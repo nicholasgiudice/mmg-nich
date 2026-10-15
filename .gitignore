@@ -1,0 +1,25 @@
+# Godot
+.godot/
+*.import
+export.cfg
+export_presets.cfg
+
+# Build/export artifacts
+build/
+builds/
+exports/
+*.zip
+
+# IDE/OS
+.vscode/
+.idea/
+.DS_Store
+
+# Secrets and local environment
+.env
+.env.*
+!.env.example
+
+# Temporary files
+*.tmp
+*.log
