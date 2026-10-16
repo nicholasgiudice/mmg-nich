@@ -1,9 +1,10 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://scripts/Main.cs" id="1_main"]
 [ext_resource type="Script" path="res://scripts/Presentation/ArenaView.cs" id="2_arena"]
 [ext_resource type="Script" path="res://scripts/Presentation/WorldView.cs" id="3_world"]
 [ext_resource type="Script" path="res://scripts/Presentation/CameraRig.cs" id="4_camera"]
+[ext_resource type="Script" path="res://scripts/Hud/Hud.cs" id="5_hud"]
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_main")
@@ -19,11 +20,27 @@ script = ExtResource("4_camera")
 
 [node name="Hud" type="CanvasLayer" parent="."]
 
+[node name="HudRoot" type="Control" parent="Hud"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("5_hud")
+
 [node name="InfoLabel" type="Label" parent="Hud"]
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
 offset_left = 8.0
-offset_top = 8.0
-offset_right = 600.0
-offset_bottom = 56.0
+offset_top = -52.0
+offset_right = 380.0
+offset_bottom = -6.0
+grow_vertical = 0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 11
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 4
 text = "Core ?"

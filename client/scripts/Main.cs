@@ -7,6 +7,7 @@ using Game.Core.Simulation;
 using Godot;
 using MmoRpgClient.Authority;
 using MmoRpgClient.Data;
+using MmoRpgClient.Hud;
 using MmoRpgClient.Input;
 using MmoRpgClient.Presentation;
 using GridMap = Game.Core.Spatial.GridMap;
@@ -19,7 +20,8 @@ namespace MmoRpgClient;
 /// <c>--encounter=id</c>, <c>--seed=n</c>, <c>--fake-authority</c>,
 /// <c>--auto-move=x,y</c> (mantém as teclas de movimento pelo sinal de x e y),
 /// <c>--demo-input=attack,ability_1,...</c> (aperta ações em sequência mirando o inimigo mais próximo e
-/// imprime as respostas da autoridade) e <c>--capture=caminho.png</c> (salva a tela e fecha; após 2 s ou ao fim do demo).
+/// imprime as respostas da autoridade) e <c>--capture=caminho.png</c> (salva a tela e fecha; após 2 s, ou
+/// <c>--capture-after=segundos</c>, ou ao fim do demo).
 /// </summary>
 public partial class Main : Node2D
 {
@@ -33,6 +35,7 @@ public partial class Main : Node2D
     private WorldView _worldView = null!;
     private CameraRig _camera = null!;
     private Label _info = null!;
+    private Hud.Hud _hud = null!;
     private double _elapsed;
     private double _demoFinishedAt = -1;
 
@@ -42,6 +45,7 @@ public partial class Main : Node2D
         _worldView = GetNode<WorldView>("World");
         _camera = GetNode<CameraRig>("Camera");
         _info = GetNode<Label>("Hud/InfoLabel");
+        _hud = GetNode<Hud.Hud>("Hud/HudRoot");
 
         foreach (var action in InputActions.All.Where(a => !InputMap.HasAction(a)))
         {
@@ -50,9 +54,10 @@ public partial class Main : Node2D
 
         try
         {
-            var (authority, map, abilities) = CreateAuthority();
+            var (authority, map, content) = CreateAuthority();
             _authority = authority;
-            _input = new PlayerInput(abilities);
+            _input = new PlayerInput(content.Abilities);
+            _hud.SetContent(content);
             GetNode<ArenaView>("Arena").Map = map;
             _camera.SetBounds(map);
         }
@@ -83,7 +88,7 @@ public partial class Main : Node2D
                 hovered = enemy.Id;
             }
 
-            _input.Update(_authority, aim, hovered);
+            _input.Update(_authority, aim, hovered, _hud.IsPointerOverUi());
             _authority.Advance(delta);
 
             var events = _authority.TakeEvents();
@@ -94,23 +99,24 @@ public partial class Main : Node2D
 
             _worldView.SelectedEntity = _input.SelectedTarget;
             _worldView.Render(_authority, events);
+            _hud.Render(_authority, _input.SelectedTarget, aim);
             if (_authority.ControlledEntity is { } player && _worldView.TryGetDrawnPosition(player, out var playerPx))
             {
                 _camera.Follow(playerPx, Units.ToPixels(aim), delta);
             }
 
             _info.Text = $"Core {CoreInfo.Version} · {Engine.GetFramesPerSecond()} FPS · tick {_authority.CurrentTick}\n"
-                + "WASD mover · clique atacar/selecionar · 1-4 habilidades · Q poção · Tab alvo · Esc limpar";
+                + "WASD mover · clique atacar · 1-4 habilidades · Q poção · Tab alvo · Esc limpar";
         }
 
         CaptureIfRequested();
     }
 
-    private (IGameAuthority Authority, GridMap Map, IReadOnlyDictionary<string, AbilityDefinition> Abilities) CreateAuthority()
+    private (IGameAuthority Authority, GridMap Map, ContentCatalog Content) CreateAuthority()
     {
         if (_args.ContainsKey("fake-authority"))
         {
-            return (new FakeAuthority(), FakeAuthority.Map, new Dictionary<string, AbilityDefinition>());
+            return (new FakeAuthority(), FakeAuthority.Map, ContentCatalog.Empty);
         }
 
         var content = ContentLoader.Load();
@@ -123,7 +129,7 @@ public partial class Main : Node2D
         var seed = _args.TryGetValue("seed", out var s) && ulong.TryParse(s, out var parsed) ? parsed : 1UL;
         var setup = EncounterSetup.Create(seed, content, encounter);
         var map = setup.World.Map ?? EntityFactory.BuildMap(content.Arenas[encounter.Arena]);
-        return (new LocalAuthority(setup.World, setup.Players.FirstOrDefault()?.Id), map, content.Abilities);
+        return (new LocalAuthority(setup.World, setup.Players.FirstOrDefault()?.Id), map, content);
     }
 
     private void CaptureIfRequested()
@@ -140,7 +146,8 @@ public partial class Main : Node2D
 
         var due = _demo is not null && _args.ContainsKey("demo-input")
             ? _demoFinishedAt >= 0 && _elapsed >= _demoFinishedAt + 0.3
-            : _elapsed >= CaptureDelaySeconds;
+            : _elapsed >= (_args.TryGetValue("capture-after", out var after)
+                && double.TryParse(after, System.Globalization.CultureInfo.InvariantCulture, out var secs) ? secs : CaptureDelaySeconds);
         if (!due)
         {
             return;

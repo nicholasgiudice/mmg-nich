@@ -42,8 +42,11 @@ public sealed class PlayerInput
     /// <summary>Último ponto de mira no mundo (tiles).</summary>
     public Vec2 AimPoint { get; private set; }
 
-    /// <summary>Lê o input do frame e envia intenções. <paramref name="hovered"/> é a unidade sob o cursor.</summary>
-    public void Update(IGameAuthority authority, Vec2 aimPoint, EntityId? hovered)
+    /// <summary>
+    /// Lê o input do frame e envia intenções. <paramref name="hovered"/> é a unidade sob o cursor;
+    /// com <paramref name="pointerOverUi"/> o clique é do HUD e não vira ataque.
+    /// </summary>
+    public void Update(IGameAuthority authority, Vec2 aimPoint, EntityId? hovered, bool pointerOverUi = false)
     {
         AimPoint = aimPoint;
         var latest = authority.Latest;
@@ -87,7 +90,7 @@ public sealed class PlayerInput
             return;
         }
 
-        if (_justPressed(InputActions.Attack))
+        if (!pointerOverUi && _justPressed(InputActions.Attack))
         {
             if (hovered is { } clicked && clicked != player)
             {

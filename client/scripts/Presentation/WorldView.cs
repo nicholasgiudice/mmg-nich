@@ -38,6 +38,12 @@ public partial class WorldView : Node2D
                 case EntityRemoved removed:
                     RemoveView(removed.Entity);
                     break;
+                case DamageDealt hit when hit.Amount > 0:
+                    ShowText(hit.Target, DamageText(hit), Hud.HudTheme.School(hit.School));
+                    break;
+                case HealApplied heal when heal.Effective > 0:
+                    ShowText(heal.Target, $"+{heal.Effective:0}", Hud.HudTheme.Heal);
+                    break;
                 case AbilityRejected rejected when rejected.Source == authority.ControlledEntity:
                     var pool = latest?.Entities.FirstOrDefault(s => s.Id == rejected.Source)?.TryGet<ResourcePool>();
                     ShowText(rejected.Source, RejectionText.For(rejected.Reason, pool?.Type), RejectionColor);
@@ -78,6 +84,18 @@ public partial class WorldView : Node2D
         {
             RemoveView(id);
         }
+    }
+
+    /// <summary>"-23", "-15 (8 absorvido)" ou "Absorvido 12" quando o escudo segurou tudo.</summary>
+    private static string DamageText(DamageDealt hit)
+    {
+        var taken = hit.Amount - hit.Absorbed;
+        if (taken <= 0)
+        {
+            return $"Absorvido {hit.Absorbed:0}";
+        }
+
+        return hit.Absorbed > 0 ? $"-{taken:0} ({hit.Absorbed:0} absorvido)" : $"-{taken:0}";
     }
 
     /// <summary>Posição desenhada (pixels) de uma unidade neste frame.</summary>
