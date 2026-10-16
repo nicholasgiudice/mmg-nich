@@ -1,0 +1,257 @@
+{
+  "classes": [
+    {
+      "id": "class.fixture_knight",
+      "name": "Cavaleiro (fixture)",
+      "health": 160,
+      "speed": 4.5,
+      "radius": 0.4,
+      "resource": { "type": "vigor", "max": 100, "initial": 0, "regenPerSecond": -2, "passiveOnlyOutOfCombat": true },
+      "resourceRules": [
+        { "id": "fixture_knight.gain_hit", "trigger": "damage_dealt", "amount": 8 },
+        { "id": "fixture_knight.gain_taken", "trigger": "damage_taken", "ratio": 0.3 }
+      ],
+      "basicAttack": "fixture_knight.slash",
+      "abilities": ["fixture_knight.taunt", "fixture_knight.whirl", "fixture_knight.guard", "fixture_knight.charge"]
+    },
+    {
+      "id": "class.fixture_ranger",
+      "name": "Arqueiro (fixture)",
+      "health": 100,
+      "speed": 5,
+      "radius": 0.4,
+      "resource": { "type": "focus", "max": 100, "initial": 50, "regenPerSecond": 6 },
+      "basicAttack": "fixture_ranger.shot",
+      "abilities": ["fixture_ranger.power_shot", "fixture_ranger.backstep"]
+    },
+    {
+      "id": "class.fixture_mage",
+      "name": "Mago (fixture)",
+      "health": 80,
+      "speed": 4.5,
+      "radius": 0.4,
+      "resource": { "type": "mana", "max": 100, "initial": 100, "regenPerSecond": 5 },
+      "basicAttack": "fixture_mage.bolt",
+      "abilities": ["fixture_mage.explosion"]
+    },
+    {
+      "id": "class.fixture_healer",
+      "name": "Clérigo (fixture)",
+      "health": 90,
+      "speed": 4.5,
+      "radius": 0.4,
+      "resource": { "type": "mana", "max": 100, "initial": 100, "regenPerSecond": 4 },
+      "basicAttack": "fixture_healer.smite",
+      "abilities": ["fixture_healer.mend"]
+    }
+  ],
+  "abilities": [
+    {
+      "id": "fixture_knight.slash",
+      "name": "Corte",
+      "targeting": { "type": "melee_arc", "range": 1.5, "angle": 100 },
+      "cooldown": 0.8,
+      "effects": [{ "type": "damage", "school": "physical", "base": 10 }]
+    },
+    {
+      "id": "fixture_knight.taunt",
+      "name": "Provocação",
+      "cooldown": 8,
+      "targeting": { "type": "unit", "range": 6, "faction": "enemy" },
+      "effects": [{ "type": "threat", "tauntDuration": 3 }]
+    },
+    {
+      "id": "fixture_knight.whirl",
+      "name": "Golpe Circular",
+      "cost": { "resource": "vigor", "amount": 30 },
+      "cooldown": 5,
+      "targeting": { "type": "circle_self", "radius": 2.5 },
+      "effects": [{ "type": "damage", "school": "physical", "base": 18 }]
+    },
+    {
+      "id": "fixture_knight.guard",
+      "name": "Escudo",
+      "cooldown": 12,
+      "targeting": { "type": "self" },
+      "effects": [{ "type": "shield", "amount": 40, "duration": 4 }]
+    },
+    {
+      "id": "fixture_knight.charge",
+      "name": "Investida",
+      "cooldown": 10,
+      "targeting": { "type": "self" },
+      "effects": [{ "type": "displacement", "kind": "dash", "distance": 5, "direction": "aim" }]
+    },
+    {
+      "id": "fixture_ranger.shot",
+      "name": "Tiro",
+      "targeting": { "type": "unit", "range": 9, "faction": "enemy" },
+      "cooldown": 1.0,
+      "effects": [{ "type": "damage", "school": "physical", "base": 8 }]
+    },
+    {
+      "id": "fixture_ranger.power_shot",
+      "name": "Tiro Devastador",
+      "cost": { "resource": "focus", "amount": 40 },
+      "cooldown": 4,
+      "castTime": 0.6,
+      "targeting": { "type": "unit", "range": 10, "faction": "enemy" },
+      "effects": [{ "type": "damage", "school": "physical", "base": 35 }]
+    },
+    {
+      "id": "fixture_ranger.backstep",
+      "name": "Recuo Rápido",
+      "cooldown": 8,
+      "targeting": { "type": "self" },
+      "effects": [{ "type": "displacement", "kind": "dash", "distance": 4, "direction": "backward" }]
+    },
+    {
+      "id": "fixture_mage.bolt",
+      "name": "Projétil",
+      "targeting": { "type": "unit", "range": 9, "faction": "enemy" },
+      "cooldown": 1.2,
+      "effects": [{ "type": "damage", "school": "arcane", "base": 6 }]
+    },
+    {
+      "id": "fixture_mage.explosion",
+      "name": "Explosão",
+      "cost": { "resource": "mana", "amount": 30 },
+      "cooldown": 3,
+      "castTime": 0.5,
+      "targeting": { "type": "circle_at_point", "range": 9, "radius": 3 },
+      "effects": [{ "type": "damage", "school": "fire", "base": 30 }]
+    },
+    {
+      "id": "fixture_healer.smite",
+      "name": "Castigo",
+      "targeting": { "type": "unit", "range": 8, "faction": "enemy" },
+      "cooldown": 1.5,
+      "effects": [{ "type": "damage", "school": "holy", "base": 5 }]
+    },
+    {
+      "id": "fixture_healer.mend",
+      "name": "Remendar",
+      "cost": { "resource": "mana", "amount": 15 },
+      "cooldown": 3,
+      "targeting": { "type": "unit", "range": 8, "faction": "ally" },
+      "effects": [{ "type": "heal", "base": 30 }]
+    },
+    {
+      "id": "fixture_wolf.bite",
+      "name": "Mordida",
+      "cooldown": 1.5,
+      "targeting": { "type": "melee_arc", "range": 1.2, "angle": 70 },
+      "effects": [{ "type": "damage", "base": 6 }]
+    },
+    {
+      "id": "fixture_wolf.rally",
+      "name": "Fúria da Alcateia",
+      "tags": ["ai.rally"],
+      "cooldown": 20,
+      "targeting": { "type": "self" },
+      "effects": [{ "type": "apply_status", "status": "status.fixture_enraged" }]
+    },
+    {
+      "id": "fixture_brute.smash",
+      "name": "Pancada",
+      "cooldown": 2,
+      "targeting": { "type": "melee_arc", "range": 1.8, "angle": 90 },
+      "effects": [{ "type": "damage", "base": 14 }]
+    }
+  ],
+  "statuses": [
+    {
+      "id": "status.fixture_enraged",
+      "name": "Enfurecido",
+      "tags": ["buff"],
+      "defaultDuration": 8,
+      "modifiers": { "damageDealtMultiplier": 1.3 }
+    }
+  ],
+  "monsters": [
+    {
+      "id": "monster.fixture_wolf",
+      "name": "Lobo (fixture)",
+      "health": 50,
+      "speed": 4.5,
+      "radius": 0.4,
+      "tags": ["beast"],
+      "abilities": ["fixture_wolf.bite", "fixture_wolf.rally"],
+      "ai": { "id": "ai.pack", "parameters": { "aggroRange": 14 } }
+    },
+    {
+      "id": "monster.fixture_brute",
+      "name": "Bruto (fixture)",
+      "health": 120,
+      "speed": 3.5,
+      "radius": 0.5,
+      "abilities": ["fixture_brute.smash"],
+      "ai": { "id": "ai.melee_chaser", "parameters": { "aggroRange": 14 } }
+    }
+  ],
+  "arenas": [
+    {
+      "id": "arena.fixture_field",
+      "lines": [
+        "######################",
+        "#....................#",
+        "#....................#",
+        "#.........##.........#",
+        "#.........##.........#",
+        "#....................#",
+        "#....................#",
+        "#....................#",
+        "#....................#",
+        "######################"
+      ]
+    }
+  ],
+  "encounters": [
+    {
+      "id": "encounter.fixture_knight_wolves",
+      "name": "Cavaleiro contra três lobos",
+      "arena": "arena.fixture_field",
+      "players": [{ "class": "class.fixture_knight", "position": { "x": 3.5, "y": 6.5 } }],
+      "enemies": [
+        { "monster": "monster.fixture_wolf", "position": { "x": 11.5, "y": 5.5 } },
+        { "monster": "monster.fixture_wolf", "position": { "x": 12.5, "y": 6.5 } },
+        { "monster": "monster.fixture_wolf", "position": { "x": 11.5, "y": 7.5 } }
+      ],
+      "defeat": { "condition": "all_players_dead", "timeLimit": 120 }
+    },
+    {
+      "id": "encounter.fixture_ranger_brute",
+      "name": "Arqueiro contra um bruto",
+      "arena": "arena.fixture_field",
+      "players": [{ "class": "class.fixture_ranger", "position": { "x": 4.5, "y": 6.5 } }],
+      "enemies": [{ "monster": "monster.fixture_brute", "position": { "x": 12.5, "y": 6.5 } }],
+      "defeat": { "condition": "all_players_dead", "timeLimit": 90 }
+    },
+    {
+      "id": "encounter.fixture_mage_brutes",
+      "name": "Mago contra dois brutos",
+      "arena": "arena.fixture_field",
+      "players": [{ "class": "class.fixture_mage", "position": { "x": 4.5, "y": 6.5 } }],
+      "enemies": [
+        { "monster": "monster.fixture_brute", "position": { "x": 13.5, "y": 5.5 } },
+        { "monster": "monster.fixture_brute", "position": { "x": 13.5, "y": 7.5 } }
+      ],
+      "defeat": { "condition": "all_players_dead", "timeLimit": 90 }
+    },
+    {
+      "id": "encounter.fixture_group",
+      "name": "Grupo contra lobos e bruto",
+      "arena": "arena.fixture_field",
+      "players": [
+        { "class": "class.fixture_knight", "position": { "x": 3.5, "y": 6.5 } },
+        { "class": "class.fixture_healer", "position": { "x": 2.5, "y": 5.5 } }
+      ],
+      "enemies": [
+        { "monster": "monster.fixture_wolf", "position": { "x": 12.5, "y": 5.5 } },
+        { "monster": "monster.fixture_wolf", "position": { "x": 12.5, "y": 7.5 } },
+        { "monster": "monster.fixture_brute", "position": { "x": 14.5, "y": 6.5 } }
+      ],
+      "defeat": { "condition": "all_players_dead", "timeLimit": 120 }
+    }
+  ]
+}
