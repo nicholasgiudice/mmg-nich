@@ -67,7 +67,7 @@
       "id": "monster.forest_matriarch",
       "name": "Matriarca da Floresta",
       "rank": "boss",
-      "health": 4500,
+      "health": 3825,
       "speed": 3.4,
       "radius": 0.9,
       "tags": ["beast", "spider", "boss"],

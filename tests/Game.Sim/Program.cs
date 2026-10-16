@@ -78,6 +78,7 @@ namespace Game.Sim
                             Runs = o.Runs,
                             MaxSeconds = o.MaxSeconds,
                             SpawnJitter = o.Jitter,
+                            HazardSourceFactory = () => new TelegraphHazardSource(),
                         };
                         summaries.Add(Batch.Run(content, spec, o.Parallel, o.PerRun));
                     }
