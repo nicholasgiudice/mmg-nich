@@ -21,7 +21,7 @@
       "mode": "periodic",
       "affects": "enemy",
       "effects": [
-        { "type": "damage", "school": "nature", "base": 1 },
+        { "type": "damage", "school": "nature", "base": 8 },
         { "type": "apply_status", "status": "status.poison", "duration": 4 }
       ]
     },

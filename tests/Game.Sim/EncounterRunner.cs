@@ -96,7 +96,7 @@ public static class EncounterRunner
         var world = setup.World;
         ApplyJitter(setup, seed, spec.SpawnJitter);
 
-        var director = new BotDirector(world, spec.HazardSourceFactory?.Invoke());
+        var director = new BotDirector(world, spec.HazardSourceFactory?.Invoke()) { Seed = seed };
         foreach (var p in setup.Players)
         {
             var classId = p.Get<UnitInfo>().DefinitionId;

@@ -4,7 +4,7 @@
     {
       "id": "monster.field_rat",
       "name": "Rato de Campo",
-      "health": 62,
+      "health": 105,
       "speed": 5.0,
       "radius": 0.3,
       "tags": ["beast", "vermin"],
@@ -34,7 +34,7 @@
     {
       "id": "monster.skeleton_guard",
       "name": "Guarda Esquelético",
-      "health": 300,
+      "health": 400,
       "speed": 3.2,
       "radius": 0.5,
       "tags": ["undead"],
@@ -66,7 +66,7 @@
       "id": "monster.forest_matriarch",
       "name": "Matriarca da Floresta",
       "rank": "boss",
-      "health": 4000,
+      "health": 6000,
       "speed": 3.4,
       "radius": 0.9,
       "tags": ["beast", "spider", "boss"],

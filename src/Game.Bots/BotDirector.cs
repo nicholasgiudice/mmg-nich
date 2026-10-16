@@ -13,6 +13,9 @@ public sealed class BotDirector(World world, IHazardSource? hazards = null)
     private readonly List<Intent> _buffer = [];
     private readonly IHazardSource _hazards = hazards ?? NoHazards.Instance;
 
+    /// <summary>Seed base do tempo de reação dos bots (use a seed do encontro). Padrão 0.</summary>
+    public ulong Seed { get; set; }
+
     public IReadOnlyList<(Entity Entity, IBotController Controller, BotOptions Options)> Bots => _bots;
 
     public void Add(Entity entity, IBotController controller, BotOptions? options = null) =>
@@ -28,7 +31,7 @@ public sealed class BotDirector(World world, IHazardSource? hazards = null)
             }
 
             _buffer.Clear();
-            controller.Think(new BotContext(world, entity, options, _hazards), _buffer);
+            controller.Think(new BotContext(world, entity, options, _hazards, Seed), _buffer);
             foreach (var intent in _buffer)
             {
                 world.Enqueue(intent);

@@ -20,14 +20,23 @@ internal static class DesignHarness
     /// <summary>Catálogo com um encontro extra: a Matriarca contra o grupo sem o Clérigo (derivado do encontro real).</summary>
     public static ContentCatalog ContentWithNoCleric { get; } = BuildNoCleric(Content);
 
-    // Escolhas de bots para o conteúdo real (o Guerreiro do protótipo não tem Provocação: ver relatório).
+    // Escolhas de bots para o conteúdo real. Reação (0,2-0,4 s) e poção (abaixo de 40% de vida) ficam nos padrões dos bots.
     public static readonly IReadOnlyDictionary<string, string> Options = new Dictionary<string, string>
     {
-        ["class.warrior:taunt"] = "warrior.whirlwind", // "uma habilidade de ameaça + básico"
         ["class.mage:explosion"] = "mage.elemental_blast",
     };
 
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, Lazy<BatchSummary>> Cache = new();
+
+    /// <summary>Roda (ou reaproveita, pois o lote é determinístico) um lote de <see cref="Runs"/> seeds.</summary>
     public static BatchSummary Run(string encounter, string strategy, IReadOnlyDictionary<string, string>? roles = null, ContentCatalog? content = null)
+    {
+        var rolesKey = roles is null ? "" : string.Join(",", roles.OrderBy(r => r.Key).Select(r => r.Key + "=" + r.Value));
+        var key = $"{encounter}|{strategy}|{rolesKey}|{(content is null ? 0 : 1)}";
+        return Cache.GetOrAdd(key, _ => new Lazy<BatchSummary>(() => RunUncached(encounter, strategy, roles, content))).Value;
+    }
+
+    private static BatchSummary RunUncached(string encounter, string strategy, IReadOnlyDictionary<string, string>? roles, ContentCatalog? content)
     {
         var spec = new RunSpec
         {
