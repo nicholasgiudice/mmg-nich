@@ -103,12 +103,14 @@ Cenários (os cinco do design): Guerreiro × 3 Lobos; Arqueiro × Lobo + Saltead
 | [T-014](fase-0/T-014-conteudo-prototipo.md) | Conteúdo do protótipo em JSON | VPS | Médio | 009, 010, 011, 012 |
 | [T-015](fase-0/T-015-simulador-encontros.md) | Simulador headless de encontros | VPS | **Forte** | 011 |
 | [T-016](fase-0/T-016-validacao-balanceamento.md) | Testes de design e balanceamento | VPS | Médio | 014, 015 |
+| [T-017](fase-0/T-017-mecanicas-faltantes.md) | Mecânicas faltantes do design (Provocação, Purificação, consumíveis…) | VPS | Forte | 016 |
+| [T-018](fase-0/T-018-bots-rebalanceamento.md) | Bots com tempo de reação e rebalanceamento | VPS | Médio | 017 |
 | [T-020](fase-0/T-020-cliente-apresentacao.md) | Cliente: autoridade local e sincronização de entidades | Windows | **Forte** | 004, 007 |
 | [T-021](fase-0/T-021-cliente-input-camera.md) | Cliente: input e câmera | Windows | Médio | 008, 020 |
 | [T-022](fase-0/T-022-cliente-hud.md) | Cliente: HUD e log de combate | Windows | Médio | 010, 013, 021 |
 | [T-023](fase-0/T-023-cliente-telegrafos-status.md) | Cliente: telegráfos, efeitos e status | Windows | Médio | 012, 021 |
 | [T-024](fase-0/T-024-cliente-menu-cenarios.md) | Cliente: menu de cenários | Windows | Leve | 014, 015, 021 |
-| [T-025](fase-0/T-025-playtest.md) | Playtest do protótipo | Windows | Humano | 016, 022, 023, 024 |
+| [T-025](fase-0/T-025-playtest.md) | Playtest do protótipo | Windows | Humano | 018, 022, 023, 024 |
 | [T-030](fase-0/T-030-planejar-fase-1.md) | Detalhar a fase 1 em tarefas | VPS | Forte | 025 |
 
 ### Ondas de execução

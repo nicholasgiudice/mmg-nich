@@ -2,7 +2,7 @@
 
 - **Ambiente:** Windows
 - **Modelo:** Humano (um agente leve pode organizar as anotações depois)
-- **Depende de:** T-016, T-022, T-023, T-024
+- **Depende de:** T-018, T-022, T-023, T-024
 - **Libera:** T-030
 
 ## Objetivo
