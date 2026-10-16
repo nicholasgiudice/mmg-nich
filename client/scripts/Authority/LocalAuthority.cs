@@ -1,4 +1,5 @@
 using Game.Core.Authority;
+using Game.Core.CombatLog;
 using Game.Core.Events;
 using Game.Core.Intents;
 using Game.Core.Simulation;
@@ -9,19 +10,22 @@ namespace MmoRpgClient.Authority;
 /// Autoridade do protótipo: roda o <see cref="World"/> dentro do cliente, em passo fixo de 20 Hz
 /// com acumulador. Não depende do Godot; quem chama <see cref="Advance"/> é o <c>_Process</c>.
 /// </summary>
-public sealed class LocalAuthority : IGameAuthority
+public sealed class LocalAuthority : IGameAuthority, ICombatLogSource
 {
     /// <summary>Máximo de ticks por chamada de <see cref="Advance"/>; o atraso excedente é descartado para não travar.</summary>
     public const int MaxStepsPerAdvance = 5;
 
     private readonly World _world;
     private readonly List<GameEvent> _pendingEvents = new();
+    private readonly CombatLogRecorder _log;
+    private readonly List<DeathSummary> _pendingDeaths = new();
     private double _accumulator;
 
     public LocalAuthority(World world, EntityId? controlledEntity)
     {
         _world = world;
         ControlledEntity = controlledEntity;
+        _log = new CombatLogRecorder(viewer: controlledEntity);
         Latest = world.Snapshot();
     }
 
@@ -63,6 +67,20 @@ public sealed class LocalAuthority : IGameAuthority
         }
     }
 
+    public IReadOnlyList<CombatLogEntry> LogEntries => _log.Entries;
+
+    public IReadOnlyList<DeathSummary> TakeDeathSummaries()
+    {
+        if (_pendingDeaths.Count == 0)
+        {
+            return Array.Empty<DeathSummary>();
+        }
+
+        var deaths = _pendingDeaths.ToArray();
+        _pendingDeaths.Clear();
+        return deaths;
+    }
+
     public IReadOnlyList<GameEvent> TakeEvents()
     {
         if (_pendingEvents.Count == 0)
@@ -81,5 +99,6 @@ public sealed class LocalAuthority : IGameAuthority
         Previous = Latest;
         Latest = _world.Snapshot();
         _pendingEvents.AddRange(_world.LastTickEvents);
+        _pendingDeaths.AddRange(_log.Record(_world));
     }
 }
