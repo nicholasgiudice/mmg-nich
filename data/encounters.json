@@ -1,0 +1,67 @@
+{
+  "$schema": "./schemas/game-data.schema.json",
+  "encounters": [
+    {
+      "id": "encounter.three_wolves",
+      "name": "Três Lobos",
+      "arena": "arena.fields",
+      "players": [{ "class": "class.warrior", "position": { "x": 5.5, "y": 10.5 } }],
+      "enemies": [
+        { "monster": "monster.grey_wolf", "position": { "x": 17.5, "y": 8.5 } },
+        { "monster": "monster.grey_wolf", "position": { "x": 18.5, "y": 10.5 } },
+        { "monster": "monster.grey_wolf", "position": { "x": 17.5, "y": 12.5 } }
+      ],
+      "victory": "all_enemies_dead",
+      "defeat": { "condition": "all_players_dead", "timeLimit": 120 }
+    },
+    {
+      "id": "encounter.wolf_and_bandit",
+      "name": "Lobo e Salteador",
+      "arena": "arena.camp",
+      "players": [{ "class": "class.archer", "position": { "x": 5.5, "y": 10.5 } }],
+      "enemies": [
+        { "monster": "monster.road_bandit", "position": { "x": 24.5, "y": 10.5 } },
+        { "monster": "monster.grey_wolf", "position": { "x": 22.5, "y": 9.5 } }
+      ],
+      "victory": "all_enemies_dead",
+      "defeat": { "condition": "all_players_dead", "timeLimit": 120 }
+    },
+    {
+      "id": "encounter.four_rats",
+      "name": "Quatro Ratos de Campo",
+      "arena": "arena.farm",
+      "players": [{ "class": "class.mage", "position": { "x": 3.5, "y": 10.5 } }],
+      "enemies": [
+        { "monster": "monster.field_rat", "position": { "x": 19.5, "y": 6.5 } },
+        { "monster": "monster.field_rat", "position": { "x": 21.5, "y": 11.5 } },
+        { "monster": "monster.field_rat", "position": { "x": 19.5, "y": 13.5 } },
+        { "monster": "monster.field_rat", "position": { "x": 22.5, "y": 16.5 } }
+      ],
+      "victory": "all_enemies_dead",
+      "defeat": { "condition": "all_players_dead", "timeLimit": 120 }
+    },
+    {
+      "id": "encounter.skeleton_guard",
+      "name": "Guarda Esquelético no Portão Partido",
+      "arena": "arena.broken_gate",
+      "players": [{ "class": "class.cleric", "position": { "x": 4.5, "y": 9.5 } }],
+      "enemies": [{ "monster": "monster.skeleton_guard", "position": { "x": 17.5, "y": 10.5 } }],
+      "victory": "all_enemies_dead",
+      "defeat": { "condition": "all_players_dead", "timeLimit": 180 }
+    },
+    {
+      "id": "encounter.forest_matriarch",
+      "name": "Matriarca da Floresta",
+      "arena": "arena.matriarch_nest",
+      "players": [
+        { "class": "class.warrior", "position": { "x": 13.5, "y": 13.5 } },
+        { "class": "class.archer", "position": { "x": 8.5, "y": 11.5 } },
+        { "class": "class.mage", "position": { "x": 8.5, "y": 15.5 } },
+        { "class": "class.cleric", "position": { "x": 6.5, "y": 13.5 } }
+      ],
+      "enemies": [{ "monster": "monster.forest_matriarch", "position": { "x": 28.5, "y": 13.5 } }],
+      "victory": "all_enemies_dead",
+      "defeat": { "condition": "all_players_dead", "timeLimit": 420 }
+    }
+  ]
+}

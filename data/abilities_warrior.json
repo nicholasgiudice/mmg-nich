@@ -1,0 +1,47 @@
+{
+  "$schema": "./schemas/game-data.schema.json",
+  "abilities": [
+    {
+      "id": "warrior.sword_strike",
+      "name": "Golpe de Espada",
+      "tags": ["basic", "melee"],
+      "cooldown": 0.9,
+      "targeting": { "type": "melee_arc", "range": 1.7, "angle": 100 },
+      "effects": [{ "type": "damage", "school": "physical", "base": 12 }]
+    },
+    {
+      "id": "warrior.heavy_strike",
+      "name": "Golpe Pesado",
+      "tags": ["melee", "interrupt"],
+      "cost": { "resource": "vigor", "amount": 30 },
+      "cooldown": 6,
+      "castTime": 0.4,
+      "targeting": { "type": "melee_arc", "range": 1.9, "angle": 90 },
+      "effects": [
+        { "type": "damage", "school": "physical", "base": 34 },
+        { "type": "interrupt" },
+        { "type": "threat", "amount": 20 }
+      ]
+    },
+    {
+      "id": "warrior.whirlwind",
+      "name": "Golpe Circular",
+      "tags": ["melee", "aoe"],
+      "cost": { "resource": "vigor", "amount": 25 },
+      "cooldown": 5,
+      "targeting": { "type": "circle_self", "radius": 2.5 },
+      "effects": [
+        { "type": "damage", "school": "physical", "base": 18 },
+        { "type": "threat", "amount": 30 }
+      ]
+    },
+    {
+      "id": "warrior.firm_guard",
+      "name": "Guarda Firme",
+      "tags": ["defensive"],
+      "cooldown": 14,
+      "targeting": { "type": "self" },
+      "effects": [{ "type": "apply_status", "status": "status.firm_guard", "duration": 4 }]
+    }
+  ]
+}

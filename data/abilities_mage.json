@@ -1,0 +1,45 @@
+{
+  "$schema": "./schemas/game-data.schema.json",
+  "abilities": [
+    {
+      "id": "mage.arcane_missile",
+      "name": "Projétil Arcano",
+      "tags": ["basic", "ranged"],
+      "cost": { "resource": "mana", "amount": 3 },
+      "cooldown": 1.0,
+      "targeting": { "type": "unit", "range": 9, "faction": "enemy" },
+      "effects": [{ "type": "damage", "school": "arcane", "base": 10 }]
+    },
+    {
+      "id": "mage.elemental_blast",
+      "name": "Explosão Elemental",
+      "tags": ["aoe", "ranged"],
+      "cost": { "resource": "mana", "amount": 45 },
+      "cooldown": 4,
+      "castTime": 0.6,
+      "targeting": { "type": "circle_at_point", "range": 9, "radius": 3 },
+      "effects": [{ "type": "damage", "school": "fire", "base": 34 }]
+    },
+    {
+      "id": "mage.ice_prison",
+      "name": "Prisão de Gelo",
+      "tags": ["control", "ranged"],
+      "cost": { "resource": "mana", "amount": 25 },
+      "cooldown": 10,
+      "targeting": { "type": "unit", "range": 8, "faction": "enemy" },
+      "effects": [
+        { "type": "damage", "school": "frost", "base": 6 },
+        { "type": "apply_status", "status": "status.frozen", "duration": 2.5 }
+      ]
+    },
+    {
+      "id": "mage.arcane_barrier",
+      "name": "Barreira Arcana",
+      "tags": ["defensive"],
+      "cost": { "resource": "mana", "amount": 30 },
+      "cooldown": 15,
+      "targeting": { "type": "self" },
+      "effects": [{ "type": "shield", "amount": 45, "duration": 6 }]
+    }
+  ]
+}

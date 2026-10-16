@@ -47,9 +47,17 @@ public static class GameDataLoader
 
         var sources = Directory
             .EnumerateFiles(directory, "*.json", SearchOption.AllDirectories)
+            .Where(f => !IsSchemaFile(directory, f))
             .OrderBy(f => f, StringComparer.Ordinal)
             .Select(f => (Name: Path.GetRelativePath(directory, f), Json: File.ReadAllText(f)));
         return LoadSources(sources);
+    }
+
+    // A subpasta "schemas" guarda apenas JSON Schema (autocomplete), nunca conteúdo.
+    private static bool IsSchemaFile(string root, string file)
+    {
+        var first = Path.GetRelativePath(root, file).Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)[0];
+        return string.Equals(first, "schemas", StringComparison.OrdinalIgnoreCase);
     }
 
     public static LoadResult LoadSources(IEnumerable<(string Name, string Json)> sources)

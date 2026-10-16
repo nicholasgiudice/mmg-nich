@@ -1,0 +1,137 @@
+{
+  "$schema": "./schemas/game-data.schema.json",
+  "abilities": [
+    {
+      "id": "field_rat.bite",
+      "name": "Mordida de Rato",
+      "cooldown": 1.0,
+      "targeting": { "type": "melee_arc", "range": 1.1, "angle": 90 },
+      "effects": [{ "type": "damage", "school": "physical", "base": 5 }]
+    },
+    {
+      "id": "grey_wolf.bite",
+      "name": "Mordida do Lobo",
+      "cooldown": 1.4,
+      "targeting": { "type": "melee_arc", "range": 1.3, "angle": 80 },
+      "effects": [{ "type": "damage", "school": "physical", "base": 6 }]
+    },
+    {
+      "id": "grey_wolf.pack_fury",
+      "name": "Fúria da Matilha",
+      "tags": ["ai.rally"],
+      "cooldown": 20,
+      "targeting": { "type": "self" },
+      "effects": [{ "type": "apply_status", "status": "status.pack_aggression", "duration": 8 }]
+    },
+    {
+      "id": "road_bandit.shot",
+      "name": "Disparo de Besta",
+      "cooldown": 2.0,
+      "targeting": { "type": "unit", "range": 9, "faction": "enemy" },
+      "effects": [{ "type": "damage", "school": "physical", "base": 9 }]
+    },
+    {
+      "id": "skeleton_guard.slash",
+      "name": "Golpe de Lâmina",
+      "cooldown": 1.6,
+      "targeting": { "type": "melee_arc", "range": 1.8, "angle": 90 },
+      "effects": [{ "type": "damage", "school": "physical", "base": 9 }]
+    },
+    {
+      "id": "skeleton_guard.raise_shield",
+      "name": "Erguer Escudo",
+      "tags": ["ai.guard"],
+      "cooldown": 8,
+      "targeting": { "type": "self" },
+      "effects": [{ "type": "apply_status", "status": "status.skeleton_guard", "duration": 3 }]
+    },
+    {
+      "id": "skeleton_guard.crushing_blow",
+      "name": "Golpe Esmagador",
+      "tags": ["ai.heavy"],
+      "cooldown": 8,
+      "targeting": { "type": "melee_arc", "range": 2.4, "angle": 100 },
+      "telegraph": { "shape": "cone", "length": 2.4, "angle": 100, "delay": 1.0, "anchor": "source", "affects": "enemy" },
+      "effects": [{ "type": "damage", "school": "physical", "base": 30 }]
+    },
+    {
+      "id": "spider_small.bite",
+      "name": "Picada da Aranha",
+      "cooldown": 1.2,
+      "targeting": { "type": "melee_arc", "range": 1.1, "angle": 90 },
+      "effects": [
+        { "type": "damage", "school": "physical", "base": 4 },
+        { "type": "apply_status", "status": "status.poison", "duration": 4 }
+      ]
+    },
+    {
+      "id": "spider_big.bite",
+      "name": "Picada da Aranha Grande",
+      "cooldown": 1.5,
+      "targeting": { "type": "melee_arc", "range": 1.6, "angle": 100 },
+      "effects": [
+        { "type": "damage", "school": "physical", "base": 11 },
+        { "type": "apply_status", "status": "status.poison", "duration": 5 }
+      ]
+    },
+    {
+      "id": "matriarch.bite",
+      "name": "Mordida da Matriarca",
+      "cooldown": 1.5,
+      "targeting": { "type": "melee_arc", "range": 2.3, "angle": 120 },
+      "effects": [{ "type": "damage", "school": "physical", "base": 18 }]
+    },
+    {
+      "id": "matriarch.rending_bite",
+      "name": "Mordida Dilacerante",
+      "cooldown": 1.5,
+      "targeting": { "type": "melee_arc", "range": 2.3, "angle": 120 },
+      "effects": [
+        { "type": "damage", "school": "physical", "base": 18 },
+        { "type": "apply_status", "status": "status.bleed", "duration": 6 }
+      ]
+    },
+    {
+      "id": "matriarch.charge",
+      "name": "Investida",
+      "cooldown": 9,
+      "targeting": { "type": "line", "length": 6, "width": 1.6 },
+      "telegraph": { "shape": "line", "length": 6, "width": 1.6, "delay": 1.0, "charge": true },
+      "effects": [{ "type": "damage", "school": "physical", "base": 38 }]
+    },
+    {
+      "id": "matriarch.venom_pool",
+      "name": "Poça de Veneno",
+      "tags": ["ai.area"],
+      "cooldown": 12,
+      "targeting": { "type": "circle_at_point", "range": 12, "radius": 2 },
+      "telegraph": { "shape": "circle", "radius": 2, "delay": 1.0, "anchor": "aim" },
+      "effects": [{ "type": "spawn_area", "area": "area.venom_pool" }]
+    },
+    {
+      "id": "matriarch.venom_pool_fast",
+      "name": "Poça de Veneno Rápida",
+      "tags": ["ai.area"],
+      "cooldown": 6,
+      "targeting": { "type": "circle_at_point", "range": 12, "radius": 2 },
+      "telegraph": { "shape": "circle", "radius": 2, "delay": 1.0, "anchor": "aim" },
+      "effects": [{ "type": "spawn_area", "area": "area.venom_pool" }]
+    },
+    {
+      "id": "matriarch.web_field",
+      "name": "Teia Sufocante",
+      "tags": ["ai.area"],
+      "cooldown": 14,
+      "targeting": { "type": "circle_at_point", "range": 12, "radius": 3 },
+      "effects": [{ "type": "spawn_area", "area": "area.sticky_web" }]
+    },
+    {
+      "id": "matriarch.summon_lesser",
+      "name": "Chamar Aranhas",
+      "tags": ["ai.summon"],
+      "cooldown": 18,
+      "targeting": { "type": "self" },
+      "effects": [{ "type": "summon", "monster": "monster.spider_small", "count": 2, "radius": 2, "maxAlive": 4 }]
+    }
+  ]
+}
