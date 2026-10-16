@@ -12,7 +12,7 @@ public static class StatusModule
     {
         s.Effects
             .Register<ApplyStatusEffect>((c, e) => StatusManager.Apply(c.World, c.Source, c.Target!, e.Status, e.DurationTicks))
-            .Register<RemoveStatusEffect>((c, e) => StatusManager.RemoveByTag(c.World, c.Target!, e.Tag, e.Count, c.SourceEntityId));
+            .Register<RemoveStatusEffect>((c, e) => StatusManager.RemoveByTags(c.World, c.Target!, e.Tags.Count > 0 ? e.Tags : [e.Tag], e.Count, c.SourceEntityId));
         s.Gates.Add(new StatusGate());
         s.Modifiers.Add(new StatusModifierSource());
     }

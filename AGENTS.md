@@ -53,6 +53,8 @@ Cada tarefa indica o ambiente. Tarefas de VPS não podem depender de interface g
 
 ## Definição de pronto (toda tarefa)
 
+Durante o trabalho use `./scripts/check.sh --fast` (pula `tests/Game.Design.Tests`, que são lentos). Antes do commit rode `./scripts/check.sh` completo.
+
 - `dotnet build` sem erros nem avisos;
 - `dotnet test` passando;
 - critérios de aceite da tarefa atendidos;

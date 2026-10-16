@@ -7,7 +7,7 @@
       "tags": ["basic", "holy"],
       "cooldown": 1.1,
       "targeting": { "type": "unit", "range": 6, "faction": "enemy" },
-      "effects": [{ "type": "damage", "school": "holy", "base": 8 }]
+      "effects": [{ "type": "damage", "school": "holy", "base": 8, "bonusVsTags": { "undead": 0.25, "corrupted": 0.25 } }]
     },
     {
       "id": "cleric.direct_heal",
@@ -35,7 +35,18 @@
       "cost": { "resource": "faith", "amount": 25 },
       "cooldown": 6,
       "targeting": { "type": "unit", "range": 7, "faction": "enemy" },
-      "effects": [{ "type": "damage", "school": "holy", "base": 26 }]
+      "effects": [
+        { "type": "damage", "school": "holy", "base": 26, "bonusVsTags": { "undead": 0.25, "corrupted": 0.25 } },
+        { "type": "heal", "base": 10, "target": "self" }
+      ]
+    },
+    {
+      "id": "cleric.purify",
+      "name": "Purificação",
+      "tags": ["cleanse", "holy"],
+      "cooldown": 8,
+      "targeting": { "type": "unit", "range": 8, "faction": "ally" },
+      "effects": [{ "type": "remove_status", "tags": ["poison", "curse"], "count": 1 }]
     }
   ]
 }

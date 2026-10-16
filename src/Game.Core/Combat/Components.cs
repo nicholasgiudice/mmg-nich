@@ -87,7 +87,20 @@ public sealed class AbilityState : IComponent
 
     public bool IsCasting => Cast is not null;
 
-    public bool Knows(string abilityId) => Known.Contains(abilityId);
+    /// <summary>
+    /// Consumíveis (T-017, <c>ClassDefinition.Consumables</c>): conhecidos e usáveis como qualquer habilidade, mas separados de
+    /// <see cref="Known"/> (que lista só as habilidades de classe) para cliente e bots distinguirem.
+    /// </summary>
+    public List<string> Consumables { get; } = new();
+
+    /// <summary>Cargas já gastas por habilidade (ausente = 0). Restantes = <c>AbilityDefinition.Charges</c> - gastas.</summary>
+    public SortedDictionary<string, int> ChargesUsed { get; } = new(StringComparer.Ordinal);
+
+    public bool Knows(string abilityId) => Known.Contains(abilityId) || Consumables.Contains(abilityId);
+
+    /// <summary>Usos restantes da habilidade, ou null se ilimitada.</summary>
+    public int? ChargesRemaining(AbilityDefinition ability) =>
+        ability.Charges is { } max ? Math.Max(0, max - (ChargesUsed.TryGetValue(ability.Id, out var u) ? u : 0)) : null;
 
     public bool IsBasicAttack(string abilityId) => BasicAttackId == abilityId;
 
@@ -98,6 +111,12 @@ public sealed class AbilityState : IComponent
     {
         var c = new AbilityState { BasicAttackId = BasicAttackId, Cast = Cast?.Clone() };
         c.Known.AddRange(Known);
+        c.Consumables.AddRange(Consumables);
+        foreach (var kv in ChargesUsed)
+        {
+            c.ChargesUsed[kv.Key] = kv.Value;
+        }
+
         foreach (var kv in ReadyAtTick)
         {
             c.ReadyAtTick[kv.Key] = kv.Value;
@@ -115,6 +134,17 @@ public sealed class AbilityState : IComponent
         }
 
         foreach (var kv in ReadyAtTick)
+        {
+            hasher.Add(kv.Key);
+            hasher.Add(kv.Value);
+        }
+
+        foreach (var k in Consumables)
+        {
+            hasher.Add(k);
+        }
+
+        foreach (var kv in ChargesUsed)
         {
             hasher.Add(kv.Key);
             hasher.Add(kv.Value);

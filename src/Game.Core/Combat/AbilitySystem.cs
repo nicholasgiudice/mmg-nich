@@ -9,7 +9,7 @@ namespace Game.Core.Combat;
 
 public sealed record AbilityCheck(AbilityRejectReason? Reason, AbilityDefinition? Ability, TargetResolution? Resolution);
 
-/// <summary>Validação de uma tentativa de uso. Ordem: vivo, conjurando, gates, conhecida, recarga, recurso, alvo, alcance, LoS.</summary>
+/// <summary>Validação de uma tentativa de uso. Ordem: vivo, conjurando, gates, conhecida, cargas, recarga, recurso, alvo, alcance, LoS.</summary>
 public static class AbilityValidator
 {
     public static AbilityCheck Validate(World world, Entity caster, string abilityId, EntityId? target, Vector2? aim)
@@ -36,6 +36,11 @@ public static class AbilityValidator
         if (st is null || ability is null || !st.Knows(abilityId))
         {
             return new AbilityCheck(AbilityRejectReason.UnknownAbility, ability, null);
+        }
+
+        if (st.ChargesRemaining(ability) is 0)
+        {
+            return new AbilityCheck(AbilityRejectReason.NoCharges, ability, null);
         }
 
         if (st.CooldownRemaining(abilityId, world.Tick) > 0)
@@ -200,10 +205,15 @@ public sealed class AbilitySystem : ISimulationSystem
 
         var ready = world.Tick + ability.CooldownTicks;
         st.ReadyAtTick[ability.Id] = ready;
+        if (ability.Charges is not null)
+        {
+            st.ChargesUsed[ability.Id] = (st.ChargesUsed.TryGetValue(ability.Id, out var used) ? used : 0) + 1;
+        }
+
         caster.Get<Transform>().Facing = res.Direction;
         world.Events.Publish(new AbilityExecuted(
             caster.Id, ability.Id, res.Targets.Select(t => t.Id).ToList(), costResource, costAmount,
-            st.IsBasicAttack(ability.Id), ready));
+            st.IsBasicAttack(ability.Id), ready, st.ChargesRemaining(ability)));
         if (ability.Telegraph is not null)
         {
             // T-012: os efeitos são aplicados na resolução do telegráfo, a quem estiver na forma naquele tick.

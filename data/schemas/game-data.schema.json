@@ -97,6 +97,7 @@
         },
         "basicAttack": { "$ref": "#/$defs/id" },
         "abilities": { "$ref": "#/$defs/idList" },
+        "consumables": { "$ref": "#/$defs/idList" },
         "resourceRules": { "type": "array", "items": { "$ref": "#/$defs/resourceRule" } }
       }
     },
@@ -138,6 +139,7 @@
         "cooldown": { "$ref": "#/$defs/seconds" },
         "castTime": { "$ref": "#/$defs/seconds" },
         "castWhileMoving": { "type": "boolean" },
+        "charges": { "type": "integer", "minimum": 1, "description": "Usos por encontro; ausente = ilimitado." },
         "targeting": { "$ref": "#/$defs/targeting" },
         "telegraph": { "$ref": "#/$defs/telegraph" },
         "effects": { "type": "array", "items": { "$ref": "#/$defs/effect" } }
@@ -191,35 +193,39 @@
     "effect": {
       "oneOf": [
         { "type": "object", "additionalProperties": false, "required": ["type", "base"],
-          "properties": { "type": { "const": "damage" }, "base": { "type": "number", "minimum": 0 }, "school": { "$ref": "#/$defs/school" } } },
+          "properties": { "target": { "$ref": "#/$defs/effectTarget" }, "type": { "const": "damage" }, "base": { "type": "number", "minimum": 0 }, "school": { "$ref": "#/$defs/school" },
+            "bonusVsTags": { "type": "object", "additionalProperties": { "type": "number", "exclusiveMinimum": -1 }, "description": "{ \"undead\": 0.5 } = +50% contra alvos com a tag; somam." } } },
         { "type": "object", "additionalProperties": false, "required": ["type", "base"],
-          "properties": { "type": { "const": "heal" }, "base": { "type": "number", "minimum": 0 } } },
+          "properties": { "target": { "$ref": "#/$defs/effectTarget" }, "type": { "const": "heal" }, "base": { "type": "number", "minimum": 0 } } },
         { "type": "object", "additionalProperties": false, "required": ["type", "amount", "duration"],
-          "properties": { "type": { "const": "shield" }, "amount": { "type": "number", "exclusiveMinimum": 0 }, "duration": { "$ref": "#/$defs/seconds" } } },
+          "properties": { "target": { "$ref": "#/$defs/effectTarget" }, "type": { "const": "shield" }, "amount": { "type": "number", "exclusiveMinimum": 0 }, "duration": { "$ref": "#/$defs/seconds" } } },
         { "type": "object", "additionalProperties": false, "required": ["type", "status"],
-          "properties": { "type": { "const": "apply_status" }, "status": { "$ref": "#/$defs/id" }, "duration": { "$ref": "#/$defs/seconds" } } },
-        { "type": "object", "additionalProperties": false, "required": ["type", "tag"],
-          "properties": { "type": { "const": "remove_status" }, "tag": { "type": "string" }, "count": { "type": "integer", "minimum": 1 } } },
+          "properties": { "target": { "$ref": "#/$defs/effectTarget" }, "type": { "const": "apply_status" }, "status": { "$ref": "#/$defs/id" }, "duration": { "$ref": "#/$defs/seconds" } } },
+        { "type": "object", "additionalProperties": false, "required": ["type"],
+          "description": "Informe tag ou tags (qualquer uma das tags).",
+          "properties": { "target": { "$ref": "#/$defs/effectTarget" }, "type": { "const": "remove_status" }, "tag": { "type": "string" }, "tags": { "$ref": "#/$defs/stringList" }, "count": { "type": "integer", "minimum": 1 } } },
         { "type": "object", "additionalProperties": false, "required": ["type", "kind", "distance"],
           "properties": {
+            "target": { "$ref": "#/$defs/effectTarget" },
             "type": { "const": "displacement" },
             "kind": { "enum": ["dash", "knockback"] },
             "distance": { "type": "number", "exclusiveMinimum": 0 },
             "direction": { "enum": ["aim", "away_from_source", "toward_target", "backward"] }
           } },
         { "type": "object", "additionalProperties": false, "required": ["type"],
-          "properties": { "type": { "const": "interrupt" } } },
+          "properties": { "target": { "$ref": "#/$defs/effectTarget" }, "type": { "const": "interrupt" } } },
         { "type": "object", "additionalProperties": false, "required": ["type"],
-          "properties": { "type": { "const": "threat" }, "amount": { "type": "number", "minimum": 0 }, "tauntDuration": { "$ref": "#/$defs/seconds" } } },
+          "properties": { "target": { "$ref": "#/$defs/effectTarget" }, "type": { "const": "threat" }, "amount": { "type": "number", "minimum": 0 }, "tauntDuration": { "$ref": "#/$defs/seconds" } } },
         { "type": "object", "additionalProperties": false, "required": ["type", "resource", "amount"],
-          "properties": { "type": { "const": "resource" }, "resource": { "type": "string" }, "amount": { "type": "number" } } },
+          "properties": { "target": { "$ref": "#/$defs/effectTarget" }, "type": { "const": "resource" }, "resource": { "type": "string" }, "amount": { "type": "number" } } },
         { "type": "object", "additionalProperties": false, "required": ["type", "area"],
-          "properties": { "type": { "const": "spawn_area" }, "area": { "$ref": "#/$defs/id" } } },
+          "properties": { "target": { "$ref": "#/$defs/effectTarget" }, "type": { "const": "spawn_area" }, "area": { "$ref": "#/$defs/id" } } },
         { "type": "object", "additionalProperties": false, "required": ["type", "monster"],
-          "properties": { "type": { "const": "summon" }, "monster": { "$ref": "#/$defs/id" }, "count": { "type": "integer", "minimum": 1 }, "radius": { "type": "number", "minimum": 0 }, "maxAlive": { "type": "integer", "minimum": 0 } } }
+          "properties": { "target": { "$ref": "#/$defs/effectTarget" }, "type": { "const": "summon" }, "monster": { "$ref": "#/$defs/id" }, "count": { "type": "integer", "minimum": 1 }, "radius": { "type": "number", "minimum": 0 }, "maxAlive": { "type": "integer", "minimum": 0 } } }
       ]
     },
     "effects": { "type": "array", "items": { "$ref": "#/$defs/effect" } },
+    "effectTarget": { "enum": ["targets", "self"], "description": "targets (padrão) = alvos da habilidade; self = o conjurador." },
     "status": {
       "type": "object",
       "additionalProperties": false,
@@ -255,7 +261,8 @@
           "properties": {
             "speedMultiplier": { "type": "number", "minimum": 0 },
             "damageTakenMultiplier": { "type": "number", "minimum": 0 },
-            "damageDealtMultiplier": { "type": "number", "minimum": 0 }
+            "damageDealtMultiplier": { "type": "number", "minimum": 0 },
+            "controlDurationMultiplier": { "type": "number", "minimum": 0 }
           }
         },
         "flags": {
@@ -274,6 +281,7 @@
         "radius": { "type": "number", "exclusiveMinimum": 0 },
         "duration": { "type": "number", "exclusiveMinimum": 0 },
         "interval": { "$ref": "#/$defs/seconds" },
+        "armTime": { "$ref": "#/$defs/seconds", "description": "Segundos até a área ficar armada; antes disso não dispara." },
         "mode": { "enum": ["periodic", "on_enter_once"] },
         "affects": { "$ref": "#/$defs/faction" },
         "effects": { "$ref": "#/$defs/effects" }

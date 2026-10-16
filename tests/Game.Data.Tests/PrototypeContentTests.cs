@@ -50,11 +50,11 @@ public class PrototypeContentTests
     }
 
     [Theory]
-    [InlineData("class.warrior", "warrior.sword_strike", new[] { "warrior.heavy_strike", "warrior.whirlwind", "warrior.firm_guard" })]
+    [InlineData("class.warrior", "warrior.sword_strike", new[] { "warrior.heavy_strike", "warrior.whirlwind", "warrior.firm_guard", "warrior.taunt" })]
     [InlineData("class.archer", "archer.shot", new[] { "archer.hunters_mark", "archer.quick_retreat", "archer.containment_trap" })]
     [InlineData("class.mage", "mage.arcane_missile", new[] { "mage.elemental_blast", "mage.ice_prison", "mage.arcane_barrier" })]
-    [InlineData("class.cleric", "cleric.holy_strike", new[] { "cleric.direct_heal", "cleric.sacred_shield", "cleric.holy_chain" })]
-    public void Each_class_has_basic_attack_and_three_abilities(string classId, string basic, string[] abilities)
+    [InlineData("class.cleric", "cleric.holy_strike", new[] { "cleric.direct_heal", "cleric.sacred_shield", "cleric.holy_chain", "cleric.purify" })]
+    public void Each_class_has_basic_attack_and_its_abilities(string classId, string basic, string[] abilities)
     {
         var db = Db();
         var cls = db.Classes[classId];
@@ -67,6 +67,62 @@ public class PrototypeContentTests
             // O prefixo do id da habilidade identifica a classe dona (warrior.*, archer.*...).
             Assert.StartsWith(classId["class.".Length..] + ".", a, StringComparison.Ordinal);
         }
+    }
+
+    [Fact]
+    public void Every_class_has_the_minor_healing_potion_as_a_limited_consumable()
+    {
+        var db = Db();
+        var potion = db.Abilities["item.minor_healing_potion"];
+        Assert.InRange(potion.Charges ?? 0, 2, 3);
+        Assert.InRange(potion.CooldownTicks, 15 * 20, 25 * 20);
+        Assert.IsType<SelfTargeting>(potion.Targeting);
+        foreach (var cls in db.Classes.Values)
+        {
+            Assert.Contains("item.minor_healing_potion", cls.Consumables);
+            Assert.DoesNotContain("item.minor_healing_potion", cls.Abilities);
+        }
+    }
+
+    [Fact]
+    public void Warrior_taunt_and_cleric_purify_are_wired_as_designed()
+    {
+        var db = Db();
+        var taunt = db.Abilities["warrior.taunt"];
+        Assert.Contains("warrior.taunt", db.Classes["class.warrior"].Abilities);
+        var threat = Assert.IsType<ThreatEffect>(Assert.Single(taunt.Effects));
+        Assert.True(threat.TauntDurationTicks > 0);
+        Assert.InRange(taunt.CooldownTicks, 8 * 20, 12 * 20);
+
+        var purify = db.Abilities["cleric.purify"];
+        Assert.Contains("cleric.purify", db.Classes["class.cleric"].Abilities);
+        var remove = Assert.IsType<RemoveStatusEffect>(Assert.Single(purify.Effects));
+        Assert.Equal(["poison", "curse"], remove.Tags);
+        Assert.Equal(1, remove.Count);
+        var rules = db.Classes["class.cleric"].ResourceRules;
+        Assert.Contains(rules, r => r.Trigger == ResourceTrigger.StatusRemoved && r.RemovedStatusTag == "poison");
+    }
+
+    [Fact]
+    public void Holy_chain_heals_the_caster_and_hits_undead_harder()
+    {
+        var chain = Db().Abilities["cleric.holy_chain"];
+        var dmg = Assert.Single(chain.Effects.OfType<DamageEffect>());
+        Assert.Equal(EffectTarget.Targets, dmg.Target);
+        Assert.True(dmg.BonusVsTags["undead"] > 0);
+        Assert.True(dmg.BonusVsTags["corrupted"] > 0);
+        var heal = Assert.Single(chain.Effects.OfType<HealEffect>());
+        Assert.Equal(EffectTarget.Self, heal.Target);
+        Assert.Empty(Db().Monsters["monster.skeleton_guard"].Resistances);
+    }
+
+    [Fact]
+    public void Frenzy_reduces_control_duration_and_trap_needs_arming()
+    {
+        var db = Db();
+        Assert.Equal(0.5, db.Statuses["status.frenzy"].Modifiers.ControlDurationMultiplier);
+        Assert.Equal(10, db.Areas["area.containment_trap"].ArmTimeTicks); // 0,5 s
+        Assert.Equal(0, db.Areas["area.venom_pool"].ArmTimeTicks);
     }
 
     [Fact]

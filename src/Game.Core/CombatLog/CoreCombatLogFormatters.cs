@@ -110,6 +110,7 @@ public static class CoreCombatLogFormatters
         AbilityRejectReason.InvalidTarget => "alvo inválido",
         AbilityRejectReason.OutOfRange => "fora de alcance",
         AbilityRejectReason.NoLineOfSight => "sem linha de visão",
+        AbilityRejectReason.NoCharges => "sem cargas",
         _ => reason.ToString(),
     };
 }

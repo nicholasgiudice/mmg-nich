@@ -9,7 +9,8 @@
       "radius": 0.45,
       "resource": { "type": "vigor", "max": 100, "initial": 0, "regenPerSecond": -3, "passiveOnlyOutOfCombat": true },
       "basicAttack": "warrior.sword_strike",
-      "abilities": ["warrior.heavy_strike", "warrior.whirlwind", "warrior.firm_guard"],
+      "abilities": ["warrior.heavy_strike", "warrior.whirlwind", "warrior.firm_guard", "warrior.taunt"],
+      "consumables": ["item.minor_healing_potion"],
       "resourceRules": [
         { "id": "warrior.gain_on_hit", "trigger": "damage_dealt", "amount": 5 },
         { "id": "warrior.gain_on_taken", "trigger": "damage_taken", "ratio": 0.12 },
@@ -26,6 +27,7 @@
       "resource": { "type": "focus", "max": 100, "initial": 50, "regenPerSecond": 3 },
       "basicAttack": "archer.shot",
       "abilities": ["archer.hunters_mark", "archer.quick_retreat", "archer.containment_trap"],
+      "consumables": ["item.minor_healing_potion"],
       "resourceRules": [
         { "id": "archer.gain_safe_distance", "trigger": "damage_dealt", "amount": 4, "minDistance": 4 },
         { "id": "archer.gain_on_marked", "trigger": "damage_dealt", "amount": 8, "targetHasStatusTag": "mark" }
@@ -39,7 +41,8 @@
       "radius": 0.4,
       "resource": { "type": "mana", "max": 100, "initial": 100, "regenPerSecond": 5 },
       "basicAttack": "mage.arcane_missile",
-      "abilities": ["mage.elemental_blast", "mage.ice_prison", "mage.arcane_barrier"]
+      "abilities": ["mage.elemental_blast", "mage.ice_prison", "mage.arcane_barrier"],
+      "consumables": ["item.minor_healing_potion"]
     },
     {
       "id": "class.cleric",
@@ -49,12 +52,15 @@
       "radius": 0.45,
       "resource": { "type": "faith", "max": 100, "initial": 40, "regenPerSecond": 0 },
       "basicAttack": "cleric.holy_strike",
-      "abilities": ["cleric.direct_heal", "cleric.sacred_shield", "cleric.holy_chain"],
+      "abilities": ["cleric.direct_heal", "cleric.sacred_shield", "cleric.holy_chain", "cleric.purify"],
+      "consumables": ["item.minor_healing_potion"],
       "resourceRules": [
         { "id": "cleric.gain_on_holy_hit", "trigger": "damage_dealt", "amount": 5 },
         { "id": "cleric.gain_on_corrupted", "trigger": "damage_dealt", "amount": 4, "targetTag": "undead" },
         { "id": "cleric.gain_on_heal", "trigger": "heal_done", "ratio": 0.15, "minEffectiveHealPercent": 10 },
-        { "id": "cleric.gain_on_shield", "trigger": "shield_applied", "ratio": 0.15 }
+        { "id": "cleric.gain_on_shield", "trigger": "shield_applied", "ratio": 0.15 },
+        { "id": "cleric.gain_on_purify_poison", "trigger": "status_removed", "amount": 12, "removedStatusTag": "poison" },
+        { "id": "cleric.gain_on_purify_curse", "trigger": "status_removed", "amount": 12, "removedStatusTag": "curse" }
       ]
     }
   ]

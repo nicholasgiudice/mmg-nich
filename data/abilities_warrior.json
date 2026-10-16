@@ -42,6 +42,14 @@
       "cooldown": 14,
       "targeting": { "type": "self" },
       "effects": [{ "type": "apply_status", "status": "status.firm_guard", "duration": 4 }]
+    },
+    {
+      "id": "warrior.taunt",
+      "name": "Provocação",
+      "tags": ["taunt", "aoe"],
+      "cooldown": 10,
+      "targeting": { "type": "circle_self", "radius": 8 },
+      "effects": [{ "type": "threat", "amount": 40, "tauntDuration": 3 }]
     }
   ]
 }
