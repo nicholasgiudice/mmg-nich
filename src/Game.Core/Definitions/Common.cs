@@ -11,6 +11,10 @@ public sealed record ResourceDefinition
     public double Initial { get; init; }
     /// <summary>Regeneração por segundo; pode ser negativa.</summary>
     public double RegenPerSecond { get; init; }
+    /// <summary>Se true, a regeneração/decaimento passivo só vale fora de combate.</summary>
+    public bool PassiveOnlyOutOfCombat { get; init; }
+    /// <summary>Ticks sem dar/receber dano ou usar habilidade para contar como fora de combate (padrão 5 s).</summary>
+    public int CombatTimeoutTicks { get; init; } = 100;
 }
 
 public sealed record ResourceCost

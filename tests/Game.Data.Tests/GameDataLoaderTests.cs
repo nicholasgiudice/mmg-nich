@@ -24,6 +24,37 @@ public class GameDataLoaderTests
             e.Message.Contains(messageContains, StringComparison.OrdinalIgnoreCase));
     }
 
+    // ---------- regras de recurso (T-010) ----------
+
+    private const string WarriorAbilities = "\"abilities\": [\"warrior.heavy_strike\", \"warrior.taunt\"]";
+
+    private static LoadResult WithRules(string rulesJson) =>
+        LoadMutated(WarriorAbilities, WarriorAbilities + ", \"resourceRules\": " + rulesJson);
+
+    [Fact]
+    public void ResourceRules_load_with_ticks_conversion()
+    {
+        var result = WithRules(
+            "[{ \"id\": \"block\", \"trigger\": \"damage_taken\", \"amount\": 5, \"ratio\": 0.1, \"sourceHasStatusTag\": \"guard\", \"minDistance\": 1, \"maxDistance\": 8, \"internalCooldown\": 0.5 }]");
+        Assert.True(result.Success, string.Join("\n", result.Errors));
+        var rule = Assert.Single(result.GetDatabaseOrThrow().Classes["class.warrior"].ResourceRules);
+        Assert.Equal(ResourceTrigger.DamageTaken, rule.Trigger);
+        Assert.Equal("guard", rule.SourceHasStatusTag);
+        Assert.Equal(10, rule.InternalCooldownTicks);
+        Assert.Equal(0.1, rule.Ratio);
+    }
+
+    [Fact]
+    public void ResourceRules_invalid_values_are_rejected()
+    {
+        AssertError(WithRules("[{ \"id\": \"a\", \"trigger\": \"damage_taken\" }]"), "resourceRules[0]", "amount");
+        AssertError(WithRules("[{ \"id\": \"a\", \"trigger\": \"damage_dealt\", \"amount\": 1, \"minDistance\": 5, \"maxDistance\": 2 }]"), "minDistance", "maxDistance");
+        AssertError(WithRules("[{ \"id\": \"a\", \"trigger\": \"damage_dealt\", \"amount\": 1, \"minEffectiveHealPercent\": 5 }]"), "minEffectiveHealPercent", "heal_done");
+        AssertError(WithRules("[{ \"id\": \"a\", \"trigger\": \"interrupt_done\", \"ratio\": 1 }]"), "ratio", "proporção");
+        AssertError(WithRules("[{ \"id\": \"a\", \"trigger\": \"damage_dealt\", \"amount\": 1 }, { \"id\": \"a\", \"trigger\": \"damage_dealt\", \"amount\": 1 }]"), "id", "duplicado");
+        AssertError(WithRules("[{ \"id\": \"a\", \"trigger\": \"nope\", \"amount\": 1 }]"), "", "");
+    }
+
     // ---------- carregamento válido ----------
 
     [Fact]

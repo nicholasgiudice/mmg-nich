@@ -12,6 +12,12 @@ namespace Game.Core.Tests;
 
 public class CombatTests
 {
+    // Efeito só de teste (os tipos reais passam a ter handler nos módulos das tarefas).
+    private sealed record CustomTestEffect : EffectDefinition
+    {
+        public double Amount { get; init; }
+    }
+
     // ---------- helpers ----------
 
     private static AbilityDefinition Ab(
@@ -514,13 +520,13 @@ public class CombatTests
     [Fact]
     public void Custom_effect_can_be_registered_without_touching_core()
     {
-        var w = NewWorld(null, Ab("x", new SelfTargeting(), [new ResourceEffect { Resource = "mana", Amount = 7 }]));
-        w.Combat.Effects.Register<ResourceEffect>((c, e) => c.Target!.Get<ResourcePool>().Current -= (float)e.Amount);
+        var w = NewWorld(null, Ab("x", new SelfTargeting(), [new CustomTestEffect { Amount = 7 }]));
+        w.Combat.Effects.Register<CustomTestEffect>((c, e) => c.Target!.Get<ResourcePool>().Current -= (float)e.Amount);
         var p = Fighter(w, Vector2.Zero, Faction.Player, abilities: "x");
         Use(w, p, "x");
         w.Step();
         Assert.Equal(93f, p.Get<ResourcePool>().Current);
-        Assert.Throws<InvalidOperationException>(() => w.Combat.Effects.Register<ResourceEffect>((_, _) => { }));
+        Assert.Throws<InvalidOperationException>(() => w.Combat.Effects.Register<CustomTestEffect>((_, _) => { }));
     }
 
     [Fact]

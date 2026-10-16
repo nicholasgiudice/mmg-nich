@@ -102,6 +102,7 @@ public static class CombatModules
         // ---- slot T-009 (status): efeitos apply_status/remove_status, IActionGate, IModifierSource ----
 
         // ---- slot T-010 (recursos): efeito resource ----
+        Resources.ResourceModule.Register(s);
 
         // ---- slot T-011 (IA/ameaça): efeito threat ----
 
