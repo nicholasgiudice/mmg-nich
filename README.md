@@ -25,7 +25,10 @@ O projeto está em fase de idealização e prototipagem. O primeiro objetivo é 
 - `design/first-map-v0.1.md` — primeiro mapa;
 - `design/class-map-validation-v0.1.md` — validação das classes contra o mapa;
 - `design/combat-encounters-v0.1.md` — encontros de combate;
-- `tech/architecture-v0.1.md` — direção tecnológica.
+- `tech/architecture-v0.1.md` — direção tecnológica;
+- `tech/stack-proposal-v0.1.md` — proposta de stack (linguagem, servidor, rede, dados, persistência);
+- `tasks/README.md` — plano de execução e tarefas para agentes;
+- `AGENTS.md` — regras para agentes que trabalham no repositório.
 
 ## Fora do MVP
 
