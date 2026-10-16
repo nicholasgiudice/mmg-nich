@@ -26,6 +26,22 @@ Requer o .NET SDK 10. Para formatar-verificar, compilar e testar tudo:
 ./scripts/check.sh
 ```
 
+## Como abrir o cliente
+
+O cliente fica em `client/` e é um projeto Godot 4 **edição .NET** (testado com 4.7.2) que referencia `src/Game.Core`.
+
+1. Instale o Godot 4 .NET (no Windows: `winget install GodotEngine.GodotEngine.Mono`) e o .NET SDK 10.
+2. No Godot, use **Importar** e escolha `client/project.godot`.
+3. Pressione **F5**: a janela deve mostrar `Core 0.0.1`.
+
+Para só compilar pela linha de comando:
+
+```bash
+dotnet build client/
+```
+
+O `client/` não faz parte de `MmoRpg.sln`, então `./scripts/check.sh` não depende do Godot.
+
 ## Documentação
 
 - `docs/vision-mvp-v0.1.md` — visão, escopo e decisões;
