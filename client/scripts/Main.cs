@@ -1,20 +1,25 @@
 using Game.Core;
 using Game.Core.Authority;
 using Game.Core.Combat;
-using Game.Core.Intents;
+using Game.Core.Definitions;
+using Game.Core.Events;
+using Game.Core.Simulation;
 using Godot;
 using MmoRpgClient.Authority;
 using MmoRpgClient.Data;
+using MmoRpgClient.Input;
 using MmoRpgClient.Presentation;
 using GridMap = Game.Core.Spatial.GridMap;
 
 namespace MmoRpgClient;
 
 /// <summary>
-/// Raiz do protótipo: escolhe a autoridade, liga a apresentação e lê o input temporário de movimento.
+/// Raiz do protótipo: escolhe a autoridade, liga input, apresentação e câmera.
 /// Argumentos (depois de <c>--</c> na linha de comando):
 /// <c>--encounter=id</c>, <c>--seed=n</c>, <c>--fake-authority</c>,
-/// <c>--auto-move=x,y</c> (move o jogador sem teclado) e <c>--capture=caminho.png</c> (salva a tela após 2 s e fecha).
+/// <c>--auto-move=x,y</c> (mantém as teclas de movimento pelo sinal de x e y),
+/// <c>--demo-input=attack,ability_1,...</c> (aperta ações em sequência mirando o inimigo mais próximo e
+/// imprime as respostas da autoridade) e <c>--capture=caminho.png</c> (salva a tela e fecha; após 2 s ou ao fim do demo).
 /// </summary>
 public partial class Main : Node2D
 {
@@ -23,58 +28,89 @@ public partial class Main : Node2D
 
     private readonly Dictionary<string, string> _args = new(StringComparer.Ordinal);
     private IGameAuthority? _authority;
+    private PlayerInput? _input;
+    private DebugInputScript? _demo;
     private WorldView _worldView = null!;
+    private CameraRig _camera = null!;
     private Label _info = null!;
-    private System.Numerics.Vector2 _lastMove;
-    private System.Numerics.Vector2? _autoMove;
     private double _elapsed;
+    private double _demoFinishedAt = -1;
 
     public override void _Ready()
     {
         ParseArgs();
         _worldView = GetNode<WorldView>("World");
-        _worldView.Camera = GetNode<Camera2D>("Camera");
+        _camera = GetNode<CameraRig>("Camera");
         _info = GetNode<Label>("Hud/InfoLabel");
-        _autoMove = _args.TryGetValue("auto-move", out var move) ? ParseVector(move) : null;
+
+        foreach (var action in InputActions.All.Where(a => !InputMap.HasAction(a)))
+        {
+            GD.PushError($"Ação ausente no Input Map: {action}");
+        }
 
         try
         {
-            var (authority, map) = CreateAuthority();
+            var (authority, map, abilities) = CreateAuthority();
             _authority = authority;
+            _input = new PlayerInput(abilities);
             GetNode<ArenaView>("Arena").Map = map;
+            _camera.SetBounds(map);
         }
         catch (Exception ex)
         {
             GD.PushError(ex.ToString());
             _info.Text = $"Core {CoreInfo.Version}\nErro ao iniciar: {ex.Message}";
         }
+
+        if (_args.ContainsKey("demo-input") || _args.ContainsKey("auto-move"))
+        {
+            _demo = new DebugInputScript(_args.GetValueOrDefault("demo-input", ""), AutoMoveActions());
+        }
     }
 
     public override void _Process(double delta)
     {
         _elapsed += delta;
-        if (_authority is not null)
+        if (_authority is not null && _input is not null)
         {
-            SendMoveIntent(_authority);
+            _demo?.Update(delta);
+            var mousePx = GetGlobalMousePosition();
+            var aim = Units.ToWorld(mousePx);
+            var hovered = _worldView.PickAt(mousePx);
+            if (_args.ContainsKey("demo-input") && NearestEnemyPosition(_authority) is { } enemy)
+            {
+                aim = Units.ToWorld(enemy.Pixels);
+                hovered = enemy.Id;
+            }
+
+            _input.Update(_authority, aim, hovered);
             _authority.Advance(delta);
-            _worldView.Render(_authority, _authority.TakeEvents());
-            _info.Text = $"Core {CoreInfo.Version} · {Engine.GetFramesPerSecond()} FPS · tick {_authority.CurrentTick}\nWASD/setas: mover (temporário)";
+
+            var events = _authority.TakeEvents();
+            if (_demo is not null)
+            {
+                LogAbilityEvents(_authority, events);
+            }
+
+            _worldView.SelectedEntity = _input.SelectedTarget;
+            _worldView.Render(_authority, events);
+            if (_authority.ControlledEntity is { } player && _worldView.TryGetDrawnPosition(player, out var playerPx))
+            {
+                _camera.Follow(playerPx, Units.ToPixels(aim), delta);
+            }
+
+            _info.Text = $"Core {CoreInfo.Version} · {Engine.GetFramesPerSecond()} FPS · tick {_authority.CurrentTick}\n"
+                + "WASD mover · clique atacar/selecionar · 1-4 habilidades · Q poção · Tab alvo · Esc limpar";
         }
 
-        if (_args.TryGetValue("capture", out var path) && _elapsed >= CaptureDelaySeconds)
-        {
-            _args.Remove("capture");
-            var error = GetViewport().GetTexture().GetImage().SavePng(path);
-            GD.Print($"capture {path}: {error}");
-            GetTree().Quit();
-        }
+        CaptureIfRequested();
     }
 
-    private (IGameAuthority Authority, GridMap Map) CreateAuthority()
+    private (IGameAuthority Authority, GridMap Map, IReadOnlyDictionary<string, AbilityDefinition> Abilities) CreateAuthority()
     {
         if (_args.ContainsKey("fake-authority"))
         {
-            return (new FakeAuthority(), FakeAuthority.Map);
+            return (new FakeAuthority(), FakeAuthority.Map, new Dictionary<string, AbilityDefinition>());
         }
 
         var content = ContentLoader.Load();
@@ -87,37 +123,107 @@ public partial class Main : Node2D
         var seed = _args.TryGetValue("seed", out var s) && ulong.TryParse(s, out var parsed) ? parsed : 1UL;
         var setup = EncounterSetup.Create(seed, content, encounter);
         var map = setup.World.Map ?? EntityFactory.BuildMap(content.Arenas[encounter.Arena]);
-        return (new LocalAuthority(setup.World, setup.Players.FirstOrDefault()?.Id), map);
+        return (new LocalAuthority(setup.World, setup.Players.FirstOrDefault()?.Id), map, content.Abilities);
     }
 
-    /// <summary>Input temporário (a T-021 substitui): envia intenção só quando a direção muda.</summary>
-    private void SendMoveIntent(IGameAuthority authority)
+    private void CaptureIfRequested()
     {
-        if (authority.ControlledEntity is not { } player)
+        if (!_args.TryGetValue("capture", out var path))
         {
             return;
         }
 
-        var dir = _autoMove ?? ReadMoveKeys();
-        if (dir == _lastMove)
+        if (_demo is { Finished: true } && _demoFinishedAt < 0)
+        {
+            _demoFinishedAt = _elapsed;
+        }
+
+        var due = _demo is not null && _args.ContainsKey("demo-input")
+            ? _demoFinishedAt >= 0 && _elapsed >= _demoFinishedAt + 0.3
+            : _elapsed >= CaptureDelaySeconds;
+        if (!due)
         {
             return;
         }
 
-        _lastMove = dir;
-        authority.Send(dir == System.Numerics.Vector2.Zero
-            ? new StopIntent(player)
-            : new MoveIntent(player, System.Numerics.Vector2.Normalize(dir)));
+        _args.Remove("capture");
+        var error = GetViewport().GetTexture().GetImage().SavePng(path);
+        GD.Print($"capture {path}: {error}");
+        GetTree().Quit();
     }
 
-    private static System.Numerics.Vector2 ReadMoveKeys()
+    private (EntityId Id, Godot.Vector2 Pixels)? NearestEnemyPosition(IGameAuthority authority)
     {
-        var x = (Pressed(Key.D, Key.Right) ? 1 : 0) - (Pressed(Key.A, Key.Left) ? 1 : 0);
-        var y = (Pressed(Key.S, Key.Down) ? 1 : 0) - (Pressed(Key.W, Key.Up) ? 1 : 0);
-        return new System.Numerics.Vector2(x, y);
+        if (authority.ControlledEntity is not { } player || !_worldView.TryGetDrawnPosition(player, out var origin))
+        {
+            return null;
+        }
+
+        var faction = authority.Latest?.Entities.FirstOrDefault(e => e.Id == player)
+            ?.TryGet<Game.Core.Simulation.Components.FactionTag>()?.Faction;
+        return authority.Latest?.Entities
+            .Where(e => e.Id != player
+                && e.TryGet<Game.Core.Simulation.Components.FactionTag>()?.Faction is { } f && f != faction
+                && e.TryGet<Game.Core.Simulation.Components.Health>() is { IsAlive: true })
+            .Select(e => _worldView.TryGetDrawnPosition(e.Id, out var px) ? (e.Id, px) : ((EntityId, Godot.Vector2)?)null)
+            .Where(x => x is not null)
+            .Select(x => x!.Value)
+            .OrderBy(x => x.Item2.DistanceTo(origin))
+            .Cast<(EntityId, Godot.Vector2)?>()
+            .FirstOrDefault();
     }
 
-    private static bool Pressed(Key a, Key b) => Input.IsPhysicalKeyPressed(a) || Input.IsPhysicalKeyPressed(b);
+    private static void LogAbilityEvents(IGameAuthority authority, IReadOnlyList<GameEvent> events)
+    {
+        foreach (var e in events)
+        {
+            var line = e switch
+            {
+                AbilityStarted s when s.Source == authority.ControlledEntity => $"started {s.AbilityId} target={s.Target} aim={s.AimPoint}",
+                AbilityExecuted x when x.Source == authority.ControlledEntity => $"executed {x.AbilityId} targets={x.Targets.Count}",
+                AbilityRejected r when r.Source == authority.ControlledEntity => $"rejected {r.AbilityId}: {r.Reason}",
+                _ => null,
+            };
+            if (line is not null)
+            {
+                GD.Print($"[tick {e.Tick}] {line}");
+            }
+        }
+    }
+
+    private IEnumerable<string> AutoMoveActions()
+    {
+        if (!_args.TryGetValue("auto-move", out var text))
+        {
+            yield break;
+        }
+
+        var parts = text.Split(',');
+        if (parts.Length != 2
+            || !float.TryParse(parts[0], System.Globalization.CultureInfo.InvariantCulture, out var x)
+            || !float.TryParse(parts[1], System.Globalization.CultureInfo.InvariantCulture, out var y))
+        {
+            yield break;
+        }
+
+        if (x > 0)
+        {
+            yield return InputActions.MoveRight;
+        }
+        else if (x < 0)
+        {
+            yield return InputActions.MoveLeft;
+        }
+
+        if (y > 0)
+        {
+            yield return InputActions.MoveDown;
+        }
+        else if (y < 0)
+        {
+            yield return InputActions.MoveUp;
+        }
+    }
 
     private void ParseArgs()
     {
@@ -134,15 +240,5 @@ public partial class Main : Node2D
                 _args[trimmed[..eq]] = trimmed[(eq + 1)..];
             }
         }
-    }
-
-    private static System.Numerics.Vector2? ParseVector(string text)
-    {
-        var parts = text.Split(',');
-        return parts.Length == 2
-            && float.TryParse(parts[0], System.Globalization.CultureInfo.InvariantCulture, out var x)
-            && float.TryParse(parts[1], System.Globalization.CultureInfo.InvariantCulture, out var y)
-            ? new System.Numerics.Vector2(x, y)
-            : null;
     }
 }

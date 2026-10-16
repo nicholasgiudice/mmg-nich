@@ -1,4 +1,5 @@
 using Game.Core.Authority;
+using Game.Core.Combat;
 using Game.Core.Events;
 using Game.Core.Simulation;
 using Game.Core.Simulation.Components;
@@ -18,21 +19,32 @@ public partial class WorldView : Node2D
     private readonly HashSet<EntityId> _seen = new();
     private WorldSnapshot? _indexedPrevious;
 
-    /// <summary>Câmera que segue a entidade controlada (opcional).</summary>
-    public Camera2D? Camera { get; set; }
+    private static readonly Color RejectionColor = new(1f, 0.85f, 0.35f);
+
+    /// <summary>Margem (pixels) além do raio ao escolher a unidade sob o cursor.</summary>
+    private const float PickMarginPx = 4f;
+
+    /// <summary>Unidade com indicador de alvo selecionado.</summary>
+    public EntityId? SelectedEntity { get; set; }
 
     /// <summary>Atualiza os nós a partir da autoridade. Chamar uma vez por frame, depois de <c>Advance</c>.</summary>
     public void Render(IGameAuthority authority, IReadOnlyList<GameEvent> events)
     {
+        var latest = authority.Latest;
         foreach (var e in events)
         {
-            if (e is EntityRemoved removed)
+            switch (e)
             {
-                RemoveView(removed.Entity);
+                case EntityRemoved removed:
+                    RemoveView(removed.Entity);
+                    break;
+                case AbilityRejected rejected when rejected.Source == authority.ControlledEntity:
+                    var pool = latest?.Entities.FirstOrDefault(s => s.Id == rejected.Source)?.TryGet<ResourcePool>();
+                    ShowText(rejected.Source, RejectionText.For(rejected.Reason, pool?.Type), RejectionColor);
+                    break;
             }
         }
 
-        var latest = authority.Latest;
         if (latest is null)
         {
             return;
@@ -53,24 +65,53 @@ public partial class WorldView : Node2D
             seen.Add(state.Id);
             var view = GetOrCreateView(state.Id);
             var controlled = authority.ControlledEntity == state.Id;
-            view.ApplyState(state, controlled);
+            view.ApplyState(state, controlled, SelectedEntity == state.Id);
 
             var from = _previousById.TryGetValue(state.Id, out var prev) ? prev.TryGet<Transform>() ?? transform : transform;
             var position = System.Numerics.Vector2.Lerp(from.Position, transform.Position, alpha);
             var facing = System.Numerics.Vector2.Lerp(from.Facing, transform.Facing, alpha);
             var pixels = Units.ToPixels(position);
             view.SetPose(pixels, new Godot.Vector2(facing.X, facing.Y));
-
-            if (controlled && Camera is not null)
-            {
-                Camera.Position = pixels;
-            }
         }
 
         foreach (var id in _views.Keys.Where(id => !seen.Contains(id)).ToList())
         {
             RemoveView(id);
         }
+    }
+
+    /// <summary>Posição desenhada (pixels) de uma unidade neste frame.</summary>
+    public bool TryGetDrawnPosition(EntityId id, out Godot.Vector2 pixels)
+    {
+        if (_views.TryGetValue(id, out var view))
+        {
+            pixels = view.Position;
+            return true;
+        }
+
+        pixels = default;
+        return false;
+    }
+
+    /// <summary>Unidade viva desenhada sob o ponto (pixels); a mais próxima se houver várias.</summary>
+    public EntityId? PickAt(Godot.Vector2 pixels) =>
+        _views.Values
+            .Where(v => v.IsAlive && v.Position.DistanceTo(pixels) <= v.RadiusPx + PickMarginPx)
+            .OrderBy(v => v.Position.DistanceTo(pixels))
+            .Select(v => (EntityId?)v.Id)
+            .FirstOrDefault();
+
+    /// <summary>Texto flutuante acima de uma unidade; acompanha a unidade e some sozinho.</summary>
+    public void ShowText(EntityId id, string text, Color color)
+    {
+        if (!_views.TryGetValue(id, out var view))
+        {
+            return;
+        }
+
+        var label = FloatingText.Create(text, color);
+        label.Position = new Godot.Vector2(0, -view.RadiusPx - 18);
+        view.AddChild(label);
     }
 
     private void IndexPrevious(WorldSnapshot? previous)

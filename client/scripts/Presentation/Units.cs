@@ -8,4 +8,7 @@ public static class Units
 
     public static Godot.Vector2 ToPixels(System.Numerics.Vector2 world) =>
         new(world.X * PixelsPerUnit, world.Y * PixelsPerUnit);
+
+    public static System.Numerics.Vector2 ToWorld(Godot.Vector2 pixels) =>
+        new(pixels.X / PixelsPerUnit, pixels.Y / PixelsPerUnit);
 }
