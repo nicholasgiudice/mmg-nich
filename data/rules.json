@@ -1,0 +1,9 @@
+{
+  "$schema": "./schemas/game-data.schema.json",
+  "rules": {
+    "control": {
+      "durationByRank": { "normal": 1.0, "elite": 0.5, "boss": 0.25 },
+      "diminishing": { "window": 15, "steps": [1.0, 0.5, 0.25, 0.0] }
+    }
+  }
+}

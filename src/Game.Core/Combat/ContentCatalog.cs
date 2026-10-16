@@ -36,6 +36,9 @@ public sealed class ContentCatalog
     public IReadOnlyDictionary<string, ArenaDefinition> Arenas { get; }
     public IReadOnlyDictionary<string, EncounterDefinition> Encounters { get; }
 
+    /// <summary>Regras globais (data/rules.json). Seções ausentes = padrões neutros.</summary>
+    public RulesDefinition Rules { get; init; } = new();
+
     private static Dictionary<string, T> Index<T>(IEnumerable<T>? items, Func<T, string> id) =>
         (items ?? []).ToDictionary(id, StringComparer.Ordinal);
 }

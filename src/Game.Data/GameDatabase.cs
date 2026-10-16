@@ -13,6 +13,9 @@ public sealed class GameDatabase
     public IReadOnlyDictionary<string, ArenaDefinition> Arenas { get; }
     public IReadOnlyDictionary<string, EncounterDefinition> Encounters { get; }
 
+    /// <summary>Regras globais (seção "rules"); seções ausentes = padrões neutros.</summary>
+    public RulesDefinition Rules { get; init; } = new();
+
     public GameDatabase(
         IEnumerable<ClassDefinition> classes,
         IEnumerable<AbilityDefinition> abilities,
