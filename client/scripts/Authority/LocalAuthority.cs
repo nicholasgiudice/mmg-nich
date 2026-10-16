@@ -16,14 +16,17 @@ public sealed class LocalAuthority : IGameAuthority, ICombatLogSource
     public const int MaxStepsPerAdvance = 5;
 
     private readonly World _world;
+    private readonly Action? _beforeStep;
     private readonly List<GameEvent> _pendingEvents = new();
     private readonly CombatLogRecorder _log;
     private readonly List<DeathSummary> _pendingDeaths = new();
     private double _accumulator;
 
-    public LocalAuthority(World world, EntityId? controlledEntity)
+    /// <param name="beforeStep">Chamado antes de cada tick (ex.: <c>BotDirector.Tick</c> dos companheiros controlados por IA).</param>
+    public LocalAuthority(World world, EntityId? controlledEntity, Action? beforeStep = null)
     {
         _world = world;
+        _beforeStep = beforeStep;
         ControlledEntity = controlledEntity;
         _log = new CombatLogRecorder(viewer: controlledEntity);
         Latest = world.Snapshot();
@@ -95,6 +98,7 @@ public sealed class LocalAuthority : IGameAuthority, ICombatLogSource
 
     private void Step()
     {
+        _beforeStep?.Invoke();
         _world.Step();
         Previous = Latest;
         Latest = _world.Snapshot();

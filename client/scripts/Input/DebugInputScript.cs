@@ -25,7 +25,8 @@ public sealed class DebugInputScript
         _held = held.ToHashSet(StringComparer.Ordinal);
     }
 
-    public bool Finished => _actions.Count == 0 && _pressedLastFrame is null;
+    /// <summary>Todas as ações do roteiro já foram apertadas.</summary>
+    public bool Finished => _actions.Count == 0;
 
     /// <summary>Chamar no começo do frame, antes de ler o input.</summary>
     public void Update(double delta)

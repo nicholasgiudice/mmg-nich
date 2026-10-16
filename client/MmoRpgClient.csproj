@@ -9,6 +9,7 @@
   <ItemGroup>
     <ProjectReference Include="../src/Game.Core/Game.Core.csproj" />
     <ProjectReference Include="../src/Game.Data/Game.Data.csproj" />
+    <ProjectReference Include="../src/Game.Bots/Game.Bots.csproj" />
   </ItemGroup>
 
   <!-- data/ da raiz é a fonte de verdade; client/data/ é cópia (ignorada no Git) lida como res://data. -->
