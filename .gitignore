@@ -23,3 +23,9 @@ exports/
 # Temporary files
 *.tmp
 *.log
+
+# .NET
+bin/
+obj/
+*.user
+TestResults/

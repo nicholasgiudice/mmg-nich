@@ -18,6 +18,14 @@ O projeto está em fase de idealização e prototipagem. O primeiro objetivo é 
 - PvE solo e em grupo;
 - habilidades com cooldown e recursos próprios.
 
+## Como compilar
+
+Requer o .NET SDK 10. Para formatar-verificar, compilar e testar tudo:
+
+```bash
+./scripts/check.sh
+```
+
 ## Documentação
 
 - `docs/vision-mvp-v0.1.md` — visão, escopo e decisões;
