@@ -13,6 +13,7 @@ public static class SystemsRegistry
         b.AddSystem(SystemOrder.Status, new Combat.Status.StatusSystem());
         b.AddSystem(SystemOrder.StatusResourceBridge, new Combat.Integration.StatusRemovalBridgeSystem());
         b.AddSystem(SystemOrder.Resources, new Combat.Resources.ResourceSystem());
+        b.AddSystem(SystemOrder.Ai, new Combat.Ai.AiSystem()); // T-011
         b.AddSystem(SystemOrder.Death, new Systems.DeathSystem());
     }
 }

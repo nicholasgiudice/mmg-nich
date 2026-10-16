@@ -109,6 +109,7 @@ public static class CombatModules
         Integration.StatusResourceBridge.Register(s);
 
         // ---- slot T-011 (IA/ameaça): efeito threat ----
+        Threat.ThreatModule.Register(s);
 
         // ---- slot T-012 (áreas/invocação/fases): efeitos spawn_area/summon ----
     }

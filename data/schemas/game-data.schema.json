@@ -42,6 +42,17 @@
           }
         }
       }
+    },
+    "threat": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "damageMultiplier": { "type": "number", "minimum": 0 },
+        "healMultiplier": { "type": "number", "minimum": 0 },
+        "overtakeRatio": { "type": "number", "minimum": 1 },
+        "groupAggroThreat": { "type": "number", "minimum": 0 },
+        "proximityThreat": { "type": "number", "minimum": 0 }
+      }
     }
   },
   "$defs": {

@@ -63,6 +63,7 @@ public static class GameDataLoader
         }
 
         content.Rules = BuildRules(content.RuleSections, errors);
+        ValidateThreat(content.Threat, errors);
         GameDataValidator.Validate(content, errors);
         if (errors.Count > 0)
         {
@@ -79,6 +80,7 @@ public static class GameDataLoader
             content.Encounters.Select(e => e.Value))
         {
             Rules = content.Rules,
+            Threat = content.Threat ?? new Game.Core.Combat.Threat.ThreatRules(),
         };
         return new LoadResult(database, errors);
     }
@@ -116,6 +118,7 @@ public static class GameDataLoader
                     case "arenas": ReadList(file, property, content.Arenas, errors); break;
                     case "encounters": ReadList(file, property, content.Encounters, errors); break;
                     case "rules": ReadRules(file, property, content.RuleSections, errors); break;
+                    case "threat": ReadObject<Game.Core.Combat.Threat.ThreatRules>(file, property, v => content.Threat = v, errors); break;
                     case "$schema": break;
                     default:
                         errors.Add(new LoadError(file, property.Name, "Seção desconhecida."));
@@ -188,6 +191,49 @@ public static class GameDataLoader
         return result;
     }
 
+    private static void ValidateThreat(Game.Core.Combat.Threat.ThreatRules? t, List<LoadError> errors)
+    {
+        if (t is null)
+        {
+            return;
+        }
+
+        void Check(string name, double value, double min)
+        {
+            if (!(value >= min) || double.IsInfinity(value))
+            {
+                errors.Add(new LoadError("rules", "threat." + name, $"Deve ser maior ou igual a {min} (valor: {value})."));
+            }
+        }
+
+        Check("damageMultiplier", t.DamageMultiplier, 0);
+        Check("healMultiplier", t.HealMultiplier, 0);
+        Check("overtakeRatio", t.OvertakeRatio, 1);
+        Check("groupAggroThreat", t.GroupAggroThreat, 0);
+        Check("proximityThreat", t.ProximityThreat, 0);
+    }
+
+    private static void ReadObject<T>(string file, JsonProperty property, Action<T> assign, List<LoadError> errors)
+    {
+        try
+        {
+            var value = property.Value.Deserialize<T>(GameJson.Options);
+            if (value is null)
+            {
+                errors.Add(new LoadError(file, property.Name, "Valor nulo."));
+            }
+            else
+            {
+                assign(value);
+            }
+        }
+        catch (JsonException ex)
+        {
+            var inner = ex.Path is { Length: > 1 } p ? p[1..] : string.Empty;
+            errors.Add(new LoadError(file, property.Name + inner, Clean(ex)));
+        }
+    }
+
     private static void ReadList<T>(string file, JsonProperty property, List<Entry<T>> target, List<LoadError> errors)
     {
         if (property.Value.ValueKind != JsonValueKind.Array)
@@ -242,4 +288,5 @@ internal sealed class RawContent
     public Dictionary<string, (JsonElement Value, string File)> RuleSections { get; } = new(StringComparer.Ordinal);
 
     public RulesDefinition Rules { get; set; } = new();
+    public Game.Core.Combat.Threat.ThreatRules? Threat { get; set; }
 }
