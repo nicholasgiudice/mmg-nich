@@ -1,26 +1,26 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene format=3 uid="uid://377qf8v1neu1"]
 
-[ext_resource type="Script" path="res://scripts/Main.cs" id="1_main"]
-[ext_resource type="Script" path="res://scripts/Presentation/ArenaView.cs" id="2_arena"]
-[ext_resource type="Script" path="res://scripts/Presentation/WorldView.cs" id="3_world"]
-[ext_resource type="Script" path="res://scripts/Presentation/CameraRig.cs" id="4_camera"]
-[ext_resource type="Script" path="res://scripts/Hud/Hud.cs" id="5_hud"]
+[ext_resource type="Script" uid="uid://bjglck1bqc6gg" path="res://scripts/Main.cs" id="1_main"]
+[ext_resource type="Script" uid="uid://d4ggtpsmu7l1a" path="res://scripts/Presentation/ArenaView.cs" id="2_arena"]
+[ext_resource type="Script" uid="uid://0bmwayi7uhxn" path="res://scripts/Presentation/WorldView.cs" id="3_world"]
+[ext_resource type="Script" uid="uid://dulv05cvwwkfk" path="res://scripts/Presentation/CameraRig.cs" id="4_camera"]
+[ext_resource type="Script" uid="uid://b746bqjdnqm8s" path="res://scripts/Hud/Hud.cs" id="5_hud"]
 
-[node name="Main" type="Node2D"]
+[node name="Main" type="Node2D" unique_id=1752047296]
 script = ExtResource("1_main")
 
-[node name="Arena" type="Node2D" parent="."]
+[node name="Arena" type="Node2D" parent="." unique_id=1640738936]
 script = ExtResource("2_arena")
 
-[node name="World" type="Node2D" parent="."]
+[node name="World" type="Node2D" parent="." unique_id=9532305]
 script = ExtResource("3_world")
 
-[node name="Camera" type="Camera2D" parent="."]
+[node name="Camera" type="Camera2D" parent="." unique_id=1996866238]
 script = ExtResource("4_camera")
 
-[node name="Hud" type="CanvasLayer" parent="."]
+[node name="Hud" type="CanvasLayer" parent="." unique_id=576918797]
 
-[node name="HudRoot" type="Control" parent="Hud"]
+[node name="HudRoot" type="Control" parent="Hud" unique_id=1704557509]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -30,7 +30,7 @@ grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("5_hud")
 
-[node name="InfoLabel" type="Label" parent="Hud"]
+[node name="InfoLabel" type="Label" parent="Hud" unique_id=333092027]
 anchors_preset = 2
 anchor_top = 1.0
 anchor_bottom = 1.0
@@ -39,8 +39,7 @@ offset_top = -52.0
 offset_right = 380.0
 offset_bottom = -6.0
 grow_vertical = 0
-mouse_filter = 2
-theme_override_font_sizes/font_size = 11
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 11
 text = "Core ?"

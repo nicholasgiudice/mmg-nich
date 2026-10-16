@@ -1,8 +1,10 @@
 using System.Globalization;
 using Game.Core.Authority;
 using Game.Core.Combat;
+using Game.Core.Combat.Phases;
 using Game.Core.Combat.Status;
 using Game.Core.Definitions;
+using Game.Core.Events;
 using Game.Core.Simulation;
 using Game.Core.Simulation.Components;
 using Godot;
@@ -18,6 +20,7 @@ namespace MmoRpgClient.Hud;
 public partial class Hud : Control
 {
     private const float FrameWidth = 240f;
+    private const double BannerSeconds = 3.0;
 
     /// <summary>Largura reservada à linha de ajuda no canto inferior esquerdo.</summary>
     private const float HelpTextWidth = 410f;
@@ -36,6 +39,8 @@ public partial class Hud : Control
     private HudBar _playerCast = null!;
     private CombatLogPanel _log = null!;
     private DeathSummaryPanel _death = null!;
+    private Label _banner = null!;
+    private double _bannerLeft;
 
     public override void _Ready()
     {
@@ -65,6 +70,39 @@ public partial class Hud : Control
 
         _death = new DeathSummaryPanel { Visible = false, SourceLabel = SourceLabel };
         AddChild(_death);
+
+        _banner = new Label
+        {
+            HorizontalAlignment = HorizontalAlignment.Center,
+            MouseFilter = MouseFilterEnum.Ignore,
+            Visible = false,
+        };
+        _banner.AddThemeFontSizeOverride("font_size", 26);
+        _banner.AddThemeConstantOverride("outline_size", 8);
+        _banner.AddThemeColorOverride("font_outline_color", Colors.Black);
+        _banner.AddThemeColorOverride("font_color", new Color(1f, 0.55f, 0.95f));
+        AddChild(_banner);
+    }
+
+    /// <summary>Aviso grande no topo da tela (ex.: mudança de fase do chefe), some sozinho.</summary>
+    public void Announce(string text, double seconds = BannerSeconds)
+    {
+        _banner.Text = text;
+        _banner.Visible = true;
+        _bannerLeft = seconds;
+        _banner.ResetSize();
+    }
+
+    public override void _Process(double delta)
+    {
+        if (_bannerLeft <= 0)
+        {
+            return;
+        }
+
+        _bannerLeft -= delta;
+        _banner.Modulate = new Color(1, 1, 1, Mathf.Clamp((float)_bannerLeft, 0f, 1f));
+        _banner.Visible = _bannerLeft > 0;
     }
 
     /// <summary>Posiciona os elementos pelo tamanho atual da tela (chamado a cada frame; barato).</summary>
@@ -82,6 +120,7 @@ public partial class Hud : Control
         _target.Position = new Vector2((screen.X - _target.Size.X) / 2, 8);
         _log.Position = new Vector2(screen.X - _log.Size.X - 8, screen.Y - _log.Size.Y - 8);
         _death.Position = (screen - _death.Size) / 2;
+        _banner.Position = new Vector2((screen.X - _banner.Size.X) / 2, screen.Y * 0.18f);
     }
 
     /// <summary>Conteúdo para nomes, custos, alcances e status removíveis (pode ser vazio).</summary>
@@ -112,9 +151,16 @@ public partial class Hud : Control
     }
 
     /// <summary>Atualiza o HUD. Chamar uma vez por frame, depois de <c>Advance</c>.</summary>
-    public void Render(IGameAuthority authority, EntityId? selected, Vec2 aimPoint)
+    public void Render(IGameAuthority authority, EntityId? selected, Vec2 aimPoint, IReadOnlyList<GameEvent> events)
     {
         var latest = authority.Latest;
+        foreach (var phase in events.OfType<PhaseChanged>().Where(p => p.Previous >= 0))
+        {
+            var boss = latest?.Entities.FirstOrDefault(e => e.Id == phase.Entity)?.TryGet<UnitInfo>()?.Name
+                ?? (_content.Monsters.TryGetValue(phase.MonsterId, out var m) ? m.Name : phase.MonsterId);
+            Announce($"{boss} — Fase {phase.Index + 1}");
+        }
+
         if (latest is null)
         {
             return;

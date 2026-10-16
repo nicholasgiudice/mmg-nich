@@ -19,8 +19,16 @@ public partial class EntityView : Node2D
     private static readonly Color BarFill = new(0.35f, 0.85f, 0.35f);
     private static readonly Color SelectionColor = new(1f, 0.85f, 0.2f);
 
+    private static readonly Color StunColor = new(1f, 0.9f, 0.3f);
+    private static readonly Color RootColor = new(0.55f, 0.38f, 0.20f);
+    private static readonly Color FrozenColor = new(0.65f, 0.9f, 1f);
+    private static readonly Color SilenceColor = new(0.75f, 0.45f, 1f);
+
     private const float BarWidth = 36f;
     private const float BarHeight = 4f;
+    private const float ChipWidth = 15f;
+    private const float ChipHeight = 10f;
+    private const double FlashSeconds = 0.12;
 
     private readonly Label _nameLabel = new();
     private float _radiusPx = 0.4f * Units.PixelsPerUnit;
@@ -29,6 +37,10 @@ public partial class EntityView : Node2D
     private float _healthFraction = 1f;
     private bool _alive = true;
     private bool _selected;
+    private IReadOnlyList<StatusChip> _chips = Array.Empty<StatusChip>();
+    private ControlMarks _marks;
+    private double _flash;
+    private double _time;
 
     public EntityId Id { get; private set; }
 
@@ -77,7 +89,45 @@ public partial class EntityView : Node2D
         }
 
         _nameLabel.Position = new Godot.Vector2(-_nameLabel.Size.X / 2, _radiusPx + 2);
-        ZIndex = alive ? 1 : 0;
+        ZIndex = alive ? ZLayers.Units : ZLayers.DeadUnits;
+    }
+
+    /// <summary>Ícones de status e marcas de controle no corpo.</summary>
+    public void ApplyStatus(IReadOnlyList<StatusChip> chips, ControlMarks marks)
+    {
+        if (!_alive)
+        {
+            chips = Array.Empty<StatusChip>();
+            marks = ControlMarks.None;
+        }
+
+        if (marks != _marks || !chips.SequenceEqual(_chips))
+        {
+            _chips = chips;
+            _marks = marks;
+            QueueRedraw();
+        }
+    }
+
+    /// <summary>Pisca em branco (recebeu dano).</summary>
+    public void Flash()
+    {
+        _flash = FlashSeconds;
+        QueueRedraw();
+    }
+
+    public override void _Process(double delta)
+    {
+        _time += delta;
+        if (_flash > 0)
+        {
+            _flash = Math.Max(0, _flash - delta);
+            QueueRedraw();
+        }
+        else if ((_marks & ControlMarks.Stunned) != 0)
+        {
+            QueueRedraw(); // estrelas girando
+        }
     }
 
     /// <summary>Pose interpolada deste frame (pixels e direção normalizada).</summary>
@@ -98,7 +148,24 @@ public partial class EntityView : Node2D
             DrawArc(Godot.Vector2.Zero, _radiusPx + 5, 0, Mathf.Tau, 32, SelectionColor, 2.5f);
         }
 
-        DrawCircle(Godot.Vector2.Zero, _radiusPx, _color);
+        if ((_marks & ControlMarks.Rooted) != 0)
+        {
+            // Raízes: espinhos marrons em volta dos pés.
+            for (var i = 0; i < 10; i++)
+            {
+                var dir = Godot.Vector2.FromAngle(i * Mathf.Tau / 10);
+                DrawLine(dir * (_radiusPx + 1), dir * (_radiusPx + 7), RootColor, 3f);
+            }
+        }
+
+        var body = _flash > 0 ? _color.Lerp(Colors.White, (float)(_flash / FlashSeconds) * 0.8f) : _color;
+        DrawCircle(Godot.Vector2.Zero, _radiusPx, body);
+        if ((_marks & ControlMarks.Frozen) != 0)
+        {
+            DrawCircle(Godot.Vector2.Zero, _radiusPx + 3, new Color(FrozenColor, 0.55f));
+            DrawArc(Godot.Vector2.Zero, _radiusPx + 3, 0, Mathf.Tau, 6, Colors.White, 2f);
+        }
+
         DrawArc(Godot.Vector2.Zero, _radiusPx, 0, Mathf.Tau, 24, Colors.Black, 1.5f);
         if (_alive)
         {
@@ -108,5 +175,46 @@ public partial class EntityView : Node2D
         var barPos = new Godot.Vector2(-BarWidth / 2, -_radiusPx - 8);
         DrawRect(new Rect2(barPos, new Godot.Vector2(BarWidth, BarHeight)), BarBack);
         DrawRect(new Rect2(barPos, new Godot.Vector2(BarWidth * _healthFraction, BarHeight)), BarFill);
+
+        if ((_marks & ControlMarks.Stunned) != 0)
+        {
+            // Estrelas girando sobre a cabeça.
+            var center = new Godot.Vector2(0, -_radiusPx - 14);
+            for (var i = 0; i < 3; i++)
+            {
+                var a = (float)_time * 4f + i * Mathf.Tau / 3;
+                DrawCircle(center + new Godot.Vector2(Mathf.Cos(a) * 9f, Mathf.Sin(a) * 3f), 2.5f, StunColor);
+            }
+        }
+
+        if ((_marks & ControlMarks.Silenced) != 0)
+        {
+            var c = new Godot.Vector2(_radiusPx + 4, -_radiusPx);
+            DrawArc(c, 4f, 0, Mathf.Tau, 12, SilenceColor, 1.5f);
+            DrawLine(c + new Godot.Vector2(-3, 3), c + new Godot.Vector2(3, -3), SilenceColor, 1.5f);
+        }
+
+        DrawChips(barPos.Y - 3);
+    }
+
+    private void DrawChips(float bottomY)
+    {
+        if (_chips.Count == 0)
+        {
+            return;
+        }
+
+        var font = ThemeDB.FallbackFont;
+        var total = _chips.Count * (ChipWidth + 1) - 1;
+        var x = -total / 2;
+        var y = bottomY - ChipHeight;
+        foreach (var chip in _chips)
+        {
+            var rect = new Rect2(x, y, ChipWidth, ChipHeight);
+            DrawRect(rect, new Color(chip.Color, 0.85f));
+            DrawRect(rect, Colors.Black, filled: false, width: 1f);
+            DrawString(font, new Godot.Vector2(x, y + ChipHeight - 2), chip.Abbreviation, HorizontalAlignment.Center, ChipWidth, 8, Colors.Black);
+            x += ChipWidth + 1;
+        }
     }
 }
