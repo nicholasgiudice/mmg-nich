@@ -17,6 +17,7 @@ public partial class EntityView : Node2D
     private static readonly Color DeadColor = new(0.45f, 0.45f, 0.45f);
     private static readonly Color BarBack = new(0.10f, 0.10f, 0.10f, 0.85f);
     private static readonly Color BarFill = new(0.35f, 0.85f, 0.35f);
+    private static readonly Color SelectionColor = new(1f, 0.85f, 0.2f);
 
     private const float BarWidth = 36f;
     private const float BarHeight = 4f;
@@ -27,8 +28,13 @@ public partial class EntityView : Node2D
     private Godot.Vector2 _facing = Godot.Vector2.Down;
     private float _healthFraction = 1f;
     private bool _alive = true;
+    private bool _selected;
 
     public EntityId Id { get; private set; }
+
+    public bool IsAlive => _alive;
+
+    public float RadiusPx => _radiusPx;
 
     public static EntityView Create(EntityId id) => new() { Id = id, Name = $"Entity{id.Value}" };
 
@@ -43,7 +49,7 @@ public partial class EntityView : Node2D
     }
 
     /// <summary>Atualiza dados lentos (vida, nome, cor) a partir do snapshot mais recente.</summary>
-    public void ApplyState(EntitySnapshot state, bool controlled)
+    public void ApplyState(EntitySnapshot state, bool controlled, bool selected)
     {
         var radius = (state.TryGet<Collider>()?.Radius ?? 0.4f) * Units.PixelsPerUnit;
         var health = state.TryGet<Health>();
@@ -54,8 +60,9 @@ public partial class EntityView : Node2D
             : faction == Faction.Player ? (controlled ? ControlledColor : PlayerColor)
             : MonsterColor;
 
-        if (radius != _radiusPx || alive != _alive || fraction != _healthFraction || color != _color)
+        if (radius != _radiusPx || alive != _alive || fraction != _healthFraction || color != _color || selected != _selected)
         {
+            _selected = selected;
             _radiusPx = radius;
             _alive = alive;
             _healthFraction = fraction;
@@ -86,6 +93,11 @@ public partial class EntityView : Node2D
 
     public override void _Draw()
     {
+        if (_selected)
+        {
+            DrawArc(Godot.Vector2.Zero, _radiusPx + 5, 0, Mathf.Tau, 32, SelectionColor, 2.5f);
+        }
+
         DrawCircle(Godot.Vector2.Zero, _radiusPx, _color);
         DrawArc(Godot.Vector2.Zero, _radiusPx, 0, Mathf.Tau, 24, Colors.Black, 1.5f);
         if (_alive)
