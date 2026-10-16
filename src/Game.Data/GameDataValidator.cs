@@ -106,10 +106,48 @@ internal static partial class GameDataValidator
             ctx.Error("resource.initial", "Deve estar entre 0 e resource.max.");
         }
 
+        ctx.NonNegative("resource.combatTimeout", x.Resource.CombatTimeoutTicks);
         ctx.Exists("basicAttack", x.BasicAttack, refs.Abilities, "habilidade");
         for (var i = 0; i < x.Abilities.Count; i++)
         {
             ctx.Exists($"abilities[{i}]", x.Abilities[i], refs.Abilities, "habilidade");
+        }
+
+        ValidateResourceRules(x, ctx);
+    }
+
+    private static void ValidateResourceRules(ClassDefinition x, Ctx ctx)
+    {
+        var ids = new HashSet<string>();
+        for (var i = 0; i < x.ResourceRules.Count; i++)
+        {
+            var r = x.ResourceRules[i];
+            var rc = ctx.At($".resourceRules[{i}]");
+            if (!ids.Add(r.Id)) { rc.Error("id", $"Id de regra duplicado na classe: '{r.Id}'."); }
+            if (!IdPattern().IsMatch(r.Id)) { rc.Error("id", $"Id inválido: '{r.Id}'."); }
+            if (!Enum.IsDefined(r.Trigger)) { rc.Error("trigger", "Gatilho inválido."); }
+            if (r.Amount == 0 && r.Ratio == 0) { rc.Error("amount", "Defina amount ou ratio diferente de 0."); }
+            if (r.Ratio != 0 && r.Trigger is ResourceTrigger.StatusRemoved or ResourceTrigger.InterruptDone or ResourceTrigger.AbilityExecuted)
+            {
+                rc.Error("ratio", "Este gatilho não tem valor para proporção; use amount.");
+            }
+
+            if (r.MinValue is { } mv) { rc.NonNegative("minValue", mv); }
+            if (r.MinDistance is { } mind) { rc.NonNegative("minDistance", mind); }
+            if (r.MaxDistance is { } maxd) { rc.NonNegative("maxDistance", maxd); }
+            if (r.MinDistance is { } a && r.MaxDistance is { } b && a > b) { rc.Error("minDistance", "Deve ser menor ou igual a maxDistance."); }
+            if (r.MinEffectiveHealPercent is { } p)
+            {
+                if (r.Trigger != ResourceTrigger.HealDone) { rc.Error("minEffectiveHealPercent", "Só vale para o gatilho heal_done."); }
+                if (!(p >= 0 && p <= 100)) { rc.Error("minEffectiveHealPercent", "Deve estar entre 0 e 100."); }
+            }
+
+            if (r.RemovedStatusTag is not null && r.Trigger != ResourceTrigger.StatusRemoved)
+            {
+                rc.Error("removedStatusTag", "Só vale para o gatilho status_removed.");
+            }
+
+            rc.NonNegative("internalCooldown", r.InternalCooldownTicks);
         }
     }
 

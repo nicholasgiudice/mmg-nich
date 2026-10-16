@@ -103,6 +103,10 @@ public static class CombatModules
         Status.StatusModule.Register(s);
 
         // ---- slot T-010 (recursos): efeito resource ----
+        Resources.ResourceModule.Register(s);
+
+        // ---- integração status -> recursos (consulta de tags de status) ----
+        Integration.StatusResourceBridge.Register(s);
 
         // ---- slot T-011 (IA/ameaça): efeito threat ----
 

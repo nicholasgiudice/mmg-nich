@@ -13,6 +13,8 @@ public sealed record ClassDefinition
     public required ResourceDefinition Resource { get; init; }
     public required string BasicAttack { get; init; }
     public IReadOnlyList<string> Abilities { get; init; } = [];
+    /// <summary>Regras de geração de recurso por evento (T-010).</summary>
+    public IReadOnlyList<ResourceRuleDefinition> ResourceRules { get; init; } = [];
 }
 
 public sealed record AbilityDefinition

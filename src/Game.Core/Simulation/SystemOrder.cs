@@ -10,6 +10,7 @@ public static class SystemOrder
     public const int Movement = 1000;   // T-007 substitui por movimento com colisão
     public const int Abilities = 2000;  // T-008
     public const int Status = 3000;     // T-009
+    public const int StatusResourceBridge = 3500; // integração T-009 -> T-010 (StatusRemoved -> status_removed)
     public const int Resources = 4000;  // T-010
     public const int Ai = 5000;         // T-011
     public const int Telegraphs = 6000; // T-012

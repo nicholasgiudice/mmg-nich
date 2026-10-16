@@ -79,11 +79,35 @@
             "type": { "type": "string" },
             "max": { "type": "number", "exclusiveMinimum": 0 },
             "initial": { "type": "number", "minimum": 0 },
-            "regenPerSecond": { "type": "number" }
+            "regenPerSecond": { "type": "number" },
+            "passiveOnlyOutOfCombat": { "type": "boolean" },
+            "combatTimeout": { "$ref": "#/$defs/seconds" }
           }
         },
         "basicAttack": { "$ref": "#/$defs/id" },
-        "abilities": { "$ref": "#/$defs/idList" }
+        "abilities": { "$ref": "#/$defs/idList" },
+        "resourceRules": { "type": "array", "items": { "$ref": "#/$defs/resourceRule" } }
+      }
+    },
+    "resourceRule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "trigger"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "trigger": { "enum": ["damage_taken", "damage_dealt", "heal_done", "shield_applied", "status_removed", "interrupt_done", "ability_executed"] },
+        "amount": { "type": "number" },
+        "ratio": { "type": "number" },
+        "minValue": { "type": "number", "minimum": 0 },
+        "targetTag": { "type": "string" },
+        "abilityTag": { "type": "string" },
+        "minDistance": { "type": "number", "minimum": 0 },
+        "maxDistance": { "type": "number", "minimum": 0 },
+        "targetHasStatusTag": { "type": "string" },
+        "sourceHasStatusTag": { "type": "string" },
+        "minEffectiveHealPercent": { "type": "number", "minimum": 0, "maximum": 100 },
+        "removedStatusTag": { "type": "string" },
+        "internalCooldown": { "$ref": "#/$defs/seconds" }
       }
     },
     "ability": {
