@@ -58,4 +58,29 @@ Conteúdo real do jogo (T-014) — use dados mínimos em `tests/Game.Data.Tests/
 
 ## Resultado
 
-_(preencher ao concluir)_
+**Feito**
+
+- Records imutáveis em `src/Game.Core/Definitions/` (classes, habilidades, targeting, efeitos, status, áreas, monstros, arenas, encontros). Sem atributos JSON no Core.
+- `src/Game.Data/`: `GameJson` (opções do System.Text.Json), `GameDataLoader` (`LoadDirectory`/`LoadSources` -> `LoadResult` com `Database` e `Errors`), `GameDataValidator`, `GameDatabase` (dicionários somente leitura por id), `TickConversion`.
+- `data/schemas/game-data.schema.json` (autocomplete; a validação oficial é a do C#).
+- Fixture `tests/Game.Data.Tests/Fixtures/valid/minimal.json` e 62 testes (carga válida, polimorfismo, segundos->ticks com arredondamento, ids únicos/formato, referências, faixas, arena, erros acumulados, JSON malformado).
+
+**Formato do JSON**
+
+- Cada arquivo é um objeto com as seções opcionais `classes`, `abilities`, `statuses`, `areas`, `monsters`, `arenas`, `encounters` (listas); seção desconhecida é erro; `$schema` é ignorado. Vários arquivos podem contribuir para a mesma seção; ids são únicos no conjunto todo.
+- Propriedades em camelCase, enums em snake_case, propriedades desconhecidas são erro (pega typos).
+- Polimorfismo: `targeting` e `effects[]` usam o discriminador `type`, configurado em `GameJson` via `JsonPolymorphismOptions` (modificador de metadados), então o Core não tem atributos. `type` pode vir em qualquer posição.
+- Segundos -> ticks: toda propriedade C# terminada em `Ticks` (ex.: `CooldownTicks`) é lida do JSON sem o sufixo (`cooldown`) em segundos e convertida por `round(s*20)` (metades para longe do zero). Funciona também para `int?`.
+- Ids: regex `snake_case` com pontos (`warrior.heavy_strike`); aplicada a todos os tipos (as classes usam ex. `class.warrior`).
+
+**Decisões / desvios**
+
+- `scaling` do exemplo da stack proposal não foi modelado (a tarefa não pede); fica para quando houver atributos.
+- `ThreatEffect`: `amount` e/ou `tauntDuration` opcionais (taunt = duração presente).
+- `ApplyStatusEffect.duration` ausente = usa duração padrão do status (`null`).
+- Resistências de monstro usam chave string (nome da escola, validada) e parâmetros de IA são `Dictionary<string,double>`.
+- Arena: só `#` é parede; qualquer outro caractere é aceito (reservado) e `.` conta como chão livre; spawn em encontro precisa estar dentro da arena e fora de `#`. Posição X/Y em tiles, célula = floor.
+- Duração/intervalo positivo que arredonda para 0 ticks é rejeitado nos campos que exigem >= 1 tick.
+- Não alterei nada fora das áreas permitidas, exceto `tests/Game.Data.Tests/Game.Data.Tests.csproj` (copiar fixtures e schemas) que está dentro de `tests/Game.Data.Tests/`.
+
+**Pendências:** nenhuma. `./scripts/check.sh` passa (format, build sem avisos, 63 testes).
