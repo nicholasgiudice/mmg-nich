@@ -38,4 +38,10 @@ Docker, PostgreSQL e Godot headless **não** entram agora — são da fase 1 em 
 
 ## Resultado
 
-_(preencher ao concluir)_
+Concluída em 2026-10-16.
+
+- Remoto `origin` = `git@github.com:nicholasgiudice/mmg-nich.git` (SSH), `main` enviado e rastreando `origin/main`.
+- Identidade Git configurada **no repositório** (não global): Nicholas Giudice / nicholas.giudice@outlook.com.
+- .NET SDK **10.0.112** instalado pelo pacote `dotnet-sdk-10.0` do Ubuntu 24.04 (não precisou do PPA backports).
+- `unzip`, `jq`, `build-essential` instalados.
+- Hello World com `dotnet run` verificado.
