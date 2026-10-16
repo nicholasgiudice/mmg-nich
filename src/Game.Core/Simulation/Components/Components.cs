@@ -79,12 +79,16 @@ public sealed class Movement(float speed) : IComponent
     public float Speed = speed;
     public Vector2 Direction;
 
-    public IComponent Clone() => new Movement(Speed) { Direction = Direction };
+    /// <summary>Quando true o movimento não altera <see cref="Transform.Facing"/> (ex.: mirando, strafe).</summary>
+    public bool LockFacing;
+
+    public IComponent Clone() => new Movement(Speed) { Direction = Direction, LockFacing = LockFacing };
 
     public void WriteHash(StateHasher hasher)
     {
         hasher.Add(Speed);
         hasher.Add(Direction);
+        hasher.Add(LockFacing);
     }
 }
 
