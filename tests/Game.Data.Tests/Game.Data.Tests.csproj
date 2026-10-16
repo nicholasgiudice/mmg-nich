@@ -17,6 +17,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="Fixtures\**\*.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\data\schemas\*.json" Link="schemas\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Using Include="Xunit" />
   </ItemGroup>
 

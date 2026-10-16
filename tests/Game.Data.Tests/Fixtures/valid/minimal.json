@@ -1,0 +1,123 @@
+{
+  "classes": [
+    {
+      "id": "class.warrior",
+      "name": "Guerreiro",
+      "health": 120,
+      "speed": 4.5,
+      "radius": 0.4,
+      "resource": { "type": "vigor", "max": 100, "initial": 0, "regenPerSecond": -2 },
+      "basicAttack": "warrior.slash",
+      "abilities": ["warrior.heavy_strike", "warrior.taunt"]
+    }
+  ],
+  "abilities": [
+    {
+      "id": "warrior.slash",
+      "name": "Corte",
+      "targeting": { "type": "melee_arc", "range": 1.5, "angle": 90 },
+      "cooldown": 0.8,
+      "effects": [{ "type": "damage", "school": "physical", "base": 10 }]
+    },
+    {
+      "id": "warrior.heavy_strike",
+      "name": "Golpe Pesado",
+      "tags": ["melee"],
+      "cost": { "resource": "vigor", "amount": 30 },
+      "cooldown": 6.0,
+      "castTime": 0.4,
+      "castWhileMoving": false,
+      "targeting": { "type": "melee_arc", "range": 1.6, "angle": 90 },
+      "effects": [
+        { "type": "damage", "school": "physical", "base": 42 },
+        { "type": "interrupt" },
+        { "type": "apply_status", "status": "status.bleed" },
+        { "type": "displacement", "kind": "knockback", "distance": 1.5, "direction": "away_from_source" }
+      ]
+    },
+    {
+      "id": "warrior.taunt",
+      "name": "Provocação",
+      "cooldown": 10,
+      "targeting": { "type": "unit", "range": 6, "faction": "enemy" },
+      "effects": [{ "type": "threat", "tauntDuration": 3 }]
+    },
+    {
+      "id": "wolf.bite",
+      "name": "Mordida",
+      "cooldown": 1.5,
+      "targeting": { "type": "melee_arc", "range": 1.2, "angle": 60 },
+      "effects": [{ "type": "damage", "base": 8 }]
+    },
+    {
+      "id": "wolf.howl",
+      "name": "Uivo",
+      "cooldown": 15,
+      "targeting": { "type": "self" },
+      "effects": [
+        { "type": "spawn_area", "area": "area.howl_field" },
+        { "type": "summon", "monster": "monster.grey_wolf", "count": 1, "radius": 2 }
+      ]
+    }
+  ],
+  "statuses": [
+    {
+      "id": "status.bleed",
+      "name": "Sangramento",
+      "tags": ["bleed", "debuff"],
+      "defaultDuration": 6,
+      "stacking": "stack",
+      "maxStacks": 3,
+      "periodic": [{ "interval": 1, "effects": [{ "type": "damage", "base": 3 }] }],
+      "modifiers": { "speedMultiplier": 0.9 },
+      "flags": { "rooted": false }
+    }
+  ],
+  "areas": [
+    {
+      "id": "area.howl_field",
+      "radius": 3,
+      "duration": 5,
+      "interval": 0.5,
+      "mode": "periodic",
+      "affects": "any",
+      "effects": [{ "type": "damage", "school": "nature", "base": 2 }]
+    }
+  ],
+  "monsters": [
+    {
+      "id": "monster.grey_wolf",
+      "name": "Lobo Cinzento",
+      "health": 60,
+      "speed": 5,
+      "radius": 0.4,
+      "rank": "normal",
+      "tags": ["beast"],
+      "resistances": { "frost": 0.25 },
+      "abilities": ["wolf.bite", "wolf.howl"],
+      "ai": { "id": "ai.melee_chaser", "parameters": { "aggroRange": 8 } }
+    }
+  ],
+  "arenas": [
+    {
+      "id": "arena.test",
+      "lines": [
+        "#######",
+        "#.....#",
+        "#.....#",
+        "#######"
+      ]
+    }
+  ],
+  "encounters": [
+    {
+      "id": "encounter.test_wolf",
+      "name": "Lobo de teste",
+      "arena": "arena.test",
+      "players": [{ "class": "class.warrior", "position": { "x": 1.5, "y": 1.5 } }],
+      "enemies": [{ "monster": "monster.grey_wolf", "position": { "x": 4.5, "y": 2.5 } }],
+      "victory": "all_enemies_dead",
+      "defeat": { "condition": "all_players_dead", "timeLimit": 120 }
+    }
+  ]
+}
