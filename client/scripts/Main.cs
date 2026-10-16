@@ -58,6 +58,7 @@ public partial class Main : Node2D
             _authority = authority;
             _input = new PlayerInput(content.Abilities);
             _hud.SetContent(content);
+            _worldView.SetContent(content);
             GetNode<ArenaView>("Arena").Map = map;
             _camera.SetBounds(map);
         }
@@ -99,7 +100,7 @@ public partial class Main : Node2D
 
             _worldView.SelectedEntity = _input.SelectedTarget;
             _worldView.Render(_authority, events);
-            _hud.Render(_authority, _input.SelectedTarget, aim);
+            _hud.Render(_authority, _input.SelectedTarget, aim, events);
             if (_authority.ControlledEntity is { } player && _worldView.TryGetDrawnPosition(player, out var playerPx))
             {
                 _camera.Follow(playerPx, Units.ToPixels(aim), delta);
