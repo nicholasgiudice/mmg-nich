@@ -62,6 +62,7 @@ public static class GameDataLoader
             ReadFile(name, json, content, errors);
         }
 
+        content.Rules = BuildRules(content.RuleSections, errors);
         GameDataValidator.Validate(content, errors);
         if (errors.Count > 0)
         {
@@ -75,7 +76,10 @@ public static class GameDataLoader
             content.Areas.Select(e => e.Value),
             content.Monsters.Select(e => e.Value),
             content.Arenas.Select(e => e.Value),
-            content.Encounters.Select(e => e.Value));
+            content.Encounters.Select(e => e.Value))
+        {
+            Rules = content.Rules,
+        };
         return new LoadResult(database, errors);
     }
 
@@ -111,6 +115,7 @@ public static class GameDataLoader
                     case "monsters": ReadList(file, property, content.Monsters, errors); break;
                     case "arenas": ReadList(file, property, content.Arenas, errors); break;
                     case "encounters": ReadList(file, property, content.Encounters, errors); break;
+                    case "rules": ReadRules(file, property, content.RuleSections, errors); break;
                     case "$schema": break;
                     default:
                         errors.Add(new LoadError(file, property.Name, "Seção desconhecida."));
@@ -118,6 +123,69 @@ public static class GameDataLoader
                 }
             }
         }
+    }
+
+    /// <summary>
+    /// "rules" é um objeto com uma seção por assunto (ex.: "control", "threat"). Arquivos diferentes podem
+    /// contribuir com seções diferentes; a mesma seção em dois arquivos é erro. Adicionar uma seção nova
+    /// exige apenas uma propriedade em <see cref="RulesDefinition"/>.
+    /// </summary>
+    private static void ReadRules(string file, JsonProperty property, Dictionary<string, (JsonElement Value, string File)> sections, List<LoadError> errors)
+    {
+        if (property.Value.ValueKind != JsonValueKind.Object)
+        {
+            errors.Add(new LoadError(file, "rules", "Deve ser um objeto."));
+            return;
+        }
+
+        foreach (var section in property.Value.EnumerateObject())
+        {
+            if (sections.TryGetValue(section.Name, out var previous))
+            {
+                errors.Add(new LoadError(file, "rules." + section.Name, $"Seção já definida em '{previous.File}'."));
+            }
+            else
+            {
+                sections[section.Name] = (section.Value.Clone(), file);
+            }
+        }
+    }
+
+    private static RulesDefinition BuildRules(Dictionary<string, (JsonElement Value, string File)> sections, List<LoadError> errors)
+    {
+        if (sections.Count == 0)
+        {
+            return new RulesDefinition();
+        }
+
+        // Valida seção por seção para apontar o arquivo certo.
+        var result = new RulesDefinition();
+        using var merged = new MemoryStream();
+        using (var writer = new Utf8JsonWriter(merged))
+        {
+            writer.WriteStartObject();
+            foreach (var (name, (value, _)) in sections)
+            {
+                writer.WritePropertyName(name);
+                value.WriteTo(writer);
+            }
+
+            writer.WriteEndObject();
+        }
+
+        try
+        {
+            result = JsonSerializer.Deserialize<RulesDefinition>(merged.ToArray(), GameJson.Options) ?? result;
+        }
+        catch (JsonException ex)
+        {
+            var path = ex.Path is { Length: > 1 } p ? p[1..] : string.Empty;
+            var section = path.TrimStart('.').Split('.', '[')[0];
+            var file = sections.TryGetValue(section, out var s) ? s.File : "rules";
+            errors.Add(new LoadError(file, "rules" + path, Clean(ex)));
+        }
+
+        return result;
     }
 
     private static void ReadList<T>(string file, JsonProperty property, List<Entry<T>> target, List<LoadError> errors)
@@ -169,4 +237,9 @@ internal sealed class RawContent
     public List<Entry<MonsterDefinition>> Monsters { get; } = [];
     public List<Entry<ArenaDefinition>> Arenas { get; } = [];
     public List<Entry<EncounterDefinition>> Encounters { get; } = [];
+
+    /// <summary>Seções de "rules" (nome -> JSON, arquivo de origem).</summary>
+    public Dictionary<string, (JsonElement Value, string File)> RuleSections { get; } = new(StringComparer.Ordinal);
+
+    public RulesDefinition Rules { get; set; } = new();
 }

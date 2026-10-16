@@ -35,6 +35,16 @@ public sealed record StatModifiers
     public double DamageDealtMultiplier { get; init; } = 1;
 }
 
+/// <summary>Redução de dano recebido só quando a fonte está dentro de um arco à frente do alvo (Guarda Firme, Guarda Esquelético).</summary>
+public sealed record FrontalModifier
+{
+    /// <summary>Abertura total do arco em graus, centrado no facing do alvo (180 = semicírculo frontal).</summary>
+    public required double ArcDegrees { get; init; }
+
+    /// <summary>Multiplicador de dano recebido quando a fonte está no arco (0.5 = -50%).</summary>
+    public required double DamageTakenMultiplier { get; init; }
+}
+
 public sealed record StatusFlags
 {
     public bool Stunned { get; init; }
@@ -60,6 +70,7 @@ public sealed record StatusDefinition
     public IReadOnlyList<PeriodicEffectDefinition> Periodic { get; init; } = [];
     public StatModifiers Modifiers { get; init; } = new();
     public StatusFlags Flags { get; init; } = new();
+    public FrontalModifier? Frontal { get; init; }
 }
 
 public sealed record AreaDefinition

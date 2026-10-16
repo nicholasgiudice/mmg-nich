@@ -26,6 +26,7 @@ internal static partial class GameDataValidator
         foreach (var e in c.Statuses) { ValidateStatus(e, refs, errors); }
         foreach (var e in c.Areas) { ValidateArea(e, refs, errors); }
         foreach (var e in c.Monsters) { ValidateMonster(e, refs, errors); }
+        ValidateRules(c.Rules, errors);
         foreach (var e in c.Arenas) { ValidateArena(e, errors); }
         foreach (var e in c.Encounters)
         {
@@ -207,11 +208,35 @@ internal static partial class GameDataValidator
         ctx.NonNegative("modifiers.speedMultiplier", x.Modifiers.SpeedMultiplier);
         ctx.NonNegative("modifiers.damageTakenMultiplier", x.Modifiers.DamageTakenMultiplier);
         ctx.NonNegative("modifiers.damageDealtMultiplier", x.Modifiers.DamageDealtMultiplier);
+        if (x.Frontal is { } fr)
+        {
+            if (fr.ArcDegrees <= 0 || fr.ArcDegrees > 360) { ctx.Error("frontal.arcDegrees", "Deve estar entre 0 (exclusivo) e 360."); }
+            ctx.NonNegative("frontal.damageTakenMultiplier", fr.DamageTakenMultiplier);
+        }
+
         for (var i = 0; i < x.Periodic.Count; i++)
         {
             var c = ctx.At($".periodic[{i}]");
             c.PositiveTicks("interval", x.Periodic[i].IntervalTicks);
             ValidateEffects(x.Periodic[i].Effects, c, "effects", refs);
+        }
+    }
+
+    private static void ValidateRules(RulesDefinition rules, List<LoadError> errors)
+    {
+        if (rules.Control is { } control)
+        {
+            var ctx = new Ctx("rules", "rules.control", errors);
+            ctx.NonNegative("durationByRank.normal", control.DurationByRank.Normal);
+            ctx.NonNegative("durationByRank.elite", control.DurationByRank.Elite);
+            ctx.NonNegative("durationByRank.boss", control.DurationByRank.Boss);
+            if (control.Diminishing.Steps.Count == 0) { ctx.Error("diminishing.steps", "Precisa de pelo menos um passo."); }
+            foreach (var step in control.Diminishing.Steps)
+            {
+                if (step < 0 || step > 1) { ctx.Error("diminishing.steps", "Passos devem estar entre 0 e 1."); }
+            }
+
+            if (control.Diminishing.Steps.Count > 1) { ctx.PositiveTicks("diminishing.window", control.Diminishing.WindowTicks); }
         }
     }
 

@@ -501,14 +501,16 @@ public class CombatTests
         Assert.Equal(1f, foe.Get<Transform>().Position.X);
     }
 
+    private sealed record NeverRegisteredEffect : EffectDefinition;
+
     [Fact]
     public void Unregistered_effect_type_fails_with_clear_error()
     {
-        var w = NewWorld(null, Ab("poison", new SelfTargeting(), [new ApplyStatusEffect { Status = "status.poison" }]));
+        var w = NewWorld(null, Ab("poison", new SelfTargeting(), [new NeverRegisteredEffect()]));
         var p = Fighter(w, Vector2.Zero, Faction.Player, abilities: "poison");
         Use(w, p, "poison");
         var ex = Assert.Throws<InvalidOperationException>(() => w.Step());
-        Assert.Contains("ApplyStatusEffect", ex.Message);
+        Assert.Contains("NeverRegisteredEffect", ex.Message);
     }
 
     [Fact]

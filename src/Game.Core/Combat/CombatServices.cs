@@ -100,6 +100,7 @@ public static class CombatModules
         CoreEffects.Register(s); // T-008: damage, heal, shield, displacement, interrupt
 
         // ---- slot T-009 (status): efeitos apply_status/remove_status, IActionGate, IModifierSource ----
+        Status.StatusModule.Register(s);
 
         // ---- slot T-010 (recursos): efeito resource ----
 

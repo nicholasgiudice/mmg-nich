@@ -13,7 +13,36 @@
     "areas": { "type": "array", "items": { "$ref": "#/$defs/area" } },
     "monsters": { "type": "array", "items": { "$ref": "#/$defs/monster" } },
     "arenas": { "type": "array", "items": { "$ref": "#/$defs/arena" } },
-    "encounters": { "type": "array", "items": { "$ref": "#/$defs/encounter" } }
+    "encounters": { "type": "array", "items": { "$ref": "#/$defs/encounter" } },
+    "rules": {
+      "type": "object",
+      "description": "Regras globais; uma seção por assunto (control, threat...).",
+      "properties": {
+        "control": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "durationByRank": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "normal": { "type": "number", "minimum": 0 },
+                "elite": { "type": "number", "minimum": 0 },
+                "boss": { "type": "number", "minimum": 0 }
+              }
+            },
+            "diminishing": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "window": { "$ref": "#/$defs/seconds" },
+                "steps": { "type": "array", "minItems": 1, "items": { "type": "number", "minimum": 0, "maximum": 1 } }
+              }
+            }
+          }
+        }
+      }
+    }
   },
   "$defs": {
     "id": {
@@ -144,6 +173,15 @@
             "additionalProperties": false,
             "required": ["interval", "effects"],
             "properties": { "interval": { "type": "number", "exclusiveMinimum": 0 }, "effects": { "$ref": "#/$defs/effects" } }
+          }
+        },
+        "frontal": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["arcDegrees", "damageTakenMultiplier"],
+          "properties": {
+            "arcDegrees": { "type": "number", "exclusiveMinimum": 0, "maximum": 360 },
+            "damageTakenMultiplier": { "type": "number", "minimum": 0 }
           }
         },
         "modifiers": {
