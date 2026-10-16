@@ -9,6 +9,7 @@ public static class SystemsRegistry
     public static void Register(WorldBuilder b)
     {
         b.AddSystem(SystemOrder.Movement, new Systems.MovementSystem());
+        b.AddSystem(SystemOrder.Abilities, new Combat.AbilitySystem());
         b.AddSystem(SystemOrder.Death, new Systems.DeathSystem());
     }
 }
