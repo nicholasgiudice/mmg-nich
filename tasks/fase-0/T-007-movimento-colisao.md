@@ -39,4 +39,18 @@ Habilidades, IA (só fornece as ferramentas).
 
 ## Resultado
 
-_(preencher ao concluir)_
+**Feito:** pasta `src/Game.Core/Spatial/` (`GridMap`, `Collision`, `Pathfinder`, `SpatialQuery`, `ForcedMovement`) e `MovementSystem` reescrito (mesma linha em `SystemOrder.Movement`). 25 testes novos em `tests/Game.Core.Tests/SpatialTests.cs`; `./scripts/check.sh` passa (42 testes Core); teste de hash/determinismo da T-006 intacto.
+
+**Configurar o mapa (T-008):** `new WorldBuilder(seed).WithMap(gridMap)` ou `WorldBuilder.CreateDefault(seed, gridMap)`. Leitura: `world.Map` (`GridMap?`; null = plano aberto sem paredes, comportamento antigo). O mapa é estático e não entra no hash/snapshot. `GridMap.FromAscii("#..", ...)` ou `new GridMap(w, h, (x,y) => bloqueado)`. Linha 0 = y 0; célula (x,y) cobre [x,x+1)x[y,y+1); fora dos limites = bloqueado.
+
+**API pública (namespace `Game.Core.Spatial`)**
+- Consultas: `world.Spatial` (`ISpatialQuery`, força bruta, trocável): `InRadius(center, r, filter?)`, `InCone(origin, dir, anguloTotalRad, alcance, filter?)`, `InOrientedRect(origin, dir, comprimento, largura, filter?)`, `Nearest(point, maxDist?, filter?)`. Só entidades vivas com `Transform`; o raio do `Collider` conta como corpo (acerta se o corpo toca a área); resultados em ordem de id; `filter` é `Func<Entity,bool>`.
+- Linha de visão: `map.HasLineOfSight(a, b)`, `map.HasLineOfSight(a, b, radius)` (corpo grosso: 3 raios), `map.Raycast(a, b, out hit)` (DDA; passar exatamente por um vértice verifica as duas células laterais, conservador).
+- Pathfinding: `Pathfinder.FindPath(map, start, goal, radius = 0, smooth = true)` retorna waypoints sem o ponto inicial, terminando exatamente em `goal`; vazio se sem caminho ou início/destino bloqueado. A* 8 direções, sem cortar quinas, desempate determinístico; suavização por LoS (com `radius`). Não considera outras entidades.
+- Deslocamento forçado: `ForcedMovement.Displace(world, entity, direction, distance)` retorna distância percorrida; para na parede (não desliza), ignora outras entidades, não muda facing; sem mapa move livre. Usar para dash/knockback; a separação entre entidades corrige sobreposições nos ticks seguintes.
+- Baixo nível: `Collision.MoveCircle(map, pos, radius, delta)` (sub-steps, desliza), `Collision.PushOut(map, pos, radius)`.
+
+**Movimento:** `MovementSystem` aplica `Movement.Direction * Speed * dt` com sub-steps (<= 0.25 tile ou metade do raio), resolve colisão círculo x células (push-out pelo ponto mais próximo, o que produz o deslize). Separação: pares sobrepostos (entidades vivas com `Collider`) corrigem `0.5 * sobreposição` por tick, metade para cada, sem empurrar para dentro de parede; posições idênticas separam em x (menor id para -x). Facing = direção da intenção ao andar, a menos que `Movement.LockFacing = true` (componente `Movement` ganhou esse campo, incluído em Clone e hash; T-008 deve ligá-lo ao mirar).
+
+**Decisões/desvios:** alterei fora das áreas listadas, o mínimo necessário: `World` (propriedades `Map` e `Spatial`), `WorldBuilder` (`WithMap`, parâmetro `map` em `CreateDefault`) e `Movement` em `Components.cs`. Entidades sem `Collider` colidem com paredes como ponto (raio 0) e não participam da separação. Raio de colisão >= 0.5 não passa por corredores de 1 tile (PushOut limitado a 4 passes). Pendência: nenhuma.
+

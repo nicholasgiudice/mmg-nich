@@ -2,6 +2,7 @@ using System.Numerics;
 using Game.Core.Events;
 using Game.Core.Intents;
 using Game.Core.Simulation.Components;
+using Game.Core.Spatial;
 
 namespace Game.Core.Simulation;
 
@@ -23,11 +24,19 @@ public sealed class World
     private bool _cacheDirty;
     private int _nextId = 1;
 
-    internal World(ulong seed, ISimulationSystem[] systems)
+    internal World(ulong seed, ISimulationSystem[] systems, GridMap? map = null)
     {
         Random = new SimRandom(seed);
         _systems = systems;
+        Map = map;
+        Spatial = new BruteForceSpatialQuery(this);
     }
+
+    /// <summary>Mapa de colisão do mundo (configurado no <see cref="WorldBuilder"/>); null = plano aberto sem paredes. Estático: não entra no hash.</summary>
+    public GridMap? Map { get; }
+
+    /// <summary>Consultas espaciais (raio, cone, retângulo, mais próxima).</summary>
+    public ISpatialQuery Spatial { get; }
 
     /// <summary>Ticks já executados.</summary>
     public long Tick { get; private set; }
