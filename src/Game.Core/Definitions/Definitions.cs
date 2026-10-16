@@ -27,7 +27,36 @@ public sealed record AbilityDefinition
     public int CastTimeTicks { get; init; }
     public bool CastWhileMoving { get; init; }
     public required TargetingDefinition Targeting { get; init; }
+
+    /// <summary>
+    /// Se definido (T-012), os efeitos não são aplicados ao concluir a conjuração: nasce um telegráfo e os efeitos
+    /// são aplicados a quem estiver dentro da forma no tick de resolução.
+    /// </summary>
+    public TelegraphDefinition? Telegraph { get; init; }
     public IReadOnlyList<EffectDefinition> Effects { get; init; } = [];
+}
+
+/// <summary>
+/// Aviso de perigo (T-012). Circle: <see cref="Radius"/>; Cone: <see cref="Length"/> (alcance) e <see cref="Angle"/> (abertura total, graus);
+/// Line: <see cref="Length"/> e <see cref="Width"/>. Forma e orientação ficam fixas desde o início.
+/// </summary>
+public sealed record TelegraphDefinition
+{
+    public required TelegraphShape Shape { get; init; }
+
+    /// <summary>Tempo de preparação (JSON: "delay", segundos). Mínimo 1 tick.</summary>
+    public required int DelayTicks { get; init; }
+    public double Radius { get; init; }
+    public double Length { get; init; }
+    public double Width { get; init; }
+    public double Angle { get; init; }
+    public TelegraphAnchor Anchor { get; init; } = TelegraphAnchor.Source;
+
+    /// <summary>Quem é atingido, relativo à facção da fonte.</summary>
+    public FactionFilter Affects { get; init; } = FactionFilter.Enemy;
+
+    /// <summary>Investida: ao resolver, depois dos efeitos, a fonte é deslocada ao longo da linha (só shape line).</summary>
+    public bool Charge { get; init; }
 }
 
 public sealed record StatModifiers
@@ -93,6 +122,24 @@ public sealed record AiProfileDefinition
     public IReadOnlyDictionary<string, double> Parameters { get; init; } = new Dictionary<string, double>();
 }
 
+/// <summary>Fase de boss (T-012). Entra quando a vida cai a <see cref="HealthPercent"/> ou menos; cada fase é entrada uma única vez, em ordem.</summary>
+public sealed record PhaseDefinition
+{
+    public required string Id { get; init; }
+
+    /// <summary>Limiar de vida em % (0..100]. A primeira fase deve ter 100; os limiares decrescem estritamente.</summary>
+    public required double HealthPercent { get; init; }
+
+    /// <summary>Efeitos aplicados ao entrar, com o boss como fonte e alvo (invocar, criar áreas, status em si).</summary>
+    public IReadOnlyList<EffectDefinition> OnEnter { get; init; } = [];
+
+    /// <summary>Habilidades que o boss pode usar nesta fase. Null = todas as suas habilidades.</summary>
+    public IReadOnlyList<string>? Abilities { get; init; }
+
+    /// <summary>Proíbe invocar enquanto nesta fase (bloqueia habilidades com efeito summon e o próprio efeito).</summary>
+    public bool NoSummons { get; init; }
+}
+
 public sealed record MonsterDefinition
 {
     public required string Id { get; init; }
@@ -106,6 +153,9 @@ public sealed record MonsterDefinition
     public IReadOnlyDictionary<string, double> Resistances { get; init; } = new Dictionary<string, double>();
     public IReadOnlyList<string> Abilities { get; init; } = [];
     public required AiProfileDefinition Ai { get; init; }
+
+    /// <summary>Fases de boss (T-012). Vazio = sem fases.</summary>
+    public IReadOnlyList<PhaseDefinition> Phases { get; init; } = [];
 }
 
 public sealed record ArenaDefinition

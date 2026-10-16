@@ -31,5 +31,6 @@ public sealed class AiProfileRegistry
         .Register("ai.pack", new PackProfile())
         .Register("ai.ranged_kiter", new RangedKiterProfile())
         .Register("ai.swarm", new SwarmProfile())
-        .Register("ai.guardian", new GuardianProfile());
+        .Register("ai.guardian", new GuardianProfile())
+        .Register("ai.boss", new BossProfile()); // T-012
 }

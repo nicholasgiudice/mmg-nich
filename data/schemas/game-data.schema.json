@@ -139,7 +139,37 @@
         "castTime": { "$ref": "#/$defs/seconds" },
         "castWhileMoving": { "type": "boolean" },
         "targeting": { "$ref": "#/$defs/targeting" },
+        "telegraph": { "$ref": "#/$defs/telegraph" },
         "effects": { "type": "array", "items": { "$ref": "#/$defs/effect" } }
+      }
+    },
+    "telegraph": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["shape", "delay"],
+      "description": "circle: radius; cone: length + angle (graus, abertura total); line: length + width. charge só em line.",
+      "properties": {
+        "shape": { "enum": ["circle", "cone", "line"] },
+        "delay": { "type": "number", "exclusiveMinimum": 0 },
+        "radius": { "type": "number", "exclusiveMinimum": 0 },
+        "length": { "type": "number", "exclusiveMinimum": 0 },
+        "width": { "type": "number", "exclusiveMinimum": 0 },
+        "angle": { "type": "number", "exclusiveMinimum": 0, "maximum": 360 },
+        "anchor": { "enum": ["source", "aim"] },
+        "affects": { "$ref": "#/$defs/faction" },
+        "charge": { "type": "boolean" }
+      }
+    },
+    "phase": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "healthPercent"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "healthPercent": { "type": "number", "exclusiveMinimum": 0, "maximum": 100 },
+        "onEnter": { "$ref": "#/$defs/effects" },
+        "abilities": { "$ref": "#/$defs/idList" },
+        "noSummons": { "type": "boolean" }
       }
     },
     "targeting": {
@@ -186,7 +216,7 @@
         { "type": "object", "additionalProperties": false, "required": ["type", "area"],
           "properties": { "type": { "const": "spawn_area" }, "area": { "$ref": "#/$defs/id" } } },
         { "type": "object", "additionalProperties": false, "required": ["type", "monster"],
-          "properties": { "type": { "const": "summon" }, "monster": { "$ref": "#/$defs/id" }, "count": { "type": "integer", "minimum": 1 }, "radius": { "type": "number", "minimum": 0 } } }
+          "properties": { "type": { "const": "summon" }, "monster": { "$ref": "#/$defs/id" }, "count": { "type": "integer", "minimum": 1 }, "radius": { "type": "number", "minimum": 0 }, "maxAlive": { "type": "integer", "minimum": 0 } } }
       ]
     },
     "effects": { "type": "array", "items": { "$ref": "#/$defs/effect" } },
@@ -275,7 +305,8 @@
             "id": { "type": "string" },
             "parameters": { "type": "object", "additionalProperties": { "type": "number" } }
           }
-        }
+        },
+        "phases": { "type": "array", "items": { "$ref": "#/$defs/phase" } }
       }
     },
     "arena": {

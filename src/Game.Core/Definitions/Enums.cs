@@ -19,3 +19,9 @@ public enum MonsterRank { Normal, Elite, Boss }
 public enum VictoryCondition { AllEnemiesDead }
 
 public enum DefeatCondition { AllPlayersDead }
+
+/// <summary>Forma de um telegráfo (JSON: circle, cone, line).</summary>
+public enum TelegraphShape { Circle, Cone, Line }
+
+/// <summary>Onde o telegráfo é ancorado: na fonte (posição da fonte, direção da mira) ou no ponto mirado (alvo/ponto).</summary>
+public enum TelegraphAnchor { Source, Aim }

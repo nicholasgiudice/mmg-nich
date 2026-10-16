@@ -204,6 +204,13 @@ public sealed class AbilitySystem : ISimulationSystem
         world.Events.Publish(new AbilityExecuted(
             caster.Id, ability.Id, res.Targets.Select(t => t.Id).ToList(), costResource, costAmount,
             st.IsBasicAttack(ability.Id), ready));
+        if (ability.Telegraph is not null)
+        {
+            // T-012: os efeitos são aplicados na resolução do telegráfo, a quem estiver na forma naquele tick.
+            Telegraphs.TelegraphService.Start(world, caster, ability, res.Direction, aim, target.HasValue ? world.Find(target.Value) : null);
+            return;
+        }
+
         EffectApplier.Apply(world, ability.Effects, caster, res.Targets, ability.Id, ability, aim, res.Direction);
     }
 }
