@@ -10,6 +10,7 @@ public static class SystemsRegistry
     {
         b.AddSystem(SystemOrder.Movement, new Systems.MovementSystem());
         b.AddSystem(SystemOrder.Abilities, new Combat.AbilitySystem());
+        b.AddSystem(SystemOrder.Ai, new Combat.Ai.AiSystem()); // T-011
         b.AddSystem(SystemOrder.Death, new Systems.DeathSystem());
     }
 }

@@ -1,0 +1,10 @@
+{
+  "$schema": "./schemas/game-data.schema.json",
+  "threat": {
+    "damageMultiplier": 1.0,
+    "healMultiplier": 0.5,
+    "overtakeRatio": 1.1,
+    "groupAggroThreat": 1.0,
+    "proximityThreat": 1.0
+  }
+}

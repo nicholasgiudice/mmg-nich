@@ -5,6 +5,9 @@ namespace Game.Data;
 /// <summary>Conteúdo do jogo já validado, indexado por id (somente leitura).</summary>
 public sealed class GameDatabase
 {
+    /// <summary>Regras globais de ameaça (seção "threat" de rules.json). T-011.</summary>
+    public Game.Core.Combat.Threat.ThreatRules Threat { get; init; } = new();
+
     public IReadOnlyDictionary<string, ClassDefinition> Classes { get; }
     public IReadOnlyDictionary<string, AbilityDefinition> Abilities { get; }
     public IReadOnlyDictionary<string, StatusDefinition> Statuses { get; }

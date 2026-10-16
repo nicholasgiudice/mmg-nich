@@ -13,7 +13,18 @@
     "areas": { "type": "array", "items": { "$ref": "#/$defs/area" } },
     "monsters": { "type": "array", "items": { "$ref": "#/$defs/monster" } },
     "arenas": { "type": "array", "items": { "$ref": "#/$defs/arena" } },
-    "encounters": { "type": "array", "items": { "$ref": "#/$defs/encounter" } }
+    "encounters": { "type": "array", "items": { "$ref": "#/$defs/encounter" } },
+    "threat": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "damageMultiplier": { "type": "number", "minimum": 0 },
+        "healMultiplier": { "type": "number", "minimum": 0 },
+        "overtakeRatio": { "type": "number", "minimum": 1 },
+        "groupAggroThreat": { "type": "number", "minimum": 0 },
+        "proximityThreat": { "type": "number", "minimum": 0 }
+      }
+    }
   },
   "$defs": {
     "id": {

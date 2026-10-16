@@ -28,6 +28,9 @@ public sealed class ContentCatalog
         Encounters = Index(encounters, x => x.Id);
     }
 
+    /// <summary>Regras globais de ameaça (<c>data/rules.json</c>, seção "threat"). T-011.</summary>
+    public Threat.ThreatRules Threat { get; init; } = new();
+
     public IReadOnlyDictionary<string, ClassDefinition> Classes { get; }
     public IReadOnlyDictionary<string, AbilityDefinition> Abilities { get; }
     public IReadOnlyDictionary<string, StatusDefinition> Statuses { get; }
