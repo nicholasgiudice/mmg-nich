@@ -1,0 +1,37 @@
+{
+  "$schema": "./schemas/game-data.schema.json",
+  "areas": [
+    {
+      "id": "area.containment_trap",
+      "radius": 1.2,
+      "duration": 30,
+      "mode": "on_enter_once",
+      "affects": "enemy",
+      "effects": [
+        { "type": "damage", "school": "physical", "base": 8 },
+        { "type": "apply_status", "status": "status.snared", "duration": 3 }
+      ]
+    },
+    {
+      "id": "area.venom_pool",
+      "radius": 2,
+      "duration": 8,
+      "interval": 1,
+      "mode": "periodic",
+      "affects": "enemy",
+      "effects": [
+        { "type": "damage", "school": "nature", "base": 4 },
+        { "type": "apply_status", "status": "status.poison", "duration": 4 }
+      ]
+    },
+    {
+      "id": "area.sticky_web",
+      "radius": 3,
+      "duration": 18,
+      "interval": 0.5,
+      "mode": "periodic",
+      "affects": "enemy",
+      "effects": [{ "type": "apply_status", "status": "status.web", "duration": 1.5 }]
+    }
+  ]
+}

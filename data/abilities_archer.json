@@ -1,0 +1,39 @@
+{
+  "$schema": "./schemas/game-data.schema.json",
+  "abilities": [
+    {
+      "id": "archer.shot",
+      "name": "Disparo",
+      "tags": ["basic", "ranged"],
+      "cooldown": 1.0,
+      "targeting": { "type": "unit", "range": 9, "faction": "enemy" },
+      "effects": [{ "type": "damage", "school": "physical", "base": 11 }]
+    },
+    {
+      "id": "archer.hunters_mark",
+      "name": "Marca do Caçador",
+      "tags": ["ranged", "debuff"],
+      "cost": { "resource": "focus", "amount": 10 },
+      "cooldown": 12,
+      "targeting": { "type": "unit", "range": 10, "faction": "enemy" },
+      "effects": [{ "type": "apply_status", "status": "status.hunters_mark", "duration": 8 }]
+    },
+    {
+      "id": "archer.quick_retreat",
+      "name": "Recuo Rápido",
+      "tags": ["mobility"],
+      "cooldown": 8,
+      "targeting": { "type": "self" },
+      "effects": [{ "type": "displacement", "kind": "dash", "distance": 5, "direction": "backward" }]
+    },
+    {
+      "id": "archer.containment_trap",
+      "name": "Armadilha de Contenção",
+      "tags": ["control", "trap"],
+      "cost": { "resource": "focus", "amount": 25 },
+      "cooldown": 14,
+      "targeting": { "type": "circle_at_point", "range": 8, "radius": 1.2 },
+      "effects": [{ "type": "spawn_area", "area": "area.containment_trap" }]
+    }
+  ]
+}
