@@ -27,4 +27,21 @@
 
 ## Resultado
 
-_(preencher ao concluir)_
+**Feito.** Todos os requisitos; relatório em `tasks/reports/balance-v0.2.md` (antes/depois, números, limites). `./scripts/check.sh` completo passa (195 Core, 98 Data, 18 Sim, 21 Design); testes de design em 2 min 44 s (limite 5 min).
+
+**Bots (`src/Game.Bots`, só acréscimos)**
+- `Reactor` (novo): opção `reaction` (global ou `class.x:reaction`): `0.2-0.4` (padrão), valor fixo ou `0` (desliga). Sorteio por `SimRandom` próprio do bot, seed = `BotDirector.Seed` (nova propriedade, padrão 0; o `EncounterRunner` passa a seed do encontro) combinada com o id da entidade; `BotContext` ganhou o parâmetro opcional `seed`. Aplica-se a: primeiro alvo / troca de alvo após morte (bot para, salvo se foge), cura, Provocação, Purificação, poção e entrada em perigos do `+dodge` (o perigo só conta depois do atraso; a identidade do perigo ignora o tick de resolução).
+- Provocação quando um aliado perdeu vida nos últimos 2 s (ou, sozinho, 2+ inimigos). Purificação (`AbilityRole.Cleanse`, novo no fim do enum, `AbilityInfo.CleanseTags`) só se alguém tem status com a tag removível. Poção (`AbilityState.Consumables`, cura própria) abaixo de `potionBelow` (padrão 0,4; 0 desliga).
+- Para o cliente (`BotDirector`, `TelegraphHazardSource`): nenhuma API renomeada ou removida. Atenção: o padrão agora liga a reação (0,2-0,4 s) e a poção; para o comportamento antigo use `reaction=0` e `potionBelow=0` nas opções, e defina `director.Seed` (ex.: seed do mundo) para variar a reação.
+
+**Testes.** `tests/Game.Design.Tests`: `taunt_and_basic` usa `warrior.taunt` (adaptação removida); Explosão sozinha (<= 50% ou mais lenta que a `rotation`); Mago `rotation` >= 20 s; >= 3 encontros não binários; Purificação, poção e Provocação nos bots; resultados em cache por (encontro, estratégia, papéis). `tests/Game.Sim.Tests`: parse de `reaction`, atraso do primeiro movimento (4 a 8 ticks), determinismo por seed, ligado x desligado.
+
+**Números alterados** (somente `data/`): ver relatório §2. Matriarca (mordidas 60, investida 130, aranhas 9/26, veneno 7, poça 8, vida 6000), Rato (vida 105, mordida 3), Explosão Elemental (custo 65), Salteador (disparo 11), Guarda Esquelético (vida 400).
+
+**Desvios / decisões**
+- Grupo sem Clérigo: o limite 30%-70% da T-016 é incompatível com 60%-90% do grupo completo (diferença de ~60 pontos e resultado muito sensível); o teste passou a exigir 5%-60% e >= 30 pontos abaixo do grupo completo. Hoje: grupo completo 77%, sem Clérigo 13%.
+- Matriarca ficou com dano acima do original da T-014: com poções e reação os bots `kite+dodge` quase não tomam dano direto.
+- Corrigido um estouro numérico no controle "aliado atacado" antes do commit (sentinela `-1_000_000`).
+- Fora da lista de áreas: nenhuma (`tests/Game.Sim/EncounterRunner.cs` está em `tests/Game.Sim/`).
+
+**Pendências:** Altar do Guarda Esquelético; desvio que veta movimento para dentro de áreas persistentes; margens estreitas na Matriarca (relatório §5).

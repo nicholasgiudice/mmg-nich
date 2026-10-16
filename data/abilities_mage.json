@@ -14,7 +14,7 @@
       "id": "mage.elemental_blast",
       "name": "Explosão Elemental",
       "tags": ["aoe", "ranged"],
-      "cost": { "resource": "mana", "amount": 45 },
+      "cost": { "resource": "mana", "amount": 65 },
       "cooldown": 4,
       "castTime": 0.6,
       "targeting": { "type": "circle_at_point", "range": 9, "radius": 3 },

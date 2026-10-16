@@ -7,7 +7,7 @@
       "tags": ["debuff", "poison", "dot"],
       "defaultDuration": 5,
       "stacking": "refresh",
-      "periodic": [{ "interval": 1, "effects": [{ "type": "damage", "school": "nature", "base": 1 }] }]
+      "periodic": [{ "interval": 1, "effects": [{ "type": "damage", "school": "nature", "base": 7 }] }]
     },
     {
       "id": "status.bleed",

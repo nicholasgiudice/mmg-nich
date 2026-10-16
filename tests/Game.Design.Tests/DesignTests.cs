@@ -11,7 +11,7 @@ namespace Game.Design.Tests;
 
 /// <summary>
 /// Critérios de design da seção "Falha de design" de cada encontro (design/combat-encounters-v0.1.md) como testes.
-/// Cada verificação roda <see cref="DesignHarness.Runs"/> seeds. Limites finais e justificativas: tasks/reports/balance-v0.1.md.
+/// Cada verificação roda <see cref="DesignHarness.Runs"/> seeds. Limites finais e justificativas: tasks/reports/balance-v0.1.md (T-016) e balance-v0.2.md (T-018).
 /// </summary>
 public class DesignTests
 {
@@ -35,7 +35,7 @@ public class DesignTests
     [Fact]
     public void Warrior_threat_skill_plus_basic_is_shallow_loses_or_is_much_slower()
     {
-        // Adaptação: o Guerreiro do protótipo não tem Provocação; "taunt" = Golpe Circular (ameaça em área) + básico.
+        // T-018: usa a Provocação de verdade (warrior.taunt), sem a adaptação da T-016.
         var rot = Run(Wolves, "rotation");
         var shallow = Run(Wolves, "taunt_and_basic");
         var ok = shallow.WinRate <= 0.50 || (shallow.Wins > 0 && shallow.TimeToWinMean >= 1.5 * rot.TimeToWinMean);
@@ -68,6 +68,22 @@ public class DesignTests
     {
         var s = Run(Rats, "rotation");
         Assert.True(s.WinRate >= 0.85, Fmt(s));
+    }
+
+    [Fact]
+    public void Mage_explosion_alone_wins_at_most_half_the_time_or_takes_longer_than_the_rotation()
+    {
+        // Design: "se Explosão Elemental resolver o encontro sozinha sem exigir movimento ou gestão de recurso, o Mago está forte demais".
+        var rot = Run(Rats, "rotation");
+        var spam = Run(Rats, "explosion_spam");
+        Assert.True(spam.WinRate <= 0.50 || spam.TimeToWinMean > rot.TimeToWinMean, $"{Fmt(spam)} vs {Fmt(rot)}");
+    }
+
+    [Fact]
+    public void Mage_rotation_takes_at_least_20_seconds_on_average()
+    {
+        var rot = Run(Rats, "rotation");
+        Assert.True(rot.Wins > 0 && rot.TimeToWinMean >= 20, Fmt(rot));
     }
 
     [Fact]
@@ -141,10 +157,10 @@ public class DesignTests
     // ---- Grupo x Matriarca ----
 
     [Fact]
-    public void Matriarch_moving_balanced_group_wins_at_least_70_percent()
+    public void Matriarch_moving_balanced_group_wins_between_60_and_90_percent()
     {
         var s = Run(Matriarch, "kite+dodge");
-        Assert.True(s.WinRate >= 0.70, Fmt(s));
+        Assert.True(s.WinRate is >= 0.60 and <= 0.90, Fmt(s));
     }
 
     [Fact]
@@ -157,10 +173,131 @@ public class DesignTests
     }
 
     [Fact]
-    public void Matriarch_group_without_cleric_wins_between_30_and_70_percent()
+    public void Matriarch_group_without_cleric_wins_between_5_and_60_percent_and_clearly_less_than_the_full_group()
     {
         var s = Run(NoClericEncounter, "kite+dodge", null, ContentWithNoCleric);
-        Assert.True(s.WinRate is >= 0.30 and <= 0.70, Fmt(s));
+        var full = Run(Matriarch, "kite+dodge");
+        Assert.True(s.WinRate is >= 0.05 and <= 0.60, Fmt(s));
+        Assert.True(s.WinRate <= full.WinRate - 0.30, $"{Fmt(s)} vs {Fmt(full)}");
+    }
+
+    // ---- T-018: resultados não binários ----
+
+    [Fact]
+    public void At_least_three_encounters_have_a_relevant_strategy_between_5_and_95_percent()
+    {
+        var rates = new[]
+        {
+            Run(Bandit, "rotation"),
+            Run(Rats, "explosion_spam"),
+            Run(Matriarch, "kite+dodge"),
+            Run(NoClericEncounter, "kite+dodge", null, ContentWithNoCleric),
+            Run(Rats, "rotation"),
+        };
+        var distinct = rates.Where(r => r.WinRate is >= 0.05 and <= 0.95).Select(r => r.Encounter).Distinct().ToList();
+        Assert.True(distinct.Count >= 3, string.Join("; ", rates.Select(Fmt)));
+    }
+
+    // ---- T-018: bots usam as mecânicas da T-017 ----
+
+    private static (World World, Entity Warrior, Entity Mage, Entity Cleric) Group()
+    {
+        var setup = EncounterSetup.Create(1, Content, Content.Encounters[Matriarch]);
+        return (setup.World, setup.Players[0], setup.Players[2], setup.Players[3]);
+    }
+
+    private static Dictionary<string, long> FirstUse(World world, BotDirector director, int ticks, Action<int>? each = null)
+    {
+        var first = new Dictionary<string, long>();
+        for (var t = 0; t < ticks; t++)
+        {
+            each?.Invoke(t);
+            director.Tick();
+            world.Step();
+            foreach (var e in world.LastTickEvents.OfType<AbilityExecuted>())
+            {
+                first.TryAdd(e.AbilityId, world.Tick);
+            }
+        }
+
+        return first;
+    }
+
+    [Fact]
+    public void Cleric_purifies_a_poisoned_ally_after_the_reaction_time()
+    {
+        var (world, warrior, _, cleric) = Group();
+        Game.Core.Combat.Status.StatusManager.Apply(world, null, warrior, "status.poison", 20 * 8);
+        var director = new BotDirector(world) { Seed = 1 };
+        director.Add(cleric, BotStrategies.Create("rotation"), new BotOptions(Options));
+        var first = FirstUse(world, director, 3 * World.TickRate);
+        Assert.True(first.TryGetValue("cleric.purify", out var tick), "Purificação não foi usada");
+        Assert.InRange(tick, 4, 2 * World.TickRate);
+        Assert.False(Game.Core.Combat.Status.StatusManager.HasTag(world, warrior, "poison"));
+    }
+
+    [Fact]
+    public void Cleric_does_not_purify_when_nobody_has_poison_or_curse()
+    {
+        var (world, _, _, cleric) = Group();
+        var director = new BotDirector(world) { Seed = 1 };
+        director.Add(cleric, BotStrategies.Create("rotation"), new BotOptions(Options));
+        var first = FirstUse(world, director, 3 * World.TickRate);
+        Assert.DoesNotContain("cleric.purify", first.Keys);
+    }
+
+    private static Dictionary<string, long> PotionRun(float healthFraction, IReadOnlyDictionary<string, string> options)
+    {
+        var (world, warrior, _, _) = Group();
+        var hp = warrior.Get<Health>();
+        hp.Current = hp.Max * healthFraction;
+        var director = new BotDirector(world) { Seed = 1 };
+        director.Add(warrior, BotStrategies.Create("rotation"), new BotOptions(options));
+        var first = FirstUse(world, director, 2 * World.TickRate);
+        if (first.ContainsKey("item.minor_healing_potion"))
+        {
+            Assert.True(hp.Current > hp.Max * healthFraction);
+        }
+
+        return first;
+    }
+
+    [Fact]
+    public void Bot_drinks_a_potion_below_the_threshold_only()
+    {
+        Assert.Contains("item.minor_healing_potion", PotionRun(0.3f, Options).Keys);
+        Assert.DoesNotContain("item.minor_healing_potion", PotionRun(0.8f, Options).Keys);
+    }
+
+    [Fact]
+    public void Bot_potion_can_be_disabled_or_moved_with_potionBelow()
+    {
+        var off = new Dictionary<string, string>(Options) { ["potionBelow"] = "0" };
+        Assert.DoesNotContain("item.minor_healing_potion", PotionRun(0.3f, off).Keys);
+        var high = new Dictionary<string, string>(Options) { ["potionBelow"] = "0.9" };
+        Assert.Contains("item.minor_healing_potion", PotionRun(0.8f, high).Keys);
+    }
+
+    [Fact]
+    public void Warrior_taunts_when_an_ally_is_hit_but_not_otherwise()
+    {
+        var (world, warrior, _, _) = Group();
+        var director = new BotDirector(world) { Seed = 1 };
+        director.Add(warrior, BotStrategies.Create("rotation"), new BotOptions(Options));
+        Assert.DoesNotContain("warrior.taunt", FirstUse(world, director, 3 * World.TickRate).Keys);
+
+        var (world2, warrior2, mage2, _) = Group();
+        var director2 = new BotDirector(world2) { Seed = 1 };
+        director2.Add(warrior2, BotStrategies.Create("rotation"), new BotOptions(Options));
+        var first = FirstUse(world2, director2, 3 * World.TickRate, t =>
+        {
+            if (t == 10)
+            {
+                mage2.Get<Health>().Current -= 20; // o Mago apanha
+            }
+        });
+        Assert.True(first.TryGetValue("warrior.taunt", out var tick), "Provocação não foi usada");
+        Assert.True(tick >= 10 + 4, $"reagiu sem tempo de reação (tick {tick})");
     }
 
     [Fact]

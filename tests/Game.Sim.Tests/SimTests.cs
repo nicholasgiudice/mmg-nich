@@ -212,4 +212,66 @@ public class SimTests
         Assert.Equal(2, Cli.Run(["--data", FixtureDir, "--encounter", "encounter.x"], new StringWriter(), new StringWriter()));
         Assert.Equal(2, Cli.Run(["--data", "/does/not/exist"], new StringWriter(), new StringWriter()));
     }
+
+    // ---- T-018: tempo de reação ----
+
+    private static BotOptions Reaction(string value) => new(new Dictionary<string, string> { ["reaction"] = value });
+
+    private static long FirstMoveTick(ulong seed, BotOptions? options)
+    {
+        var content = Content.Value;
+        var setup = EncounterSetup.Create(seed, content, content.Encounters[Wolves]);
+        var player = setup.Players[0];
+        var start = player.Get<Transform>().Position;
+        var director = new BotDirector(setup.World) { Seed = seed };
+        director.Add(player, BotStrategies.Create("rotation"), options);
+        for (var i = 0; i < 40; i++)
+        {
+            director.Tick();
+            setup.World.Step();
+            if (Vector2.Distance(start, player.Get<Transform>().Position) > 0.01f)
+            {
+                return setup.World.Tick;
+            }
+        }
+
+        return -1;
+    }
+
+    [Fact]
+    public void Reaction_parses_ranges_fixed_values_and_zero()
+    {
+        Assert.Equal((0.2, 0.4), Reactor.ParseRange(null));
+        Assert.Equal((0.1, 0.5), Reactor.ParseRange("0.1-0.5"));
+        Assert.Equal((0.3, 0.3), Reactor.ParseRange("0.3"));
+        Assert.Equal((0.0, 0.0), Reactor.ParseRange("0"));
+    }
+
+    [Fact]
+    public void Reaction_delays_the_first_move_within_the_range_and_zero_disables_it()
+    {
+        Assert.All(Enumerable.Range(1, 12), seed =>
+        {
+            var tick = FirstMoveTick((ulong)seed, null);
+            Assert.InRange(tick, 4 + 1, 8 + 1); // 0,2 a 0,4 s = 4 a 8 ticks, mais o tick de movimento
+        });
+        Assert.Equal(1, FirstMoveTick(1, Reaction("0")));
+        Assert.True(FirstMoveTick(1, Reaction("0.4")) >= 8);
+    }
+
+    [Fact]
+    public void Reaction_is_deterministic_by_seed_and_varies_between_seeds()
+    {
+        var a = Enumerable.Range(1, 30).Select(s => FirstMoveTick((ulong)s, null)).ToList();
+        var b = Enumerable.Range(1, 30).Select(s => FirstMoveTick((ulong)s, null)).ToList();
+        Assert.Equal(a, b);
+        Assert.True(a.Distinct().Count() > 1);
+
+        var spec = Spec(Group);
+        var h1 = EncounterRunner.Run(Content.Value, spec, 5).StateHash;
+        var h2 = EncounterRunner.Run(Content.Value, spec, 5).StateHash;
+        Assert.Equal(h1, h2);
+        var off = spec with { Options = Reaction("0") };
+        Assert.NotEqual(h1, EncounterRunner.Run(Content.Value, off, 5).StateHash);
+    }
 }

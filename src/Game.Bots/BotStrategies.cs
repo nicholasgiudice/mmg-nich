@@ -107,13 +107,19 @@ public sealed class DodgingController(IBotController inner, string name) : IBotC
 {
     private const float Margin = 0.35f;
     private readonly List<Hazard> _hazards = [];
+    private readonly List<Hazard> _all = [];
+    private readonly Reactor _reactor = new();
+    private readonly Dictionary<object, long> _noticeAt = [];
+    private readonly HashSet<object> _current = [];
 
     public string Name => name;
 
     public void Think(BotContext ctx, List<Intent> output)
     {
         _hazards.Clear();
-        ctx.Hazards.Collect(ctx.World, _hazards);
+        _all.Clear();
+        ctx.Hazards.Collect(ctx.World, _all);
+        Notice(ctx);
         var radius = ctx.Radius + Margin;
         var pos = ctx.Position;
         if (_hazards.Count == 0 || !_hazards.Any(h => h.Contains(pos, radius)))
@@ -146,6 +152,43 @@ public sealed class DodgingController(IBotController inner, string name) : IBotC
         var dir = escape.Value - pos;
         output.Add(new MoveIntent(ctx.Self.Id, System.Numerics.Vector2.Normalize(dir)));
     }
+
+    /// <summary>T-018: um perigo só entra na decisão depois do tempo de reação desde que apareceu (identidade ignora o tick de resolução).</summary>
+    private void Notice(BotContext ctx)
+    {
+        _current.Clear();
+        foreach (var h in _all)
+        {
+            var key = KeyOf(h);
+            _current.Add(key);
+            if (!_noticeAt.TryGetValue(key, out var at))
+            {
+                at = ctx.World.Tick + _reactor.DrawTicks(ctx);
+                _noticeAt[key] = at;
+            }
+
+            if (ctx.World.Tick >= at)
+            {
+                _hazards.Add(h);
+            }
+        }
+
+        if (_noticeAt.Count > _current.Count)
+        {
+            foreach (var k in _noticeAt.Keys.Where(k => !_current.Contains(k)).ToList())
+            {
+                _noticeAt.Remove(k);
+            }
+        }
+    }
+
+    private static object KeyOf(Hazard h) => h switch
+    {
+        CircleHazard c => (1, c.Center, c.Radius),
+        RectHazard r => (2, r.Origin, r.Direction, r.Length, r.Width),
+        ConeHazard c => (3, c.Origin, c.Direction, c.AngleRadians, c.Range),
+        _ => h,
+    };
 
     /// <summary>Ponto livre mais próximo fora de todos os perigos (amostragem radial), alcançável em linha reta.</summary>
     private System.Numerics.Vector2? FindEscape(BotContext ctx, float radius)

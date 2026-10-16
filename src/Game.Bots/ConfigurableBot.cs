@@ -1,7 +1,9 @@
 using System.Numerics;
+using Game.Core.Combat.Status;
 using Game.Core.Definitions;
 using Game.Core.Intents;
 using Game.Core.Simulation;
+using Game.Core.Simulation.Components;
 
 namespace Game.Bots;
 
@@ -38,6 +40,9 @@ public sealed class ConfigurableBot(BotPlan plan) : IBotController
     private EntityId _focus = EntityId.None;
     private Vector2 _fleeDir;
     private bool _cornered;
+    private readonly Reactor _reactor = new();
+    private readonly Dictionary<EntityId, float> _allyHp = [];
+    private long _allyHitTick = -1_000_000;
 
     private IReadOnlyList<AbilityInfo>? _allowed;
 
@@ -47,6 +52,7 @@ public sealed class ConfigurableBot(BotPlan plan) : IBotController
 
     public void Think(BotContext ctx, List<Intent> output)
     {
+        TrackAllies(ctx);
         var abilities = ctx.Abilities;
         if (abilities.Cast is { } cast)
         {
@@ -68,7 +74,15 @@ public sealed class ConfigurableBot(BotPlan plan) : IBotController
             fleeing = ctx.EdgeDistanceTo(enemies[0]) < RetreatDistance(ctx);
         }
 
-        var used = TryUseAbilities(ctx, allowed, enemies, focus, fleeing, output, out var dashed);
+        // T-018: ainda não "viu" o novo alvo (tempo de reação): fica parado, a menos que esteja fugindo.
+        if (focus is null && enemies.Count > 0 && !fleeing)
+        {
+            output.Add(new StopIntent(ctx.Self.Id));
+            return;
+        }
+
+        var dashed = false;
+        var used = TryPotion(ctx, output) || TryUseAbilities(ctx, allowed, enemies, focus, fleeing, output, out dashed);
         if (!used && plan.UseBasicAttack)
         {
             dashed = TryBasic(ctx, enemies, focus, fleeing, output);
@@ -98,6 +112,13 @@ public sealed class ConfigurableBot(BotPlan plan) : IBotController
             return sticky;
         }
 
+        // Alvo novo (morte do anterior ou início do combate): só troca depois do tempo de reação.
+        if (!_reactor.Ready(ctx, "focus", true))
+        {
+            return null;
+        }
+
+        _reactor.Reset("focus");
         _focus = enemies[0].Id;
         return enemies[0];
     }
@@ -123,6 +144,7 @@ public sealed class ConfigurableBot(BotPlan plan) : IBotController
 
             if (ctx.TryUse(info, target, aim, output))
             {
+                _reactor.Reset(info.Id);
                 dashed = info.Role == AbilityRole.Dash || info.NeedsStanding;
                 return true;
             }
@@ -194,6 +216,9 @@ public sealed class ConfigurableBot(BotPlan plan) : IBotController
             case AbilityRole.Heal:
                 return PlanHeal(ctx, info, cls, out target);
 
+            case AbilityRole.Cleanse:
+                return PlanCleanse(ctx, info, out target);
+
             case AbilityRole.Taunt:
                 {
                     if (nearest is null)
@@ -201,8 +226,10 @@ public sealed class ConfigurableBot(BotPlan plan) : IBotController
                         return false;
                     }
 
-                    var group = enemies.Count >= 2 || ctx.Allies().Count > 1;
-                    if (!force && !group)
+                    // Aliado sob ataque (perdeu vida há pouco) ou, sozinho, vários inimigos. Reage depois do tempo de reação.
+                    var allyHit = ctx.World.Tick - _allyHitTick <= 2 * World.TickRate;
+                    var group = allyHit || (enemies.Count >= 2 && ctx.Allies().Count <= 1);
+                    if (!_reactor.Ready(ctx, info.Id, group || force))
                     {
                         return false;
                     }
@@ -265,7 +292,7 @@ public sealed class ConfigurableBot(BotPlan plan) : IBotController
         }
     }
 
-    private static bool PlanHeal(BotContext ctx, AbilityInfo info, string cls, out EntityId? target)
+    private bool PlanHeal(BotContext ctx, AbilityInfo info, string cls, out EntityId? target)
     {
         target = null;
         var threshold = (float)ctx.Options.GetDouble(cls, "healBelow", 0.75);
@@ -274,7 +301,7 @@ public sealed class ConfigurableBot(BotPlan plan) : IBotController
             .OrderBy(BotContext.HealthOf)
             .ThenBy(a => a.Id.Value)
             .ToList();
-        if (injured.Count == 0)
+        if (!_reactor.Ready(ctx, info.Id, injured.Count > 0))
         {
             return false;
         }
@@ -288,6 +315,83 @@ public sealed class ConfigurableBot(BotPlan plan) : IBotController
 
         // Cura própria/em área centrada em si: vale se alguém (ou o próprio) perto está ferido.
         return injured.Any(a => a.Id == ctx.Self.Id || ctx.EdgeDistanceTo(a) <= Math.Max(info.AreaRadius, 0.5));
+    }
+
+    /// <summary>Purificação: aliado (ou o próprio) com status de uma das tags removíveis; o mais ferido primeiro.</summary>
+    private bool PlanCleanse(BotContext ctx, AbilityInfo info, out EntityId? target)
+    {
+        target = null;
+        var afflicted = ctx.Allies()
+            .Where(a => info.CleanseTags.Any(t => StatusManager.HasTag(ctx.World, a, t)))
+            .OrderBy(BotContext.HealthOf)
+            .ThenBy(a => a.Id.Value)
+            .FirstOrDefault();
+        if (!_reactor.Ready(ctx, info.Id, afflicted is not null))
+        {
+            return false;
+        }
+
+        target = afflicted!.Id;
+        return info.NeedsUnitTarget;
+    }
+
+    /// <summary>Consumível de cura própria (poção) quando a vida cai abaixo de <c>potionBelow</c> (padrão 0,4; 0 desliga).</summary>
+    private bool TryPotion(BotContext ctx, List<Intent> output)
+    {
+        var below = (float)ctx.Options.GetDouble(ctx.ClassId, "potionBelow", 0.4);
+        var consumables = ctx.Abilities.Consumables;
+        if (consumables.Count == 0 || below <= 0)
+        {
+            return false;
+        }
+
+        var low = ctx.HealthFraction <= below;
+        if (!_reactor.Ready(ctx, "potion", low))
+        {
+            return false;
+        }
+
+        foreach (var id in consumables)
+        {
+            if (!ctx.World.Content.Abilities.TryGetValue(id, out var def))
+            {
+                continue;
+            }
+
+            var info = AbilityInfo.For(def);
+            if (!info.HasHeal || !(info.IsSelfCentered || info.NeedsUnitTarget))
+            {
+                continue;
+            }
+
+            if (ctx.TryUse(info, info.NeedsUnitTarget ? ctx.Self.Id : null, null, output))
+            {
+                _reactor.Reset("potion");
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>Guarda quando algum aliado (não o próprio bot) perdeu vida, para a Provocação reagir a "aliado sob ataque".</summary>
+    private void TrackAllies(BotContext ctx)
+    {
+        foreach (var a in ctx.Allies())
+        {
+            if (a.Id == ctx.Self.Id)
+            {
+                continue;
+            }
+
+            var hp = a.TryGet<Health>()?.Current ?? 0f;
+            if (_allyHp.TryGetValue(a.Id, out var last) && hp < last)
+            {
+                _allyHitTick = ctx.World.Tick;
+            }
+
+            _allyHp[a.Id] = hp;
+        }
     }
 
     private static bool PlanDash(

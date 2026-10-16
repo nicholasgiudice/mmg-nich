@@ -6,7 +6,7 @@
       "name": "Mordida de Rato",
       "cooldown": 1.0,
       "targeting": { "type": "melee_arc", "range": 1.1, "angle": 90 },
-      "effects": [{ "type": "damage", "school": "physical", "base": 4 }]
+      "effects": [{ "type": "damage", "school": "physical", "base": 3 }]
     },
     {
       "id": "grey_wolf.bite",
@@ -28,7 +28,7 @@
       "name": "Disparo de Besta",
       "cooldown": 2.0,
       "targeting": { "type": "unit", "range": 9, "faction": "enemy" },
-      "effects": [{ "type": "damage", "school": "physical", "base": 9 }]
+      "effects": [{ "type": "damage", "school": "physical", "base": 11 }]
     },
     {
       "id": "skeleton_guard.slash",
@@ -60,7 +60,7 @@
       "cooldown": 1.2,
       "targeting": { "type": "melee_arc", "range": 1.1, "angle": 90 },
       "effects": [
-        { "type": "damage", "school": "physical", "base": 2 },
+        { "type": "damage", "school": "physical", "base": 9 },
         { "type": "apply_status", "status": "status.poison", "duration": 4 }
       ]
     },
@@ -70,7 +70,7 @@
       "cooldown": 1.5,
       "targeting": { "type": "melee_arc", "range": 1.6, "angle": 100 },
       "effects": [
-        { "type": "damage", "school": "physical", "base": 5.5 },
+        { "type": "damage", "school": "physical", "base": 26 },
         { "type": "apply_status", "status": "status.poison", "duration": 5 }
       ]
     },
@@ -79,7 +79,7 @@
       "name": "Mordida da Matriarca",
       "cooldown": 1.5,
       "targeting": { "type": "melee_arc", "range": 2.3, "angle": 120 },
-      "effects": [{ "type": "damage", "school": "physical", "base": 9 }]
+      "effects": [{ "type": "damage", "school": "physical", "base": 60 }]
     },
     {
       "id": "matriarch.rending_bite",
@@ -87,7 +87,7 @@
       "cooldown": 1.5,
       "targeting": { "type": "melee_arc", "range": 2.3, "angle": 120 },
       "effects": [
-        { "type": "damage", "school": "physical", "base": 9 },
+        { "type": "damage", "school": "physical", "base": 60 },
         { "type": "apply_status", "status": "status.bleed", "duration": 6 }
       ]
     },
@@ -97,7 +97,7 @@
       "cooldown": 9,
       "targeting": { "type": "line", "length": 6, "width": 1.6 },
       "telegraph": { "shape": "line", "length": 6, "width": 1.6, "delay": 1.0, "charge": true },
-      "effects": [{ "type": "damage", "school": "physical", "base": 19 }]
+      "effects": [{ "type": "damage", "school": "physical", "base": 130 }]
     },
     {
       "id": "matriarch.venom_pool",

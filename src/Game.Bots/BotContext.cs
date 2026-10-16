@@ -18,8 +18,10 @@ public interface IBotController
 }
 
 /// <summary>Tudo que um controlador pode ler no tick atual.</summary>
-public sealed class BotContext(World world, Entity self, BotOptions options, IHazardSource hazards)
+public sealed class BotContext(World world, Entity self, BotOptions options, IHazardSource hazards, ulong seed = 0)
 {
+    /// <summary>Seed do encontro, base do sorteio determinístico do tempo de reação (<see cref="Reactor"/>).</summary>
+    public ulong Seed { get; } = seed;
     public World World { get; } = world;
     public Entity Self { get; } = self;
     public BotOptions Options { get; } = options;
