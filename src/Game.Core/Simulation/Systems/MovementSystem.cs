@@ -29,7 +29,7 @@ public sealed class MovementSystem : ISimulationSystem
                 continue;
             }
 
-            var delta = move.Direction * move.Speed * World.TickSeconds;
+            var delta = move.Direction * (move.Speed * (float)world.Combat.SpeedMultiplier(world, e)) * World.TickSeconds;
             if (world.Map is null)
             {
                 tr.Position += delta;

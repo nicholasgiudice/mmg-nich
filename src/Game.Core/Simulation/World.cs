@@ -1,4 +1,5 @@
 using System.Numerics;
+using Game.Core.Combat;
 using Game.Core.Events;
 using Game.Core.Intents;
 using Game.Core.Simulation.Components;
@@ -24,8 +25,10 @@ public sealed class World
     private bool _cacheDirty;
     private int _nextId = 1;
 
-    internal World(ulong seed, ISimulationSystem[] systems, GridMap? map = null)
+    internal World(ulong seed, ISimulationSystem[] systems, GridMap? map = null, ContentCatalog? content = null, CombatServices? combat = null)
     {
+        Content = content ?? ContentCatalog.Empty;
+        Combat = combat ?? new CombatServices();
         Random = new SimRandom(seed);
         _systems = systems;
         Map = map;
@@ -34,6 +37,12 @@ public sealed class World
 
     /// <summary>Mapa de colisão do mundo (configurado no <see cref="WorldBuilder"/>); null = plano aberto sem paredes. Estático: não entra no hash.</summary>
     public GridMap? Map { get; }
+
+    /// <summary>Definições de conteúdo (habilidades, status, áreas, monstros...) já carregadas. Estático: não entra no hash.</summary>
+    public ContentCatalog Content { get; }
+
+    /// <summary>Registros de combate: efeitos por tipo, gates e fontes de modificadores.</summary>
+    public CombatServices Combat { get; }
 
     /// <summary>Consultas espaciais (raio, cone, retângulo, mais próxima).</summary>
     public ISpatialQuery Spatial { get; }

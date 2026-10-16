@@ -10,6 +10,6 @@ public sealed record MoveIntent(EntityId Entity, Vector2 Direction) : Intent(Ent
 
 public sealed record StopIntent(EntityId Entity) : Intent(Entity);
 
-/// <summary>Só o tipo; tratamento na T-008 (o sistema de habilidades lê <c>world.TickIntents</c>).</summary>
+/// <summary>Tratada pelo <c>AbilitySystem</c> (Combat), que lê <c>world.TickIntents</c>.</summary>
 public sealed record UseAbilityIntent(EntityId Entity, string AbilityId, EntityId? Target = null, Vector2? AimPoint = null)
     : Intent(Entity);

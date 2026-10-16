@@ -1,0 +1,47 @@
+{
+  "classes": [
+    {
+      "id": "class.warrior",
+      "name": "Guerreiro",
+      "health": 120,
+      "speed": 4.5,
+      "radius": 0.4,
+      "resource": { "type": "vigor", "max": 100, "initial": 0 },
+      "basicAttack": "warrior.slash",
+      "abilities": []
+    }
+  ],
+  "abilities": [
+    {
+      "id": "warrior.slash",
+      "name": "Corte",
+      "targeting": { "type": "melee_arc", "range": 1.5, "angle": 90 },
+      "cooldown": 0.8,
+      "effects": [{ "type": "damage", "school": "physical", "base": 10 }]
+    }
+  ],
+  "monsters": [
+    {
+      "id": "monster.dummy",
+      "name": "Boneco",
+      "health": 25,
+      "speed": 0,
+      "radius": 0.4,
+      "resistances": { "frost": 0.5 },
+      "abilities": [],
+      "ai": { "id": "ai.none" }
+    }
+  ],
+  "arenas": [
+    { "id": "arena.test", "lines": ["#######", "#.....#", "#.....#", "#######"] }
+  ],
+  "encounters": [
+    {
+      "id": "encounter.dummy",
+      "name": "Boneco",
+      "arena": "arena.test",
+      "players": [{ "class": "class.warrior", "position": { "x": 1.5, "y": 1.5 } }],
+      "enemies": [{ "monster": "monster.dummy", "position": { "x": 2.5, "y": 1.5 } }]
+    }
+  ]
+}

@@ -14,6 +14,12 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Game.Core\Game.Core.csproj" />
+    <!-- Game.Data só nos testes: o Core recebe as definições já carregadas. -->
+    <ProjectReference Include="..\..\src\Game.Data\Game.Data.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="Fixtures\**\*.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>
