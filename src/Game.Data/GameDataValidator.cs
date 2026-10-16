@@ -163,7 +163,29 @@ internal static partial class GameDataValidator
         }
 
         ValidateTargeting(x.Targeting, ctx.At(".targeting"));
+        if (x.Telegraph is { } tg) { ValidateTelegraph(tg, ctx.At(".telegraph")); }
         ValidateEffects(x.Effects, ctx, "effects", refs);
+    }
+
+    private static void ValidateTelegraph(TelegraphDefinition t, Ctx ctx)
+    {
+        ctx.PositiveTicks("delay", t.DelayTicks);
+        switch (t.Shape)
+        {
+            case TelegraphShape.Circle:
+                ctx.Positive("radius", t.Radius);
+                break;
+            case TelegraphShape.Cone:
+                ctx.Positive("length", t.Length);
+                if (!(t.Angle > 0 && t.Angle <= 360)) { ctx.Error("angle", "Deve estar em (0, 360]."); }
+                break;
+            case TelegraphShape.Line:
+                ctx.Positive("length", t.Length);
+                ctx.Positive("width", t.Width);
+                break;
+        }
+
+        if (t.Charge && t.Shape != TelegraphShape.Line) { ctx.Error("charge", "Investida exige shape 'line'."); }
     }
 
     private static void ValidateTargeting(TargetingDefinition t, Ctx ctx)
@@ -232,6 +254,7 @@ internal static partial class GameDataValidator
                     c.Exists("monster", su.Monster, refs.Monsters, "monstro");
                     if (su.Count < 1) { c.Error("count", "Deve ser pelo menos 1."); }
                     c.NonNegative("radius", su.Radius);
+                    if (su.MaxAlive < 0) { c.Error("maxAlive", "Deve ser maior ou igual a 0 (0 = sem limite)."); }
                     break;
             }
         }
@@ -310,6 +333,32 @@ internal static partial class GameDataValidator
         }
 
         if (string.IsNullOrWhiteSpace(x.Ai.Id)) { ctx.Error("ai.id", "Id do perfil de IA obrigatório."); }
+        ValidatePhases(x, ctx, refs);
+    }
+
+    private static void ValidatePhases(MonsterDefinition x, Ctx ctx, Refs refs)
+    {
+        var ids = new HashSet<string>();
+        var previous = double.PositiveInfinity;
+        for (var i = 0; i < x.Phases.Count; i++)
+        {
+            var p = x.Phases[i];
+            var pc = ctx.At($".phases[{i}]");
+            if (!IdPattern().IsMatch(p.Id)) { pc.Error("id", $"Id de fase inválido: '{p.Id}'."); }
+            if (!ids.Add(p.Id)) { pc.Error("id", $"Id de fase duplicado no monstro: '{p.Id}'."); }
+            if (!(p.HealthPercent > 0 && p.HealthPercent <= 100)) { pc.Error("healthPercent", "Deve estar em (0, 100]."); }
+            else if (i == 0 && p.HealthPercent != 100) { pc.Error("healthPercent", "A primeira fase deve ter healthPercent 100."); }
+            else if (p.HealthPercent >= previous) { pc.Error("healthPercent", "Os limiares devem decrescer de uma fase para a seguinte."); }
+            previous = p.HealthPercent;
+            ValidateEffects(p.OnEnter, pc, "onEnter", refs);
+            if (p.Abilities is { } list)
+            {
+                for (var j = 0; j < list.Count; j++)
+                {
+                    pc.Exists($"abilities[{j}]", list[j], refs.Abilities, "habilidade");
+                }
+            }
+        }
     }
 
     private static void ValidateArena(Entry<ArenaDefinition> e, List<LoadError> errors)

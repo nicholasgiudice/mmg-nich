@@ -65,4 +65,7 @@ public sealed record SummonEffect : EffectDefinition
     public required string Monster { get; init; }
     public int Count { get; init; } = 1;
     public double Radius { get; init; }
+
+    /// <summary>Máximo de invocações vivas deste monstro por fonte (0 = sem limite). Só nasce o que cabe no limite.</summary>
+    public int MaxAlive { get; init; }
 }

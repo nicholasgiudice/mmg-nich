@@ -111,6 +111,7 @@ public static class CombatModules
         // ---- slot T-011 (IA/ameaça): efeito threat ----
         Threat.ThreatModule.Register(s);
 
-        // ---- slot T-012 (áreas/invocação/fases): efeitos spawn_area/summon ----
+        // ---- slot T-012 (áreas/invocação/fases): efeitos spawn_area/summon + gate de fases ----
+        EncounterModule.Register(s);
     }
 }

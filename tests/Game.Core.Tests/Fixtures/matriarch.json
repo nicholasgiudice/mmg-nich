@@ -1,0 +1,149 @@
+{
+  "classes": [
+    {
+      "id": "class.fixture_hero", "name": "Heroi", "health": 100000, "speed": 4, "radius": 0.4,
+      "resource": { "type": "vigor", "max": 100, "initial": 0 },
+      "basicAttack": "hero.hit",
+      "abilities": [],
+      "resourceRules": [ { "id": "fixture.taken", "trigger": "damage_taken", "ratio": 0.1 } ]
+    }
+  ],
+  "abilities": [
+    { "id": "hero.hit", "name": "Golpe", "targeting": { "type": "unit", "range": 40 }, "effects": [ { "type": "damage", "base": 10 } ] },
+    {
+      "id": "matriarch.bite", "name": "Mordida", "cooldown": 1,
+      "targeting": { "type": "melee_arc", "range": 2, "angle": 120 },
+      "effects": [ { "type": "damage", "base": 20 } ]
+    },
+    {
+      "id": "matriarch.charge", "name": "Investida", "cooldown": 8,
+      "targeting": { "type": "line", "length": 6, "width": 1.5 },
+      "telegraph": { "shape": "line", "length": 6, "width": 1.5, "delay": 1, "charge": true },
+      "effects": [ { "type": "damage", "base": 40 } ]
+    },
+    {
+      "id": "matriarch.venom_pool", "name": "Poca de Veneno", "tags": [ "ai.area" ], "cooldown": 10,
+      "targeting": { "type": "circle_at_point", "range": 10, "radius": 2 },
+      "telegraph": { "shape": "circle", "radius": 2, "delay": 1, "anchor": "aim" },
+      "effects": [ { "type": "spawn_area", "area": "area.venom_pool" } ]
+    },
+    {
+      "id": "matriarch.venom_pool_fast", "name": "Poca de Veneno Rapida", "tags": [ "ai.area" ], "cooldown": 4,
+      "targeting": { "type": "circle_at_point", "range": 10, "radius": 2 },
+      "telegraph": { "shape": "circle", "radius": 2, "delay": 1, "anchor": "aim" },
+      "effects": [ { "type": "spawn_area", "area": "area.venom_pool" } ]
+    },
+    {
+      "id": "matriarch.web", "name": "Teia", "tags": [ "ai.area" ], "cooldown": 12,
+      "targeting": { "type": "circle_at_point", "range": 10, "radius": 3 },
+      "effects": [ { "type": "spawn_area", "area": "area.web" } ]
+    },
+    {
+      "id": "matriarch.summon_lesser", "name": "Chamar Aranhas", "tags": [ "ai.summon" ], "cooldown": 15,
+      "targeting": { "type": "self" },
+      "effects": [ { "type": "summon", "monster": "monster.spider_small", "count": 2, "radius": 2, "maxAlive": 4 } ]
+    },
+    {
+      "id": "matriarch.summon_greater", "name": "Chamar Aranha Maior", "tags": [ "ai.summon" ], "cooldown": 30,
+      "targeting": { "type": "self" },
+      "effects": [ { "type": "summon", "monster": "monster.spider_big", "count": 1, "radius": 2, "maxAlive": 1 } ]
+    },
+    {
+      "id": "hero.set_trap", "name": "Armadilha", "targeting": { "type": "circle_at_point", "range": 40, "radius": 1 },
+      "effects": [ { "type": "spawn_area", "area": "area.trap" } ]
+    },
+    {
+      "id": "spider.bite", "name": "Picada", "cooldown": 1,
+      "targeting": { "type": "melee_arc", "range": 1.2, "angle": 120 },
+      "effects": [ { "type": "damage", "base": 3 } ]
+    }
+  ],
+  "statuses": [
+    {
+      "id": "status.fixture_poison", "name": "Veneno", "tags": [ "poison" ], "defaultDuration": 2,
+      "periodic": [ { "interval": 1, "effects": [ { "type": "damage", "base": 2, "school": "nature" } ] } ]
+    },
+    { "id": "status.fixture_slow", "name": "Lentidao", "defaultDuration": 1, "modifiers": { "speedMultiplier": 0.5 } },
+    { "id": "status.fixture_rooted", "name": "Preso", "tags": [ "root" ], "defaultDuration": 3, "flags": { "rooted": true } },
+    { "id": "status.fixture_frenzy", "name": "Frenesi", "defaultDuration": 3600, "modifiers": { "speedMultiplier": 1.4, "damageTakenMultiplier": 1.25 } }
+  ],
+  "areas": [
+    {
+      "id": "area.venom_pool", "radius": 2, "duration": 6, "interval": 1, "mode": "periodic", "affects": "enemy",
+      "effects": [
+        { "type": "damage", "base": 5, "school": "nature" },
+        { "type": "apply_status", "status": "status.fixture_poison" }
+      ]
+    },
+    {
+      "id": "area.web", "radius": 3, "duration": 20, "interval": 0.5, "mode": "periodic", "affects": "enemy",
+      "effects": [ { "type": "apply_status", "status": "status.fixture_slow" } ]
+    },
+    {
+      "id": "area.trap", "radius": 1, "duration": 30, "mode": "on_enter_once", "affects": "enemy",
+      "effects": [ { "type": "apply_status", "status": "status.fixture_rooted" } ]
+    }
+  ],
+  "monsters": [
+    {
+      "id": "monster.spider_small", "name": "Aranha", "health": 60, "speed": 3.5, "radius": 0.4,
+      "abilities": [ "spider.bite" ], "ai": { "id": "ai.melee_chaser", "parameters": { "aggroRange": 20 } }
+    },
+    {
+      "id": "monster.spider_big", "name": "Aranha Maior", "health": 300, "speed": 3, "radius": 0.6,
+      "abilities": [ "spider.bite" ], "ai": { "id": "ai.melee_chaser", "parameters": { "aggroRange": 20 } }
+    },
+    {
+      "id": "monster.matriarch", "name": "Matriarca da Floresta", "rank": "boss", "health": 3000, "speed": 3, "radius": 0.8,
+      "abilities": [
+        "matriarch.charge", "matriarch.bite", "matriarch.summon_lesser", "matriarch.summon_greater",
+        "matriarch.venom_pool", "matriarch.venom_pool_fast", "matriarch.web"
+      ],
+      "ai": { "id": "ai.boss", "parameters": { "aggroRange": 30 } },
+      "phases": [
+        {
+          "id": "hunt", "healthPercent": 100,
+          "abilities": [ "matriarch.charge", "matriarch.bite", "matriarch.venom_pool", "matriarch.summon_lesser" ]
+        },
+        {
+          "id": "suffocating_web", "healthPercent": 66,
+          "onEnter": [ { "type": "summon", "monster": "monster.spider_big", "count": 1, "radius": 2, "maxAlive": 1 } ],
+          "abilities": [ "matriarch.charge", "matriarch.bite", "matriarch.venom_pool_fast", "matriarch.web", "matriarch.summon_lesser" ]
+        },
+        {
+          "id": "frenzy", "healthPercent": 33, "noSummons": true,
+          "onEnter": [ { "type": "apply_status", "status": "status.fixture_frenzy" } ],
+          "abilities": [ "matriarch.charge", "matriarch.bite", "matriarch.venom_pool_fast", "matriarch.summon_lesser" ]
+        }
+      ]
+    }
+  ],
+  "arenas": [
+    {
+      "id": "arena.nest",
+      "lines": [
+        "##############################",
+        "#............................#",
+        "#............................#",
+        "#............................#",
+        "#............................#",
+        "#............................#",
+        "#............................#",
+        "#............................#",
+        "#............................#",
+        "#............................#",
+        "#............................#",
+        "#............................#",
+        "#............................#",
+        "##############################"
+      ]
+    }
+  ],
+  "encounters": [
+    {
+      "id": "encounter.matriarch", "name": "Matriarca", "arena": "arena.nest",
+      "players": [ { "class": "class.fixture_hero", "position": { "x": 5.5, "y": 6.5 } } ],
+      "enemies": [ { "monster": "monster.matriarch", "position": { "x": 15.5, "y": 6.5 } } ]
+    }
+  ]
+}
