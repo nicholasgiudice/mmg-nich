@@ -19,7 +19,7 @@ MMO RPG 2D medieval, visão de cima, combate PvE em tempo real. Documentos de re
 4. Crie a branch `task/T-XXX-nome-curto` a partir de `main` atualizada.
 5. Altere apenas as áreas listadas em "Áreas que pode alterar". Se precisar mexer em outra, faça o mínimo e registre no Resultado.
 6. Ao terminar, preencha a seção `## Resultado` no próprio arquivo da tarefa: o que foi feito, decisões tomadas, desvios, pendências.
-7. Faça commit na branch. Não faça merge em `main` nem push forçado — o humano revisa e integra.
+7. Faça commit na branch. Não faça merge em `main`, nunca faça push de `main` e nunca use push forçado — o humano revisa e integra. Se a tarefa roda no Windows, faça `git push -u origin task/T-XXX-...` ao terminar, para a integração ser feita a partir da VPS. Na VPS, não faça push (a integração é local).
 
 Se algo for ambíguo, escolha a opção mais simples coerente com `tech/stack-proposal-v0.1.md`, siga em frente e registre a decisão no Resultado. Só pare se estiver realmente bloqueado.
 
