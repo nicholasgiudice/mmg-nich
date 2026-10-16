@@ -29,3 +29,7 @@ bin/
 obj/
 *.user
 TestResults/
+
+# Claude Code (worktrees de agentes, config local)
+.claude/worktrees/
+.claude/settings.local.json
