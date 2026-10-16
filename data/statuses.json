@@ -90,7 +90,7 @@
       "tags": ["buff", "frenzy"],
       "defaultDuration": 3600,
       "stacking": "refresh",
-      "modifiers": { "speedMultiplier": 1.35, "damageDealtMultiplier": 1.15, "damageTakenMultiplier": 1.2 }
+      "modifiers": { "speedMultiplier": 1.35, "damageDealtMultiplier": 1.15, "damageTakenMultiplier": 1.2, "controlDurationMultiplier": 0.5 }
     }
   ]
 }

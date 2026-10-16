@@ -20,6 +20,12 @@ public sealed class AreaState : IComponent
     public FactionFilter Affects { get; init; }
     public long CreatedTick { get; init; }
 
+    /// <summary>Tick em que a área fica armada (T-017); antes disso não dispara. Igual a CreatedTick = armada desde o início.</summary>
+    public long ArmedAtTick { get; init; }
+
+    /// <summary>Já publicou <see cref="AreaArmed"/> (só áreas com tempo de armar).</summary>
+    public bool ArmedAnnounced { get; set; }
+
     /// <summary>A área expira no primeiro tick com <c>Tick >= ExpiresAtTick</c> (após aplicar, se for tick de aplicação).</summary>
     public long ExpiresAtTick { get; init; }
 
@@ -35,6 +41,8 @@ public sealed class AreaState : IComponent
         Mode = Mode,
         Affects = Affects,
         CreatedTick = CreatedTick,
+        ArmedAtTick = ArmedAtTick,
+        ArmedAnnounced = ArmedAnnounced,
         ExpiresAtTick = ExpiresAtTick,
         NextApplyTick = NextApplyTick,
     };
@@ -48,6 +56,8 @@ public sealed class AreaState : IComponent
         hasher.Add((int)Mode);
         hasher.Add((int)Affects);
         hasher.Add(CreatedTick);
+        hasher.Add(ArmedAtTick);
+        hasher.Add(ArmedAnnounced);
         hasher.Add(ExpiresAtTick);
         hasher.Add(NextApplyTick);
     }
@@ -62,7 +72,12 @@ public enum AreaExpireReason
     Triggered,
 }
 
-public sealed record AreaSpawned(EntityId Area, string AreaId, EntityId Owner, Vector2 Position, float Radius, long ExpiresAtTick) : GameEvent;
+/// <summary>ArmedAtTick (T-017): tick em que a área passa a disparar (= tick de criação se não há tempo de armar).</summary>
+public sealed record AreaSpawned(
+    EntityId Area, string AreaId, EntityId Owner, Vector2 Position, float Radius, long ExpiresAtTick, long ArmedAtTick = 0) : GameEvent;
+
+/// <summary>A área terminou de armar e passa a disparar (T-017). Só é publicado para áreas com <c>armTime</c> &gt; 0.</summary>
+public sealed record AreaArmed(EntityId Area, string AreaId, EntityId Owner) : GameEvent;
 
 /// <summary>Os efeitos da área foram aplicados a <paramref name="Targets"/> (só é publicado quando há alvos).</summary>
 public sealed record AreaTriggered(EntityId Area, string AreaId, EntityId Owner, IReadOnlyList<EntityId> Targets) : GameEvent;
@@ -84,11 +99,13 @@ public static class AreaService
             Mode = def.Mode,
             Affects = def.Affects,
             CreatedTick = world.Tick,
+            ArmedAtTick = world.Tick + def.ArmTimeTicks,
+            ArmedAnnounced = def.ArmTimeTicks <= 0,
             ExpiresAtTick = world.Tick + def.DurationTicks,
             NextApplyTick = world.Tick + interval,
         };
         var entity = world.Spawn(new Transform { Position = position }, state);
-        world.Events.Publish(new AreaSpawned(entity.Id, def.Id, state.Owner, position, state.Radius, state.ExpiresAtTick));
+        world.Events.Publish(new AreaSpawned(entity.Id, def.Id, state.Owner, position, state.Radius, state.ExpiresAtTick, state.ArmedAtTick));
         return entity;
     }
 
@@ -112,6 +129,7 @@ public static class AreaService
 /// <summary>
 /// Aplica e expira áreas (ordem <see cref="SystemOrder.Areas"/>, antes de Status/Recursos/IA para que o dano gere recurso e ameaça no mesmo tick).
 /// Periódica: aplica os efeitos a quem está dentro a cada intervalo (primeira aplicação em criação + intervalo, inclusive no tick final).
+/// Áreas com <c>armTime</c> só disparam depois de armadas (evento <see cref="AreaArmed"/>); a primeira aplicação periódica só ocorre depois de armada.
 /// <c>on_enter_once</c>: dispara no primeiro tick em que algum afetado está dentro, aplica a todos os que estão dentro e some.
 /// Alvos: entidades vivas com facção e vida cujo corpo toca o círculo.
 /// </summary>
@@ -129,6 +147,24 @@ public sealed class AreaSystem : ISimulationSystem
             var def = world.Content.Areas[area.AreaId];
             var pos = entity.Get<Transform>().Position;
             var owner = world.Find(area.Owner);
+
+            var armed = world.Tick >= area.ArmedAtTick;
+            if (armed && !area.ArmedAnnounced)
+            {
+                area.ArmedAnnounced = true;
+                world.Events.Publish(new AreaArmed(entity.Id, area.AreaId, area.Owner));
+            }
+
+            if (!armed)
+            {
+                // Ainda armando: não dispara (a duração continua correndo).
+                if (world.Tick >= area.ExpiresAtTick)
+                {
+                    Expire(world, entity, area, AreaExpireReason.Duration);
+                }
+
+                continue;
+            }
 
             if (area.Mode == AreaMode.OnEnterOnce)
             {

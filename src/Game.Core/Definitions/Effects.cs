@@ -1,12 +1,19 @@
 namespace Game.Core.Definitions;
 
 /// <summary>Efeito de habilidade/status/área. Discriminador JSON: <c>type</c>. Durações em ticks.</summary>
-public abstract record EffectDefinition;
+public abstract record EffectDefinition
+{
+    /// <summary>JSON: "target" (<c>targets</c> | <c>self</c>). <c>self</c> aplica o efeito ao conjurador, não aos alvos (T-017).</summary>
+    public EffectTarget Target { get; init; } = EffectTarget.Targets;
+}
 
 public sealed record DamageEffect : EffectDefinition
 {
     public required double Base { get; init; }
     public DamageSchool School { get; init; } = DamageSchool.Physical;
+
+    /// <summary>Bônus por tag do alvo (T-017): <c>{ "undead": 0.5 }</c> = +50% contra alvos com a tag. Bônus de tags diferentes somam.</summary>
+    public IReadOnlyDictionary<string, double> BonusVsTags { get; init; } = new Dictionary<string, double>();
 }
 
 public sealed record HealEffect : EffectDefinition
@@ -29,7 +36,10 @@ public sealed record ApplyStatusEffect : EffectDefinition
 
 public sealed record RemoveStatusEffect : EffectDefinition
 {
-    public required string Tag { get; init; }
+    public string Tag { get; init; } = "";
+
+    /// <summary>Alternativa a <see cref="Tag"/> (T-017): remove status que tenham qualquer uma destas tags (ex.: poison ou curse).</summary>
+    public IReadOnlyList<string> Tags { get; init; } = [];
     public int Count { get; init; } = 1;
 }
 

@@ -5,6 +5,7 @@
       "id": "area.containment_trap",
       "radius": 1.2,
       "duration": 30,
+      "armTime": 0.5,
       "mode": "on_enter_once",
       "affects": "enemy",
       "effects": [

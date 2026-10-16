@@ -23,7 +23,8 @@ public sealed class AbilityInfo
     private AbilityInfo(AbilityDefinition def)
     {
         Definition = def;
-        var effects = def.Effects;
+        // T-017: efeitos com "target": "self" (ex.: cura própria da Corrente Sagrada) não definem o papel da habilidade.
+        var effects = def.Effects.Where(e => e.Target == EffectTarget.Targets).ToList();
         DamageTotal = effects.OfType<DamageEffect>().Sum(e => e.Base);
         HasHeal = effects.OfType<HealEffect>().Any();
         HasShield = effects.OfType<ShieldEffect>().Any();

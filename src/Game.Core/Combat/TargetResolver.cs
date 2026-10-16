@@ -22,8 +22,12 @@ public static class TargetResolver
 {
     private const float RangeEpsilon = 1e-4f;
 
-    public static bool IsBeneficial(AbilityDefinition ability) =>
-        ability.Effects.Count > 0 && ability.Effects.All(e => e is HealEffect or ShieldEffect or RemoveStatusEffect);
+    /// <summary>Só os efeitos com <c>target: targets</c> contam (efeitos em <c>self</c> não decidem a facção).</summary>
+    public static bool IsBeneficial(AbilityDefinition ability)
+    {
+        var onTargets = ability.Effects.Where(e => e.Target == EffectTarget.Targets).ToList();
+        return onTargets.Count > 0 && onTargets.All(e => e is HealEffect or ShieldEffect or RemoveStatusEffect);
+    }
 
     public static Vector2 AimDirection(Entity caster, Entity? target, Vector2? aim)
     {

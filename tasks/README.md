@@ -68,10 +68,12 @@ Decisões de escopo, derivadas de `design/combat-encounters-v0.1.md`:
 
 | Classe | Ataque básico | Habilidades do protótipo |
 |---|---|---|
-| Guerreiro | Golpe de espada | Golpe Pesado, Golpe Circular, Guarda Firme |
+| Guerreiro | Golpe de espada | Golpe Pesado, Golpe Circular, Guarda Firme, Provocação |
 | Arqueiro | Disparo | Marca do Caçador, Recuo Rápido, Armadilha de Contenção |
 | Mago | Projétil Arcano | Explosão Elemental, Prisão de Gelo, Barreira Arcana |
-| Clérigo | Golpe Sagrado | Cura Direta, Escudo Sagrado, Corrente Sagrada |
+| Clérigo | Golpe Sagrado | Cura Direta, Escudo Sagrado, Corrente Sagrada, Purificação |
+
+Consumível comum às quatro classes (campo `consumables`, separado das habilidades): Poção de Cura Menor (`item.minor_healing_potion`, 3 cargas por encontro, recarga de 20 s).
 
 Inimigos: Rato de Campo, Lobo Cinzento, Salteador da Estrada, Guarda Esquelético e Matriarca da Floresta (simplificada, 3 fases).
 

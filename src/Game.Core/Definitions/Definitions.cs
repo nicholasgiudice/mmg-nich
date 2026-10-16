@@ -13,6 +13,13 @@ public sealed record ClassDefinition
     public required ResourceDefinition Resource { get; init; }
     public required string BasicAttack { get; init; }
     public IReadOnlyList<string> Abilities { get; init; } = [];
+
+    /// <summary>
+    /// Consumíveis (T-017): ids de habilidade com uso limitado por <see cref="AbilityDefinition.Charges"/>. Ficam separados de
+    /// <see cref="Abilities"/>; o jogador os conhece mas eles não entram em <c>AbilityState.Known</c> (ver <c>AbilityState.Consumables</c>).
+    /// </summary>
+    public IReadOnlyList<string> Consumables { get; init; } = [];
+
     /// <summary>Regras de geração de recurso por evento (T-010).</summary>
     public IReadOnlyList<ResourceRuleDefinition> ResourceRules { get; init; } = [];
 }
@@ -26,6 +33,9 @@ public sealed record AbilityDefinition
     public int CooldownTicks { get; init; }
     public int CastTimeTicks { get; init; }
     public bool CastWhileMoving { get; init; }
+
+    /// <summary>Usos por encontro (T-017). Null = ilimitado. Esgotadas: <c>AbilityRejectReason.NoCharges</c>.</summary>
+    public int? Charges { get; init; }
     public required TargetingDefinition Targeting { get; init; }
 
     /// <summary>
@@ -64,6 +74,9 @@ public sealed record StatModifiers
     public double SpeedMultiplier { get; init; } = 1;
     public double DamageTakenMultiplier { get; init; } = 1;
     public double DamageDealtMultiplier { get; init; } = 1;
+
+    /// <summary>Multiplica a duração de status com tag <c>control</c> recebidos por quem tem este status (0,5 = metade). T-017.</summary>
+    public double ControlDurationMultiplier { get; init; } = 1;
 }
 
 /// <summary>Redução de dano recebido só quando a fonte está dentro de um arco à frente do alvo (Guarda Firme, Guarda Esquelético).</summary>
@@ -111,6 +124,9 @@ public sealed record AreaDefinition
     public required int DurationTicks { get; init; }
     /// <summary>Intervalo entre aplicações (modo periodic).</summary>
     public int IntervalTicks { get; init; }
+
+    /// <summary>Tempo de armar (JSON: "armTime", segundos). Antes disso a área não dispara. 0 = armada na criação. T-017.</summary>
+    public int ArmTimeTicks { get; init; }
     public AreaMode Mode { get; init; } = AreaMode.Periodic;
     public FactionFilter Affects { get; init; } = FactionFilter.Enemy;
     public IReadOnlyList<EffectDefinition> Effects { get; init; } = [];

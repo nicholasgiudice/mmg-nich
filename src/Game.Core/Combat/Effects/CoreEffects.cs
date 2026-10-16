@@ -23,7 +23,27 @@ public static class CoreEffects
     public static float Round(double value) => (float)Math.Round(value, MidpointRounding.AwayFromZero);
 
     private static void OnDamage(EffectContext c, DamageEffect e) =>
-        DamageResolver.Deal(c.World, c.Source, c.Target!, c.SourceId, e.Base, e.School);
+        DamageResolver.Deal(c.World, c.Source, c.Target!, c.SourceId, e.Base * TagBonus(c.Target!, e), e.School);
+
+    /// <summary>1 + soma dos bônus <c>bonusVsTags</c> das tags que o alvo possui (mínimo 0).</summary>
+    public static double TagBonus(Entity target, DamageEffect e)
+    {
+        if (e.BonusVsTags.Count == 0 || target.TryGet<UnitInfo>() is not { } info)
+        {
+            return 1;
+        }
+
+        var bonus = 0.0;
+        foreach (var kv in e.BonusVsTags)
+        {
+            if (info.HasTag(kv.Key))
+            {
+                bonus += kv.Value;
+            }
+        }
+
+        return Math.Max(0, 1 + bonus);
+    }
 
     private static void OnHeal(EffectContext c, HealEffect e)
     {

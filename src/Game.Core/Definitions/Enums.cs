@@ -3,6 +3,9 @@ namespace Game.Core.Definitions;
 /// <summary>Escola de dano (valores JSON em snake_case: physical, arcane, ...).</summary>
 public enum DamageSchool { Physical, Arcane, Fire, Frost, Holy, Nature }
 
+/// <summary>A quem um efeito se aplica (T-017): aos alvos resolvidos da habilidade (padrão) ou ao conjurador.</summary>
+public enum EffectTarget { Targets, Self }
+
 /// <summary>Facção alvo/afetada em relação a quem usa.</summary>
 public enum FactionFilter { Enemy, Ally, Any }
 

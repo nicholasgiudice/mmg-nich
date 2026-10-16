@@ -113,6 +113,11 @@ internal static partial class GameDataValidator
             ctx.Exists($"abilities[{i}]", x.Abilities[i], refs.Abilities, "habilidade");
         }
 
+        for (var i = 0; i < x.Consumables.Count; i++)
+        {
+            ctx.Exists($"consumables[{i}]", x.Consumables[i], refs.Abilities, "habilidade");
+        }
+
         ValidateResourceRules(x, ctx);
     }
 
@@ -162,6 +167,7 @@ internal static partial class GameDataValidator
             ctx.NonNegative("cost.amount", cost.Amount);
         }
 
+        if (x.Charges is { } charges && charges < 1) { ctx.Error("charges", "Deve ser pelo menos 1 (ausente = ilimitado)."); }
         ValidateTargeting(x.Targeting, ctx.At(".targeting"));
         if (x.Telegraph is { } tg) { ValidateTelegraph(tg, ctx.At(".telegraph")); }
         ValidateEffects(x.Effects, ctx, "effects", refs);
@@ -222,6 +228,12 @@ internal static partial class GameDataValidator
             {
                 case DamageEffect d:
                     c.NonNegative("base", d.Base);
+                    foreach (var (tag, bonus) in d.BonusVsTags)
+                    {
+                        if (string.IsNullOrWhiteSpace(tag)) { c.Error("bonusVsTags", "Tag vazia."); }
+                        if (!(bonus > -1)) { c.Error($"bonusVsTags.{tag}", "Deve ser maior que -1."); }
+                    }
+
                     break;
                 case HealEffect h:
                     c.NonNegative("base", h.Base);
@@ -235,7 +247,8 @@ internal static partial class GameDataValidator
                     if (a.DurationTicks is { } d2) { c.PositiveTicks("duration", d2); }
                     break;
                 case RemoveStatusEffect r:
-                    if (string.IsNullOrWhiteSpace(r.Tag)) { c.Error("tag", "Tag obrigatória."); }
+                    if (string.IsNullOrWhiteSpace(r.Tag) && r.Tags.Count == 0) { c.Error("tag", "Informe 'tag' ou 'tags'."); }
+                    if (r.Tags.Any(string.IsNullOrWhiteSpace)) { c.Error("tags", "Tag vazia."); }
                     if (r.Count < 1) { c.Error("count", "Deve ser pelo menos 1."); }
                     break;
                 case DisplacementEffect m:
@@ -269,6 +282,7 @@ internal static partial class GameDataValidator
         ctx.NonNegative("modifiers.speedMultiplier", x.Modifiers.SpeedMultiplier);
         ctx.NonNegative("modifiers.damageTakenMultiplier", x.Modifiers.DamageTakenMultiplier);
         ctx.NonNegative("modifiers.damageDealtMultiplier", x.Modifiers.DamageDealtMultiplier);
+        ctx.NonNegative("modifiers.controlDurationMultiplier", x.Modifiers.ControlDurationMultiplier);
         if (x.Frontal is { } fr)
         {
             if (fr.ArcDegrees <= 0 || fr.ArcDegrees > 360) { ctx.Error("frontal.arcDegrees", "Deve estar entre 0 (exclusivo) e 360."); }
@@ -309,6 +323,8 @@ internal static partial class GameDataValidator
         ctx.PositiveTicks("duration", x.DurationTicks);
         if (x.Mode == AreaMode.Periodic) { ctx.PositiveTicks("interval", x.IntervalTicks); }
         else { ctx.NonNegative("interval", x.IntervalTicks); }
+        ctx.NonNegative("armTime", x.ArmTimeTicks);
+        if (x.ArmTimeTicks >= x.DurationTicks) { ctx.Error("armTime", "Deve ser menor que a duração da área."); }
         ValidateEffects(x.Effects, ctx, "effects", refs);
     }
 

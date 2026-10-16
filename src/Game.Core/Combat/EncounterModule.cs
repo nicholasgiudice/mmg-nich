@@ -56,6 +56,12 @@ public static class EncounterModule
                 ? $"{c.SourceLabel(e.AreaId)} foi disparada"
                 : $"{c.SourceLabel(e.AreaId)} desapareceu"));
 
+        f.Register<AreaArmed>((c, e) => c.Entry(
+            e,
+            LogCategory.Habilidade,
+            $"{c.SourceLabel(e.AreaId)} está armada",
+            e.Owner));
+
         f.Register<PhaseChanged>((c, e) => c.Entry(
             e,
             LogCategory.Fase,

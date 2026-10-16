@@ -85,20 +85,33 @@ public static class EffectApplier
     {
         var dir = aimDirection ?? source?.TryGet<Simulation.Components.Transform>()?.Facing ?? new Vector2(0, 1);
         var registry = world.Combat.Effects;
+        IReadOnlyList<Entity>? selfOnly = null;
         foreach (var effect in effects)
         {
             var scope = registry.ScopeOf(effect); // lança erro claro se não registrado
+            var effectTargets = targets;
+            if (effect.Target == EffectTarget.Self)
+            {
+                // T-017: "target": "self" aplica ao conjurador (ignorado se não há fonte viva).
+                if (source is null || !source.IsAlive)
+                {
+                    continue;
+                }
+
+                effectTargets = selfOnly ??= [source];
+            }
+
             if (scope == EffectScope.PerCast)
             {
-                registry.Invoke(Make(world, source, null, targets, sourceId, ability, aimPoint, dir), effect);
+                registry.Invoke(Make(world, source, null, effectTargets, sourceId, ability, aimPoint, dir), effect);
                 continue;
             }
 
-            foreach (var t in targets)
+            foreach (var t in effectTargets)
             {
                 if (t.IsAlive)
                 {
-                    registry.Invoke(Make(world, source, t, targets, sourceId, ability, aimPoint, dir), effect);
+                    registry.Invoke(Make(world, source, t, effectTargets, sourceId, ability, aimPoint, dir), effect);
                 }
             }
         }

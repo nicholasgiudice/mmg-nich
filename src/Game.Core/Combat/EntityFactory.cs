@@ -18,6 +18,8 @@ public static class EntityFactory
             abilities.Known.Add(a);
         }
 
+        abilities.Consumables.AddRange(def.Consumables.Where(c => !abilities.Known.Contains(c)).Distinct());
+
         return world.Spawn(
             new Transform { Position = position },
             new Health((float)def.Health),

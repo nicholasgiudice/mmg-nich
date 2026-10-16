@@ -1,0 +1,14 @@
+{
+  "$schema": "./schemas/game-data.schema.json",
+  "abilities": [
+    {
+      "id": "item.minor_healing_potion",
+      "name": "Poção de Cura Menor",
+      "tags": ["consumable", "heal"],
+      "cooldown": 20,
+      "charges": 3,
+      "targeting": { "type": "self" },
+      "effects": [{ "type": "heal", "base": 60 }]
+    }
+  ]
+}

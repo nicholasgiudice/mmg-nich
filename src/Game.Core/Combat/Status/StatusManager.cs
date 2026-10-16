@@ -66,7 +66,8 @@ public static class StatusManager
         {
             var rules = world.Content.Rules.Control ?? ControlRules.Neutral;
             var rank = target.TryGet<UnitInfo>()?.Rank ?? MonsterRank.Normal;
-            var factor = rules.DurationByRank.For(rank) * NextDiminishingStep(world, effects, rules.Diminishing);
+            var factor = rules.DurationByRank.For(rank) * NextDiminishingStep(world, effects, rules.Diminishing)
+                * ControlDurationMultiplier(world, target);
             duration = factor <= 0 ? 0 : Math.Max(1, (int)Math.Round(duration * factor, MidpointRounding.AwayFromZero));
             if (duration == 0)
             {
@@ -121,6 +122,18 @@ public static class StatusManager
         return inst;
     }
 
+    /// <summary>Produto dos <c>controlDurationMultiplier</c> dos status ativos do alvo (^acúmulos). 1 = sem redução (T-017).</summary>
+    public static double ControlDurationMultiplier(World world, Entity target)
+    {
+        var m = 1.0;
+        foreach (var s in Active(world, target))
+        {
+            m *= Math.Pow(Def(world, s).Modifiers.ControlDurationMultiplier, s.Stacks);
+        }
+
+        return m;
+    }
+
     /// <summary>Passo do retorno decrescente para esta aplicação (1 = cheio, 0 = imune) e registra a aplicação.</summary>
     private static double NextDiminishingStep(World world, StatusEffects fx, ControlDiminishing d)
     {
@@ -152,7 +165,11 @@ public static class StatusManager
     // ---------- remoção ----------
 
     /// <summary>Remove até <paramref name="count"/> status com a tag, do mais antigo ao mais novo. Retorna quantos removeu.</summary>
-    public static int RemoveByTag(World world, Entity target, string tag, int count, EntityId by)
+    public static int RemoveByTag(World world, Entity target, string tag, int count, EntityId by) =>
+        RemoveByTags(world, target, [tag], count, by);
+
+    /// <summary>Como <see cref="RemoveByTag"/>, mas casa status com QUALQUER uma das tags (T-017: purificar veneno ou maldição).</summary>
+    public static int RemoveByTags(World world, Entity target, IReadOnlyList<string> tags, int count, EntityId by)
     {
         var fx = target.TryGet<StatusEffects>();
         if (fx is null)
@@ -168,7 +185,7 @@ public static class StatusManager
                 break;
             }
 
-            if (IsActive(world, s) && Def(world, s).Tags.Contains(tag))
+            if (IsActive(world, s) && Def(world, s).Tags.Any(t => tags.Contains(t)))
             {
                 fx.Active.Remove(s);
                 world.Events.Publish(new StatusRemoved(target.Id, s.StatusId, s.Id, by));
