@@ -45,4 +45,12 @@ Projeto Godot (T-004), qualquer classe de jogo, servidor, Docker.
 
 ## Resultado
 
-_(preencher ao concluir)_
+**Feito:** `MmoRpg.sln` (formato clássico), `global.json` (SDK 10.0.100, `rollForward: latestFeature`), `Directory.Build.props`, `.editorconfig`, projetos `src/Game.Core`, `src/Game.Data`, `tests/Game.Core.Tests`, `tests/Game.Data.Tests` (um teste de fumaça cada), `data/.gitkeep`, `data/schemas/.gitkeep`, `scripts/check.sh`, `.gitignore` e seção "Como compilar" no `README.md`.
+
+**Decisões:**
+- `Game.Core` sem nenhum `PackageReference`; `TargetFramework` das bibliotecas usa `$(SharedTargetFramework)` e o dos testes `$(AppTargetFramework)`.
+- `check.sh` roda `dotnet format`, `dotnet build -warnaserror` e `dotnet test --no-build` sobre `MmoRpg.sln`, com `set -euo pipefail`.
+- Pacotes de teste (xunit 2.9.3, Test.Sdk 17.14.1, coverlet 6.0.4) vieram do template `dotnet new xunit`.
+- `dotnet format` não reclamou de arquivos gerados; nenhuma exclusão foi necessária.
+
+**Desvios/pendências:** nenhum.
