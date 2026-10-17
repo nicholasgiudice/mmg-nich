@@ -107,12 +107,14 @@ Cenários (os cinco do design): Guerreiro × 3 Lobos; Arqueiro × Lobo + Saltead
 | [T-016](fase-0/T-016-validacao-balanceamento.md) | Testes de design e balanceamento | VPS | Médio | 014, 015 |
 | [T-017](fase-0/T-017-mecanicas-faltantes.md) | Mecânicas faltantes do design (Provocação, Purificação, consumíveis…) | VPS | Forte | 016 |
 | [T-018](fase-0/T-018-bots-rebalanceamento.md) | Bots com tempo de reação e rebalanceamento | VPS | Médio | 017 |
+| [T-019](fase-0/T-019-rebalanceamento-playtest.md) | Rebalanceamento pós-playtest: monstros mais lentos, mais dano | VPS | Médio | 018, 025 (impressões) |
 | [T-020](fase-0/T-020-cliente-apresentacao.md) | Cliente: autoridade local e sincronização de entidades | Windows | **Forte** | 004, 007 |
 | [T-021](fase-0/T-021-cliente-input-camera.md) | Cliente: input e câmera | Windows | Médio | 008, 020 |
 | [T-022](fase-0/T-022-cliente-hud.md) | Cliente: HUD e log de combate | Windows | Médio | 010, 013, 021 |
 | [T-023](fase-0/T-023-cliente-telegrafos-status.md) | Cliente: telegráfos, efeitos e status | Windows | Médio | 012, 021 |
 | [T-024](fase-0/T-024-cliente-menu-cenarios.md) | Cliente: menu de cenários | Windows | Leve | 014, 015, 021 |
 | [T-025](fase-0/T-025-playtest.md) | Playtest do protótipo | Windows | Humano | 018, 022, 023, 024 |
+| [T-026](fase-0/T-026-cliente-ataque-continuo.md) | Cliente: ataque contínuo segurando o botão | Windows | Leve | 021, 024 |
 | [T-030](fase-0/T-030-planejar-fase-1.md) | Detalhar a fase 1 em tarefas | VPS | Forte | 025 |
 
 ### Ondas de execução
@@ -131,6 +133,7 @@ Tarefas da mesma onda podem rodar em paralelo.
 | 8 | T-014 | T-023 |
 | 9 | T-016 | T-024 |
 | 10 | — | T-025 |
+| 10b | T-019 | T-026 (ajustes do playtest; depois, nova rodada da T-025) |
 | 11 | T-030 | — |
 
 Na onda 6, as quatro tarefas da VPS mexem em pastas diferentes do Core, mas todas registram sistemas no mundo. Integre na ordem 009 → 010 → 011 → 013. A T-009 e a T-011 criam/estendem o mesmo `data/rules.json`: quem integrar depois resolve o conflito mantendo as duas seções.
