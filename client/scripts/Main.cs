@@ -9,15 +9,17 @@ using MmoRpgClient.Authority;
 using MmoRpgClient.Data;
 using MmoRpgClient.Hud;
 using MmoRpgClient.Input;
+using MmoRpgClient.Match;
 using MmoRpgClient.Presentation;
 using GridMap = Game.Core.Spatial.GridMap;
 
 namespace MmoRpgClient;
 
 /// <summary>
-/// Raiz do protótipo: escolhe a autoridade, liga input, apresentação e câmera.
-/// Argumentos (depois de <c>--</c> na linha de comando):
-/// <c>--encounter=id</c>, <c>--seed=n</c>, <c>--fake-authority</c>,
+/// Cena da partida: monta a autoridade a partir do menu (<see cref="MatchSettings"/>) e liga input, apresentação,
+/// câmera, pausa (Esc), reinício (R) e tela de resultado.
+/// Argumentos de depuração (depois de <c>--</c> na linha de comando; pulam o menu):
+/// <c>--encounter=id</c>, <c>--class=id</c>, <c>--seed=n</c>, <c>--time-scale=n</c>, <c>--fake-authority</c>,
 /// <c>--auto-move=x,y</c> (mantém as teclas de movimento pelo sinal de x e y),
 /// <c>--demo-input=attack,ability_1,...</c> (aperta ações em sequência mirando o inimigo mais próximo e
 /// imprime as respostas da autoridade) e <c>--capture=caminho.png</c> (salva a tela e fecha; após 2 s, ou
@@ -25,8 +27,13 @@ namespace MmoRpgClient;
 /// </summary>
 public partial class Main : Node2D
 {
+    public const string ScenePath = "res://scenes/Main.tscn";
+
     private const string DefaultEncounter = "encounter.three_wolves";
     private const double CaptureDelaySeconds = 2.0;
+
+    /// <summary>Tempo para ver o desfecho antes da tela de resultado.</summary>
+    private const double ResultDelaySeconds = 1.5;
 
     private readonly Dictionary<string, string> _args = new(StringComparer.Ordinal);
     private IGameAuthority? _authority;
@@ -38,6 +45,13 @@ public partial class Main : Node2D
     private Hud.Hud _hud = null!;
     private double _elapsed;
     private double _demoFinishedAt = -1;
+    private ContentCatalog _content = ContentCatalog.Empty;
+    private MatchSettings? _settings;
+    private MatchTracker? _tracker;
+    private MatchOverlay _overlay = null!;
+    private string _encounterName = "";
+    private bool _paused;
+    private double _endedAt = -1;
 
     public override void _Ready()
     {
@@ -46,6 +60,11 @@ public partial class Main : Node2D
         _camera = GetNode<CameraRig>("Camera");
         _info = GetNode<Label>("Hud/InfoLabel");
         _hud = GetNode<Hud.Hud>("Hud/HudRoot");
+        _overlay = GetNode<MatchOverlay>("Hud/Overlay");
+        _overlay.ContinueRequested += Resume;
+        _overlay.RestartRequested += Restart;
+        _overlay.NextRequested += NextEncounter;
+        _overlay.MenuRequested += BackToMenu;
 
         foreach (var action in InputActions.All.Where(a => !InputMap.HasAction(a)))
         {
@@ -56,6 +75,7 @@ public partial class Main : Node2D
         {
             var (authority, map, content) = CreateAuthority();
             _authority = authority;
+            _content = content;
             _input = new PlayerInput(content.Abilities);
             _hud.SetContent(content);
             _worldView.SetContent(content);
@@ -68,6 +88,12 @@ public partial class Main : Node2D
             _info.Text = $"Core {CoreInfo.Version}\nErro ao iniciar: {ex.Message}";
         }
 
+        if (_args.TryGetValue("time-scale", out var scale)
+            && double.TryParse(scale, System.Globalization.CultureInfo.InvariantCulture, out var timeScale) && timeScale > 0)
+        {
+            Engine.TimeScale = timeScale; // só depuração: acelera a partida (a simulação continua em ticks fixos)
+        }
+
         if (_args.ContainsKey("demo-input") || _args.ContainsKey("auto-move"))
         {
             _demo = new DebugInputScript(_args.GetValueOrDefault("demo-input", ""), AutoMoveActions());
@@ -77,9 +103,16 @@ public partial class Main : Node2D
     public override void _Process(double delta)
     {
         _elapsed += delta;
+        if (!_paused && !_overlay.IsOpen)
+        {
+            _demo?.Update(delta); // antes de ler as teclas: o roteiro aperta ações neste frame
+        }
+
+        HandleMatchKeys();
+        var running = !_paused && !_overlay.IsOpen;
         if (_authority is not null && _input is not null)
         {
-            _demo?.Update(delta);
+
             var mousePx = GetGlobalMousePosition();
             var aim = Units.ToWorld(mousePx);
             var hovered = _worldView.PickAt(mousePx);
@@ -89,10 +122,15 @@ public partial class Main : Node2D
                 hovered = enemy.Id;
             }
 
-            _input.Update(_authority, aim, hovered, _hud.IsPointerOverUi());
-            _authority.Advance(delta);
+            IReadOnlyList<GameEvent> events = Array.Empty<GameEvent>();
+            if (running)
+            {
+                _input.Update(_authority, aim, hovered, _hud.IsPointerOverUi());
+                _authority.Advance(delta);
+                events = _authority.TakeEvents();
+                UpdateOutcome(events);
+            }
 
-            var events = _authority.TakeEvents();
             if (_demo is not null)
             {
                 LogAbilityEvents(_authority, events);
@@ -107,7 +145,7 @@ public partial class Main : Node2D
             }
 
             _info.Text = $"Core {CoreInfo.Version} · {Engine.GetFramesPerSecond()} FPS · tick {_authority.CurrentTick}\n"
-                + "WASD mover · clique atacar · 1-4 habilidades · Q poção · Tab alvo · Esc limpar";
+                + "WASD mover · clique atacar · 1-4 habilidades · Q poção · Tab alvo · R reiniciar · Esc pausa";
         }
 
         CaptureIfRequested();
@@ -121,16 +159,98 @@ public partial class Main : Node2D
         }
 
         var content = ContentLoader.Load();
-        var encounterId = _args.GetValueOrDefault("encounter", DefaultEncounter);
-        if (!content.Encounters.TryGetValue(encounterId, out var encounter))
+        var settings = MatchSettings.Current ?? new MatchSettings(
+            _args.GetValueOrDefault("encounter", DefaultEncounter),
+            _args.GetValueOrDefault("class"),
+            _args.TryGetValue("seed", out var s) && ulong.TryParse(s, out var parsed) ? parsed : 1UL);
+        var match = MatchSetup.Create(content, settings);
+        MatchSettings.Current = _settings = settings with { ClassId = match.PlayerClass };
+        _encounterName = match.Encounter.Name;
+        _tracker = new MatchTracker(match.Authority.ControlledEntity, match.Encounter.Defeat.TimeLimitTicks);
+        return (match.Authority, match.Map, content);
+    }
+
+    /// <summary>Esc: limpa o alvo se houver (a ação do PlayerInput); senão pausa/continua. R: reinicia com a mesma seed.</summary>
+    private void HandleMatchKeys()
+    {
+        if (_settings is null)
         {
-            throw new InvalidOperationException($"Encontro desconhecido: {encounterId}");
+            return;
         }
 
-        var seed = _args.TryGetValue("seed", out var s) && ulong.TryParse(s, out var parsed) ? parsed : 1UL;
-        var setup = EncounterSetup.Create(seed, content, encounter);
-        var map = setup.World.Map ?? EntityFactory.BuildMap(content.Arenas[encounter.Arena]);
-        return (new LocalAuthority(setup.World, setup.Players.FirstOrDefault()?.Id), map, content);
+        if (Godot.Input.IsActionJustPressed(InputActions.Restart))
+        {
+            Restart();
+            return;
+        }
+
+        if (Godot.Input.IsActionJustPressed(InputActions.Pause))
+        {
+            if (_paused)
+            {
+                Resume();
+            }
+            else if (!_overlay.IsOpen && _input?.SelectedTarget is null)
+            {
+                _paused = true;
+                _overlay.ShowPause(_settings, _encounterName);
+            }
+        }
+    }
+
+    private void UpdateOutcome(IReadOnlyList<GameEvent> events)
+    {
+        if (_tracker is null || _settings is null || _authority is null)
+        {
+            return;
+        }
+
+        _tracker.Consume(events, _authority.Latest);
+        if (_tracker.Outcome == MatchOutcome.InProgress)
+        {
+            return;
+        }
+
+        if (_endedAt < 0)
+        {
+            _endedAt = _elapsed;
+            GD.Print($"[match] {_tracker.Outcome} em {_tracker.Seconds:0.0}s");
+        }
+        else if (_elapsed - _endedAt >= ResultDelaySeconds && _demo is null)
+        {
+            _overlay.ShowResult(_tracker, _settings, _encounterName, NextEncounterId() is not null);
+        }
+    }
+
+    private void Resume()
+    {
+        _paused = false;
+        _overlay.Close();
+    }
+
+    private void Restart() => GetTree().ReloadCurrentScene();
+
+    private void BackToMenu() => GetTree().ChangeSceneToFile(MenuScreen.ScenePath);
+
+    /// <summary>Próximo encontro da lista, com a classe sugerida dele e uma seed nova.</summary>
+    private void NextEncounter()
+    {
+        if (NextEncounterId() is not { } next)
+        {
+            BackToMenu();
+            return;
+        }
+
+        var encounter = _content.Encounters[next];
+        MatchSettings.Current = new MatchSettings(next, MatchSetup.SuggestedClass(encounter), MatchSettings.RandomSeed());
+        GetTree().ReloadCurrentScene();
+    }
+
+    private string? NextEncounterId()
+    {
+        var ordered = MenuScreen.OrderedEncounterIds(_content);
+        var index = _settings is null ? -1 : ordered.IndexOf(_settings.EncounterId);
+        return index >= 0 && index + 1 < ordered.Count ? ordered[index + 1] : null;
     }
 
     private void CaptureIfRequested()

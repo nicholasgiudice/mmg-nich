@@ -11,6 +11,12 @@ public static class InputActions
     public const string TargetNext = "target_next";
     public const string TargetClear = "target_clear";
 
+    /// <summary>Esc: pausa (quando não há alvo selecionado para limpar).</summary>
+    public const string Pause = "pause";
+
+    /// <summary>R: reinicia a partida com a mesma seed.</summary>
+    public const string Restart = "restart";
+
     /// <summary>Primeiro consumível da classe (poção), tecla Q.</summary>
     public const string Consumable = "consumable_1";
 
@@ -18,5 +24,5 @@ public static class InputActions
     public static readonly string[] AbilitySlots = ["ability_1", "ability_2", "ability_3", "ability_4"];
 
     public static IEnumerable<string> All =>
-        new[] { MoveUp, MoveDown, MoveLeft, MoveRight, Attack, TargetNext, TargetClear, Consumable }.Concat(AbilitySlots);
+        new[] { MoveUp, MoveDown, MoveLeft, MoveRight, Attack, TargetNext, TargetClear, Consumable, Pause, Restart }.Concat(AbilitySlots);
 }

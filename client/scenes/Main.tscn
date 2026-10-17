@@ -5,6 +5,7 @@
 [ext_resource type="Script" uid="uid://0bmwayi7uhxn" path="res://scripts/Presentation/WorldView.cs" id="3_world"]
 [ext_resource type="Script" uid="uid://dulv05cvwwkfk" path="res://scripts/Presentation/CameraRig.cs" id="4_camera"]
 [ext_resource type="Script" uid="uid://b746bqjdnqm8s" path="res://scripts/Hud/Hud.cs" id="5_hud"]
+[ext_resource type="Script" path="res://scripts/Match/MatchOverlay.cs" id="6_overlay"]
 
 [node name="Main" type="Node2D" unique_id=1752047296]
 script = ExtResource("1_main")
@@ -43,3 +44,12 @@ theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 4
 theme_override_font_sizes/font_size = 11
 text = "Core ?"
+
+[node name="Overlay" type="Control" parent="Hud"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("6_overlay")
