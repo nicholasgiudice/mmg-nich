@@ -7,7 +7,7 @@
       "tags": ["basic", "ranged"],
       "cooldown": 1.0,
       "targeting": { "type": "unit", "range": 9, "faction": "enemy" },
-      "effects": [{ "type": "damage", "school": "physical", "base": 11 }]
+      "effects": [{ "type": "damage", "school": "physical", "base": 17 }]
     },
     {
       "id": "archer.hunters_mark",

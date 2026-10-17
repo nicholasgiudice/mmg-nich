@@ -8,7 +8,7 @@
       "cost": { "resource": "mana", "amount": 3 },
       "cooldown": 1.0,
       "targeting": { "type": "unit", "range": 9, "faction": "enemy" },
-      "effects": [{ "type": "damage", "school": "arcane", "base": 10 }]
+      "effects": [{ "type": "damage", "school": "arcane", "base": 15 }]
     },
     {
       "id": "mage.elemental_blast",
@@ -18,7 +18,7 @@
       "cooldown": 4,
       "castTime": 0.6,
       "targeting": { "type": "circle_at_point", "range": 9, "radius": 3 },
-      "effects": [{ "type": "damage", "school": "fire", "base": 34 }]
+      "effects": [{ "type": "damage", "school": "fire", "base": 44 }]
     },
     {
       "id": "mage.ice_prison",
@@ -28,7 +28,7 @@
       "cooldown": 10,
       "targeting": { "type": "unit", "range": 8, "faction": "enemy" },
       "effects": [
-        { "type": "damage", "school": "frost", "base": 6 },
+        { "type": "damage", "school": "frost", "base": 9 },
         { "type": "apply_status", "status": "status.frozen", "duration": 2.5 }
       ]
     },

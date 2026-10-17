@@ -1,6 +1,7 @@
 using Game.Bots;
 using Game.Core.Combat;
 using Game.Core.Combat.Resources;
+using Game.Core.Definitions;
 using Game.Core.Events;
 using Game.Core.Simulation;
 using Game.Core.Simulation.Components;
@@ -11,7 +12,7 @@ namespace Game.Design.Tests;
 
 /// <summary>
 /// Critérios de design da seção "Falha de design" de cada encontro (design/combat-encounters-v0.1.md) como testes.
-/// Cada verificação roda <see cref="DesignHarness.Runs"/> seeds. Limites finais e justificativas: tasks/reports/balance-v0.1.md (T-016) e balance-v0.2.md (T-018).
+/// Cada verificação roda <see cref="DesignHarness.Runs"/> seeds. Limites finais e justificativas: tasks/reports/balance-v0.1.md (T-016), balance-v0.2.md (T-018) e balance-v0.3.md (T-019).
 /// </summary>
 public class DesignTests
 {
@@ -179,6 +180,35 @@ public class DesignTests
         var full = Run(Matriarch, "kite+dodge");
         Assert.True(s.WinRate is >= 0.05 and <= 0.60, Fmt(s));
         Assert.True(s.WinRate <= full.WinRate - 0.30, $"{Fmt(s)} vs {Fmt(full)}");
+    }
+
+    // ---- T-019: afastar-se (kite) é possível ----
+
+    [Fact]
+    public void Normal_monsters_are_slower_than_the_slowest_class()
+    {
+        // Playtest T-025: lobos e ratos corriam mais que Mago/Clérigo e não dava para abrir distância.
+        var slowest = Content.Classes.Values.Min(c => c.Speed);
+        var fast = Content.Monsters.Values
+            .Where(m => m.Rank == MonsterRank.Normal && m.Speed >= slowest)
+            .Select(m => $"{m.Id} ({m.Speed})")
+            .ToList();
+        Assert.True(fast.Count == 0, $"monstros normais com velocidade >= {slowest}: {string.Join(", ", fast)}");
+    }
+
+    [Fact]
+    public void Kiting_mage_and_archer_take_clearly_less_damage_than_standing_and_trading()
+    {
+        var mageKite = Run(Rats, "kite");
+        var mageRot = Run(Rats, "rotation");
+        Assert.True(mageKite.WinRate >= 0.85 && mageKite.DamageTaken <= 0.5 * mageRot.DamageTaken,
+            $"{Fmt(mageKite)} recebido {mageKite.DamageTaken:F0} vs {Fmt(mageRot)} recebido {mageRot.DamageTaken:F0}");
+
+        // O Salteador atira de longe: afastar-se só evita o dano do Lobo, por isso a margem é menor.
+        var archerKite = Run(Bandit, "kite");
+        var archerRot = Run(Bandit, "rotation");
+        Assert.True(archerKite.DamageTaken <= 0.85 * archerRot.DamageTaken,
+            $"{Fmt(archerKite)} recebido {archerKite.DamageTaken:F0} vs {Fmt(archerRot)} recebido {archerRot.DamageTaken:F0}");
     }
 
     // ---- T-018: resultados não binários ----

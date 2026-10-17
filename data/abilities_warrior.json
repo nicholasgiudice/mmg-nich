@@ -7,7 +7,7 @@
       "tags": ["basic", "melee"],
       "cooldown": 0.9,
       "targeting": { "type": "melee_arc", "range": 1.7, "angle": 100 },
-      "effects": [{ "type": "damage", "school": "physical", "base": 12 }]
+      "effects": [{ "type": "damage", "school": "physical", "base": 18 }]
     },
     {
       "id": "warrior.heavy_strike",
@@ -18,7 +18,7 @@
       "castTime": 0.4,
       "targeting": { "type": "melee_arc", "range": 1.9, "angle": 90 },
       "effects": [
-        { "type": "damage", "school": "physical", "base": 34 },
+        { "type": "damage", "school": "physical", "base": 51 },
         { "type": "interrupt" },
         { "type": "threat", "amount": 20 }
       ]
@@ -31,7 +31,7 @@
       "cooldown": 5,
       "targeting": { "type": "circle_self", "radius": 2.5 },
       "effects": [
-        { "type": "damage", "school": "physical", "base": 18 },
+        { "type": "damage", "school": "physical", "base": 27 },
         { "type": "threat", "amount": 30 }
       ]
     },

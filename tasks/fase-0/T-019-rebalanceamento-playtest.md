@@ -41,4 +41,23 @@ O lado de "controle" da fluidez (cada clique = um ataque) é tratado na T-026, n
 
 ## Resultado
 
-_(preencher ao concluir)_
+Concluída em 2026-10-16 **no Windows** (a tarefa é de VPS; o designer pediu para fazer aqui porque a VPS estava lenta — nada nela depende de VPS: só `dotnet`, simulador e testes). Relatório completo em `tasks/reports/balance-v0.3.md`.
+
+**Branch:** `task/T-019-rebalanceamento-playtest`, a partir de `docs/tarefas-T-019-T-026` (que traz este arquivo). Só `data/`, `tests/Game.Design.Tests/` e `tasks/`; não conflita com as branches do cliente.
+
+**Feito:**
+1. Lobo Cinzento e Rato de Campo 5,0 → 4,0; Salteador 4,2 → 4,0. Nenhum monstro `normal` corre ≥ 4,5 (a classe mais lenta).
+2. Dano das classes +50% em todos os ataques básicos e habilidades de dano, **exceto** Explosão Elemental (+30%, 34 → 44): por ser em área, com +50% o `explosion_spam` vencia 96% e mais rápido que a rotação.
+3. Reequilíbrio dos monstros para não trivializar: Rato vida 105 → 150, Guarda Esquelético 400 → 560, Matriarca 6000 → 9000, disparo do Salteador 11 → 20, mordida do Lobo 7 → 9.
+4. Todos os 21 testes de design anteriores passam **sem afrouxar nenhum limite**.
+5. Testes novos: monstros normais mais lentos que a classe mais lenta; Mago e Arqueiro com `kite` tomam claramente menos dano que com `rotation` (Mago 34 × 195; Arqueiro 152 × 203).
+6. Relatório `balance-v0.3.md` com antes / só o pedido / depois para os 13 pares encontro×estratégia e a Matriarca com jogador parado por classe.
+
+**Efeito principal:** afastar-se passou a funcionar (Mago `kite` recebe 34 de dano contra 121 antes); lutas do Guerreiro 20 → 13 s e do Arqueiro 26 → 18 s; Mago e Clérigo mantêm ~36 s, com golpes 50% mais fortes.
+
+**Verificação:** `./scripts/check.sh` OK (23 testes de design, ~50 s).
+
+**Pendências / para o próximo playtest:**
+- Matriarca continua com ~4,5–5 min (vida 9000 para manter 60–90% com o grupo de bots). Se ficar longa demais, trocar vida por dano.
+- O Arqueiro recebe mais dano do Salteador (20) para manter "precisa se mover"; se ficar punitivo para humanos, rever junto com o teste "parado não vence".
+- Bots vencem os encontros solo 100%; a dificuldade humana só se confirma jogando (nova rodada da T-025, com a T-026).
