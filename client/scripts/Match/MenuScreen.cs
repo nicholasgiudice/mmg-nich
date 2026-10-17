@@ -15,7 +15,7 @@ public partial class MenuScreen : Control
 {
     public const string ScenePath = "res://scenes/Menu.tscn";
 
-    private static readonly string[] DirectArgs = ["encounter", "class", "fake-authority", "demo-input", "auto-move"];
+    private static readonly string[] DirectArgs = ["encounter", "class", "fake-authority", "demo-input", "auto-move", "hold"];
 
     private readonly ItemList _encounters = new();
     private readonly OptionButton _classes = new();

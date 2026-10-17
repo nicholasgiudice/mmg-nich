@@ -20,7 +20,7 @@ namespace MmoRpgClient;
 /// câmera, pausa (Esc), reinício (R) e tela de resultado.
 /// Argumentos de depuração (depois de <c>--</c> na linha de comando; pulam o menu):
 /// <c>--encounter=id</c>, <c>--class=id</c>, <c>--seed=n</c>, <c>--time-scale=n</c>, <c>--fake-authority</c>,
-/// <c>--auto-move=x,y</c> (mantém as teclas de movimento pelo sinal de x e y),
+/// <c>--auto-move=x,y</c> (mantém as teclas de movimento pelo sinal de x e y), <c>--hold=attack,...</c> (mantém ações),
 /// <c>--demo-input=attack,ability_1,...</c> (aperta ações em sequência mirando o inimigo mais próximo e
 /// imprime as respostas da autoridade) e <c>--capture=caminho.png</c> (salva a tela e fecha; após 2 s, ou
 /// <c>--capture-after=segundos</c>, ou ao fim do demo).
@@ -94,9 +94,11 @@ public partial class Main : Node2D
             Engine.TimeScale = timeScale; // só depuração: acelera a partida (a simulação continua em ticks fixos)
         }
 
-        if (_args.ContainsKey("demo-input") || _args.ContainsKey("auto-move"))
+        if (_args.ContainsKey("demo-input") || _args.ContainsKey("auto-move") || _args.ContainsKey("hold"))
         {
-            _demo = new DebugInputScript(_args.GetValueOrDefault("demo-input", ""), AutoMoveActions());
+            var held = AutoMoveActions().Concat(
+                _args.GetValueOrDefault("hold", "").Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
+            _demo = new DebugInputScript(_args.GetValueOrDefault("demo-input", ""), held);
         }
     }
 
@@ -116,7 +118,7 @@ public partial class Main : Node2D
             var mousePx = GetGlobalMousePosition();
             var aim = Units.ToWorld(mousePx);
             var hovered = _worldView.PickAt(mousePx);
-            if (_args.ContainsKey("demo-input") && NearestEnemyPosition(_authority) is { } enemy)
+            if ((_args.ContainsKey("demo-input") || _args.ContainsKey("hold")) && NearestEnemyPosition(_authority) is { } enemy)
             {
                 aim = Units.ToWorld(enemy.Pixels);
                 hovered = enemy.Id;
