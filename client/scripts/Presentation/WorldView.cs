@@ -24,6 +24,10 @@ public partial class WorldView : Node2D
     private readonly HashSet<EntityId> _seen = new();
     private readonly Dictionary<EntityId, Node2D> _ground = new();
     private ContentCatalog _content = ContentCatalog.Empty;
+    private (string Text, ulong AtMs) _lastRejection;
+
+    /// <summary>A mesma mensagem de rejeição não se repete antes disto (botão mantido fora de alcance).</summary>
+    private const ulong RejectionRepeatMs = 1000;
     private WorldSnapshot? _indexedPrevious;
 
     private static readonly Color RejectionColor = new(1f, 0.85f, 0.35f);
@@ -66,7 +70,14 @@ public partial class WorldView : Node2D
                     break;
                 case AbilityRejected rejected when rejected.Source == authority.ControlledEntity:
                     var pool = latest?.Entities.FirstOrDefault(s => s.Id == rejected.Source)?.TryGet<ResourcePool>();
-                    ShowText(rejected.Source, RejectionText.For(rejected.Reason, pool?.Type), RejectionColor);
+                    var text = RejectionText.For(rejected.Reason, pool?.Type);
+                    var nowMs = Time.GetTicksMsec();
+                    if (text != _lastRejection.Text || nowMs - _lastRejection.AtMs >= RejectionRepeatMs)
+                    {
+                        _lastRejection = (text, nowMs);
+                        ShowText(rejected.Source, text, RejectionColor);
+                    }
+
                     break;
             }
         }

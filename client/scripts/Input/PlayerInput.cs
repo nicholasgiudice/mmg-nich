@@ -11,17 +11,25 @@ namespace MmoRpgClient.Input;
 /// <summary>
 /// Transforma o input do jogador em intenções. Não valida nada (quem decide é a autoridade, que
 /// responde com <c>AbilityRejected</c>); só escolhe alvo e ponto de mira conforme o tipo de alvo da
-/// habilidade. Intenções são enviadas apenas quando algo muda (direção) ou num aperto de tecla.
+/// habilidade. Intenções são enviadas apenas quando algo muda (direção), num aperto de tecla ou, com a
+/// tecla/botão mantido, quando a habilidade fica pronta de novo (T-026: ataque contínuo, sem spam).
 /// </summary>
 public sealed class PlayerInput
 {
     /// <summary>Distância máxima (tiles) dos inimigos considerados pelo Tab.</summary>
     public const float TabTargetRange = 15f;
 
+    /// <summary>Com a tecla mantida e nada mudou desde o último envio (ex.: fora de alcance), espera isto antes de tentar de novo.</summary>
+    public const int HeldRetryTicks = 8;
+
+    /// <summary>Intervalo mínimo entre dois envios da mesma habilidade mantida (o resultado leva um tick para voltar).</summary>
+    public const int HeldMinGapTicks = 2;
+
     private readonly IReadOnlyDictionary<string, AbilityDefinition> _abilities;
     private readonly Func<string, bool> _justPressed;
     private readonly Func<string, bool> _pressed;
     private Vec2 _lastMove;
+    private readonly Dictionary<string, (long SentTick, long ReadyAtSend)> _lastSent = new(StringComparer.Ordinal);
 
     /// <param name="abilities">Definições (para saber o tipo de alvo); vazio = só envia mira e alvo.</param>
     /// <param name="justPressed">Ação apertada neste frame (padrão: <c>Godot.Input.IsActionJustPressed</c>).</param>
@@ -90,6 +98,7 @@ public sealed class PlayerInput
             return;
         }
 
+        var tick = authority.CurrentTick;
         if (!pointerOverUi && _justPressed(InputActions.Attack))
         {
             if (hovered is { } clicked && clicked != player)
@@ -99,23 +108,59 @@ public sealed class PlayerInput
 
             if (abilities.BasicAttackId is { } basic)
             {
-                UseAbility(authority, self, units, basic, hovered);
+                UseAbility(authority, self, units, basic, hovered, abilities, tick);
             }
+        }
+        else if (!pointerOverUi && _pressed(InputActions.Attack) && abilities.BasicAttackId is { } held
+            && CanRepeat(held, abilities, tick))
+        {
+            UseAbility(authority, self, units, held, hovered, abilities, tick);
+        }
+
+        // Espaço: ataca o alvo selecionado (Tab/clique) mirando nele; o cursor só conta sem seleção.
+        if (abilities.BasicAttackId is { } keyAttack
+            && (_justPressed(InputActions.AttackKey) || (_pressed(InputActions.AttackKey) && CanRepeat(keyAttack, abilities, tick))))
+        {
+            UseAbility(authority, self, units, keyAttack, hovered, abilities, tick, preferSelected: true);
         }
 
         var slots = abilities.Known.Where(a => a != abilities.BasicAttackId).ToList();
         for (var i = 0; i < InputActions.AbilitySlots.Length && i < slots.Count; i++)
         {
-            if (_justPressed(InputActions.AbilitySlots[i]))
+            var action = InputActions.AbilitySlots[i];
+            if (_justPressed(action) || (_pressed(action) && CanRepeat(slots[i], abilities, tick)))
             {
-                UseAbility(authority, self, units, slots[i], hovered);
+                UseAbility(authority, self, units, slots[i], hovered, abilities, tick);
             }
         }
 
+        // Poção só no aperto: segurar não deve gastar todas.
         if (abilities.Consumables.Count > 0 && _justPressed(InputActions.Consumable))
         {
-            UseAbility(authority, self, units, abilities.Consumables[0], hovered);
+            UseAbility(authority, self, units, abilities.Consumables[0], hovered, abilities, tick);
         }
+    }
+
+    /// <summary>
+    /// Repetição com a tecla mantida: só quando a habilidade estará pronta no próximo tick (a intenção é
+    /// aplicada nele), sem conjuração em andamento e sem reenviar enquanto a resposta não chega. Se a recarga
+    /// não mudou desde o último envio, a autoridade recusou (alcance, alvo...): espera <see cref="HeldRetryTicks"/>.
+    /// </summary>
+    private bool CanRepeat(string abilityId, AbilityState abilities, long tick)
+    {
+        var ready = abilities.ReadyAtTick.TryGetValue(abilityId, out var t) ? t : 0;
+        if (ready > tick + 1 || abilities.IsCasting)
+        {
+            return false;
+        }
+
+        if (!_lastSent.TryGetValue(abilityId, out var last))
+        {
+            return true;
+        }
+
+        var since = tick - last.SentTick;
+        return since >= HeldMinGapTicks && (ready != last.ReadyAtSend || since >= HeldRetryTicks);
     }
 
     private void SendMove(IGameAuthority authority, EntityId player)
@@ -135,24 +180,30 @@ public sealed class PlayerInput
     /// <summary>
     /// Mira sempre vai junto (dá a direção de arcos, linhas, áreas e deslocamentos). Para alvo único:
     /// unidade sob o cursor, senão a selecionada, desde que da facção certa; cura sem aliado mirado vai em si mesmo.
+    /// Com <paramref name="preferSelected"/> (ataque pelo teclado) a ordem se inverte e a mira vai no alvo selecionado.
     /// </summary>
     private void UseAbility(IGameAuthority authority, EntitySnapshot self, IReadOnlyDictionary<EntityId, EntitySnapshot> units,
-        string abilityId, EntityId? hovered)
+        string abilityId, EntityId? hovered, AbilityState abilities, long tick, bool preferSelected = false)
     {
-        EntityId? target = hovered ?? SelectedTarget;
+        _lastSent[abilityId] = (tick, abilities.ReadyAtTick.TryGetValue(abilityId, out var ready) ? ready : 0);
+        var (first, second) = preferSelected ? (SelectedTarget, hovered) : (hovered, SelectedTarget);
+        EntityId? target = first ?? second;
         _abilities.TryGetValue(abilityId, out var ability);
         if (ability?.Targeting is UnitTargeting unit)
         {
             bool Fits(EntityId? id) =>
                 id is { } v && units.TryGetValue(v, out var s) && IsAlive(s) && MatchesFaction(self, s, unit.Faction);
 
-            target = Fits(hovered) ? hovered
-                : Fits(SelectedTarget) ? SelectedTarget
+            target = Fits(first) ? first
+                : Fits(second) ? second
                 : unit.Faction == FactionFilter.Ally ? self.Id
                 : target;
         }
 
-        authority.Send(new UseAbilityIntent(self.Id, abilityId, target, AimPoint));
+        var aim = preferSelected && SelectedTarget is { } sel && units.TryGetValue(sel, out var selected)
+            ? selected.Get<Transform>().Position
+            : AimPoint;
+        authority.Send(new UseAbilityIntent(self.Id, abilityId, target, aim));
     }
 
     private EntityId? NextEnemy(IEnumerable<EntitySnapshot> units, EntitySnapshot self)
