@@ -35,12 +35,14 @@ Concluída em 2026-10-16 no Windows (Godot 4.7.2 .NET).
 2. **Anti-spam** (`CanRepeat`): com a tecla mantida, só envia quando a recarga do snapshot (`ReadyAtTick`) diz que a habilidade fica pronta no próximo tick, sem conjuração em andamento e com ao menos 2 ticks desde o último envio. Se a recarga não mudou desde o envio anterior (a autoridade recusou: fora de alcance, sem alvo, sem recurso), espera 8 ticks (0,4 s) para tentar de novo.
 3. **Teclas 1–4 mantidas** repetem a habilidade com a mesma regra; toque funciona como antes. A poção (Q) **não** repete (segurar não gasta todas).
 4. Clique sobre o HUD continua sem virar ataque.
+5. **Ataque pelo Espaço** (pedido no playtest): ação `attack_key` (Espaço) faz o ataque básico no **alvo selecionado** (Tab ou clique) e mira nele — o cursor só conta quando não há seleção. Assim o jogador seleciona com Tab e ataca com Espaço sem precisar do mouse. Segurar o Espaço repete com a mesma regra anti-spam. O clique esquerdo continua como antes (alvo sob o cursor primeiro).
 - `WorldView`: a mesma mensagem de rejeição não se repete antes de 1 s (botão mantido fora de alcance não enche a tela de "Fora de alcance").
-- Depuração: `--hold=attack,ability_1,...` mantém ações apertadas (usado nos testes abaixo).
+- Depuração: `--hold=attack,ability_1,...` mantém ações apertadas (usado nos testes abaixo); `--capture-after` passou a valer também com `--demo-input`.
 
 **Verificação** (`--hold`, log de `started`/`rejected` do jogador):
 - Guerreiro segurando o ataque 8 s: 9 golpes nos ticks 1, 19, 37, … 145 — exatamente a recarga de 0,9 s (18 ticks), 0 rejeições.
 - Mago segurando o ataque longe dos ratos 6 s: 0 envios por frame; 1 tentativa a cada 8 ticks (15 rejeições em 6 s, texto mostrado no máximo 1×/s).
+- Espaço mantido com o cursor sobre o inimigo mais próximo: 1 Tab → ataques no #3 (o mais próximo); 2 Tabs → ataques no #2 (Salteador), a cada recarga — segue a seleção, não o cursor.
 - Arqueiro andando até os inimigos segurando ataque + Marca: tenta até entrar no alcance, depois dispara a cada recarga; a Marca (recarga 12 s) saiu 1 vez e não foi reenviada.
 - `dotnet build client/` sem avisos; `./scripts/check.sh` OK (332 testes).
 

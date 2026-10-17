@@ -147,7 +147,7 @@ public partial class Main : Node2D
             }
 
             _info.Text = $"Core {CoreInfo.Version} · {Engine.GetFramesPerSecond()} FPS · tick {_authority.CurrentTick}\n"
-                + "WASD mover · clique atacar · 1-4 habilidades · Q poção · Tab alvo · R reiniciar · Esc pausa";
+                + "WASD mover · clique/Espaço atacar · 1-4 habilidades · Q poção · Tab alvo · R reiniciar · Esc pausa";
         }
 
         CaptureIfRequested();
@@ -267,10 +267,12 @@ public partial class Main : Node2D
             _demoFinishedAt = _elapsed;
         }
 
-        var due = _demo is not null && _args.ContainsKey("demo-input")
-            ? _demoFinishedAt >= 0 && _elapsed >= _demoFinishedAt + 0.3
-            : _elapsed >= (_args.TryGetValue("capture-after", out var after)
-                && double.TryParse(after, System.Globalization.CultureInfo.InvariantCulture, out var secs) ? secs : CaptureDelaySeconds);
+        // --capture-after manda; sem ele, com roteiro, fotografa logo depois do fim do roteiro.
+        double? delay = _args.TryGetValue("capture-after", out var after)
+            && double.TryParse(after, System.Globalization.CultureInfo.InvariantCulture, out var secs) ? secs : null;
+        var due = delay is { } d ? _elapsed >= d
+            : _demo is not null && _args.ContainsKey("demo-input") ? _demoFinishedAt >= 0 && _elapsed >= _demoFinishedAt + 0.3
+            : _elapsed >= CaptureDelaySeconds;
         if (!due)
         {
             return;

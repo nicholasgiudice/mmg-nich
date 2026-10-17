@@ -117,6 +117,13 @@ public sealed class PlayerInput
             UseAbility(authority, self, units, held, hovered, abilities, tick);
         }
 
+        // Espaço: ataca o alvo selecionado (Tab/clique) mirando nele; o cursor só conta sem seleção.
+        if (abilities.BasicAttackId is { } keyAttack
+            && (_justPressed(InputActions.AttackKey) || (_pressed(InputActions.AttackKey) && CanRepeat(keyAttack, abilities, tick))))
+        {
+            UseAbility(authority, self, units, keyAttack, hovered, abilities, tick, preferSelected: true);
+        }
+
         var slots = abilities.Known.Where(a => a != abilities.BasicAttackId).ToList();
         for (var i = 0; i < InputActions.AbilitySlots.Length && i < slots.Count; i++)
         {
@@ -173,25 +180,30 @@ public sealed class PlayerInput
     /// <summary>
     /// Mira sempre vai junto (dá a direção de arcos, linhas, áreas e deslocamentos). Para alvo único:
     /// unidade sob o cursor, senão a selecionada, desde que da facção certa; cura sem aliado mirado vai em si mesmo.
+    /// Com <paramref name="preferSelected"/> (ataque pelo teclado) a ordem se inverte e a mira vai no alvo selecionado.
     /// </summary>
     private void UseAbility(IGameAuthority authority, EntitySnapshot self, IReadOnlyDictionary<EntityId, EntitySnapshot> units,
-        string abilityId, EntityId? hovered, AbilityState abilities, long tick)
+        string abilityId, EntityId? hovered, AbilityState abilities, long tick, bool preferSelected = false)
     {
         _lastSent[abilityId] = (tick, abilities.ReadyAtTick.TryGetValue(abilityId, out var ready) ? ready : 0);
-        EntityId? target = hovered ?? SelectedTarget;
+        var (first, second) = preferSelected ? (SelectedTarget, hovered) : (hovered, SelectedTarget);
+        EntityId? target = first ?? second;
         _abilities.TryGetValue(abilityId, out var ability);
         if (ability?.Targeting is UnitTargeting unit)
         {
             bool Fits(EntityId? id) =>
                 id is { } v && units.TryGetValue(v, out var s) && IsAlive(s) && MatchesFaction(self, s, unit.Faction);
 
-            target = Fits(hovered) ? hovered
-                : Fits(SelectedTarget) ? SelectedTarget
+            target = Fits(first) ? first
+                : Fits(second) ? second
                 : unit.Faction == FactionFilter.Ally ? self.Id
                 : target;
         }
 
-        authority.Send(new UseAbilityIntent(self.Id, abilityId, target, AimPoint));
+        var aim = preferSelected && SelectedTarget is { } sel && units.TryGetValue(sel, out var selected)
+            ? selected.Get<Transform>().Position
+            : AimPoint;
+        authority.Send(new UseAbilityIntent(self.Id, abilityId, target, aim));
     }
 
     private EntityId? NextEnemy(IEnumerable<EntitySnapshot> units, EntitySnapshot self)
