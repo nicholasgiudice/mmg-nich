@@ -13,7 +13,7 @@
       "name": "Mordida do Lobo",
       "cooldown": 1.4,
       "targeting": { "type": "melee_arc", "range": 1.3, "angle": 80 },
-      "effects": [{ "type": "damage", "school": "physical", "base": 7 }]
+      "effects": [{ "type": "damage", "school": "physical", "base": 9 }]
     },
     {
       "id": "grey_wolf.pack_fury",
@@ -28,7 +28,7 @@
       "name": "Disparo de Besta",
       "cooldown": 2.0,
       "targeting": { "type": "unit", "range": 9, "faction": "enemy" },
-      "effects": [{ "type": "damage", "school": "physical", "base": 11 }]
+      "effects": [{ "type": "damage", "school": "physical", "base": 20 }]
     },
     {
       "id": "skeleton_guard.slash",

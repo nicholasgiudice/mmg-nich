@@ -7,7 +7,7 @@
       "tags": ["basic", "holy"],
       "cooldown": 1.1,
       "targeting": { "type": "unit", "range": 6, "faction": "enemy" },
-      "effects": [{ "type": "damage", "school": "holy", "base": 8, "bonusVsTags": { "undead": 0.25, "corrupted": 0.25 } }]
+      "effects": [{ "type": "damage", "school": "holy", "base": 12, "bonusVsTags": { "undead": 0.25, "corrupted": 0.25 } }]
     },
     {
       "id": "cleric.direct_heal",
@@ -36,7 +36,7 @@
       "cooldown": 6,
       "targeting": { "type": "unit", "range": 7, "faction": "enemy" },
       "effects": [
-        { "type": "damage", "school": "holy", "base": 26, "bonusVsTags": { "undead": 0.25, "corrupted": 0.25 } },
+        { "type": "damage", "school": "holy", "base": 39, "bonusVsTags": { "undead": 0.25, "corrupted": 0.25 } },
         { "type": "heal", "base": 10, "target": "self" }
       ]
     },
