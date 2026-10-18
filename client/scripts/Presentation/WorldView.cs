@@ -31,6 +31,7 @@ public partial class WorldView : Node2D
     private WorldSnapshot? _indexedPrevious;
 
     private static readonly Color RejectionColor = new(1f, 0.85f, 0.35f);
+    private static readonly Color InterruptColor = new(1f, 0.5f, 0.3f);
 
     /// <summary>Margem (pixels) além do raio ao escolher a unidade sob o cursor.</summary>
     private const float PickMarginPx = 4f;
@@ -64,6 +65,16 @@ public partial class WorldView : Node2D
                     var width = _views.TryGetValue(moved.Entity, out var movedView) ? movedView.RadiusPx * 1.6f : 16f;
                     AddChild(TrailView.Create(Units.ToPixels(moved.From), Units.ToPixels(moved.To), width,
                         moved.Kind == DisplacementKind.Knockback ? new Color(1f, 0.6f, 0.4f) : new Color(0.8f, 0.9f, 1f)));
+                    break;
+                case CastInterrupted cut when cut.Reason != CastInterruptReason.Died:
+                    var own = cut.Entity == authority.ControlledEntity;
+                    ShowText(cut.Entity, cut.Reason switch
+                    {
+                        CastInterruptReason.Moved when own => "Interrompido — você se moveu",
+                        CastInterruptReason.Disabled => "Impedido",
+                        CastInterruptReason.Cancelled => "Cancelado",
+                        _ => "Interrompido",
+                    }, InterruptColor);
                     break;
                 case HealApplied heal when heal.Effective > 0:
                     ShowText(heal.Target, $"+{heal.Effective:0}", Hud.HudTheme.Heal);
