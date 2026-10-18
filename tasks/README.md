@@ -52,13 +52,13 @@ Fluxo para você:
 
 | Fase | Objetivo | Estado do plano |
 |---|---|---|
-| **0 — Protótipo de combate** | Arena local, 4 classes com 3 habilidades + ataque básico, 4 inimigos, Matriarca simplificada, simulador de encontros | **Detalhada** (tarefas abaixo) |
-| **1 — Rede mínima** | Servidor dedicado na VPS, 4 jogadores na mesma arena, login de desenvolvimento | Esboço (seção 7) |
-| **2 — Persistência** | Contas, personagens, inventário, Cidade + Campos online | Esboço |
+| **0 — Protótipo de combate** | Arena local, 4 classes com 3 habilidades + ataque básico, 4 inimigos, Matriarca simplificada, simulador de encontros | **Concluída** (T-025: aprovada como base; seção 6) |
+| **1 — Rede mínima** | Servidor dedicado na VPS, 4 jogadores na mesma arena, login de desenvolvimento | **Detalhada** (T-030; seção 6b) |
+| **2 — Persistência e progressão** | Contas, personagens, inventário, Cidade + Campos online; atributos, níveis, equipamento e habilidades reformuladas (`design/progression-v0.1.md`) | Esboço (seção 7) — detalhada pela T-120 |
 | **3 — Primeiro mapa completo** | Floresta, Ruínas, Cripta instanciada, Vigia Sem Rosto | Esboço |
 | **4 — Operação** | CI/CD, métricas, testes de carga, produção separada | Esboço |
 
-As fases 1 a 4 são detalhadas em arquivos de tarefa somente quando a fase anterior terminar (tarefa T-030 para a fase 1), porque dependem do que o protótipo ensinar.
+As fases são detalhadas em arquivos de tarefa somente quando a anterior termina (T-030 detalhou a fase 1; T-120 detalha a fase 2), porque dependem do que a fase anterior ensinar.
 
 ---
 
@@ -157,23 +157,57 @@ T-002 ──────────┴─► T-004 ───────┴─�
 
 ---
 
+## 6b. Tarefas da fase 1 (rede mínima)
+
+Detalhadas pela T-030 a partir do código da fase 0. Antes do servidor, o Core é preparado para rodar fora do cliente (T-101, T-102).
+
+### Índice
+
+| ID | Tarefa | Ambiente | Modelo | Depende de |
+|---|---|---|---|---|
+| [T-101](fase-1/T-101-core-pronto-para-servidor.md) | Core pronto para servidor: estado replicável e snapshots leves | VPS | **Forte** | 025 |
+| [T-102](fase-1/T-102-log-sem-world.md) | Log de combate a partir de eventos e snapshots (sem `World`) | VPS | Médio | 025 |
+| [T-103](fase-1/T-103-protocolo.md) | `Game.Protocol`: mensagens, serialização e versão | VPS | **Forte** | 101 |
+| [T-104](fase-1/T-104-docker-firewall-vps.md) | VPS: Docker, firewall e porta UDP do jogo | VPS | Humano + Leve | — |
+| [T-105](fase-1/T-105-servidor-de-zona.md) | `Game.Server`: loop de 20 Hz, LiteNetLib e login de desenvolvimento | VPS | **Forte** | 101, 103 |
+| [T-106](fase-1/T-106-interesse-e-delta.md) | Interest management por grade e snapshots delta | VPS | **Forte** | 105 |
+| [T-107](fase-1/T-107-cliente-net-authority.md) | Cliente: `NetAuthority` e jogar online | Windows | **Forte** | 102, 103, 105 |
+| [T-108](fase-1/T-108-predicao-reconciliacao.md) | Cliente: predição do próprio movimento e reconciliação | Windows | **Forte** | 107 |
+| [T-109](fase-1/T-109-bots-de-rede.md) | Bots de rede headless para teste de carga | VPS | Médio | 103, 105 (106 para a medição final) |
+| [T-110](fase-1/T-110-deploy-desenvolvimento.md) | Deploy de desenvolvimento do servidor | VPS | Leve | 104, 105 |
+| [T-111](fase-1/T-111-playtest-online.md) | Playtest online com 4 jogadores | Windows | Humano | 106, 108, 109, 110 |
+| [T-120](fase-1/T-120-planejar-fase-2.md) | Detalhar a fase 2 em tarefas | VPS | Forte | 111 |
+
+### Ondas de execução
+
+| Onda | VPS | Windows |
+|---|---|---|
+| 1 | T-101, T-102, T-104 | — |
+| 2 | T-103 | — |
+| 3 | T-105 | — |
+| 4 | T-106, T-109, T-110 | T-107 |
+| 5 | — | T-108 |
+| 6 | — | T-111 |
+| 7 | T-120 | — |
+
+Na onda 1 as três tarefas mexem em áreas diferentes (Core, log do Core, infraestrutura). A T-102 toca `src/Game.Core/CombatLog/` e a T-101 o resto do Core: integre 101 antes de 102.
+
+### Grafo de dependências
+
+```text
+T-025 ─┬─► T-101 ─► T-103 ─► T-105 ─┬─► T-106 ──────────────┐
+       └─► T-102 ───────────────────┼─► T-107 ─► T-108 ─────┤
+T-104 ──────────────────────────────┼─► T-110 ──────────────┼─► T-111 ─► T-120
+                                    └─► T-109 ──────────────┘
+```
+
+---
+
 ## 7. Fases seguintes (esboço)
 
-Serão convertidas em arquivos de tarefa pela T-030 e pelas tarefas equivalentes no fim de cada fase.
+Serão convertidas em arquivos de tarefa no fim de cada fase (T-120 para a fase 2). A fase 1 já está detalhada na seção 6b.
 
-### Fase 1 — Rede mínima
-
-| Tarefa | Ambiente | Modelo |
-|---|---|---|
-| `Game.Protocol`: mensagens, serialização (MemoryPack), versionamento | VPS | Forte |
-| `Game.Server`: loop de 20 Hz, LiteNetLib, login de desenvolvimento, intenções → Core, snapshots | VPS | Forte |
-| Interest management por grade e snapshots delta | VPS | Forte |
-| Cliente: `NetAuthority`, interpolação, predição de movimento e reconciliação | Windows | Forte |
-| Bots de rede headless para teste de carga | VPS | Médio |
-| Deploy de desenvolvimento: Dockerfile, Compose, ufw, porta UDP | VPS | Leve |
-| Playtest online com 4 jogadores | Windows | Humano |
-
-### Fase 2 — Persistência
+### Fase 2 — Persistência e progressão
 
 | Tarefa | Ambiente | Modelo |
 |---|---|---|
@@ -183,6 +217,11 @@ Serão convertidas em arquivos de tarefa pela T-030 e pelas tarefas equivalentes
 | Servidor: valida token, carrega/salva personagem, gravação assíncrona e transacional | VPS | Forte |
 | Cliente: login, seleção e criação de personagem | Windows | Médio |
 | Caddy com HTTPS e backup `pg_dump` fora da VPS | VPS | Leve |
+| Core: atributos (FOR, DES, AGI, INT, VIT), `scaling` nos efeitos, defesa e crítico (`design/progression-v0.1.md`) | VPS | Forte |
+| Core: níveis, XP, pontos livres e liberação de habilidades por nível | VPS | Forte |
+| Dados: reformulação das habilidades das quatro classes e assinaturas do nível 12 | VPS | Médio |
+| Simulador: perfis por nível/equipamento e testes de design da progressão | VPS | Médio |
+| Cliente: tela de personagem (atributos), inventário/equipamento, barra com liberação por nível | Windows | Médio |
 
 ### Fase 3 — Primeiro mapa completo
 

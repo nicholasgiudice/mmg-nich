@@ -24,4 +24,17 @@ Converter o esboço da fase 1 (`tasks/README.md`, seção 7) em arquivos `tasks/
 
 ## Resultado
 
-_(preencher ao concluir)_
+Concluída em 2026-10-17 no Windows (a tarefa é de VPS; feita aqui a pedido do designer — só documentos). Fase 1 detalhada em `tasks/fase-1/` e na seção 6b de `tasks/README.md` (índice, ondas e grafo, sem ciclos).
+
+**Revisão do Core para rodar em servidor** (requisito 2) — vira as primeiras tarefas:
+- `World.Snapshot()` clona todos os componentes de todas as entidades a cada tick e mistura estado interno (IA, ameaça, recurso) com o que o cliente precisa → **T-101** separa replicável × interno, reduz alocação e mede o tick.
+- `EntitySnapshot` só pode ser construído dentro do Core → **T-101** cria uma fábrica pública para o cliente de rede.
+- O log de combate depende do `World` → **T-102** passa a formatar a partir de eventos + snapshots + conteúdo.
+- Conteúdo igual em cliente e servidor → hash do `ContentCatalog` (**T-101**) verificado no `Hello` (**T-103/T-105**).
+- Pontos fortes já existentes: nenhum relógio nem aleatoriedade sem seed no Core; ids de entidade nunca reutilizados; hash de estado (`StateHasher`) útil para achar dessincronização.
+
+**Tarefas criadas:** T-101 (Core para servidor), T-102 (log sem `World`), T-103 (`Game.Protocol`), T-104 (Docker, ufw e porta UDP — tarefa própria, como pedido), T-105 (`Game.Server`), T-106 (interesse e delta), T-107 (`NetAuthority`), T-108 (predição e reconciliação), T-109 (bots de rede), T-110 (deploy de desenvolvimento), T-111 (playtest online) e T-120 (planejar a fase 2).
+
+**Decisões:**
+- Primeira versão do servidor = **uma sala** com um encontro do protótipo (padrão Matriarca), vagas livres opcionalmente preenchidas por bots de `Game.Bots`; zonas e mapa completo ficam para a fase 3.
+- A progressão aprovada na T-031 (atributos, níveis, equipamento, habilidades reformuladas) entrou no esboço da fase 2 ("Persistência e progressão"), que a T-120 detalha.
