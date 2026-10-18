@@ -118,6 +118,7 @@ Cenários (os cinco do design): Guerreiro × 3 Lobos; Arqueiro × Lobo + Saltead
 | [T-027](fase-0/T-027-mana-e-mago.md) | Mana para todas as classes; Mago com área à distância | VPS ou Windows | Médio | 019 |
 | [T-028](fase-0/T-028-cliente-previa-area.md) | Cliente: pré-visualização de área e aviso de conjuração interrompida | Windows | Leve | 026, 027 |
 | [T-030](fase-0/T-030-planejar-fase-1.md) | Detalhar a fase 1 em tarefas | VPS | Forte | 025 |
+| [T-031](fase-0/T-031-design-progressao.md) | Design de progressão: atributos, equipamento e reformulação das habilidades | qualquer | Humano + Forte | 025 |
 
 ### Ondas de execução
 
@@ -137,7 +138,7 @@ Tarefas da mesma onda podem rodar em paralelo.
 | 10 | — | T-025 |
 | 10b | T-019 | T-026 (ajustes do playtest; depois, nova rodada da T-025) |
 | 10c | T-027 | T-028 (decisões do designer; depois, nova rodada da T-025) |
-| 11 | T-030 | — |
+| 11 | T-030, T-031 (em paralelo; T-031 é documento de design) | — |
 
 Na onda 6, as quatro tarefas da VPS mexem em pastas diferentes do Core, mas todas registram sistemas no mundo. Integre na ordem 009 → 010 → 011 → 013. A T-009 e a T-011 criam/estendem o mesmo `data/rules.json`: quem integrar depois resolve o conflito mantendo as duas seções.
 
