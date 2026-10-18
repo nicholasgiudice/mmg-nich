@@ -41,6 +41,7 @@ public partial class Main : Node2D
     private DebugInputScript? _demo;
     private WorldView _worldView = null!;
     private CameraRig _camera = null!;
+    private AimPreview _aimPreview = null!;
     private Label _info = null!;
     private Hud.Hud _hud = null!;
     private double _elapsed;
@@ -57,6 +58,8 @@ public partial class Main : Node2D
     {
         ParseArgs();
         _worldView = GetNode<WorldView>("World");
+        _aimPreview = new AimPreview { Name = "AimPreview" };
+        _worldView.AddChild(_aimPreview);
         _camera = GetNode<CameraRig>("Camera");
         _info = GetNode<Label>("Hud/InfoLabel");
         _hud = GetNode<Hud.Hud>("Hud/HudRoot");
@@ -144,6 +147,7 @@ public partial class Main : Node2D
             if (_authority.ControlledEntity is { } player && _worldView.TryGetDrawnPosition(player, out var playerPx))
             {
                 _camera.Follow(playerPx, Units.ToPixels(aim), delta);
+                _aimPreview.Show(_input.PreviewAbility, playerPx, Units.ToPixels(_input.PreviewPoint));
             }
 
             _info.Text = $"Core {CoreInfo.Version} · {Engine.GetFramesPerSecond()} FPS · tick {_authority.CurrentTick}\n"

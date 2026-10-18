@@ -24,4 +24,14 @@ No playtest (2026-10-17) a Explosão Elemental "parecia corpo a corpo": ela cai 
 
 ## Resultado
 
-_(preencher ao concluir)_
+Concluída em 2026-10-17 no Windows (Godot 4.7.2 .NET). Branch `task/T-028-cliente-previa-area`, a partir de `task/T-027-mana-e-mago` (integrar T-027 antes).
+
+**Feito** (`client/`):
+1. **Pré-visualização** (`Presentation/AimPreview.cs`): habilidades com área mirada (`circle_at_point`, `line` — Explosão Elemental, Campo de Relâmpagos, Armadilha) mostram, **enquanto a tecla está apertada**, o anel tracejado do alcance máximo e a forma atingida em ciano (diferente do laranja dos telegráfos inimigos). **A habilidade sai ao soltar a tecla** (`PlayerInput`, novo `justReleased`). As demais (alvo único, `self`, `circle_self`) continuam saindo no aperto e repetindo com a tecla mantida (T-026).
+2. **Conjuração interrompida**: em `CastInterrupted`, texto flutuante na unidade ("Interrompido — você se moveu" para o jogador, "Interrompido"/"Impedido"/"Cancelado" nos demais casos, inclusive inimigos interrompidos pelo jogador); a barra de conjuração do HUD fica vermelha por 0,8 s com "<habilidade> — interrompido (você se moveu)".
+3. **Mira limitada ao alcance** (`PlayerInput.ClampAim`): cursor além do alcance de uma área em ponto mira no ponto mais distante permitido, na direção do cursor (antes: "Fora de alcance"). Por isso a barra de habilidades não marca mais essas áreas como fora de alcance.
+- `project.godot` regravado pelo editor do Godot no formato dele (mesmos atalhos, quebras de linha diferentes).
+
+**Verificação:** captura do Mago segurando a tecla 4 (anel de alcance + círculo do Campo); `--demo-input=ability_1,ability_4` conjura a Explosão ao soltar com a mira puxada para o alcance (ratos a mais de 9 tiles) e recusa o Campo por falta de Mana; Clérigo andando com Cura Direta mostra "Interrompido — você se moveu". `dotnet build client/` sem avisos; `./scripts/check.sh` OK.
+
+**Pendências:** não há como cancelar a área depois de apertar a tecla (soltar sempre conjura); um botão de cancelar (ex.: clique direito) pode entrar no próximo playtest.

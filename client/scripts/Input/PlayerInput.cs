@@ -13,6 +13,8 @@ namespace MmoRpgClient.Input;
 /// responde com <c>AbilityRejected</c>); só escolhe alvo e ponto de mira conforme o tipo de alvo da
 /// habilidade. Intenções são enviadas apenas quando algo muda (direção), num aperto de tecla ou, com a
 /// tecla/botão mantido, quando a habilidade fica pronta de novo (T-026: ataque contínuo, sem spam).
+/// Habilidades com área mirada (ponto ou linha) mostram a prévia enquanto a tecla está apertada e saem ao
+/// soltar (T-028); a mira é limitada ao alcance.
 /// </summary>
 public sealed class PlayerInput
 {
@@ -28,21 +30,34 @@ public sealed class PlayerInput
     private readonly IReadOnlyDictionary<string, AbilityDefinition> _abilities;
     private readonly Func<string, bool> _justPressed;
     private readonly Func<string, bool> _pressed;
+    private readonly Func<string, bool> _justReleased;
     private Vec2 _lastMove;
     private readonly Dictionary<string, (long SentTick, long ReadyAtSend)> _lastSent = new(StringComparer.Ordinal);
 
     /// <param name="abilities">Definições (para saber o tipo de alvo); vazio = só envia mira e alvo.</param>
     /// <param name="justPressed">Ação apertada neste frame (padrão: <c>Godot.Input.IsActionJustPressed</c>).</param>
     /// <param name="pressed">Ação mantida (padrão: <c>Godot.Input.IsActionPressed</c>).</param>
+    /// <param name="justReleased">Ação solta neste frame (padrão: <c>Godot.Input.IsActionJustReleased</c>).</param>
     public PlayerInput(
         IReadOnlyDictionary<string, AbilityDefinition> abilities,
         Func<string, bool>? justPressed = null,
-        Func<string, bool>? pressed = null)
+        Func<string, bool>? pressed = null,
+        Func<string, bool>? justReleased = null)
     {
         _abilities = abilities;
         _justPressed = justPressed ?? (a => Godot.Input.IsActionJustPressed(a));
         _pressed = pressed ?? (a => Godot.Input.IsActionPressed(a));
+        _justReleased = justReleased ?? (a => Godot.Input.IsActionJustReleased(a));
     }
+
+    /// <summary>Habilidade de área cuja tecla está apertada (prévia no chão); null = nenhuma.</summary>
+    public AbilityDefinition? PreviewAbility { get; private set; }
+
+    /// <summary>Ponto onde a área da prévia cairia (mira limitada ao alcance), em tiles.</summary>
+    public Vec2 PreviewPoint { get; private set; }
+
+    /// <summary>Área mirada no chão: mostra prévia enquanto apertada e sai ao soltar.</summary>
+    public static bool IsAimedArea(AbilityDefinition? def) => def?.Targeting is CircleAtPointTargeting or LineTargeting;
 
     /// <summary>Alvo selecionado (clique ou Tab); limpo quando morre ou some.</summary>
     public EntityId? SelectedTarget { get; private set; }
@@ -57,6 +72,7 @@ public sealed class PlayerInput
     public void Update(IGameAuthority authority, Vec2 aimPoint, EntityId? hovered, bool pointerOverUi = false)
     {
         AimPoint = aimPoint;
+        PreviewAbility = null;
         var latest = authority.Latest;
         if (authority.ControlledEntity is not { } player || latest is null)
         {
@@ -128,7 +144,21 @@ public sealed class PlayerInput
         for (var i = 0; i < InputActions.AbilitySlots.Length && i < slots.Count; i++)
         {
             var action = InputActions.AbilitySlots[i];
-            if (_justPressed(action) || (_pressed(action) && CanRepeat(slots[i], abilities, tick)))
+            _abilities.TryGetValue(slots[i], out var def);
+            if (IsAimedArea(def))
+            {
+                // T-028: segurar mostra onde a área vai cair; soltar conjura.
+                if (_pressed(action))
+                {
+                    PreviewAbility = def;
+                    PreviewPoint = ClampAim(def!, self.Get<Transform>().Position, AimPoint);
+                }
+                else if (_justReleased(action))
+                {
+                    UseAbility(authority, self, units, slots[i], hovered, abilities, tick);
+                }
+            }
+            else if (_justPressed(action) || (_pressed(action) && CanRepeat(slots[i], abilities, tick)))
             {
                 UseAbility(authority, self, units, slots[i], hovered, abilities, tick);
             }
@@ -203,7 +233,24 @@ public sealed class PlayerInput
         var aim = preferSelected && SelectedTarget is { } sel && units.TryGetValue(sel, out var selected)
             ? selected.Get<Transform>().Position
             : AimPoint;
+        if (ability is not null)
+        {
+            aim = ClampAim(ability, self.Get<Transform>().Position, aim);
+        }
         authority.Send(new UseAbilityIntent(self.Id, abilityId, target, aim));
+    }
+
+    /// <summary>Área em ponto além do alcance: mira no ponto mais distante permitido na direção do cursor.</summary>
+    public static Vec2 ClampAim(AbilityDefinition ability, Vec2 origin, Vec2 aim)
+    {
+        if (ability.Targeting is not CircleAtPointTargeting point)
+        {
+            return aim;
+        }
+
+        var offset = aim - origin;
+        var range = (float)point.Range - 0.01f;
+        return offset.Length() > range ? origin + Vec2.Normalize(offset) * range : aim;
     }
 
     private EntityId? NextEnemy(IEnumerable<EntitySnapshot> units, EntitySnapshot self)

@@ -41,6 +41,11 @@ public partial class Hud : Control
     private DeathSummaryPanel _death = null!;
     private Label _banner = null!;
     private double _bannerLeft;
+    private double _castFlashLeft;
+    private string _castFlashText = "";
+
+    /// <summary>Quanto tempo a barra de conjuração fica vermelha depois de uma interrupção.</summary>
+    private const double CastFlashSeconds = 0.8;
 
     public override void _Ready()
     {
@@ -95,6 +100,7 @@ public partial class Hud : Control
 
     public override void _Process(double delta)
     {
+        _castFlashLeft = Math.Max(0, _castFlashLeft - delta);
         if (_bannerLeft <= 0)
         {
             return;
@@ -154,6 +160,13 @@ public partial class Hud : Control
     public void Render(IGameAuthority authority, EntityId? selected, Vec2 aimPoint, IReadOnlyList<GameEvent> events)
     {
         var latest = authority.Latest;
+        foreach (var cut in events.OfType<CastInterrupted>().Where(c => c.Entity == authority.ControlledEntity))
+        {
+            var ability = _content.Abilities.TryGetValue(cut.AbilityId, out var def) ? def.Name : cut.AbilityId;
+            _castFlashText = cut.Reason == CastInterruptReason.Moved ? $"{ability} — interrompido (você se moveu)" : $"{ability} — interrompido";
+            _castFlashLeft = CastFlashSeconds;
+        }
+
         foreach (var phase in events.OfType<PhaseChanged>().Where(p => p.Previous >= 0))
         {
             var boss = latest?.Entities.FirstOrDefault(e => e.Id == phase.Entity)?.TryGet<UnitInfo>()?.Name
@@ -177,6 +190,11 @@ public partial class Hud : Control
             _player.Display(self, StatusText(self, now), now, _content);
             UpdateAbilityBar(self, byId, selected, aimPoint, now);
             UpdateCast(_playerCast, self, now, HudTheme.Cast);
+            if (!_playerCast.Visible && _castFlashLeft > 0)
+            {
+                _playerCast.Visible = true;
+                _playerCast.Set(1f, new Color(HudTheme.CastEnemy, (float)Math.Min(1, _castFlashLeft / 0.3)), _castFlashText);
+            }
         }
         else
         {
@@ -322,7 +340,7 @@ public partial class Hud : Control
         return (state, tooltip);
     }
 
-    /// <summary>Só indicativo (a autoridade decide): alvo único contra o alvo selecionado; área em ponto contra a mira.</summary>
+    /// <summary>Só indicativo (a autoridade decide): alvo único contra o alvo selecionado. Área em ponto nunca fica fora de alcance (T-028: a mira é limitada ao alcance).</summary>
     private static bool IsOutOfRange(AbilityDefinition? def, EntitySnapshot self, IReadOnlyDictionary<EntityId, EntitySnapshot> byId,
         EntityId? selected, Vec2 aimPoint)
     {
@@ -333,8 +351,6 @@ public partial class Hud : Control
                 when selected is { } sid && byId.TryGetValue(sid, out var t) && t.TryGet<Transform>() is { } tt:
                 var radius = t.TryGet<Collider>()?.Radius ?? 0f;
                 return Vec2.Distance(origin, tt.Position) - radius > unit.Range;
-            case CircleAtPointTargeting point:
-                return Vec2.Distance(origin, aimPoint) > point.Range;
             default:
                 return false;
         }
