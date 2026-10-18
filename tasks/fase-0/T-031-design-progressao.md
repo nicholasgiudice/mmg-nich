@@ -44,4 +44,6 @@ Um documento de design (`design/progression-v0.1.md`) que permita a outras taref
 - Habilidades: 4 normais + 1 assinatura por classe (níveis 1, 1, 4, 8, 12), com papel, custo, recarga e escala; 2 por classe ficam fora do MVP.
 - Metas do simulador por faixa de progressão e ordem de implementação na fase 2.
 
+**Revisão 1 (designer: "o Arqueiro ficou fraco, não tem um atributo que aumenta o ataque"):** cada classe agora tem um atributo de ataque explícito (FOR Guerreiro, AGI Arqueiro, INT Mago, ESP Clérigo); Disparo escala 1,0 × AGI (igual ao Golpe de Espada com FOR); a Marca do Caçador escala com AGI (16% + 0,75% × AGI, máx. 60%); Armadilha 2 + 0,5 × AGI; Chuva de Flechas passa para o nível 4 e a Armadilha para o 8. Tabela comparativa Guerreiro × Arqueiro no nível 15 na seção 7.
+
 **Pendências (seção 10 do documento):** redistribuição de pontos, habilidades fora do MVP, assinaturas, nível máximo 15, arma do Mago, crítico em cura.

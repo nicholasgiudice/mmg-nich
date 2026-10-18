@@ -55,10 +55,10 @@ Cinco atributos. **Todos os pontos ganhos por nível são livres** (5 por nível
 
 | Atributo | Efeito |
 |---|---|
-| **Força (FOR)** | escala habilidades físicas corpo a corpo (Guerreiro, ataque do Clérigo) |
-| **Agilidade (AGI)** | escala habilidades à distância físicas (Arqueiro); crítico +0,25% por ponto (base 5%, máx. 40%); recarga do ataque básico ÷ (1 + AGI × 0,005), máx. +50% |
-| **Inteligência (INT)** | escala magias arcanas e elementais (Mago); +1 de Mana máxima por ponto |
-| **Espírito (ESP)** | escala cura, escudos e dano sagrado (Clérigo); +1 de Mana máxima e +0,05 Mana/s por ponto |
+| **Força (FOR)** | **atributo de ataque do Guerreiro**: escala o dano das habilidades corpo a corpo |
+| **Agilidade (AGI)** | **atributo de ataque do Arqueiro**: escala todo o dano do Arqueiro e o bônus da Marca do Caçador; para todas as classes, crítico +0,25% por ponto (base 5%, máx. 40%) e recarga do ataque básico ÷ (1 + AGI × 0,005), máx. +50% |
+| **Inteligência (INT)** | **atributo de ataque do Mago**: escala magias arcanas e elementais; +1 de Mana máxima por ponto |
+| **Espírito (ESP)** | **atributo do Clérigo**: escala cura, escudos e dano sagrado; +1 de Mana máxima e +0,05 Mana/s por ponto |
 | **Vitalidade (VIT)** | +10 de vida máxima por ponto |
 
 Qual atributo escala cada habilidade está nos dados de cada efeito (`scaling`), então uma habilidade pode escalar com dois atributos (ex.: Guerreiro com FOR e arma).
@@ -207,14 +207,23 @@ Fora do MVP: Investida (mobilidade é fraqueza do Guerreiro), Interceptação.
 
 | Nível | Tecla | Habilidade | Papel | Custo / recarga | Escala |
 |---|---|---|---|---|---|
-| 1 | M1 | Disparo | básico à distância | 0 / 1,0 s | 1,0 × ARMA + 0,9 × AGI = 17 |
-| 1 | 1 | Marca do Caçador | aumenta dano no alvo | 10 / 12 s | — (multiplicador nos dados) |
+| 1 | M1 | Disparo | básico à distância | 0 / 1,0 s | 1,0 × ARMA + 1,0 × AGI = 18 (protótipo: 17) |
+| 1 | 1 | Marca do Caçador | aumenta o dano que o alvo recebe de todos | 10 / 12 s | bônus 16% + 0,75% × AGI, máx. 60% (nível 1: 25% = protótipo) |
 | 1 | 2 | Recuo Rápido | cria distância | 0 / 8 s | — |
-| 4 | 3 | Armadilha de Contenção | prende ao pisar | 25 / 14 s | 4 + 0,4 × AGI |
-| 8 | 4 | **Chuva de Flechas** | área com preparação (telegráfo aliado) | 45 / 12 s | 10 + 1,4 × AGI por onda, 3 ondas |
+| 4 | 3 | **Chuva de Flechas** | área com preparação (telegráfo aliado) | 45 / 12 s | 10 + 1,4 × AGI por onda, 3 ondas |
+| 8 | 4 | Armadilha de Contenção | prende ao pisar | 25 / 14 s | 2 + 0,5 × AGI (nível 1: 8 = protótipo) |
 | 12 | 5 | **Flecha Devastadora** | assinatura: disparo canalizado 1,5 s, linha longa | 70 / 60 s | 40 + 1,0 × ARMA + 5,0 × AGI |
 
 Fora do MVP: Flecha Perfurante, Tiro Debilitante.
+
+**Por que o Arqueiro escala bem** (revisão do designer, 2026-10-17: "o Arqueiro ficou fraco, não tem um atributo que aumenta o ataque"): AGI é o atributo de ataque dele e alimenta o Disparo no mesmo ritmo que FOR alimenta o Golpe de Espada, além da Marca, que multiplica **todo** o dano no alvo (inclusive o do grupo). Comparação no nível 15 com os 70 pontos livres no atributo de ataque (82) e arma rara de dano 18:
+
+| | Guerreiro (FOR 82) | Arqueiro (AGI 82) |
+|---|---|---|
+| Ataque básico | Golpe de Espada 100 | Disparo 100 |
+| Principal | Golpe Pesado 238 | Marca: +60% em todo dano no alvo (Disparo marcado 160) |
+| Área | Golpe Circular 145 | Chuva de Flechas 125 × 3 ondas |
+| Crítico (AGI) | 6,5% | 25,5% |
 
 ### Mago (INT)
 
