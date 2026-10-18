@@ -31,7 +31,7 @@ Um documento de design (`design/progression-v0.1.md`) que permita a outras taref
 
 ## Resultado
 
-**Proposta entregue em 2026-10-17, aguardando aprovação do designer** (critério de aceite). Documento: `design/progression-v0.1.md`.
+**Concluída em 2026-10-17: proposta aprovada pelo designer** ("ok, podemos seguir"), com as recomendações para as pendências. Documento: `design/progression-v0.1.md`.
 
 **Decisões do designer usadas:** nível com XP; pontos de atributo totalmente livres; habilidades liberadas por nível com barra de 6 (básico + 1–5); 6 espaços de equipamento.
 
@@ -48,4 +48,4 @@ Um documento de design (`design/progression-v0.1.md`) que permita a outras taref
 
 **Revisão 2 (designer):** Agilidade passou a ser só velocidade do ataque básico e crítico, para todas as classes; nova **Destreza (DES)** para dano à distância (Arqueiro e Marca do Caçador); **Espírito removido**, com cura, escudo, dano sagrado, Mana e regeneração indo para a **Inteligência** (Mana máxima = 80 + 2 × INT). Atributos finais: FOR, DES, AGI, INT, VIT. Perfis iniciais refeitos mantendo a calibração do protótipo (Arqueiro DES 12, Clérigo INT 12).
 
-**Pendências (seção 10 do documento):** redistribuição de pontos, habilidades fora do MVP, assinaturas, nível máximo 15, arma do Mago, crítico em cura.
+**Decisões finais (seção 10):** redistribuição na cidade (1ª grátis, depois moedas); 2 habilidades por classe fora do MVP; assinaturas no nível 12; nível máximo 15; cajados e cetros dão INT (perfil do Mago INT 11 + 2 do cajado inicial, mantendo a calibração); crítico vale para cura e escudo.

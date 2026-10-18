@@ -1,6 +1,6 @@
 # Progressão — v0.1: níveis, atributos, equipamento e habilidades
 
-Status: **proposta para revisão do designer** (T-031). Decisões já tomadas pelo designer (2026-10-17):
+Status: **aprovado pelo designer em 2026-10-17** (T-031), com as decisões da seção 10. Decisões-base do designer:
 
 - progressão por **nível com XP**;
 - pontos de atributo **totalmente livres**;
@@ -71,7 +71,7 @@ Revisão do designer (2026-10-17): Agilidade virou atributo de velocidade e crí
 |---|---|---|---|---|---|---|
 | Guerreiro | 12 | 3 | 6 | 4 | 10 | FOR, VIT |
 | Arqueiro | 4 | 12 | 6 | 5 | 8 | DES, AGI |
-| Mago | 3 | 3 | 5 | 13 | 6 | INT |
+| Mago | 3 | 3 | 5 | 11 (+2 do cajado inicial = 13) | 6 | INT |
 | Clérigo | 6 | 2 | 4 | 12 | 8 | INT, VIT |
 
 Como a distribuição é livre, a interface mostra o **atributo sugerido** da classe e a prévia do efeito de cada ponto (ex.: "+1 FOR: Golpe Pesado 51 → 53").
@@ -137,10 +137,10 @@ dano final = valor × modificadores (status, Marca, frontal...) × (1 − reduç
 |---|---|---|
 | Guerreiro | espada, machado, maça | 4 + 1,0 × nível do item |
 | Arqueiro | arco | 4 + 1,0 × nível do item |
-| Clérigo | maça, cetro | 3 + 0,9 × nível do item |
-| Mago | cajado | 2 + 0,6 × nível do item (o Mago escala com INT, não com a arma) |
+| Clérigo | maça (dano de arma `3 + 0,9 × nível do item`) ou cetro (dano `2 + 0,6 × nível do item` e **+INT** `1 + 0,5 × nível do item`) |
+| Mago | cajado | 2 + 0,6 × nível do item, e **+INT** `1 + 0,5 × nível do item` (as magias escalam com INT) |
 
-Equipamento inicial (nível do item 2): espada 6, arco 6, maça 5, cajado 3 — calibra os ataques básicos do protótipo (§8).
+Equipamento inicial (nível do item 2): espada 6, arco 6, maça 5, cajado 3 com +2 INT — calibra os números do protótipo (§1).
 
 ### Tipos de armadura
 
@@ -278,11 +278,13 @@ Os testes de design atuais passam a rodar com o "perfil esperado nível 1" — q
 5. Simulador: perfis por nível/equipamento; testes de design da §8.
 6. Cliente: tela de personagem (atributos com prévia), inventário/equipamento, barra com liberação por nível.
 
-## 10. Decisões pendentes para o designer
+## 10. Decisões (aprovadas em 2026-10-17)
 
-1. **Redistribuir pontos**: como a distribuição é livre, permitir refazer na cidade? Proposta: primeira vez grátis, depois custo em moedas crescente com o nível.
-2. **Habilidades fora do MVP**: confirmar as duas deixadas de fora por classe (Guerreiro: Investida, Interceptação; Arqueiro: Flecha Perfurante, Tiro Debilitante; Mago: Combustão, Dissipar Magia; Clérigo: Bênção, Oração Restauradora).
-3. **Assinaturas**: confirmar Muralha Viva, Flecha Devastadora, Cataclismo Arcano e Milagre como habilidade do nível 12.
-4. **Nível máximo 15** e o ritmo (~6–7 h até o máximo no MVP).
-5. **Arma do Mago e do Clérigo**: as magias escalam só com INT (o cajado contribui pouco) — ou cajados e cetros também darem INT?
-6. **Crítico em cura** (proposto: sim).
+O designer aprovou a proposta e as recomendações abaixo.
+
+1. **Redistribuir pontos**: permitido na cidade; a primeira vez é grátis, depois custa moedas, com custo crescente pelo nível.
+2. **Habilidades fora do MVP** (ficam para especializações): Guerreiro — Investida, Interceptação; Arqueiro — Flecha Perfurante, Tiro Debilitante; Mago — Combustão, Dissipar Magia; Clérigo — Bênção, Oração Restauradora.
+3. **Assinaturas do nível 12**: Muralha Viva, Flecha Devastadora, Cataclismo Arcano e Milagre.
+4. **Nível máximo 15**, ~6–7 h até o máximo no MVP.
+5. **Cajados e cetros dão INT** como estatística base, além de um dano de arma menor (§6). Para manter a calibração, o perfil inicial do Mago tem INT 11 e o cajado inicial dá +2.
+6. **Crítico vale para cura** (e escudo).
