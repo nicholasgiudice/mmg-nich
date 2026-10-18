@@ -55,22 +55,24 @@ Cinco atributos. **Todos os pontos ganhos por nível são livres** (5 por nível
 
 | Atributo | Efeito |
 |---|---|
-| **Força (FOR)** | **atributo de ataque do Guerreiro**: escala o dano das habilidades corpo a corpo |
-| **Agilidade (AGI)** | **atributo de ataque do Arqueiro**: escala todo o dano do Arqueiro e o bônus da Marca do Caçador; para todas as classes, crítico +0,25% por ponto (base 5%, máx. 40%) e recarga do ataque básico ÷ (1 + AGI × 0,005), máx. +50% |
-| **Inteligência (INT)** | **atributo de ataque do Mago**: escala magias arcanas e elementais; +1 de Mana máxima por ponto |
-| **Espírito (ESP)** | **atributo do Clérigo**: escala cura, escudos e dano sagrado; +1 de Mana máxima e +0,05 Mana/s por ponto |
+| **Força (FOR)** | **dano corpo a corpo**: escala as habilidades físicas de perto (Guerreiro, ataque do Clérigo) |
+| **Destreza (DES)** | **dano à distância**: escala as habilidades físicas à distância (Arqueiro) e o bônus da Marca do Caçador |
+| **Agilidade (AGI)** | **velocidade de ataque e crítico, para todas as classes**: recarga do ataque básico ÷ (1 + AGI × 0,005), máx. +50%; crítico +0,25% por ponto (base 5%, máx. 40%). Não aumenta o dano de cada golpe. |
+| **Inteligência (INT)** | **magia, cura e Mana**: escala magias arcanas e elementais (Mago), cura, escudos e dano sagrado (Clérigo); +2 de Mana máxima e +0,05 Mana/s por ponto |
 | **Vitalidade (VIT)** | +10 de vida máxima por ponto |
 
 Qual atributo escala cada habilidade está nos dados de cada efeito (`scaling`), então uma habilidade pode escalar com dois atributos (ex.: Guerreiro com FOR e arma).
 
+Revisão do designer (2026-10-17): Agilidade virou atributo de velocidade e crítico para todas as classes; o dano à distância passou para a nova **Destreza**; Espírito foi removido e seus efeitos (cura, escudo, dano sagrado, Mana e regeneração) foram para a **Inteligência**. Mago e Clérigo compartilham a INT, mas se diferenciam pelas habilidades: no Mago ela vira dano em área e controle, no Clérigo cura e proteção.
+
 ### Perfil inicial (nível 1, antes dos pontos livres)
 
-| Classe | FOR | AGI | INT | ESP | VIT | Atributo sugerido |
+| Classe | FOR | DES | AGI | INT | VIT | Atributos sugeridos |
 |---|---|---|---|---|---|---|
-| Guerreiro | 12 | 6 | 3 | 4 | 10 | FOR, VIT |
-| Arqueiro | 6 | 12 | 4 | 5 | 8 | AGI |
-| Mago | 3 | 5 | 13 | 8 | 6 | INT |
-| Clérigo | 6 | 4 | 7 | 12 | 8 | ESP |
+| Guerreiro | 12 | 3 | 6 | 4 | 10 | FOR, VIT |
+| Arqueiro | 4 | 12 | 6 | 5 | 8 | DES, AGI |
+| Mago | 3 | 3 | 5 | 13 | 6 | INT |
+| Clérigo | 6 | 2 | 4 | 12 | 8 | INT, VIT |
 
 Como a distribuição é livre, a interface mostra o **atributo sugerido** da classe e a prévia do efeito de cada ponto (ex.: "+1 FOR: Golpe Pesado 51 → 53").
 
@@ -85,18 +87,19 @@ Como a distribuição é livre, a interface mostra o **atributo sugerido** da cl
   | Mago | 50 | 7 | 110 |
   | Clérigo | 70 | 10 | 150 |
 
-- **Mana máxima** = 80 + INT + ESP (nível 1: Guerreiro 87, Arqueiro 89, Clérigo 99, Mago 101; hoje é 100 para todas).
-- **Regeneração de Mana** = base da classe (Guerreiro 4, Arqueiro 4, Mago 5, Clérigo 3 por segundo) + ESP × 0,05. Os ganhos por evento da T-027 continuam.
+- **Mana máxima** = 80 + 2 × INT (nível 1: Guerreiro 88, Arqueiro 90, Clérigo 104, Mago 106; hoje é 100 para todas).
+- **Regeneração de Mana** = base da classe (Guerreiro 4, Arqueiro 4, Mago 5, Clérigo 3 por segundo) + INT × 0,05. Os ganhos por evento da T-027 continuam.
 - **Defesa**: duas estatísticas vindas do equipamento.
   - **Armadura** reduz dano físico; **Resistência** reduz dano mágico (arcano, fogo, gelo, natureza, sagrado).
   - Redução = `D / (D + 40 + 8 × nível do atacante)`, máximo 60%.
   - Exemplo: armadura 60 contra atacante nível 10 → 60 / (60 + 120) = 33% de redução.
-- **Crítico**: chance 5% + AGI × 0,25% (máx. 40%), dano ou cura × 1,5. Vale para dano e cura.
+- **Crítico**: chance 5% + AGI × 0,25% (máx. 40%), dano ou cura × 1,5. Vale para dano e cura, em todas as classes.
+- **Velocidade de ataque**: recarga do ataque básico ÷ (1 + AGI × 0,005), máx. +50% (AGI 100). Só o ataque básico; habilidades mantêm a recarga.
 
 ## 5. Fórmula das habilidades
 
 ```text
-valor = base + Σ (coeficiente × estatística)        estatísticas: FOR, AGI, INT, ESP, ARMA
+valor = base + Σ (coeficiente × estatística)        estatísticas: FOR, DES, INT, VIT, ARMA (AGI não entra: atua na recarga e no crítico)
 dano final = valor × modificadores (status, Marca, frontal...) × (1 − redução da defesa) × crítico
 ```
 
@@ -158,7 +161,7 @@ Armadura base por peça: peito `6 + 2 × nível do item`; cabeça, mãos e pés 
 | Raro | azul | +2 | elites, chefes |
 | Épico | roxo | +2 e um efeito próprio | só Matriarca e Vigia (lista própria) |
 
-Afixos possíveis: +FOR, +AGI, +INT, +ESP, +VIT (valor `1 + 0,4 × nível do item`), +vida (`5 × nível do item`), +crítico (`0,5% + 0,1% × nível do item`), +regeneração de Mana (`0,2 + 0,03 × nível do item`/s), +armadura ou +resistência (`2 × nível do item`).
+Afixos possíveis: +FOR, +DES, +AGI, +INT, +VIT (valor `1 + 0,4 × nível do item`), +vida (`5 × nível do item`), +crítico (`0,5% + 0,1% × nível do item`), +regeneração de Mana (`0,2 + 0,03 × nível do item`/s), +armadura ou +resistência (`2 × nível do item`).
 
 O nível do item é o nível da área onde caiu.
 
@@ -203,27 +206,27 @@ Morte não perde equipamento (visão do MVP).
 
 Fora do MVP: Investida (mobilidade é fraqueza do Guerreiro), Interceptação.
 
-### Arqueiro (AGI, arma)
+### Arqueiro (DES, arma)
 
 | Nível | Tecla | Habilidade | Papel | Custo / recarga | Escala |
 |---|---|---|---|---|---|
-| 1 | M1 | Disparo | básico à distância | 0 / 1,0 s | 1,0 × ARMA + 1,0 × AGI = 18 (protótipo: 17) |
-| 1 | 1 | Marca do Caçador | aumenta o dano que o alvo recebe de todos | 10 / 12 s | bônus 16% + 0,75% × AGI, máx. 60% (nível 1: 25% = protótipo) |
+| 1 | M1 | Disparo | básico à distância | 0 / 1,0 s | 1,0 × ARMA + 1,0 × DES = 18 (protótipo: 17) |
+| 1 | 1 | Marca do Caçador | aumenta o dano que o alvo recebe de todos | 10 / 12 s | bônus 16% + 0,75% × DES, máx. 60% (nível 1: 25% = protótipo) |
 | 1 | 2 | Recuo Rápido | cria distância | 0 / 8 s | — |
-| 4 | 3 | **Chuva de Flechas** | área com preparação (telegráfo aliado) | 45 / 12 s | 10 + 1,4 × AGI por onda, 3 ondas |
-| 8 | 4 | Armadilha de Contenção | prende ao pisar | 25 / 14 s | 2 + 0,5 × AGI (nível 1: 8 = protótipo) |
-| 12 | 5 | **Flecha Devastadora** | assinatura: disparo canalizado 1,5 s, linha longa | 70 / 60 s | 40 + 1,0 × ARMA + 5,0 × AGI |
+| 4 | 3 | **Chuva de Flechas** | área com preparação (telegráfo aliado) | 45 / 12 s | 10 + 1,4 × DES por onda, 3 ondas |
+| 8 | 4 | Armadilha de Contenção | prende ao pisar | 25 / 14 s | 2 + 0,5 × DES (nível 1: 8 = protótipo) |
+| 12 | 5 | **Flecha Devastadora** | assinatura: disparo canalizado 1,5 s, linha longa | 70 / 60 s | 40 + 1,0 × ARMA + 5,0 × DES |
 
 Fora do MVP: Flecha Perfurante, Tiro Debilitante.
 
-**Por que o Arqueiro escala bem** (revisão do designer, 2026-10-17: "o Arqueiro ficou fraco, não tem um atributo que aumenta o ataque"): AGI é o atributo de ataque dele e alimenta o Disparo no mesmo ritmo que FOR alimenta o Golpe de Espada, além da Marca, que multiplica **todo** o dano no alvo (inclusive o do grupo). Comparação no nível 15 com os 70 pontos livres no atributo de ataque (82) e arma rara de dano 18:
+**Por que o Arqueiro escala bem** (revisão do designer, 2026-10-17): **DES** é o atributo de dano dele e alimenta o Disparo no mesmo ritmo que FOR alimenta o Golpe de Espada, além da Marca, que multiplica **todo** o dano no alvo (inclusive o do grupo). AGI é igual para todas as classes (velocidade e crítico). Comparação no nível 15 com arma rara de dano 18, os 70 pontos livres divididos em 50 no atributo de dano e 20 em AGI:
 
-| | Guerreiro (FOR 82) | Arqueiro (AGI 82) |
+| | Guerreiro (FOR 62, AGI 26) | Arqueiro (DES 62, AGI 26) |
 |---|---|---|
-| Ataque básico | Golpe de Espada 100 | Disparo 100 |
-| Principal | Golpe Pesado 238 | Marca: +60% em todo dano no alvo (Disparo marcado 160) |
-| Área | Golpe Circular 145 | Chuva de Flechas 125 × 3 ondas |
-| Crítico (AGI) | 6,5% | 25,5% |
+| Ataque básico | Golpe de Espada 80, a cada 0,79 s | Disparo 80, a cada 0,88 s |
+| Principal | Golpe Pesado 188 | Marca: +60% em todo dano no alvo (Disparo marcado 128) |
+| Área | Golpe Circular 113 | Chuva de Flechas 97 × 3 ondas |
+| Crítico | 11,5% | 11,5% |
 
 ### Mago (INT)
 
@@ -238,16 +241,16 @@ Fora do MVP: Flecha Perfurante, Tiro Debilitante.
 
 Fora do MVP: Combustão, Dissipar Magia.
 
-### Clérigo (ESP, arma)
+### Clérigo (INT, arma)
 
 | Nível | Tecla | Habilidade | Papel | Custo / recarga | Escala |
 |---|---|---|---|---|---|
-| 1 | M1 | Golpe Sagrado | básico, bônus contra mortos-vivos | 0 / 1,1 s | 1,0 × ARMA + 0,6 × ESP = 12 |
-| 1 | 1 | Cura Direta | cura (0,8 s de conjuração) | 20 / 4 s | 26 + 2,0 × ESP = 50 |
-| 1 | 2 | Corrente Sagrada | dano + cura própria limitada | 25 / 6 s | 15 + 2,0 × ESP = 39 |
-| 4 | 3 | Escudo Sagrado | escudo em aliado | 15 / 10 s | 21 + 2,0 × ESP = 45 |
+| 1 | M1 | Golpe Sagrado | básico, bônus contra mortos-vivos | 0 / 1,1 s | 1,0 × ARMA + 0,6 × INT = 12 |
+| 1 | 1 | Cura Direta | cura (0,8 s de conjuração) | 20 / 4 s | 26 + 2,0 × INT = 50 |
+| 1 | 2 | Corrente Sagrada | dano + cura própria limitada | 25 / 6 s | 15 + 2,0 × INT = 39 |
+| 4 | 3 | Escudo Sagrado | escudo em aliado | 15 / 10 s | 21 + 2,0 × INT = 45 |
 | 8 | 4 | Purificação | remove veneno/maldição | 0 / 8 s | — |
-| 12 | 5 | **Milagre** | assinatura: cura grande em todos os aliados próximos | 90 / 120 s | 60 + 4,0 × ESP |
+| 12 | 5 | **Milagre** | assinatura: cura grande em todos os aliados próximos | 90 / 120 s | 60 + 4,0 × INT |
 
 Fora do MVP: Bênção, Oração Restauradora.
 
@@ -281,5 +284,5 @@ Os testes de design atuais passam a rodar com o "perfil esperado nível 1" — q
 2. **Habilidades fora do MVP**: confirmar as duas deixadas de fora por classe (Guerreiro: Investida, Interceptação; Arqueiro: Flecha Perfurante, Tiro Debilitante; Mago: Combustão, Dissipar Magia; Clérigo: Bênção, Oração Restauradora).
 3. **Assinaturas**: confirmar Muralha Viva, Flecha Devastadora, Cataclismo Arcano e Milagre como habilidade do nível 12.
 4. **Nível máximo 15** e o ritmo (~6–7 h até o máximo no MVP).
-5. **Arma do Mago** contribuir pouco (só INT escala as magias) — ou o cajado também dar INT?
+5. **Arma do Mago e do Clérigo**: as magias escalam só com INT (o cajado contribui pouco) — ou cajados e cetros também darem INT?
 6. **Crítico em cura** (proposto: sim).
