@@ -34,4 +34,10 @@ Ver também as "Falhas de design" de cada encontro em `design/combat-encounters-
 
 ## Resultado
 
-_(preencher: decisão tomada)_
+Concluída em 2026-10-17. Relatório: `tasks/reports/playtest-v0.1.md`.
+
+**Roteiro:** jogado pelo designer no Windows, com as classes nos encontros solo e na Matriarca (com bots no resto do grupo). Sem jogadores externos nesta rodada. Notas de 1 a 5 não foram atribuídas (retorno qualitativo).
+
+**O que o playtest gerou:** T-019 (monstros mais lentos, dano das classes +50%), T-026 (ataque contínuo, Espaço no alvo do Tab), T-027 (Mana para todas as classes, Campo de Relâmpagos, Explosão instantânea) e T-028 (prévia de área, mira limitada ao alcance, aviso de interrupção). Avaliação final do designer: "agora está legal".
+
+**Decisão:** **fase 0 aprovada como base do combate**; sem nova rodada de ajuste fino de números na fase 0. As habilidades serão **reformuladas** junto com atributos e equipamentos. Próximos passos: **T-031** (design de progressão: atributos, equipamento, fórmulas e diretrizes das habilidades) e **T-030** (planejar a fase 1, rede), que podem andar em paralelo; reformulação e rebalanceamento das habilidades na fase 2, com itens e equipamento.
