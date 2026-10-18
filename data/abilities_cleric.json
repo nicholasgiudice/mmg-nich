@@ -13,7 +13,7 @@
       "id": "cleric.direct_heal",
       "name": "Cura Direta",
       "tags": ["heal"],
-      "cost": { "resource": "faith", "amount": 20 },
+      "cost": { "resource": "mana", "amount": 20 },
       "cooldown": 4,
       "castTime": 0.8,
       "targeting": { "type": "unit", "range": 8, "faction": "ally" },
@@ -23,7 +23,7 @@
       "id": "cleric.sacred_shield",
       "name": "Escudo Sagrado",
       "tags": ["defensive", "preventive"],
-      "cost": { "resource": "faith", "amount": 15 },
+      "cost": { "resource": "mana", "amount": 15 },
       "cooldown": 10,
       "targeting": { "type": "unit", "range": 8, "faction": "ally" },
       "effects": [{ "type": "shield", "amount": 45, "duration": 6 }]
@@ -32,7 +32,7 @@
       "id": "cleric.holy_chain",
       "name": "Corrente Sagrada",
       "tags": ["holy", "ranged"],
-      "cost": { "resource": "faith", "amount": 25 },
+      "cost": { "resource": "mana", "amount": 25 },
       "cooldown": 6,
       "targeting": { "type": "unit", "range": 7, "faction": "enemy" },
       "effects": [

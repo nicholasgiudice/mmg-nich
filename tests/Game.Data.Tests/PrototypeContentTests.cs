@@ -52,7 +52,7 @@ public class PrototypeContentTests
     [Theory]
     [InlineData("class.warrior", "warrior.sword_strike", new[] { "warrior.heavy_strike", "warrior.whirlwind", "warrior.firm_guard", "warrior.taunt" })]
     [InlineData("class.archer", "archer.shot", new[] { "archer.hunters_mark", "archer.quick_retreat", "archer.containment_trap" })]
-    [InlineData("class.mage", "mage.arcane_missile", new[] { "mage.elemental_blast", "mage.ice_prison", "mage.arcane_barrier" })]
+    [InlineData("class.mage", "mage.arcane_missile", new[] { "mage.elemental_blast", "mage.ice_prison", "mage.arcane_barrier", "mage.lightning_field" })]
     [InlineData("class.cleric", "cleric.holy_strike", new[] { "cleric.direct_heal", "cleric.sacred_shield", "cleric.holy_chain", "cleric.purify" })]
     public void Each_class_has_basic_attack_and_its_abilities(string classId, string basic, string[] abilities)
     {

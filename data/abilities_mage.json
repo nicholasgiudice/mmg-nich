@@ -15,8 +15,7 @@
       "name": "Explosão Elemental",
       "tags": ["aoe", "ranged"],
       "cost": { "resource": "mana", "amount": 65 },
-      "cooldown": 4,
-      "castTime": 0.6,
+      "cooldown": 6,
       "targeting": { "type": "circle_at_point", "range": 9, "radius": 3 },
       "effects": [{ "type": "damage", "school": "fire", "base": 44 }]
     },
@@ -40,6 +39,18 @@
       "cooldown": 15,
       "targeting": { "type": "self" },
       "effects": [{ "type": "shield", "amount": 45, "duration": 6 }]
+    },
+    {
+      "id": "mage.lightning_field",
+      "name": "Campo de Relâmpagos",
+      "tags": ["aoe", "ranged", "zone"],
+      "cost": { "resource": "mana", "amount": 40 },
+      "cooldown": 12,
+      "targeting": { "type": "circle_at_point", "range": 9, "radius": 2.5 },
+      "effects": [
+        { "type": "damage", "school": "arcane", "base": 12 },
+        { "type": "spawn_area", "area": "area.lightning_field" }
+      ]
     }
   ]
 }

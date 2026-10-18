@@ -13,7 +13,7 @@
       "id": "warrior.heavy_strike",
       "name": "Golpe Pesado",
       "tags": ["melee", "interrupt"],
-      "cost": { "resource": "vigor", "amount": 30 },
+      "cost": { "resource": "mana", "amount": 30 },
       "cooldown": 6,
       "castTime": 0.4,
       "targeting": { "type": "melee_arc", "range": 1.9, "angle": 90 },
@@ -27,7 +27,7 @@
       "id": "warrior.whirlwind",
       "name": "Golpe Circular",
       "tags": ["melee", "aoe"],
-      "cost": { "resource": "vigor", "amount": 25 },
+      "cost": { "resource": "mana", "amount": 25 },
       "cooldown": 5,
       "targeting": { "type": "circle_self", "radius": 2.5 },
       "effects": [
