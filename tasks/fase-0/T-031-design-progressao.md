@@ -31,4 +31,17 @@ Um documento de design (`design/progression-v0.1.md`) que permita a outras taref
 
 ## Resultado
 
-_(preencher ao concluir)_
+**Proposta entregue em 2026-10-17, aguardando aprovação do designer** (critério de aceite). Documento: `design/progression-v0.1.md`.
+
+**Decisões do designer usadas:** nível com XP; pontos de atributo totalmente livres; habilidades liberadas por nível com barra de 6 (básico + 1–5); 6 espaços de equipamento.
+
+**Conteúdo:**
+- Regra de calibração: nível 1 com equipamento inicial = números atuais do protótipo (todas as escalas conferidas: Golpe de Espada 18, Golpe Pesado 51, Disparo 17, Projétil 15, Explosão 44, Cura 50, Corrente 39, Escudos 45; vida 240/130/110/150).
+- Níveis 1–15, curva de XP `50 × L^1,8` (~600 monstros normais, ~6–7 h), XP por monstro e por diferença de nível, níveis por área do mapa.
+- 5 atributos (FOR, AGI, INT, ESP, VIT), perfil inicial por classe, vida/Mana/regeneração, defesa (armadura e resistência), crítico.
+- Fórmula `base + Σ coeficiente × estatística` com `scaling` nos efeitos (formato já previsto na proposta de stack) e exemplo do nível 1 ao 15.
+- Equipamento: 6 espaços, armas por classe, 3 tipos de armadura, raridades e afixos, tabela de queda.
+- Habilidades: 4 normais + 1 assinatura por classe (níveis 1, 1, 4, 8, 12), com papel, custo, recarga e escala; 2 por classe ficam fora do MVP.
+- Metas do simulador por faixa de progressão e ordem de implementação na fase 2.
+
+**Pendências (seção 10 do documento):** redistribuição de pontos, habilidades fora do MVP, assinaturas, nível máximo 15, arma do Mago, crítico em cura.
