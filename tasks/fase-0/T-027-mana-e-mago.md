@@ -31,4 +31,17 @@ A pré-visualização da área e o aviso de conjuração interrompida ficam na T
 
 ## Resultado
 
-_(preencher ao concluir)_
+Concluída em 2026-10-17 no Windows. Relatório: `tasks/reports/balance-v0.4.md`.
+
+**Feito:**
+1. **Mana para todas as classes** (`data/classes.json`): Guerreiro e Arqueiro começam com 100 e regeneram 4/s, Clérigo 100 e 3/s, Mago igual (100, 5/s). Custos em `mana` com os mesmos valores. As regras de ganho por evento (`resourceRules`) foram mantidas, agora gerando Mana — cada classe continua com um jeito próprio de reabastecer (decisão registrada em `design/classes-v0.1.md`).
+2. **Campo de Relâmpagos** (`mage.lightning_field`, tecla 4 do Mago; nova `area.lightning_field`): área à distância (alcance 9, raio 2,5), 12 de dano no impacto + zona de 5 s com 8 de dano por segundo; custo 40, recarga 12 s.
+3. **Explosão Elemental instantânea** (sem os 0,6 s de conjuração), recarga 4 → 6 s.
+4. Matriarca vida 9000 → 10000 (grupo `kite+dodge` foi a 91%; agora 78%).
+5. Teste de conteúdo atualizado (`PrototypeContentTests`: lista de habilidades do Mago).
+
+**Verificação:** 23 testes de design passam sem afrouxar limites; `./scripts/check.sh` completo OK.
+
+**Decisões:** o dano no impacto do Campo faz os bots o tratarem como dano em área (sem mexer em `Game.Bots`). A conversão de Vigor/Foco/Fé para Mana mantém os ganhos por evento para não apagar a identidade das classes.
+
+**Pendências:** bots usam pouco as áreas (`minAoe=2`); Matriarca segue longa (~5 min) — trocar vida por dano numa próxima rodada; pré-visualização e aviso de interrupção na T-028.

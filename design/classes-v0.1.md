@@ -6,7 +6,7 @@ As classes são arquétipos iniciais. Evoluções e especializações ficam fora
 
 **Função:** combate corpo a corpo, resistência, ameaça e proteção.
 
-**Recurso:** Vigor, gerado por ataques, bloqueios, dano recebido e interrupções.
+**Recurso:** Mana (decisão de 2026-10-17, T-027: todas as classes usam Mana). Regenera com o tempo e o Guerreiro ganha Mana extra com ataques, bloqueios, dano recebido e interrupções (antes: Vigor).
 
 **Forças:** resistência, controle de grupos, proteção.
 
@@ -26,7 +26,7 @@ As classes são arquétipos iniciais. Evoluções e especializações ficam fora
 
 **Função:** dano à distância, posicionamento, prioridade de alvo e armadilhas.
 
-**Recurso:** Foco, gerado por ataques em distância segura e acertos em alvos marcados.
+**Recurso:** Mana (T-027). Regenera com o tempo e o Arqueiro ganha Mana extra com ataques em distância segura e acertos em alvos marcados (antes: Foco).
 
 **Forças:** dano consistente, mobilidade, eliminação de alvos prioritários.
 
@@ -67,7 +67,7 @@ As classes são arquétipos iniciais. Evoluções e especializações ficam fora
 
 **Função:** cura, proteção, purificação, suporte e dano sagrado.
 
-**Recurso:** Fé, gerada por curas relevantes, proteção preventiva, purificação e ataques sagrados.
+**Recurso:** Mana (T-027). Regenera com o tempo e o Clérigo ganha Mana extra com curas relevantes, proteção preventiva, purificação e ataques sagrados (antes: Fé).
 
 **Forças:** sustenta grupos, remove condições e é eficiente contra mortos-vivos e corrupção.
 

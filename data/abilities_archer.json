@@ -13,7 +13,7 @@
       "id": "archer.hunters_mark",
       "name": "Marca do Caçador",
       "tags": ["ranged", "debuff"],
-      "cost": { "resource": "focus", "amount": 10 },
+      "cost": { "resource": "mana", "amount": 10 },
       "cooldown": 12,
       "targeting": { "type": "unit", "range": 10, "faction": "enemy" },
       "effects": [{ "type": "apply_status", "status": "status.hunters_mark", "duration": 8 }]
@@ -30,7 +30,7 @@
       "id": "archer.containment_trap",
       "name": "Armadilha de Contenção",
       "tags": ["control", "trap"],
-      "cost": { "resource": "focus", "amount": 25 },
+      "cost": { "resource": "mana", "amount": 25 },
       "cooldown": 14,
       "targeting": { "type": "circle_at_point", "range": 8, "radius": 1.2 },
       "effects": [{ "type": "spawn_area", "area": "area.containment_trap" }]

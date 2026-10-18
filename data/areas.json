@@ -33,6 +33,15 @@
       "mode": "periodic",
       "affects": "enemy",
       "effects": [{ "type": "apply_status", "status": "status.web", "duration": 1.5 }]
+    },
+    {
+      "id": "area.lightning_field",
+      "radius": 2.5,
+      "duration": 5,
+      "interval": 1,
+      "mode": "periodic",
+      "affects": "enemy",
+      "effects": [{ "type": "damage", "school": "arcane", "base": 8 }]
     }
   ]
 }
