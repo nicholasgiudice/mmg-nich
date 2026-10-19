@@ -62,6 +62,11 @@ public sealed class PlayerInput
     /// <summary>Alvo selecionado (clique ou Tab); limpo quando morre ou some.</summary>
     public EntityId? SelectedTarget { get; private set; }
 
+    /// <summary>
+    /// Ataque básico automático no alvo selecionado (T-033). Ligado por padrão; Esc/limpar o alvo para de atacar.
+    /// </summary>
+    public bool AutoAttack { get; set; } = true;
+
     /// <summary>Último ponto de mira no mundo (tiles).</summary>
     public Vec2 AimPoint { get; private set; }
 
@@ -115,8 +120,10 @@ public sealed class PlayerInput
         }
 
         var tick = authority.CurrentTick;
+        var basicSent = false;
         if (!pointerOverUi && _justPressed(InputActions.Attack))
         {
+            basicSent = true;
             if (hovered is { } clicked && clicked != player)
             {
                 SelectedTarget = clicked;
@@ -130,6 +137,7 @@ public sealed class PlayerInput
         else if (!pointerOverUi && _pressed(InputActions.Attack) && abilities.BasicAttackId is { } held
             && CanRepeat(held, abilities, tick))
         {
+            basicSent = true;
             UseAbility(authority, self, units, held, hovered, abilities, tick);
         }
 
@@ -137,7 +145,17 @@ public sealed class PlayerInput
         if (abilities.BasicAttackId is { } keyAttack
             && (_justPressed(InputActions.AttackKey) || (_pressed(InputActions.AttackKey) && CanRepeat(keyAttack, abilities, tick))))
         {
+            basicSent = true;
             UseAbility(authority, self, units, keyAttack, hovered, abilities, tick, preferSelected: true);
+        }
+
+        // T-033: com um inimigo selecionado, o ataque básico sai sozinho quando está pronto e o alvo está no alcance.
+        if (!basicSent && AutoAttack && abilities.BasicAttackId is { } autoBasic
+            && SelectedTarget is { } autoTarget && units.TryGetValue(autoTarget, out var target)
+            && IsAlive(target) && MatchesFaction(self, target, FactionFilter.Enemy)
+            && InReach(autoBasic, self, target) && CanRepeat(autoBasic, abilities, tick))
+        {
+            UseAbility(authority, self, units, autoBasic, hovered, abilities, tick, preferSelected: true);
         }
 
         var slots = abilities.Known.Where(a => a != abilities.BasicAttackId).ToList();
@@ -238,6 +256,28 @@ public sealed class PlayerInput
             aim = ClampAim(ability, self.Get<Transform>().Position, aim);
         }
         authority.Send(new UseAbilityIntent(self.Id, abilityId, target, aim));
+    }
+
+    /// <summary>
+    /// Alvo ao alcance do ataque (só para não enviar à toa; quem decide é a autoridade). Sem definição
+    /// conhecida, considera que sim.
+    /// </summary>
+    private bool InReach(string abilityId, EntitySnapshot self, EntitySnapshot target)
+    {
+        if (!_abilities.TryGetValue(abilityId, out var def))
+        {
+            return true;
+        }
+
+        var range = def.Targeting switch
+        {
+            UnitTargeting u => u.Range,
+            MeleeArcTargeting m => m.Range,
+            _ => double.MaxValue,
+        };
+        var distance = Vec2.Distance(self.Get<Transform>().Position, target.Get<Transform>().Position)
+            - (target.TryGet<Collider>()?.Radius ?? 0f);
+        return distance <= range;
     }
 
     /// <summary>Área em ponto além do alcance: mira no ponto mais distante permitido na direção do cursor.</summary>

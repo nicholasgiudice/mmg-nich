@@ -120,6 +120,7 @@ Cenários (os cinco do design): Guerreiro × 3 Lobos; Arqueiro × Lobo + Saltead
 | [T-030](fase-0/T-030-planejar-fase-1.md) | Detalhar a fase 1 em tarefas | VPS | Forte | 025 |
 | [T-031](fase-0/T-031-design-progressao.md) | Design de progressão: atributos, equipamento e reformulação das habilidades | qualquer | Humano + Forte | 025 |
 | [T-032](fase-0/T-032-ajustes-classes-mana.md) | Ajustes de classes, Mana só por tempo e níveis de habilidade | VPS ou Windows | Médio | 027, 031 |
+| [T-033](fase-0/T-033-ataque-automatico.md) | Cliente: ataque básico automático no alvo selecionado | Windows | Leve | 026 |
 
 ### Ondas de execução
 

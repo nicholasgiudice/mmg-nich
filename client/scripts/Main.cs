@@ -151,7 +151,7 @@ public partial class Main : Node2D
             }
 
             _info.Text = $"Core {CoreInfo.Version} · {Engine.GetFramesPerSecond()} FPS · tick {_authority.CurrentTick}\n"
-                + "WASD mover · clique/Espaço atacar · 1-4 habilidades · Q poção · Tab alvo · R reiniciar · Esc pausa";
+                + "WASD mover · Tab/clique seleciona e ataca sozinho · 1-5 habilidades · Q poção · R reiniciar · Esc pausa";
         }
 
         CaptureIfRequested();
