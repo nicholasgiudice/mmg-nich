@@ -6,8 +6,9 @@ using Game.Core.Simulation;
 namespace Game.Core.CombatLog;
 
 /// <summary>
-/// Dados passados aos formatadores: mundo (para resolver nomes), jogador que lê o log (vira "Você")
-/// e nomes de entidades já vistas (para entidades removidas depois do evento).
+/// Dados passados aos formatadores: consulta de nomes e conteúdo (<see cref="ICombatLogLookup"/>, sobre o mundo ou
+/// sobre um snapshot), jogador que lê o log (vira "Você") e nomes de entidades já vistas (para entidades removidas
+/// depois do evento).
 /// </summary>
 public sealed class CombatLogContext
 {
@@ -15,14 +16,17 @@ public sealed class CombatLogContext
 
     private readonly IReadOnlyDictionary<EntityId, string> _knownNames;
 
-    public CombatLogContext(World world, EntityId? viewer, IReadOnlyDictionary<EntityId, string> knownNames)
+    public CombatLogContext(ICombatLogLookup lookup, EntityId? viewer, IReadOnlyDictionary<EntityId, string> knownNames)
     {
-        World = world;
+        Lookup = lookup;
         Viewer = viewer;
         _knownNames = knownNames;
     }
 
-    public World World { get; }
+    public ICombatLogLookup Lookup { get; }
+
+    /// <summary>Definições de conteúdo (habilidades, status...).</summary>
+    public ContentCatalog Content => Lookup.Content;
 
     /// <summary>Entidade do jogador que lê o log; ela aparece como "Você".</summary>
     public EntityId? Viewer { get; }
@@ -40,10 +44,9 @@ public sealed class CombatLogContext
             return "Você";
         }
 
-        var unit = World.Find(id)?.TryGet<UnitInfo>();
-        if (unit is not null)
+        if (Lookup.UnitName(id) is { } name)
         {
-            return unit.Name;
+            return name;
         }
 
         return _knownNames.TryGetValue(id, out var known) ? known : $"Entidade {id}";
@@ -52,7 +55,7 @@ public sealed class CombatLogContext
     /// <summary>Nome de uma habilidade ou status pelo id (áreas não têm nome: cai no próprio id).</summary>
     public string SourceLabel(string sourceId)
     {
-        var content = World.Content;
+        var content = Content;
         if (content.Abilities.TryGetValue(sourceId, out var ability))
         {
             return ability.Name;
