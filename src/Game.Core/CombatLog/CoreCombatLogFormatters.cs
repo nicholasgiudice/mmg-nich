@@ -93,7 +93,7 @@ public static class CoreCombatLogFormatters
 
     /// <summary>"usou Mordida" quando a fonte é uma entidade e a origem é habilidade; senão, "causou dano".</summary>
     private static string Verb(CombatLogContext c, DamageDealt e) =>
-        !e.Source.IsNone && c.World.Content.Abilities.ContainsKey(e.SourceId)
+        !e.Source.IsNone && c.Content.Abilities.ContainsKey(e.SourceId)
             ? $"usou {c.SourceLabel(e.SourceId)}"
             : "causou dano";
 

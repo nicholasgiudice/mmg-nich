@@ -5,9 +5,10 @@ using Game.Core.Simulation;
 namespace Game.Core.CombatLog;
 
 /// <summary>
-/// Log de combate: consome <see cref="World.LastTickEvents"/> depois de cada <see cref="World.Step"/>
-/// (fora da simulação, sem sistema) e produz linhas formatadas, guardadas em ordem.
-/// Chamar <see cref="Record"/> de novo para o mesmo tick não duplica linhas.
+/// Log de combate: consome os eventos de cada tick concluído (fora da simulação, sem sistema) e produz linhas
+/// formatadas, guardadas em ordem. Funciona com o <see cref="World"/> (<see cref="Record(World)"/>) ou só com
+/// eventos + snapshot + conteúdo, como no cliente de rede (<see cref="Record(IReadOnlyList{GameEvent}, ICombatLogLookup)"/>).
+/// Gravar de novo o mesmo tick não duplica linhas.
 /// </summary>
 public sealed class CombatLogRecorder
 {
@@ -52,19 +53,25 @@ public sealed class CombatLogRecorder
     /// <summary>
     /// Lê os eventos do último tick concluído do mundo e devolve os resumos de morte gerados neles.
     /// </summary>
-    public IReadOnlyList<DeathSummary> Record(World world)
+    public IReadOnlyList<DeathSummary> Record(World world) => Record(world.LastTickEvents, new WorldLogLookup(world));
+
+    /// <summary>
+    /// Grava os eventos de um tick concluído usando <paramref name="lookup"/> para nomes e conteúdo (o estado no fim
+    /// desse tick) e devolve os resumos de morte gerados neles.
+    /// </summary>
+    public IReadOnlyList<DeathSummary> Record(IReadOnlyList<GameEvent> events, ICombatLogLookup lookup)
     {
         var deaths = new List<DeathSummary>();
-        if (world.Tick == _lastRecordedTick)
+        if (lookup.Tick == _lastRecordedTick)
         {
             return deaths;
         }
 
-        _lastRecordedTick = world.Tick;
-        RefreshNames(world);
-        var ctx = new CombatLogContext(world, Viewer, _names);
+        _lastRecordedTick = lookup.Tick;
+        RefreshNames(lookup);
+        var ctx = new CombatLogContext(lookup, Viewer, _names);
 
-        foreach (var e in world.LastTickEvents)
+        foreach (var e in events)
         {
             if (!_formatters.TryFormat(ctx, e, out var entry))
             {
@@ -123,14 +130,11 @@ public sealed class CombatLogRecorder
         }
     }
 
-    private void RefreshNames(World world)
+    private void RefreshNames(ICombatLogLookup lookup)
     {
-        foreach (var e in world.Entities)
+        foreach (var (id, name) in lookup.NamedUnits())
         {
-            if (e.TryGet<UnitInfo>() is { } unit)
-            {
-                _names[e.Id] = unit.Name;
-            }
+            _names[id] = name;
         }
     }
 }

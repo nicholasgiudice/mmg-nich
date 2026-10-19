@@ -1,6 +1,5 @@
 using Game.Core.Combat;
 using Game.Core.Simulation;
-using Game.Data;
 using Xunit.Abstractions;
 
 namespace Game.Core.Tests;
@@ -9,28 +8,6 @@ namespace Game.Core.Tests;
 public class ServerReadinessTests(ITestOutputHelper output)
 {
     private const string Matriarch = "encounter.forest_matriarch";
-
-    private static readonly Lazy<ContentCatalog> RealContent = new(() =>
-    {
-        var dir = AppContext.BaseDirectory;
-        while (dir is not null && !File.Exists(Path.Combine(dir, "data", "classes.json")))
-        {
-            dir = Path.GetDirectoryName(dir);
-        }
-
-        var dataDir = Path.Combine(dir ?? throw new DirectoryNotFoundException("data/ não encontrada"), "data");
-        var sources = Directory.EnumerateFiles(dataDir, "*.json")
-            .OrderBy(f => f, StringComparer.Ordinal)
-            .Select(f => (Path.GetFileName(f), File.ReadAllText(f)));
-        var db = GameDataLoader.LoadSources(sources).GetDatabaseOrThrow();
-        return new ContentCatalog(db.Classes.Values, db.Abilities.Values, db.Statuses.Values, db.Areas.Values,
-            db.Monsters.Values, db.Arenas.Values, db.Encounters.Values)
-        {
-            Rules = db.Rules,
-            Threat = db.Threat,
-            Fingerprint = db.Fingerprint,
-        };
-    });
 
     /// <summary>Matriarca com os 4 jogadores parados: a IA, os telegráfos e as invocações trabalham sozinhos.</summary>
     private static World MatriarchWorld(ulong seed, int warmupTicks)
