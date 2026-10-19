@@ -31,7 +31,7 @@ public sealed class StatusInstance
 }
 
 /// <summary>Status ativos da entidade e o estado do retorno decrescente de controle.</summary>
-public sealed class StatusEffects : IComponent
+public sealed class StatusEffects : IComponent, IReplicated
 {
     public List<StatusInstance> Active { get; } = new();
     public int NextInstanceId { get; set; } = 1;

@@ -5,7 +5,7 @@ using Game.Core.Simulation;
 namespace Game.Core.Combat;
 
 /// <summary>Identidade de dados da entidade (para IA, log e regras por tag/rank/resistência).</summary>
-public sealed class UnitInfo : IComponent
+public sealed class UnitInfo : IComponent, IReplicated
 {
     /// <summary>Id da definição de origem (classe ou monstro), ex.: "class.warrior".</summary>
     public string DefinitionId { get; init; } = "";
@@ -73,7 +73,7 @@ public sealed class CastState
 }
 
 /// <summary>Habilidades conhecidas, recargas (em tick absoluto) e conjuração atual.</summary>
-public sealed class AbilityState : IComponent
+public sealed class AbilityState : IComponent, IReplicated
 {
     public List<string> Known { get; } = new();
 
@@ -174,7 +174,7 @@ public sealed class ShieldInstance
 }
 
 /// <summary>Escudos ativos (absorvem na ordem de criação, antes da vida).</summary>
-public sealed class ShieldState : IComponent
+public sealed class ShieldState : IComponent, IReplicated
 {
     public List<ShieldInstance> Shields { get; } = new();
     public int NextShieldId { get; set; } = 1;

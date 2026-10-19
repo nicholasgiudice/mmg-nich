@@ -29,7 +29,7 @@ public sealed class LocalAuthority : IGameAuthority, ICombatLogSource
         _beforeStep = beforeStep;
         ControlledEntity = controlledEntity;
         _log = new CombatLogRecorder(viewer: controlledEntity);
-        Latest = world.Snapshot();
+        Latest = world.Snapshot(SnapshotScope.Replicated);
     }
 
     public EntityId? ControlledEntity { get; }
@@ -101,7 +101,7 @@ public sealed class LocalAuthority : IGameAuthority, ICombatLogSource
         _beforeStep?.Invoke();
         _world.Step();
         Previous = Latest;
-        Latest = _world.Snapshot();
+        Latest = _world.Snapshot(SnapshotScope.Replicated);
         _pendingEvents.AddRange(_world.LastTickEvents);
         _pendingDeaths.AddRange(_log.Record(_world));
     }

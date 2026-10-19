@@ -8,7 +8,7 @@ using Game.Core.Simulation.Components;
 namespace Game.Core.Combat.Areas;
 
 /// <summary>Área persistente (poça, teia, armadilha). Entidade sem vida: <c>Transform</c> (centro) + este componente.</summary>
-public sealed class AreaState : IComponent
+public sealed class AreaState : IComponent, IReplicated
 {
     public string AreaId { get; init; } = "";
     public EntityId Owner { get; init; }

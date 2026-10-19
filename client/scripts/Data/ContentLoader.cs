@@ -38,6 +38,7 @@ public static class ContentLoader
         {
             Rules = db.Rules,
             Threat = db.Threat,
+            Fingerprint = db.Fingerprint,
         };
     }
 }

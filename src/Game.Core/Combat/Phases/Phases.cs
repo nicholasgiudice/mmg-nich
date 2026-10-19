@@ -8,7 +8,7 @@ using Game.Core.Simulation.Components;
 namespace Game.Core.Combat.Phases;
 
 /// <summary>Fase atual de um boss. <see cref="Index"/> = -1 antes da primeira avaliação; só aumenta (cada fase é entrada uma única vez).</summary>
-public sealed class PhaseState : IComponent
+public sealed class PhaseState : IComponent, IReplicated
 {
     public int Index { get; set; } = -1;
     public long EnteredTick { get; set; }

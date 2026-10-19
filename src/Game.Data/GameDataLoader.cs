@@ -64,8 +64,9 @@ public static class GameDataLoader
     {
         var errors = new List<LoadError>();
         var content = new RawContent();
+        var materialized = sources.ToList();
 
-        foreach (var (name, json) in sources)
+        foreach (var (name, json) in materialized)
         {
             ReadFile(name, json, content, errors);
         }
@@ -89,6 +90,7 @@ public static class GameDataLoader
         {
             Rules = content.Rules,
             Threat = content.Threat ?? new Game.Core.Combat.Threat.ThreatRules(),
+            Fingerprint = ContentFingerprint.Compute(materialized),
         };
         return new LoadResult(database, errors);
     }

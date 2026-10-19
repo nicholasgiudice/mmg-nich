@@ -175,12 +175,39 @@ public sealed class World
         }
     }
 
-    /// <summary>Cópia imutável do estado, para cliente e testes.</summary>
-    public WorldSnapshot Snapshot()
+    /// <summary>
+    /// Cópia imutável do estado. <see cref="SnapshotScope.Replicated"/> leva só o que o cliente vê
+    /// (<see cref="IReplicated"/>); <see cref="SnapshotScope.Full"/> leva tudo (testes e depuração).
+    /// </summary>
+    public WorldSnapshot Snapshot(SnapshotScope scope = SnapshotScope.Full)
     {
-        var list = Entities.Select(e => new EntitySnapshot(
-            e.Id,
-            e.OrderedComponents().ToDictionary(kv => kv.Key, kv => kv.Value.Clone()))).ToList();
+        var entities = Entities;
+        var list = new EntitySnapshot[entities.Count];
+        for (var i = 0; i < entities.Count; i++)
+        {
+            var ordered = entities[i].OrderedComponents();
+            var count = 0;
+            foreach (var kv in ordered)
+            {
+                if (scope == SnapshotScope.Full || kv.Value is IReplicated)
+                {
+                    count++;
+                }
+            }
+
+            var copies = new IComponent[count];
+            var n = 0;
+            foreach (var kv in ordered)
+            {
+                if (scope == SnapshotScope.Full || kv.Value is IReplicated)
+                {
+                    copies[n++] = kv.Value.Clone();
+                }
+            }
+
+            list[i] = EntitySnapshot.FromOrdered(entities[i].Id, copies);
+        }
+
         return new WorldSnapshot(Tick, list);
     }
 
