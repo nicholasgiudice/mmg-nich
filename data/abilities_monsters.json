@@ -13,7 +13,7 @@
       "name": "Mordida do Lobo",
       "cooldown": 1.4,
       "targeting": { "type": "melee_arc", "range": 1.3, "angle": 80 },
-      "effects": [{ "type": "damage", "school": "physical", "base": 9 }]
+      "effects": [{ "type": "damage", "school": "physical", "base": 12 }]
     },
     {
       "id": "grey_wolf.pack_fury",
@@ -79,7 +79,7 @@
       "name": "Mordida da Matriarca",
       "cooldown": 1.5,
       "targeting": { "type": "melee_arc", "range": 2.3, "angle": 120 },
-      "effects": [{ "type": "damage", "school": "physical", "base": 60 }]
+      "effects": [{ "type": "damage", "school": "physical", "base": 62 }]
     },
     {
       "id": "matriarch.rending_bite",
@@ -87,7 +87,7 @@
       "cooldown": 1.5,
       "targeting": { "type": "melee_arc", "range": 2.3, "angle": 120 },
       "effects": [
-        { "type": "damage", "school": "physical", "base": 60 },
+        { "type": "damage", "school": "physical", "base": 62 },
         { "type": "apply_status", "status": "status.bleed", "duration": 6 }
       ]
     },

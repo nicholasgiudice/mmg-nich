@@ -53,13 +53,18 @@ public class DesignTests
     }
 
     [Fact]
-    public void Archer_standing_still_does_not_win()
+    public void Archer_standing_still_does_not_win_and_trading_hits_costs_much_more_than_kiting()
     {
-        // idle = parado (só atira se algo entrar no alcance); rotation = persegue sem recuar e é cercado.
+        // idle = parado (só atira se algo entrar no alcance): continua perdendo.
         var idle = Run(Bandit, "idle");
-        var rot = Run(Bandit, "rotation");
         Assert.True(idle.WinRate <= 0.40, Fmt(idle));
-        Assert.True(rot.WinRate <= 0.40, Fmt(rot));
+
+        // T-032: com o Disparo Potente (pedido do designer) o Arqueiro que persegue sem recuar (rotation) passou a
+        // vencer; a regra "precisa se mover" vira custo: trocar golpes parado custa bem mais vida que se afastar.
+        var rot = Run(Bandit, "rotation");
+        var kite = Run(Bandit, "kite");
+        Assert.True(rot.DamageTaken >= 1.4 * kite.DamageTaken,
+            $"{Fmt(rot)} recebido {rot.DamageTaken:F0} vs {Fmt(kite)} recebido {kite.DamageTaken:F0}");
     }
 
     // ---- Mago x 4 Ratos ----

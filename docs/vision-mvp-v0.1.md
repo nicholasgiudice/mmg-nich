@@ -35,7 +35,8 @@ O MVP terá quatro classes: Guerreiro, Arqueiro, Mago e Clérigo.
 - visão 2D de cima;
 - movimentação livre;
 - ataques básicos e habilidades com cooldown;
-- recursos próprios por classe;
+- habilidades pagas com Mana, que regenera com o tempo (mesmo recurso para todas as classes; decisões de 2026-10-17 e 2026-10-19);
+- habilidades aprendidas com pontos a cada nível, com níveis de habilidade (`design/progression-v0.1.md`);
 - grupo ideal de quatro jogadores;
 - PvE solo possível, com vantagens reais para grupos;
 - morte inicial sem perda de equipamento;

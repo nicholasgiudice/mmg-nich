@@ -11,7 +11,7 @@ Documento complementar a `tech/architecture-v0.1.md`. Mantém as decisões já t
 | Requisito de design | Implicação técnica |
 |---|---|
 | Combate em tempo real, visão de cima, movimentação livre | Simulação em ticks fixos, interpolação no cliente, predição de movimento do próprio jogador |
-| Habilidades com cooldown, recursos próprios (Vigor, Foco, Mana, Fé) | Sistema de habilidades orientado a dados e a eventos (recursos gerados por bloqueio, interrupção, cura relevante etc.) |
+| Habilidades com cooldown e custo de Mana | Sistema de habilidades orientado a dados e a eventos (a proposta original previa recursos próprios por classe gerados por eventos; o designer trocou por Mana para todas, só por tempo — T-027/T-032) |
 | Ameaça, controle com redução em elites/bosses, veneno, maldição, medo | Tabela de ameaça, efeitos de status com tags e retorno decrescente |
 | Bosses com fases, selos, invocações | Máquina de estados de IA configurável por dados |
 | "O jogador sabe por que tomou dano" | Todo efeito gera um evento rastreável → log de combate e feedback visual |
@@ -113,7 +113,7 @@ Diretrizes:
 - **Estado em dados simples** (entidades com componentes de vida, recurso, posição, status, ameaça), sistemas que processam esse estado a cada tick. Não é necessário adotar um framework ECS completo no início; uma estrutura simples de entidades + sistemas resolve. Se a escala exigir, bibliotecas como Arch podem ser avaliadas depois.
 - **Tick fixo e determinístico o suficiente:** relógio da simulação controlado pelo tick, RNG com seed injetada, nada de `DateTime.Now` ou física do Godot dentro da regra.
 - **Colisão e movimento próprios:** colisão simples (círculos contra grade/polígonos do mapa) e pathfinding A* em grade dentro do Core. A física do Godot não deve decidir nada que o servidor precise concordar.
-- **Recursos orientados a eventos:** Vigor ganho ao bloquear golpe forte ou interromper, Fé ao purificar condição perigosa, Foco ao acertar alvo marcado — tudo assinatura de eventos, configurável por dados.
+- **Recursos configuráveis por dados:** o Core suporta ganho de recurso por eventos (bloqueio, interrupção, purificação, acerto em alvo marcado — `resourceRules`), mas o design atual usa só regeneração de Mana por tempo (decisão de 2026-10-19, T-032). O mecanismo fica disponível para efeitos futuros (ex.: roubo de Mana em equipamento, `design/ideias-futuras.md`).
 - **Status com tags** (`veneno`, `maldição`, `controle`, `medo`) e **retorno decrescente** para controle em elites e bosses.
 - **IA por máquina de estados** descrita em dados: fases do boss por limiar de vida/tempo, rotação de ataques, invocações, condições de falha (selos destruídos).
 - **Telegráfos como entidades:** cones, linhas e áreas de aviso existem na simulação com tempo de preparação, para que cliente e servidor concordem sobre o que acerta quem.
@@ -159,7 +159,7 @@ Exemplo do formato esperado:
 {
   "id": "warrior.heavy_strike",
   "class": "warrior",
-  "cost": { "resource": "vigor", "amount": 30 },
+  "cost": { "resource": "mana", "amount": 30 },
   "cooldown": 6.0,
   "castTime": 0.4,
   "targeting": { "type": "melee_arc", "range": 1.6, "angle": 90 },

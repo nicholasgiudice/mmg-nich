@@ -51,7 +51,7 @@ public class PrototypeContentTests
 
     [Theory]
     [InlineData("class.warrior", "warrior.sword_strike", new[] { "warrior.heavy_strike", "warrior.whirlwind", "warrior.firm_guard", "warrior.taunt" })]
-    [InlineData("class.archer", "archer.shot", new[] { "archer.hunters_mark", "archer.quick_retreat", "archer.containment_trap" })]
+    [InlineData("class.archer", "archer.shot", new[] { "archer.power_shot", "archer.hunters_mark", "archer.quick_retreat" })]
     [InlineData("class.mage", "mage.arcane_missile", new[] { "mage.elemental_blast", "mage.ice_prison", "mage.arcane_barrier", "mage.lightning_field" })]
     [InlineData("class.cleric", "cleric.holy_strike", new[] { "cleric.direct_heal", "cleric.sacred_shield", "cleric.holy_chain", "cleric.purify" })]
     public void Each_class_has_basic_attack_and_its_abilities(string classId, string basic, string[] abilities)
@@ -99,8 +99,29 @@ public class PrototypeContentTests
         var remove = Assert.IsType<RemoveStatusEffect>(Assert.Single(purify.Effects));
         Assert.Equal(["poison", "curse"], remove.Tags);
         Assert.Equal(1, remove.Count);
-        var rules = db.Classes["class.cleric"].ResourceRules;
-        Assert.Contains(rules, r => r.Trigger == ResourceTrigger.StatusRemoved && r.RemovedStatusTag == "poison");
+    }
+
+    [Fact]
+    public void Mana_comes_only_from_regeneration_over_time()
+    {
+        // T-032: nenhuma classe ganha Mana ao atacar, curar, proteger ou purificar.
+        foreach (var cls in Db().Classes.Values)
+        {
+            Assert.Equal("mana", cls.Resource.Type);
+            Assert.Empty(cls.ResourceRules);
+            Assert.True(cls.Resource.RegenPerSecond > 0, cls.Id);
+        }
+    }
+
+    [Fact]
+    public void Archer_has_a_damage_skill_and_mage_basic_attack_is_free()
+    {
+        var db = Db();
+        var damaging = db.Classes["class.archer"].Abilities
+            .Where(a => db.Abilities[a].Effects.OfType<DamageEffect>().Any())
+            .ToList();
+        Assert.Contains("archer.power_shot", damaging);
+        Assert.Null(db.Abilities[db.Classes["class.mage"].BasicAttack].Cost);
     }
 
     [Fact]
