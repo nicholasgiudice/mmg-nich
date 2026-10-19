@@ -34,7 +34,7 @@
     {
       "id": "monster.skeleton_guard",
       "name": "Guarda Esquelético",
-      "health": 560,
+      "health": 440,
       "speed": 3.2,
       "radius": 0.5,
       "tags": ["undead"],
@@ -66,7 +66,7 @@
       "id": "monster.forest_matriarch",
       "name": "Matriarca da Floresta",
       "rank": "boss",
-      "health": 10000,
+      "health": 8000,
       "speed": 3.4,
       "radius": 0.9,
       "tags": ["beast", "spider", "boss"],

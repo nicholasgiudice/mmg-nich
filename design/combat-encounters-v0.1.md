@@ -35,7 +35,7 @@ Campos da Vigília, próximo à Clareira dos Caçadores.
 
 ### O que testa
 
-- geração de Vigor;
+- gestão de Mana (regenera só com o tempo);
 - controle de ameaça;
 - uso de Golpe Circular;
 - escolha entre dano e defesa;
@@ -46,8 +46,8 @@ Campos da Vigília, próximo à Clareira dos Caçadores.
 
 1. Agrupar os lobos para usar Golpe Circular ou mantê-los separados.
 2. Usar Guarda Firme antes de receber dano ou depois.
-3. Gastar Vigor em Golpe Pesado ou guardar para defesa.
-4. Usar Investida para iniciar ou para reposicionar.
+3. Gastar Mana em Golpe Pesado ou guardar para Golpe Circular e Guarda Firme.
+4. Escolher o alvo do Golpe Pesado: o lobo mais ferido ou o que está mordendo.
 
 ### Resultado esperado
 
@@ -82,14 +82,14 @@ Campos da Vigília, perto do Acampamento dos Salteadores.
 - manutenção de distância;
 - Marca do Caçador;
 - Recuo Rápido;
-- Armadilha de Contenção;
+- Disparo Potente;
 - diferença entre alvo perigoso e alvo resistente.
 
 ### Decisões do jogador
 
 1. Eliminar o Salteador primeiro ou controlar o Lobo.
-2. Usar Armadilha para criar distância ou prender o Salteador.
-3. Gastar Foco em Tiro Debilitante ou guardar para Tiro Devastador.
+2. Usar Recuo Rápido para criar distância do Lobo ou guardar para escapar quando ele alcançar.
+3. Gastar Mana em Disparo Potente no Salteador ou guardar para a Marca do Caçador no Lobo.
 4. Lutar em campo aberto ou usar obstáculos.
 
 ### Resultado esperado

@@ -5,7 +5,6 @@
       "id": "mage.arcane_missile",
       "name": "Projétil Arcano",
       "tags": ["basic", "ranged"],
-      "cost": { "resource": "mana", "amount": 3 },
       "cooldown": 1.0,
       "targeting": { "type": "unit", "range": 9, "faction": "enemy" },
       "effects": [{ "type": "damage", "school": "arcane", "base": 15 }]
@@ -14,8 +13,8 @@
       "id": "mage.elemental_blast",
       "name": "Explosão Elemental",
       "tags": ["aoe", "ranged"],
-      "cost": { "resource": "mana", "amount": 65 },
-      "cooldown": 6,
+      "cost": { "resource": "mana", "amount": 80 },
+      "cooldown": 8,
       "targeting": { "type": "circle_at_point", "range": 9, "radius": 3 },
       "effects": [{ "type": "damage", "school": "fire", "base": 44 }]
     },
@@ -46,7 +45,7 @@
       "tags": ["aoe", "ranged", "zone"],
       "cost": { "resource": "mana", "amount": 40 },
       "cooldown": 12,
-      "targeting": { "type": "circle_at_point", "range": 9, "radius": 2.5 },
+      "targeting": { "type": "circle_at_point", "range": 9, "radius": 3.5 },
       "effects": [
         { "type": "damage", "school": "arcane", "base": 12 },
         { "type": "spawn_area", "area": "area.lightning_field" }

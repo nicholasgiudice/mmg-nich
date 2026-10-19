@@ -2,87 +2,97 @@
 
 As classes são arquétipos iniciais. Evoluções e especializações ficam fora do MVP.
 
+**Recurso de todas as classes: Mana** (decisão de 2026-10-17, T-027), que **só regenera com o tempo** (5 por segundo + Inteligência e equipamento; decisão de 2026-10-19, T-032). Nenhuma classe ganha Mana ao atacar, apanhar, curar ou proteger.
+
+**Habilidades:** cada classe tem um ataque básico e **5 habilidades no MVP** — 4 normais e 1 de assinatura —, uma por tecla (1–5). São aprendidas com pontos de habilidade (1 por nível) e têm níveis de habilidade que aumentam o valor e mudam o comportamento; valores, custos e o que muda em cada nível estão em `design/progression-v0.1.md` (§7). As habilidades em "Depois do MVP" ficam para especializações.
+
 ## Guerreiro
 
 **Função:** combate corpo a corpo, resistência, ameaça e proteção.
 
-**Recurso:** Mana (decisão de 2026-10-17, T-027: todas as classes usam Mana). Regenera com o tempo e o Guerreiro ganha Mana extra com ataques, bloqueios, dano recebido e interrupções (antes: Vigor).
+**Atributos de referência:** Força (dano) e Vitalidade.
 
 **Forças:** resistência, controle de grupos, proteção.
 
 **Fraquezas:** pouco alcance, mobilidade limitada, depende de aproximação.
 
-**Habilidades:**
+**Ataque básico:** Golpe de Espada.
 
-- Golpe Pesado — dano alto e possível interrupção;
+**Habilidades do MVP:**
+
+- Golpe Pesado — dano alto e interrupção (no nível de habilidade 3+, atordoa);
 - Provocação — direciona monstros ao Guerreiro;
-- Investida — aproximação e impacto;
+- Golpe Circular — dano e ameaça em área curta (mais giros nos níveis 3 e 5);
 - Guarda Firme — redução de dano com mobilidade reduzida;
-- Golpe Circular — dano e ameaça em área curta;
-- Interceptação — reduz dano destinado a um aliado;
-- Muralha Viva — habilidade de emergência que protege o grupo.
+- **Muralha Viva** (assinatura) — escudo de emergência para o grupo.
+
+**Depois do MVP:** Investida, Interceptação.
 
 ## Arqueiro
 
-**Função:** dano à distância, posicionamento, prioridade de alvo e armadilhas.
+**Função:** dano à distância, posicionamento e prioridade de alvo.
 
-**Recurso:** Mana (T-027). Regenera com o tempo e o Arqueiro ganha Mana extra com ataques em distância segura e acertos em alvos marcados (antes: Foco).
+**Atributos de referência:** Destreza (dano) e Agilidade.
 
 **Forças:** dano consistente, mobilidade, eliminação de alvos prioritários.
 
 **Fraquezas:** pouca resistência, vulnerável quando cercado e em espaços apertados.
 
-**Habilidades:**
+**Ataque básico:** Disparo.
 
-- Flecha Perfurante — dano em linha;
-- Marca do Caçador — aumenta dano contra um alvo;
+**Habilidades do MVP:**
+
+- Disparo Potente — tiro forte em um alvo (2 flechas no nível de habilidade 3, 3 flechas no 5);
+- Marca do Caçador — aumenta o dano que o alvo recebe de todos;
 - Recuo Rápido — cria distância;
-- Armadilha de Contenção — reduz ou interrompe movimento;
 - Chuva de Flechas — dano em área com preparação;
-- Tiro Debilitante — reduz velocidade, dano ou resistência;
-- Flecha Devastadora — disparo canalizado de alto impacto.
+- **Flecha Devastadora** (assinatura) — disparo canalizado de alto impacto em linha.
+
+**Depois do MVP:** Armadilha de Contenção (saiu em 2026-10-19 para o Disparo Potente caber na barra de 5 teclas), Flecha Perfurante, Tiro Debilitante.
 
 ## Mago
 
 **Função:** dano mágico, área, controle e exploração de fraquezas.
 
-**Recurso:** Mana.
+**Atributo de referência:** Inteligência.
 
 **Forças:** impacto em grupos, controle de área e adaptação elemental.
 
 **Fraquezas:** baixa resistência, vulnerabilidade sob pressão e dependência de Mana.
 
-**Habilidades:**
+**Ataque básico:** Projétil Arcano (sem custo de Mana).
 
-- Projétil Arcano — ataque básico de baixo custo;
-- Explosão Elemental — dano em área;
-- Prisão de Gelo — lentidão ou congelamento;
+**Habilidades do MVP:**
+
+- Explosão Elemental — dano em área à distância (2 acertos no nível de habilidade 3, 3 no 5);
+- Prisão de Gelo — congelamento;
 - Barreira Arcana — proteção temporária;
-- Combustão — dano contínuo;
-- Campo de Relâmpagos — zona de dano;
-- Dissipar Magia — remove ou enfraquece efeitos;
-- Cataclismo Arcano — habilidade de assinatura com alto cooldown.
+- Campo de Relâmpagos — zona de dano à distância;
+- **Cataclismo Arcano** (assinatura) — área grande com alto tempo de recarga.
+
+**Depois do MVP:** Combustão, Dissipar Magia.
 
 ## Clérigo
 
 **Função:** cura, proteção, purificação, suporte e dano sagrado.
 
-**Recurso:** Mana (T-027). Regenera com o tempo e o Clérigo ganha Mana extra com curas relevantes, proteção preventiva, purificação e ataques sagrados (antes: Fé).
+**Atributos de referência:** Inteligência (cura, escudo e dano sagrado) e Vitalidade.
 
 **Forças:** sustenta grupos, remove condições e é eficiente contra mortos-vivos e corrupção.
 
 **Fraquezas:** menor dano geral, vulnerabilidade isolado e necessidade de escolher entre atacar e apoiar.
 
-**Habilidades:**
+**Ataque básico:** Golpe Sagrado.
 
-- Golpe Sagrado — ataque básico;
+**Habilidades do MVP:**
+
 - Cura Direta — recuperação de vida;
-- Bênção — fortalecimento temporário;
+- Corrente Sagrada — dano em alvos corrompidos e recuperação limitada;
 - Escudo Sagrado — absorve dano antecipadamente;
 - Purificação — remove efeitos negativos;
-- Oração Restauradora — cura gradual em área;
-- Corrente Sagrada — dano em alvos corrompidos e recuperação limitada;
-- Milagre — habilidade de emergência de alto cooldown.
+- **Milagre** (assinatura) — cura de emergência do grupo.
+
+**Depois do MVP:** Bênção, Oração Restauradora.
 
 ## Regras de balanceamento
 
@@ -91,4 +101,5 @@ As classes são arquétipos iniciais. Evoluções e especializações ficam fora
 - especializações futuras devem mudar estilo de jogo, não só números;
 - controle é reduzido contra elites e bosses;
 - dano em área exige posicionamento e recurso;
-- nenhuma classe pode ser dominante em todas as situações.
+- nenhuma classe pode ser dominante em todas as situações;
+- com 15 pontos de habilidade não é possível ter todas as habilidades no nível máximo: escolher onde investir faz parte da build.

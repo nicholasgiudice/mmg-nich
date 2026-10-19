@@ -10,6 +10,15 @@
       "effects": [{ "type": "damage", "school": "physical", "base": 17 }]
     },
     {
+      "id": "archer.power_shot",
+      "name": "Disparo Potente",
+      "tags": ["ranged", "damage"],
+      "cost": { "resource": "mana", "amount": 25 },
+      "cooldown": 7,
+      "targeting": { "type": "unit", "range": 9, "faction": "enemy" },
+      "effects": [{ "type": "damage", "school": "physical", "base": 40 }]
+    },
+    {
       "id": "archer.hunters_mark",
       "name": "Marca do Caçador",
       "tags": ["ranged", "debuff"],

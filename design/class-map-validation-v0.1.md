@@ -24,15 +24,15 @@ Cada classe precisa:
 
 | Inimigo | Guerreiro | Arqueiro | Mago | Clérigo |
 |---|---|---|---|---|
-| Rato de Campo | Golpe circular | Disparo múltiplo/ataque básico | Explosão elemental | Golpe sagrado |
+| Rato de Campo | Golpe circular | Chuva de flechas/ataque básico | Explosão elemental | Golpe sagrado |
 | Lobo Cinzento | Provocação e controle | Recuo rápido e marca | Prisão de gelo | Cura e ataque sagrado |
-| Salteador | Investida/interrupção | Marca e tiro debilitante | Controle de grupo | Bênção e purificação |
-| Aranha do Bosque | Guarda firme | Armadilha e distância | Campo de relâmpagos | Purificação |
-| Fada da Névoa | Investida | Tiro debilitante | Dissipar/controle | Corrente sagrada |
+| Salteador | Golpe pesado (interrupção) | Marca e disparo potente | Controle de grupo | Escudo e purificação |
+| Aranha do Bosque | Guarda firme | Recuo e distância | Campo de relâmpagos | Purificação |
+| Fada da Névoa | Provocação | Disparo potente | Prisão de gelo | Corrente sagrada |
 | Ent Corrompido | Controle de posição | Dano constante | Exploração de fraqueza elemental | Sustentação |
 | Guarda Esquelético | Ataque lateral e ameaça | Disparo em alvo exposto | Dano mágico/controle | Dano sagrado |
-| Sacerdote Morto | Interrupção | Eliminação prioritária | Dissipar magia | Purificação |
-| Cavaleiro Espectral | Guarda firme e interceptação | Marca e mobilidade | Controle de movimento | Escudo e cura |
+| Sacerdote Morto | Interrupção (golpe pesado) | Eliminação prioritária | Controle (prisão de gelo) | Purificação |
+| Cavaleiro Espectral | Guarda firme e Muralha Viva | Marca e mobilidade | Controle de movimento | Escudo e cura |
 
 A matriz mostra funções distintas sem criar um inimigo que só possa ser derrotado por uma classe específica.
 
@@ -57,11 +57,11 @@ O Guerreiro pode virar um personagem passivo que apenas usa Provocação e esper
 
 ### Ajuste necessário
 
-A geração de Vigor deve recompensar decisões, não apenas receber dano. O Guerreiro deve ganhar mais Vigor ao:
+Decisão de 2026-10-19 (T-032): a Mana de todas as classes vem só do tempo, então o Guerreiro não é recompensado por apanhar. Para ele jogar ativamente, as habilidades devem recompensar decisões (níveis de habilidade em `design/progression-v0.1.md`) — por exemplo:
 
 - bloquear um ataque forte;
 - interromper uma habilidade;
-- interceptar dano destinado a um aliado;
+- proteger o grupo com Muralha Viva e Provocação no momento certo;
 - manter um inimigo perigoso afastado da retaguarda.
 
 ### Resultado esperado
@@ -76,7 +76,7 @@ O Guerreiro joga ativamente e precisa escolher entre causar dano, controlar ou p
 
 - elimina Sacerdotes Mortos e Fadas da Névoa;
 - mantém distância de Lobos e Aranhas;
-- usa armadilhas na Floresta;
+- usa Recuo Rápido e Chuva de Flechas para controlar o espaço na Floresta;
 - marca o boss para aumentar o dano do grupo;
 - ataca selos ou alvos secundários sem abandonar completamente a luta;
 - causa dano consistente contra alvos resistentes.
@@ -178,7 +178,7 @@ O Clérigo é melhor em grupo, mas não é um personagem incapaz de jogar sozinh
 ### Participação das classes
 
 - Guerreiro segura a Matriarca e posiciona o corpo dela;
-- Arqueiro mantém dano e usa armadilhas;
+- Arqueiro mantém dano com Disparo Potente e a Marca na Matriarca;
 - Mago controla as aranhas menores e zonas de veneno;
 - Clérigo purifica veneno e mantém o grupo vivo.
 
@@ -202,7 +202,7 @@ O boss não pode ser derrotado ficando parado em um ponto enquanto o Clérigo cu
 
 ### Participação das classes
 
-- Guerreiro mantém o boss longe do grupo e intercepta ataques;
+- Guerreiro mantém o boss longe do grupo e protege com Muralha Viva;
 - Arqueiro marca o boss e elimina alvos secundários;
 - Mago controla invocações e cria zonas de contenção;
 - Clérigo cura, purifica e protege os selos ou jogadores.

@@ -16,7 +16,7 @@ O projeto está em fase de idealização e prototipagem. O primeiro objetivo é 
 - 4 classes base;
 - combate em tempo real;
 - PvE solo e em grupo;
-- habilidades com cooldown e recursos próprios.
+- habilidades com cooldown, pagas com Mana (regenera com o tempo) e aprendidas com pontos a cada nível.
 
 ## Como compilar
 

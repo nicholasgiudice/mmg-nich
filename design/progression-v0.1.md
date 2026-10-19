@@ -4,14 +4,14 @@ Status: **aprovado pelo designer em 2026-10-17** (T-031), com as decisões da se
 
 - progressão por **nível com XP**;
 - pontos de atributo **totalmente livres**;
-- habilidades **liberadas por nível**, barra com **6 espaços** (ataque básico + 1 a 5);
+- habilidades aprendidas com **1 ponto de habilidade por nível**, cada uma com **níveis de habilidade (NH)** — 5 nas normais, 3 na assinatura (revisão de 2026-10-19); barra com o ataque básico + **5 teclas**;
 - **6 espaços de equipamento**.
 
 Todo número abaixo é ponto de partida para o simulador, não valor final. Regras e números vão para `data/*.json` (nunca no código).
 
 ## 1. Princípio de calibração
 
-**Um personagem nível 1 com o equipamento inicial produz exatamente os números do protótipo atual** (`balance-v0.4.md`): Golpe de Espada 18, Explosão Elemental 44, Cura Direta 50, vida do Guerreiro 240 etc. Assim o balanceamento já feito na fase 0 vira o ponto de partida da curva, e o simulador continua valendo.
+**Um personagem nível 1 com o equipamento inicial e cada habilidade no NH1 produz exatamente os números do protótipo atual** (`balance-v0.5.md`): Golpe de Espada 18, Explosão Elemental 44, Cura Direta 50, vida do Guerreiro 240 etc. Assim o balanceamento já feito na fase 0 vira o ponto de partida da curva, e o simulador continua valendo.
 
 ## 2. Níveis e XP
 
@@ -88,7 +88,7 @@ Como a distribuição é livre, a interface mostra o **atributo sugerido** da cl
   | Clérigo | 70 | 10 | 150 |
 
 - **Mana máxima** = 80 + 2 × INT (nível 1: Guerreiro 88, Arqueiro 90, Clérigo 104, Mago 106; hoje é 100 para todas).
-- **Regeneração de Mana** = base da classe (Guerreiro 4, Arqueiro 4, Mago 5, Clérigo 3 por segundo) + INT × 0,05. Os ganhos por evento da T-027 continuam.
+- **Regeneração de Mana** = 5 por segundo para todas as classes + INT × 0,05 (+ afixos de equipamento). **Mana vem só do tempo** (decisão de 2026-10-19, T-032): nenhuma classe ganha Mana ao atacar, apanhar, curar ou proteger.
 - **Defesa**: duas estatísticas vindas do equipamento.
   - **Armadura** reduz dano físico; **Resistência** reduz dano mágico (arcano, fogo, gelo, natureza, sagrado).
   - Redução = `D / (D + 40 + 8 × nível do atacante)`, máximo 60%.
@@ -175,84 +175,107 @@ O nível do item é o nível da área onde caiu.
 
 Morte não perde equipamento (visão do MVP).
 
-## 7. Habilidades por classe
+## 7. Habilidades: pontos e níveis de habilidade
+
+Revisão do designer (2026-10-19, T-032): as habilidades são **aprendidas com pontos** ganhos a cada nível e cada uma tem **níveis de habilidade (NH)**. Substitui a "liberação por nível" da primeira versão.
 
 ### Regras gerais
 
-- Barra: **ataque básico** (clique / Espaço) + **5 espaços** (teclas 1–5) + poção (Q).
-- Liberação: nível 1 → espaços 1 e 2; nível 4 → espaço 3; nível 8 → espaço 4; **nível 12 → espaço 5, habilidade de assinatura**.
-- Cada classe usa 4 habilidades normais + 1 de assinatura das listas de `classes-v0.1.md`. As 2 restantes de cada lista ficam para depois do MVP (especializações).
-- Ataques básicos não custam Mana (muda o Projétil Arcano, que hoje custa 3).
+- **1 ponto de habilidade por nível do personagem** (15 no total; o nível 1 já dá 1 ponto).
+- Cada classe tem **4 habilidades normais com 5 NH** e **1 assinatura com 3 NH**: 4 × 5 + 3 = **23 NH possíveis para 15 pontos** — não dá para ter tudo no máximo; o jogador escolhe onde investir. Redistribuir pontos de habilidade segue a mesma regra dos atributos (na cidade; 1ª vez grátis, depois moedas).
+- **Requisito de nível**: NH *n* de uma habilidade normal exige personagem no nível `2n − 1` (NH1 no 1, NH2 no 3, NH3 no 5, NH4 no 7, NH5 no 9). A assinatura exige nível 12 (NH1), 13 (NH2) e 15 (NH3).
+- Habilidade com NH 0 não aparece na barra. Ataque básico não tem NH (escala com atributos e arma).
+- Barra: **ataque básico** (clique / Espaço) + **5 teclas** (4 normais + assinatura) + poção (Q).
+- **Valor por NH**: cada NH multiplica o valor da habilidade (base + escalas da §5): NH1 × 1,0; NH2 × 1,2; NH3 × 1,4; NH4 × 1,6; NH5 × 1,8 (assinatura: × 1,0 / 1,3 / 1,6). **NH3 e NH5 também mudam o comportamento** (tabelas abaixo). Quando o NH acrescenta acertos (mais flechas, explosões, giros), cada acerto vale a porcentagem indicada **do valor do NH1**: 3 flechas de 85% = 2,55 × NH1, contra 1,8 × nas habilidades sem acertos extras — o ganho maior compensa não ter efeito extra (atordoar, lentidão...).
+- Custo de Mana e recarga não mudam com o NH, salvo quando a tabela diz.
+- Ataques básicos não custam Mana (Projétil Arcano sem custo desde a T-032).
 
 | Tipo de habilidade | Custo (Mana) | Recarga |
 |---|---|---|
-| Utilidade / reposicionamento | 10–20 | 6–12 s |
+| Utilidade / reposicionamento | 0–20 | 6–12 s |
 | Dano principal (alvo único) | 20–35 | 5–8 s |
 | Controle | 25–40 | 10–15 s |
-| Área | 35–65 | 6–14 s |
-| Defensiva / cura | 15–30 | 4–15 s |
+| Área | 35–80 | 8–14 s |
+| Defensiva / cura | 0–30 | 4–15 s |
 | Assinatura | 60–100 | 60–120 s |
+
+**Calibração**: o NH1 de cada habilidade, no nível 1 com equipamento inicial, dá os números do protótipo (`balance-v0.5.md`).
 
 ### Guerreiro (FOR, arma)
 
-| Nível | Tecla | Habilidade | Papel | Custo / recarga | Escala (nível 1 = protótipo) |
-|---|---|---|---|---|---|
-| 1 | M1 | Golpe de Espada | básico, arco curto | 0 / 0,9 s | 1,0 × ARMA + 1,0 × FOR = 18 |
-| 1 | 1 | Golpe Pesado | dano alto + interrupção | 30 / 6 s | 15 + 1,0 × ARMA + 2,5 × FOR = 51 |
-| 1 | 2 | Provocação | ameaça, direciona monstros | 0 / 10 s | — |
-| 4 | 3 | Golpe Circular | área curta + ameaça | 25 / 5 s | 5 + 0,5 × ARMA + 1,6 × FOR = 27 |
-| 8 | 4 | Guarda Firme | redução de dano, menos mobilidade | 0 / 14 s | redução fixa (dados) |
-| 12 | 5 | **Muralha Viva** | assinatura: escudo em todos os aliados próximos | 80 / 90 s | escudo 40 + 2,0 × VIT |
+Ataque básico: **Golpe de Espada** — 1,0 × ARMA + 1,0 × FOR = 18, a cada 0,9 s.
 
-Fora do MVP: Investida (mobilidade é fraqueza do Guerreiro), Interceptação.
+| Habilidade | Papel | Custo / recarga | NH1 | NH2 / NH4 | NH3 | NH5 |
+|---|---|---|---|---|---|---|
+| **Golpe Pesado** | dano alto + interrupção (0,4 s de conjuração) | 30 / 6 s | 15 + 1,0 × ARMA + 2,5 × FOR = 51, interrompe | × 1,2 / × 1,6 | × 1,4 e atordoa 0,5 s | × 1,8, atordoa 1 s e arco 90° → 120° |
+| **Provocação** | atrai os monstros próximos | 0 / 10 s | raio 8, 3 s | duração 3,5 s / recarga 8 s | raio 10, duração 4 s | o Guerreiro recebe 15% menos dano por 4 s depois de provocar |
+| **Golpe Circular** | área curta + ameaça | 25 / 5 s | 5 + 0,5 × ARMA + 1,6 × FOR = 27 | × 1,2 / 2 giros de 100% | **2 giros** de 85% cada | **3 giros** de 85% e aplica Sangramento |
+| **Guarda Firme** | reduz o dano recebido, anda mais devagar | 0 / 14 s | −40% de dano por 4 s, −50% de velocidade | duração 5 s / recarga 12 s | −50% de dano e só −30% de velocidade | devolve 20% do dano corpo a corpo bloqueado ao atacante |
+| **Muralha Viva** (assinatura) | escudo no grupo | 80 / 90 s | escudo 40 + 2,0 × VIT em aliados a até 5 tiles | NH2: × 1,3 e raio 7 | NH3: × 1,6 e remove atordoamento/enraizamento dos aliados | — |
 
 ### Arqueiro (DES, arma)
 
-| Nível | Tecla | Habilidade | Papel | Custo / recarga | Escala |
-|---|---|---|---|---|---|
-| 1 | M1 | Disparo | básico à distância | 0 / 1,0 s | 1,0 × ARMA + 1,0 × DES = 18 (protótipo: 17) |
-| 1 | 1 | Marca do Caçador | aumenta o dano que o alvo recebe de todos | 10 / 12 s | bônus 16% + 0,75% × DES, máx. 60% (nível 1: 25% = protótipo) |
-| 1 | 2 | Recuo Rápido | cria distância | 0 / 8 s | — |
-| 4 | 3 | **Chuva de Flechas** | área com preparação (telegráfo aliado) | 45 / 12 s | 10 + 1,4 × DES por onda, 3 ondas |
-| 8 | 4 | Armadilha de Contenção | prende ao pisar | 25 / 14 s | 2 + 0,5 × DES (nível 1: 8 = protótipo) |
-| 12 | 5 | **Flecha Devastadora** | assinatura: disparo canalizado 1,5 s, linha longa | 70 / 60 s | 40 + 1,0 × ARMA + 5,0 × DES |
+Ataque básico: **Disparo** — 1,0 × ARMA + 1,0 × DES = 18, a cada 1,0 s.
 
-Fora do MVP: Flecha Perfurante, Tiro Debilitante.
+| Habilidade | Papel | Custo / recarga | NH1 | NH2 / NH4 | NH3 | NH5 |
+|---|---|---|---|---|---|---|
+| **Disparo Potente** (novo, T-032) | tiro forte em um alvo | 25 / 7 s | **1 flecha**: 10 + 1,0 × ARMA + 2,0 × DES = 40 | × 1,2 / 2 flechas de 100% | **2 flechas** de 85% | **3 flechas** de 85% |
+| **Marca do Caçador** | o alvo recebe mais dano de todos | 10 / 12 s | +16% + 0,75% × DES (25% no nível 1, máx. 60%), 8 s | duração 10 s / +5 pontos percentuais no bônus (máx. 65%) | marca também o inimigo mais próximo do alvo | marcados ficam 20% mais lentos |
+| **Recuo Rápido** | cria distância | 0 / 8 s | salto de 5 tiles para trás | recarga 7 s / recarga 6 s | 6 tiles e o próximo disparo em até 2 s causa +30% | **2 cargas** |
+| **Chuva de Flechas** | área com preparação (telegráfo aliado) | 45 / 12 s | 3 ondas de 10 + 1,4 × DES = 27 cada, raio 3 | × 1,2 / × 1,6 | × 1,4 e raio 4 | × 1,8, **4 ondas** e lentidão de 20% na área |
+| **Flecha Devastadora** (assinatura) | disparo canalizado (1,5 s) em linha longa | 70 / 60 s | 40 + 1,0 × ARMA + 5,0 × DES | NH2: × 1,3 e atravessa todos os inimigos da linha | NH3: × 1,6, canalização 1,0 s e recarga 45 s | — |
 
-**Por que o Arqueiro escala bem** (revisão do designer, 2026-10-17): **DES** é o atributo de dano dele e alimenta o Disparo no mesmo ritmo que FOR alimenta o Golpe de Espada, além da Marca, que multiplica **todo** o dano no alvo (inclusive o do grupo). AGI é igual para todas as classes (velocidade e crítico). Comparação no nível 15 com arma rara de dano 18, os 70 pontos livres divididos em 50 no atributo de dano e 20 em AGI:
-
-| | Guerreiro (FOR 62, AGI 26) | Arqueiro (DES 62, AGI 26) |
-|---|---|---|
-| Ataque básico | Golpe de Espada 80, a cada 0,79 s | Disparo 80, a cada 0,88 s |
-| Principal | Golpe Pesado 188 | Marca: +60% em todo dano no alvo (Disparo marcado 128) |
-| Área | Golpe Circular 113 | Chuva de Flechas 97 × 3 ondas |
-| Crítico | 11,5% | 11,5% |
+Fora do MVP: **Armadilha de Contenção** (a barra tem 5 teclas; saiu para o Disparo Potente entrar — continua nos dados para uma especialização), Flecha Perfurante, Tiro Debilitante.
 
 ### Mago (INT)
 
-| Nível | Tecla | Habilidade | Papel | Custo / recarga | Escala |
-|---|---|---|---|---|---|
-| 1 | M1 | Projétil Arcano | básico à distância | 0 / 1,0 s | 3 + 0,9 × INT = 15 |
-| 1 | 1 | Explosão Elemental | área à distância, instantânea | 65 / 6 s | 18 + 2,0 × INT = 44 |
-| 1 | 2 | Prisão de Gelo | controle (congela) | 25 / 10 s | 3 + 0,45 × INT = 9 |
-| 4 | 3 | Barreira Arcana | escudo próprio | 30 / 15 s | 19 + 2,0 × INT = 45 |
-| 8 | 4 | Campo de Relâmpagos | zona de dano à distância | 40 / 12 s | impacto 4 + 0,6 × INT = 12; zona 2 + 0,45 × INT = 8/s |
-| 12 | 5 | **Cataclismo Arcano** | assinatura: área grande com telegráfo de 1,5 s | 100 / 120 s | 60 + 6,0 × INT |
+Ataque básico: **Projétil Arcano** — 3 + 0,9 × INT = 15, a cada 1,0 s, **sem custo**.
+
+| Habilidade | Papel | Custo / recarga | NH1 | NH2 / NH4 | NH3 | NH5 |
+|---|---|---|---|---|---|---|
+| **Explosão Elemental** | área à distância, instantânea | 80 / 8 s | **1 acerto**: 18 + 2,0 × INT = 44, raio 3 | × 1,2 / 2 acertos de 100% | **2 acertos** de 85% (0,4 s entre eles) | **3 acertos** de 85% |
+| **Prisão de Gelo** | congela um alvo | 25 / 10 s | 3 + 0,45 × INT = 9 e congela 2,5 s | × 1,2 e 3 s / × 1,6 e 3,5 s | congela também inimigos a até 2 tiles do alvo | congelados recebem +20% de dano de todas as fontes |
+| **Barreira Arcana** | escudo próprio | 30 / 15 s | 19 + 2,0 × INT = 45 por 6 s | × 1,2 / × 1,6 | × 1,4 e, ao acabar, devolve em Mana 30% do escudo que sobrou | × 1,8 e protege também o aliado mais próximo (50% do valor) |
+| **Campo de Relâmpagos** | zona de dano à distância | 40 / 12 s | impacto 4 + 0,6 × INT = 12; zona de **raio 3,5** com 2 + 0,45 × INT = 8 por segundo, 5 s | × 1,2 / × 1,6 | × 1,4 e dura 7 s | × 1,8 e pulsos a cada 0,5 s |
+| **Cataclismo Arcano** (assinatura) | área grande com telegráfo de 1,5 s | 100 / 120 s | 60 + 6,0 × INT, raio 5 | NH2: × 1,3 e raio 6 | NH3: × 1,6 e deixa o chão em chamas por 4 s | — |
 
 Fora do MVP: Combustão, Dissipar Magia.
 
 ### Clérigo (INT, arma)
 
-| Nível | Tecla | Habilidade | Papel | Custo / recarga | Escala |
-|---|---|---|---|---|---|
-| 1 | M1 | Golpe Sagrado | básico, bônus contra mortos-vivos | 0 / 1,1 s | 1,0 × ARMA + 0,6 × INT = 12 |
-| 1 | 1 | Cura Direta | cura (0,8 s de conjuração) | 20 / 4 s | 26 + 2,0 × INT = 50 |
-| 1 | 2 | Corrente Sagrada | dano + cura própria limitada | 25 / 6 s | 15 + 2,0 × INT = 39 |
-| 4 | 3 | Escudo Sagrado | escudo em aliado | 15 / 10 s | 21 + 2,0 × INT = 45 |
-| 8 | 4 | Purificação | remove veneno/maldição | 0 / 8 s | — |
-| 12 | 5 | **Milagre** | assinatura: cura grande em todos os aliados próximos | 90 / 120 s | 60 + 4,0 × INT |
+Ataque básico: **Golpe Sagrado** — 1,0 × ARMA + 0,6 × INT = 12, a cada 1,1 s, bônus contra mortos-vivos.
+
+| Habilidade | Papel | Custo / recarga | NH1 | NH2 / NH4 | NH3 | NH5 |
+|---|---|---|---|---|---|---|
+| **Cura Direta** | cura um aliado (0,8 s de conjuração) | 20 / 4 s | 26 + 2,0 × INT = 50 | × 1,2 / × 1,6 | × 1,4 e conjuração 0,5 s | × 1,8 e cura também o aliado mais ferido próximo (50% do valor) |
+| **Corrente Sagrada** | dano + cura própria limitada | 25 / 6 s | 15 + 2,0 × INT = 39 e cura 10 o Clérigo | × 1,2 / × 1,6 | salta para um 2º inimigo (70%) | salta para 3 inimigos e a cura própria dobra |
+| **Escudo Sagrado** | escudo em um aliado | 15 / 10 s | 21 + 2,0 × INT = 45 | × 1,2 / × 1,6 | × 1,4 e remove um veneno do alvo | × 1,8 e protege também o aliado mais ferido |
+| **Purificação** | remove veneno ou maldição | 0 / 8 s | remove 1 efeito | recarga 7 s / recarga 6 s | remove 2 efeitos | também cura 20 + 1,0 × INT e dá 2 s de imunidade a veneno e maldição |
+| **Milagre** (assinatura) | cura grande no grupo | 90 / 120 s | 60 + 4,0 × INT em todos os aliados a até 8 tiles | NH2: × 1,3 | NH3: × 1,6 e levanta um aliado caído próximo com 30% da vida | — |
 
 Fora do MVP: Bênção, Oração Restauradora.
+
+### Exemplos de distribuição (nível 15, 15 pontos)
+
+| Classe | Foco | Distribuição |
+|---|---|---|
+| Arqueiro | alvo único | Disparo Potente 5, Marca 5, Recuo 1, Chuva 1, Flecha Devastadora 3 |
+| Arqueiro | área e controle de distância | Chuva 5, Recuo 3, Disparo Potente 3, Marca 1, Flecha Devastadora 3 |
+| Mago | área | Explosão 5, Campo 5, Prisão 1, Barreira 1, Cataclismo 3 |
+| Clérigo | cura do grupo | Cura 5, Escudo 5, Purificação 1, Corrente 1, Milagre 3 |
+
+Com 23 NH possíveis e 15 pontos, sempre sobram 8 NH sem preencher: duas habilidades no máximo, a assinatura e o resto no mínimo, ou várias pela metade.
+
+### Comparação Guerreiro × Arqueiro no nível 15
+
+Arma rara de dano 18, 50 pontos no atributo de dano e 20 em AGI (FOR/DES 62, AGI 26), habilidades principais no NH5:
+
+| | Guerreiro | Arqueiro |
+|---|---|---|
+| Ataque básico | Golpe de Espada 80, a cada 0,79 s | Disparo 80, a cada 0,88 s |
+| Dano principal (NH5) | Golpe Pesado (15 + 18 + 155) × 1,8 = 338 e atordoa 1 s | Disparo Potente 3 × (10 + 18 + 124) × 0,85 = 388 em 3 flechas |
+| Bônus | — | Marca NH5: +60% em todo dano no alvo e lentidão |
+| Crítico | 11,5% | 11,5% |
 
 ## 8. Metas para o simulador e testes de design
 
@@ -265,6 +288,7 @@ Perfis de teste: personagem no **nível esperado** da área, pontos no **atribut
 | Matriarca (nível 8), grupo de 4 no nível 7–8 com incomuns | vitória 60–90%, duração 2–4 min |
 | Vigia Sem Rosto (nível 15), grupo de 4 no nível 14–15 com raros | vitória 50–80%, duração 4–6 min |
 | Mesma classe, pontos todos no atributo sugerido × espalhados | o sugerido vence mais rápido, mas o espalhado ainda vence ≥ 60% no perfil esperado |
+| Distribuição de pontos de habilidade (perfil esperado, mesma classe) | duas habilidades no NH5 × pontos espalhados: as duas vencem ≥ 70%; nenhuma distribuição é a única que vence |
 | Diferença entre classes (solo, perfil esperado) | nenhuma classe mais de 1,6× mais lenta que a média (Clérigo pode ser a mais lenta, como hoje) |
 
 Os testes de design atuais passam a rodar com o "perfil esperado nível 1" — que reproduz o protótipo pela regra de calibração da §1.
@@ -272,11 +296,11 @@ Os testes de design atuais passam a rodar com o "perfil esperado nível 1" — q
 ## 9. Implementação (fase 2, ordem sugerida)
 
 1. Core: componente de atributos/estatísticas, `scaling` nos efeitos (dano, cura, escudo), defesa (armadura/resistência), crítico com o RNG da simulação; dados de perfil por classe. Com perfil nível 1 + equipamento inicial, todos os testes atuais continuam passando.
-2. Core: níveis, XP, pontos livres e liberação de habilidades por nível.
+2. Core: níveis, XP, pontos de atributo livres, **pontos de habilidade e NH** (multiplicador por NH; variações de NH3/NH5 descritas nos dados de cada habilidade, ex.: `"ranks": [{ "rank": 3, "hits": 2, "hitScale": 0.85 }]`), **múltiplos acertos** (flechas, explosões, giros) e requisito de nível por NH.
 3. Core: itens, equipamento e queda (já no esboço da fase 2).
-4. Dados: reformulação das habilidades (tabelas da §7) e novas assinaturas.
+4. Dados: habilidades com os NH da §7 e as novas assinaturas.
 5. Simulador: perfis por nível/equipamento; testes de design da §8.
-6. Cliente: tela de personagem (atributos com prévia), inventário/equipamento, barra com liberação por nível.
+6. Cliente: tela de personagem (atributos com prévia), tela de habilidades (pontos e NH, com prévia do próximo NH), inventário/equipamento.
 
 ## 10. Decisões (aprovadas em 2026-10-17)
 
@@ -288,3 +312,11 @@ O designer aprovou a proposta e as recomendações abaixo.
 4. **Nível máximo 15**, ~6–7 h até o máximo no MVP.
 5. **Cajados e cetros dão INT** como estatística base, além de um dano de arma menor (§6). Para manter a calibração, o perfil inicial do Mago tem INT 11 e o cajado inicial dá +2.
 6. **Crítico vale para cura** (e escudo).
+
+### Revisão de 2026-10-19 (T-032)
+
+7. **Habilidades por pontos**: 1 ponto de habilidade por nível; 5 NH nas habilidades normais, 3 na assinatura; não dá para maximizar tudo (§7).
+8. **Barra com 5 teclas**: para o Arqueiro ganhar o **Disparo Potente**, a **Armadilha de Contenção** saiu do MVP.
+9. **Mana só por tempo** (5/s para todas as classes + INT); sem ganho por ataque, dano recebido, cura ou escudo.
+10. **Projétil Arcano sem custo**; **Campo de Relâmpagos com raio 3,5**.
+11. Ideias para depois do MVP ficam em `design/ideias-futuras.md`.
