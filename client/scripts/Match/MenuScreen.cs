@@ -109,7 +109,7 @@ public partial class MenuScreen : Control
 
         root.AddChild(new Label
         {
-            Text = "Em jogo: WASD mover · clique ou Espaço (alvo do Tab) atacar · 1-4 habilidades · Q poção · Tab alvo · R reiniciar · Esc pausa",
+            Text = "Em jogo: WASD mover · Tab ou clique seleciona o alvo e o ataque básico é automático · 1-5 habilidades · Q poção · Esc limpa alvo/pausa · R reiniciar",
             Modulate = new Color(1, 1, 1, 0.6f),
         });
 
