@@ -10,7 +10,7 @@ namespace Game.Core.Combat.Telegraphs;
 /// Telegráfo em andamento (entidade sem vida: tem <c>Transform</c> = origem/direção e este componente).
 /// Os efeitos são os da habilidade <see cref="AbilityId"/>; a forma é fixada no início.
 /// </summary>
-public sealed class TelegraphState : IComponent
+public sealed class TelegraphState : IComponent, IReplicated
 {
     public EntityId Source { get; init; }
     public string AbilityId { get; init; } = "";

@@ -16,6 +16,9 @@ public sealed class GameDatabase
     public IReadOnlyDictionary<string, ArenaDefinition> Arenas { get; }
     public IReadOnlyDictionary<string, EncounterDefinition> Encounters { get; }
 
+    /// <summary>Impressão digital dos JSON carregados (<see cref="ContentFingerprint"/>); cliente e servidor comparam.</summary>
+    public string Fingerprint { get; init; } = "";
+
     /// <summary>Regras globais (seção "rules"); seções ausentes = padrões neutros.</summary>
     public RulesDefinition Rules { get; init; } = new();
 

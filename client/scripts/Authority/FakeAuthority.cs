@@ -35,7 +35,7 @@ public sealed class FakeAuthority : IGameAuthority
             new Health(50),
             new FactionTag(Faction.Monster),
             new Collider(0.5f));
-        Latest = _scratch.Snapshot();
+        Latest = _scratch.Snapshot(SnapshotScope.Replicated);
     }
 
     public static GridMap Map { get; } = new(16, 12, (x, y) => x == 0 || y == 0 || x == 15 || y == 11);
@@ -73,7 +73,7 @@ public sealed class FakeAuthority : IGameAuthority
             }
 
             Previous = Latest;
-            Latest = _scratch.Snapshot();
+            Latest = _scratch.Snapshot(SnapshotScope.Replicated);
         }
 
         InterpolationFraction = (float)(_accumulator / TickSeconds);

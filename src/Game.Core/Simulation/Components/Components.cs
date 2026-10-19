@@ -9,7 +9,7 @@ public enum Faction
 }
 
 /// <summary>Posição (unidades = tiles) e direção para onde a entidade olha.</summary>
-public sealed class Transform : IComponent
+public sealed class Transform : IComponent, IReplicated
 {
     public Vector2 Position;
     public Vector2 Facing = new(0, 1);
@@ -23,7 +23,7 @@ public sealed class Transform : IComponent
     }
 }
 
-public sealed class Health : IComponent
+public sealed class Health : IComponent, IReplicated
 {
     public float Current;
     public float Max;
@@ -47,17 +47,17 @@ public sealed class Health : IComponent
     }
 }
 
-public sealed class FactionTag(Faction faction) : IComponent
+public sealed class FactionTag(Faction faction) : IComponent, IReplicated
 {
     public Faction Faction { get; } = faction;
 
-    public IComponent Clone() => new FactionTag(Faction);
+    public IComponent Clone() => this; // imutável
 
     public void WriteHash(StateHasher hasher) => hasher.Add((int)Faction);
 }
 
 /// <summary>Recurso de classe (vigor, fe, foco...). O tipo é um id de dados, ex.: "resource.vigor".</summary>
-public sealed class ResourcePool(string type, float max, float current) : IComponent
+public sealed class ResourcePool(string type, float max, float current) : IComponent, IReplicated
 {
     public string Type { get; } = type;
     public float Max = max;
@@ -74,7 +74,7 @@ public sealed class ResourcePool(string type, float max, float current) : ICompo
 }
 
 /// <summary>Velocidade (tiles/s) e direção de movimento desejada (comprimento 0..1; zero = parado).</summary>
-public sealed class Movement(float speed) : IComponent
+public sealed class Movement(float speed) : IComponent, IReplicated
 {
     public float Speed = speed;
     public Vector2 Direction;
@@ -93,7 +93,7 @@ public sealed class Movement(float speed) : IComponent
 }
 
 /// <summary>Círculo de colisão (raio em tiles). Usado pela T-007.</summary>
-public sealed class Collider(float radius) : IComponent
+public sealed class Collider(float radius) : IComponent, IReplicated
 {
     public float Radius = radius;
 

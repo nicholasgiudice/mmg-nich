@@ -42,6 +42,12 @@ public sealed class ContentCatalog
     /// <summary>Regras globais (data/rules.json). Seções ausentes = padrões neutros.</summary>
     public RulesDefinition Rules { get; init; } = new();
 
+    /// <summary>
+    /// Impressão digital dos dados de origem (calculada por quem carrega o conteúdo, ex.: <c>Game.Data</c>).
+    /// Vazia em conteúdo montado à mão. Cliente e servidor só jogam juntos com o mesmo valor (T-101).
+    /// </summary>
+    public string Fingerprint { get; init; } = "";
+
     private static Dictionary<string, T> Index<T>(IEnumerable<T>? items, Func<T, string> id) =>
         (items ?? []).ToDictionary(id, StringComparer.Ordinal);
 }
