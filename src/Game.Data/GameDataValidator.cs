@@ -28,9 +28,10 @@ internal static partial class GameDataValidator
         foreach (var e in c.Monsters) { ValidateMonster(e, refs, errors); }
         ValidateRules(c.Rules, errors);
         foreach (var e in c.Arenas) { ValidateArena(e, errors); }
+        var abilityDefs = c.Abilities.GroupBy(a => a.Value.Id).ToDictionary(g => g.Key, g => g.First().Value, StringComparer.Ordinal);
         foreach (var e in c.Encounters)
         {
-            ValidateEncounter(e, classes, monsters, c.Arenas.GroupBy(a => a.Value.Id).ToDictionary(g => g.Key, g => g.First().Value), errors);
+            ValidateEncounter(e, classes, monsters, c.Arenas.GroupBy(a => a.Value.Id).ToDictionary(g => g.Key, g => g.First().Value), abilityDefs, errors);
         }
     }
 
@@ -171,6 +172,42 @@ internal static partial class GameDataValidator
         ValidateTargeting(x.Targeting, ctx.At(".targeting"));
         if (x.Telegraph is { } tg) { ValidateTelegraph(tg, ctx.At(".telegraph")); }
         ValidateEffects(x.Effects, ctx, "effects", refs);
+        ValidateRankFields(x.Hits, x.CooldownCharges, ctx);
+        ValidateRanks(x, ctx, refs);
+    }
+
+    /// <summary>T-060: níveis de habilidade em sequência (2, 3, ...), até 5 (3 na assinatura); cada nível validado como a base.</summary>
+    private static void ValidateRanks(AbilityDefinition x, Ctx ctx, Refs refs)
+    {
+        var max = Game.Core.Combat.AbilityRanks.MaxAllowed(x);
+        if (x.HighestRank > max)
+        {
+            ctx.Error("ranks", $"{x.HighestRank} níveis; o máximo é {max}" + (x.Signature ? " (assinatura)." : "."));
+        }
+
+        for (var i = 0; i < x.Ranks.Count; i++)
+        {
+            var r = x.Ranks[i];
+            var rc = ctx.At($".ranks[{i}]");
+            if (r.Rank != i + 2) { rc.Error("rank", $"Esperado {i + 2}: os níveis começam no 2 e seguem em ordem."); }
+            if (r.CooldownTicks is { } cd) { rc.NonNegative("cooldown", cd); }
+            if (r.CastTimeTicks is { } cast) { rc.NonNegative("castTime", cast); }
+            if (r.Cost is { } cost) { rc.NonNegative("cost.amount", cost.Amount); }
+            if (r.Targeting is { } t) { ValidateTargeting(t, rc.At(".targeting")); }
+            if (r.Telegraph is { } tg) { ValidateTelegraph(tg, rc.At(".telegraph")); }
+            if (r.Effects is { } effects) { ValidateEffects(effects, rc, "effects", refs); }
+            ValidateRankFields(r.Hits, r.CooldownCharges ?? 1, rc);
+        }
+    }
+
+    private static void ValidateRankFields(AbilityHitsDefinition? hits, int cooldownCharges, Ctx ctx)
+    {
+        if (cooldownCharges < 1) { ctx.Error("cooldownCharges", "Deve ser pelo menos 1."); }
+        if (hits is { } h)
+        {
+            if (h.Count is < 1 or > 5) { ctx.Error("hits.count", "Deve estar entre 1 e 5."); }
+            ctx.NonNegative("hits.interval", h.IntervalTicks);
+        }
     }
 
     private static void ValidateTelegraph(TelegraphDefinition t, Ctx ctx)
@@ -409,6 +446,7 @@ internal static partial class GameDataValidator
         HashSet<string> classes,
         HashSet<string> monsters,
         Dictionary<string, ArenaDefinition> arenas,
+        Dictionary<string, AbilityDefinition> abilities,
         List<LoadError> errors)
     {
         var x = e.Value;
@@ -423,6 +461,18 @@ internal static partial class GameDataValidator
         {
             ctx.Exists($"players[{i}].class", x.Players[i].Class, classes, "classe");
             CheckSpawn(ctx, $"players[{i}].position", x.Players[i].Position, arena);
+            foreach (var (abilityId, rank) in x.Players[i].Ranks)
+            {
+                var field = $"players[{i}].ranks.{abilityId}";
+                if (!abilities.TryGetValue(abilityId, out var ability))
+                {
+                    ctx.Error(field, $"Referência inexistente: habilidade '{abilityId}'.");
+                }
+                else if (rank < 1 || rank > ability.HighestRank)
+                {
+                    ctx.Error(field, $"NH {rank} fora de 1..{ability.HighestRank}.");
+                }
+            }
         }
 
         for (var i = 0; i < x.Enemies.Count; i++)

@@ -58,6 +58,12 @@ public sealed record AbilityExecuted(
 
 public sealed record AbilityRejected(EntityId Source, string AbilityId, AbilityRejectReason Reason) : GameEvent;
 
+/// <summary>
+/// Acerto extra de uma habilidade com vários acertos (T-060): <paramref name="HitIndex"/> vai de 2 a
+/// <paramref name="HitCount"/>. O primeiro acerto é o próprio <see cref="AbilityExecuted"/>.
+/// </summary>
+public sealed record AbilityHit(EntityId Source, string AbilityId, int HitIndex, int HitCount, IReadOnlyList<EntityId> Targets) : GameEvent;
+
 public sealed record CastInterrupted(EntityId Entity, string AbilityId, CastInterruptReason Reason, EntityId? By) : GameEvent;
 
 /// <summary>

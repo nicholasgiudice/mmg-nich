@@ -122,6 +122,34 @@
         "internalCooldown": { "$ref": "#/$defs/seconds" }
       }
     },
+    "abilityHits": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "T-060: acertos por uso e intervalo entre eles.",
+      "properties": { "count": { "type": "integer", "minimum": 1, "maximum": 5 }, "interval": { "$ref": "#/$defs/seconds" } }
+    },
+    "abilityRank": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["rank"],
+      "description": "T-060: nível de habilidade (NH2 em diante). Campos ausentes herdam do nível anterior.",
+      "properties": {
+        "rank": { "type": "integer", "minimum": 2, "maximum": 5 },
+        "cost": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["resource", "amount"],
+          "properties": { "resource": { "type": "string" }, "amount": { "type": "number", "minimum": 0 } }
+        },
+        "cooldown": { "$ref": "#/$defs/seconds" },
+        "castTime": { "$ref": "#/$defs/seconds" },
+        "targeting": { "$ref": "#/$defs/targeting" },
+        "telegraph": { "$ref": "#/$defs/telegraph" },
+        "effects": { "type": "array", "items": { "$ref": "#/$defs/effect" } },
+        "hits": { "$ref": "#/$defs/abilityHits" },
+        "cooldownCharges": { "type": "integer", "minimum": 1 }
+      }
+    },
     "ability": {
       "type": "object",
       "additionalProperties": false,
@@ -140,6 +168,10 @@
         "castTime": { "$ref": "#/$defs/seconds" },
         "castWhileMoving": { "type": "boolean" },
         "charges": { "type": "integer", "minimum": 1, "description": "Usos por encontro; ausente = ilimitado." },
+        "signature": { "type": "boolean", "description": "T-060: assinatura (até 3 níveis em vez de 5)." },
+        "hits": { "$ref": "#/$defs/abilityHits" },
+        "cooldownCharges": { "type": "integer", "minimum": 1, "description": "T-060: usos guardados que recarregam um a um." },
+        "ranks": { "type": "array", "maxItems": 4, "items": { "$ref": "#/$defs/abilityRank" } },
         "targeting": { "$ref": "#/$defs/targeting" },
         "telegraph": { "$ref": "#/$defs/telegraph" },
         "effects": { "type": "array", "items": { "$ref": "#/$defs/effect" } }
@@ -342,7 +374,15 @@
             "type": "object",
             "additionalProperties": false,
             "required": ["class", "position"],
-            "properties": { "class": { "$ref": "#/$defs/id" }, "position": { "$ref": "#/$defs/position" } }
+            "properties": {
+              "class": { "$ref": "#/$defs/id" },
+              "position": { "$ref": "#/$defs/position" },
+              "ranks": {
+                "type": "object",
+                "additionalProperties": { "type": "integer", "minimum": 1, "maximum": 5 },
+                "description": "T-060: NH por habilidade (encontros de teste)."
+              }
+            }
           }
         },
         "enemies": {
