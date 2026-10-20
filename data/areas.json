@@ -42,6 +42,60 @@
       "mode": "periodic",
       "affects": "enemy",
       "effects": [{ "type": "damage", "school": "arcane", "base": 8 }]
+    },
+    {
+      "id": "area.lightning_field_2",
+      "radius": 3.5,
+      "duration": 5,
+      "interval": 1,
+      "mode": "periodic",
+      "affects": "enemy",
+      "effects": [{ "type": "damage", "school": "arcane", "base": 9 }]
+    },
+    {
+      "id": "area.lightning_field_3",
+      "radius": 3.5,
+      "duration": 7,
+      "interval": 1,
+      "mode": "periodic",
+      "affects": "enemy",
+      "effects": [{ "type": "damage", "school": "arcane", "base": 11 }]
+    },
+    {
+      "id": "area.lightning_field_4",
+      "radius": 3.5,
+      "duration": 7,
+      "interval": 1,
+      "mode": "periodic",
+      "affects": "enemy",
+      "effects": [{ "type": "damage", "school": "arcane", "base": 12 }]
+    },
+    {
+      "id": "area.lightning_field_5",
+      "radius": 4.5,
+      "duration": 7,
+      "interval": 1,
+      "mode": "periodic",
+      "affects": "enemy",
+      "effects": [{ "type": "damage", "school": "arcane", "base": 15 }]
+    },
+    {
+      "id": "area.rain_slow",
+      "radius": 4,
+      "duration": 2,
+      "interval": 0.5,
+      "mode": "periodic",
+      "affects": "enemy",
+      "effects": [{ "type": "apply_status", "status": "status.rain_slow", "duration": 1 }]
+    },
+    {
+      "id": "area.cataclysm_fire",
+      "radius": 6,
+      "duration": 4,
+      "interval": 1,
+      "mode": "periodic",
+      "affects": "enemy",
+      "effects": [{ "type": "damage", "school": "fire", "base": 22 }]
     }
   ]
 }

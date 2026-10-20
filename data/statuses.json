@@ -90,7 +90,95 @@
       "tags": ["buff", "frenzy"],
       "defaultDuration": 3600,
       "stacking": "refresh",
-      "modifiers": { "speedMultiplier": 1.35, "damageDealtMultiplier": 1.15, "damageTakenMultiplier": 1.2, "controlDurationMultiplier": 0.5 }
+      "modifiers": {
+        "speedMultiplier": 1.35,
+        "damageDealtMultiplier": 1.15,
+        "damageTakenMultiplier": 1.2,
+        "controlDurationMultiplier": 0.5
+      }
+    },
+    {
+      "id": "status.stunned",
+      "name": "Atordoado",
+      "tags": ["debuff", "control", "stun"],
+      "defaultDuration": 0.5,
+      "stacking": "refresh",
+      "flags": { "stunned": true }
+    },
+    {
+      "id": "status.frozen_deep",
+      "name": "Congelado",
+      "tags": ["debuff", "control", "freeze"],
+      "defaultDuration": 3.5,
+      "stacking": "refresh",
+      "flags": { "rooted": true },
+      "modifiers": { "damageTakenMultiplier": 1.2 }
+    },
+    {
+      "id": "status.hunters_mark_strong",
+      "name": "Marca do Caçador",
+      "tags": ["debuff", "mark"],
+      "defaultDuration": 10,
+      "stacking": "refresh",
+      "modifiers": { "damageTakenMultiplier": 1.3 }
+    },
+    {
+      "id": "status.hunters_mark_slowing",
+      "name": "Marca do Caçador",
+      "tags": ["debuff", "mark", "slow"],
+      "defaultDuration": 10,
+      "stacking": "refresh",
+      "modifiers": { "damageTakenMultiplier": 1.3, "speedMultiplier": 0.8 }
+    },
+    {
+      "id": "status.firm_guard_strong",
+      "name": "Guarda Firme",
+      "tags": ["buff", "guard"],
+      "defaultDuration": 5,
+      "stacking": "refresh",
+      "frontal": { "arcDegrees": 180, "damageTakenMultiplier": 0.35 },
+      "modifiers": { "speedMultiplier": 0.7 }
+    },
+    {
+      "id": "status.firm_guard_reflect",
+      "name": "Guarda Firme",
+      "tags": ["buff", "guard"],
+      "defaultDuration": 5,
+      "stacking": "refresh",
+      "frontal": { "arcDegrees": 180, "damageTakenMultiplier": 0.35, "reflectMeleeFraction": 0.2 },
+      "modifiers": { "speedMultiplier": 0.7 }
+    },
+    {
+      "id": "status.taunt_resolve",
+      "name": "Determinação",
+      "tags": ["buff", "guard"],
+      "defaultDuration": 4,
+      "stacking": "refresh",
+      "modifiers": { "damageTakenMultiplier": 0.85 }
+    },
+    {
+      "id": "status.retreat_focus",
+      "name": "Foco do Recuo",
+      "tags": ["buff", "focus"],
+      "defaultDuration": 2,
+      "stacking": "refresh",
+      "empower": { "abilities": ["archer.shot", "archer.power_shot"], "multiplier": 1.3 }
+    },
+    {
+      "id": "status.rain_slow",
+      "name": "Lentidão",
+      "tags": ["debuff", "slow"],
+      "defaultDuration": 1,
+      "stacking": "refresh",
+      "modifiers": { "speedMultiplier": 0.8 }
+    },
+    {
+      "id": "status.purified",
+      "name": "Purificado",
+      "tags": ["buff", "cleanse"],
+      "defaultDuration": 2,
+      "stacking": "refresh",
+      "immuneToTags": ["poison", "curse"]
     }
   ]
 }

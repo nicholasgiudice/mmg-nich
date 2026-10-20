@@ -21,6 +21,44 @@
         { "type": "damage", "school": "physical", "base": 51 },
         { "type": "interrupt" },
         { "type": "threat", "amount": 20 }
+      ],
+      "ranks": [
+        {
+          "rank": 2,
+          "effects": [
+            { "type": "damage", "school": "physical", "base": 61 },
+            { "type": "interrupt" },
+            { "type": "threat", "amount": 20 }
+          ]
+        },
+        {
+          "rank": 3,
+          "effects": [
+            { "type": "damage", "school": "physical", "base": 71 },
+            { "type": "interrupt" },
+            { "type": "apply_status", "status": "status.stunned", "duration": 0.5 },
+            { "type": "threat", "amount": 20 }
+          ]
+        },
+        {
+          "rank": 4,
+          "effects": [
+            { "type": "damage", "school": "physical", "base": 82 },
+            { "type": "interrupt" },
+            { "type": "apply_status", "status": "status.stunned", "duration": 0.5 },
+            { "type": "threat", "amount": 20 }
+          ]
+        },
+        {
+          "rank": 5,
+          "effects": [
+            { "type": "damage", "school": "physical", "base": 92 },
+            { "type": "interrupt" },
+            { "type": "apply_status", "status": "status.stunned", "duration": 1 },
+            { "type": "threat", "amount": 20 }
+          ],
+          "targeting": { "type": "melee_arc", "range": 1.9, "angle": 120 }
+        }
       ]
     },
     {
@@ -30,9 +68,30 @@
       "cost": { "resource": "mana", "amount": 25 },
       "cooldown": 5,
       "targeting": { "type": "circle_self", "radius": 2.5 },
-      "effects": [
-        { "type": "damage", "school": "physical", "base": 27 },
-        { "type": "threat", "amount": 30 }
+      "effects": [{ "type": "damage", "school": "physical", "base": 27 }, { "type": "threat", "amount": 30 }],
+      "ranks": [
+        {
+          "rank": 2,
+          "effects": [{ "type": "damage", "school": "physical", "base": 33 }, { "type": "threat", "amount": 30 }]
+        },
+        {
+          "rank": 3,
+          "effects": [{ "type": "damage", "school": "physical", "base": 23 }, { "type": "threat", "amount": 30 }],
+          "hits": { "count": 2, "interval": 0.3 }
+        },
+        {
+          "rank": 4,
+          "effects": [{ "type": "damage", "school": "physical", "base": 27 }, { "type": "threat", "amount": 30 }]
+        },
+        {
+          "rank": 5,
+          "effects": [
+            { "type": "damage", "school": "physical", "base": 23 },
+            { "type": "threat", "amount": 30 },
+            { "type": "apply_status", "status": "status.bleed" }
+          ],
+          "hits": { "count": 3, "interval": 0.3 }
+        }
       ]
     },
     {
@@ -41,7 +100,19 @@
       "tags": ["defensive"],
       "cooldown": 14,
       "targeting": { "type": "self" },
-      "effects": [{ "type": "apply_status", "status": "status.firm_guard", "duration": 4 }]
+      "effects": [{ "type": "apply_status", "status": "status.firm_guard", "duration": 4 }],
+      "ranks": [
+        { "rank": 2, "effects": [{ "type": "apply_status", "status": "status.firm_guard", "duration": 5 }] },
+        {
+          "rank": 3,
+          "effects": [{ "type": "apply_status", "status": "status.firm_guard_strong", "duration": 5 }]
+        },
+        { "rank": 4, "cooldown": 12 },
+        {
+          "rank": 5,
+          "effects": [{ "type": "apply_status", "status": "status.firm_guard_reflect", "duration": 5 }]
+        }
+      ]
     },
     {
       "id": "warrior.taunt",
@@ -49,7 +120,47 @@
       "tags": ["taunt", "aoe"],
       "cooldown": 10,
       "targeting": { "type": "circle_self", "radius": 8 },
-      "effects": [{ "type": "threat", "amount": 40, "tauntDuration": 3 }]
+      "effects": [{ "type": "threat", "amount": 40, "tauntDuration": 3 }],
+      "ranks": [
+        { "rank": 2, "effects": [{ "type": "threat", "amount": 40, "tauntDuration": 3.5 }] },
+        {
+          "rank": 3,
+          "targeting": { "type": "circle_self", "radius": 10 },
+          "effects": [{ "type": "threat", "amount": 40, "tauntDuration": 4 }]
+        },
+        { "rank": 4, "cooldown": 8 },
+        {
+          "rank": 5,
+          "effects": [
+            { "type": "threat", "amount": 40, "tauntDuration": 4 },
+            { "type": "apply_status", "status": "status.taunt_resolve", "duration": 4, "target": "self" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "warrior.living_wall",
+      "name": "Muralha Viva",
+      "tags": ["defensive", "group", "signature"],
+      "signature": true,
+      "cost": { "resource": "mana", "amount": 80 },
+      "cooldown": 90,
+      "targeting": { "type": "circle_self", "radius": 5 },
+      "effects": [{ "type": "shield", "amount": 60, "duration": 6 }],
+      "ranks": [
+        {
+          "rank": 2,
+          "targeting": { "type": "circle_self", "radius": 7 },
+          "effects": [{ "type": "shield", "amount": 78, "duration": 6 }]
+        },
+        {
+          "rank": 3,
+          "effects": [
+            { "type": "shield", "amount": 96, "duration": 6 },
+            { "type": "remove_status", "tags": ["stun", "root", "freeze"], "count": 0 }
+          ]
+        }
+      ]
     }
   ]
 }

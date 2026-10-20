@@ -16,7 +16,21 @@
       "cost": { "resource": "mana", "amount": 80 },
       "cooldown": 8,
       "targeting": { "type": "circle_at_point", "range": 9, "radius": 3 },
-      "effects": [{ "type": "damage", "school": "fire", "base": 44 }]
+      "effects": [{ "type": "damage", "school": "fire", "base": 44 }],
+      "ranks": [
+        { "rank": 2, "effects": [{ "type": "damage", "school": "fire", "base": 53 }] },
+        {
+          "rank": 3,
+          "effects": [{ "type": "damage", "school": "fire", "base": 37 }],
+          "hits": { "count": 2, "interval": 0.4 }
+        },
+        { "rank": 4, "effects": [{ "type": "damage", "school": "fire", "base": 44 }] },
+        {
+          "rank": 5,
+          "effects": [{ "type": "damage", "school": "fire", "base": 37 }],
+          "hits": { "count": 3, "interval": 0.4 }
+        }
+      ]
     },
     {
       "id": "mage.ice_prison",
@@ -28,6 +42,54 @@
       "effects": [
         { "type": "damage", "school": "frost", "base": 9 },
         { "type": "apply_status", "status": "status.frozen", "duration": 2.5 }
+      ],
+      "ranks": [
+        {
+          "rank": 2,
+          "effects": [
+            { "type": "damage", "school": "frost", "base": 11 },
+            { "type": "apply_status", "status": "status.frozen", "duration": 3 }
+          ]
+        },
+        {
+          "rank": 3,
+          "effects": [
+            { "type": "damage", "school": "frost", "base": 12 },
+            { "type": "apply_status", "status": "status.frozen", "duration": 3 },
+            {
+              "type": "extra_targets",
+              "radius": 2,
+              "count": 0,
+              "effects": [{ "type": "apply_status", "status": "status.frozen", "duration": 3 }]
+            }
+          ]
+        },
+        {
+          "rank": 4,
+          "effects": [
+            { "type": "damage", "school": "frost", "base": 14 },
+            { "type": "apply_status", "status": "status.frozen", "duration": 3.5 },
+            {
+              "type": "extra_targets",
+              "radius": 2,
+              "count": 0,
+              "effects": [{ "type": "apply_status", "status": "status.frozen", "duration": 3.5 }]
+            }
+          ]
+        },
+        {
+          "rank": 5,
+          "effects": [
+            { "type": "damage", "school": "frost", "base": 16 },
+            { "type": "apply_status", "status": "status.frozen_deep", "duration": 3.5 },
+            {
+              "type": "extra_targets",
+              "radius": 2,
+              "count": 0,
+              "effects": [{ "type": "apply_status", "status": "status.frozen_deep", "duration": 3.5 }]
+            }
+          ]
+        }
       ]
     },
     {
@@ -37,7 +99,50 @@
       "cost": { "resource": "mana", "amount": 30 },
       "cooldown": 15,
       "targeting": { "type": "self" },
-      "effects": [{ "type": "shield", "amount": 45, "duration": 6 }]
+      "effects": [{ "type": "shield", "amount": 45, "duration": 6 }],
+      "ranks": [
+        { "rank": 2, "effects": [{ "type": "shield", "amount": 54, "duration": 6 }] },
+        {
+          "rank": 3,
+          "effects": [
+            {
+              "type": "shield",
+              "amount": 63,
+              "duration": 6,
+              "refund": { "resource": "mana", "fraction": 0.3 }
+            }
+          ]
+        },
+        {
+          "rank": 4,
+          "effects": [
+            {
+              "type": "shield",
+              "amount": 72,
+              "duration": 6,
+              "refund": { "resource": "mana", "fraction": 0.3 }
+            }
+          ]
+        },
+        {
+          "rank": 5,
+          "effects": [
+            {
+              "type": "shield",
+              "amount": 81,
+              "duration": 6,
+              "refund": { "resource": "mana", "fraction": 0.3 }
+            },
+            {
+              "type": "extra_targets",
+              "radius": 8,
+              "affects": "ally",
+              "multiplier": 0.5,
+              "effects": [{ "type": "shield", "amount": 81, "duration": 6 }]
+            }
+          ]
+        }
+      ]
     },
     {
       "id": "mage.lightning_field",
@@ -49,6 +154,63 @@
       "effects": [
         { "type": "damage", "school": "arcane", "base": 12 },
         { "type": "spawn_area", "area": "area.lightning_field" }
+      ],
+      "ranks": [
+        {
+          "rank": 2,
+          "effects": [
+            { "type": "damage", "school": "arcane", "base": 14 },
+            { "type": "spawn_area", "area": "area.lightning_field_2" }
+          ]
+        },
+        {
+          "rank": 3,
+          "effects": [
+            { "type": "damage", "school": "arcane", "base": 17 },
+            { "type": "spawn_area", "area": "area.lightning_field_3" }
+          ]
+        },
+        {
+          "rank": 4,
+          "effects": [
+            { "type": "damage", "school": "arcane", "base": 18 },
+            { "type": "spawn_area", "area": "area.lightning_field_4" }
+          ]
+        },
+        {
+          "rank": 5,
+          "targeting": { "type": "circle_at_point", "range": 9, "radius": 4.5 },
+          "effects": [
+            { "type": "damage", "school": "arcane", "base": 21 },
+            { "type": "spawn_area", "area": "area.lightning_field_5" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "mage.arcane_cataclysm",
+      "name": "Cataclismo Arcano",
+      "tags": ["aoe", "ranged", "signature"],
+      "signature": true,
+      "cost": { "resource": "mana", "amount": 100 },
+      "cooldown": 120,
+      "targeting": { "type": "circle_at_point", "range": 10, "radius": 5 },
+      "telegraph": { "shape": "circle", "delay": 1.5, "radius": 5, "anchor": "aim" },
+      "effects": [{ "type": "damage", "school": "arcane", "base": 138 }],
+      "ranks": [
+        {
+          "rank": 2,
+          "targeting": { "type": "circle_at_point", "range": 10, "radius": 6 },
+          "telegraph": { "shape": "circle", "delay": 1.5, "radius": 6, "anchor": "aim" },
+          "effects": [{ "type": "damage", "school": "arcane", "base": 179 }]
+        },
+        {
+          "rank": 3,
+          "effects": [
+            { "type": "damage", "school": "arcane", "base": 221 },
+            { "type": "spawn_area", "area": "area.cataclysm_fire" }
+          ]
+        }
       ]
     }
   ]

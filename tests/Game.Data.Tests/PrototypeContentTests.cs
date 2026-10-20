@@ -50,10 +50,10 @@ public class PrototypeContentTests
     }
 
     [Theory]
-    [InlineData("class.warrior", "warrior.sword_strike", new[] { "warrior.heavy_strike", "warrior.whirlwind", "warrior.firm_guard", "warrior.taunt" })]
-    [InlineData("class.archer", "archer.shot", new[] { "archer.power_shot", "archer.hunters_mark", "archer.quick_retreat" })]
-    [InlineData("class.mage", "mage.arcane_missile", new[] { "mage.elemental_blast", "mage.ice_prison", "mage.arcane_barrier", "mage.lightning_field" })]
-    [InlineData("class.cleric", "cleric.holy_strike", new[] { "cleric.direct_heal", "cleric.sacred_shield", "cleric.holy_chain", "cleric.purify" })]
+    [InlineData("class.warrior", "warrior.sword_strike", new[] { "warrior.heavy_strike", "warrior.whirlwind", "warrior.firm_guard", "warrior.taunt", "warrior.living_wall" })]
+    [InlineData("class.archer", "archer.shot", new[] { "archer.power_shot", "archer.hunters_mark", "archer.quick_retreat", "archer.rain_of_arrows", "archer.devastating_arrow" })]
+    [InlineData("class.mage", "mage.arcane_missile", new[] { "mage.elemental_blast", "mage.ice_prison", "mage.arcane_barrier", "mage.lightning_field", "mage.arcane_cataclysm" })]
+    [InlineData("class.cleric", "cleric.holy_strike", new[] { "cleric.direct_heal", "cleric.sacred_shield", "cleric.holy_chain", "cleric.purify", "cleric.miracle" })]
     public void Each_class_has_basic_attack_and_its_abilities(string classId, string basic, string[] abilities)
     {
         var db = Db();
@@ -67,6 +67,11 @@ public class PrototypeContentTests
             // O prefixo do id da habilidade identifica a classe dona (warrior.*, archer.*...).
             Assert.StartsWith(classId["class.".Length..] + ".", a, StringComparison.Ordinal);
         }
+
+        // T-062: barra do MVP = 4 habilidades normais com 5 NH + a assinatura (a última) com 3 NH.
+        Assert.Equal(abilities.Length - 1, abilities.Count(a => !db.Abilities[a].Signature));
+        Assert.True(db.Abilities[abilities[^1]].Signature);
+        Assert.All(abilities, a => Assert.Equal(db.Abilities[a].Signature ? 3 : 5, db.Abilities[a].HighestRank));
     }
 
     [Fact]

@@ -16,7 +16,21 @@
       "cost": { "resource": "mana", "amount": 25 },
       "cooldown": 7,
       "targeting": { "type": "unit", "range": 9, "faction": "enemy" },
-      "effects": [{ "type": "damage", "school": "physical", "base": 40 }]
+      "effects": [{ "type": "damage", "school": "physical", "base": 40 }],
+      "ranks": [
+        { "rank": 2, "effects": [{ "type": "damage", "school": "physical", "base": 48 }] },
+        {
+          "rank": 3,
+          "effects": [{ "type": "damage", "school": "physical", "base": 34 }],
+          "hits": { "count": 2, "interval": 0.15 }
+        },
+        { "rank": 4, "effects": [{ "type": "damage", "school": "physical", "base": 40 }] },
+        {
+          "rank": 5,
+          "effects": [{ "type": "damage", "school": "physical", "base": 34 }],
+          "hits": { "count": 3, "interval": 0.15 }
+        }
+      ]
     },
     {
       "id": "archer.hunters_mark",
@@ -25,7 +39,46 @@
       "cost": { "resource": "mana", "amount": 10 },
       "cooldown": 12,
       "targeting": { "type": "unit", "range": 10, "faction": "enemy" },
-      "effects": [{ "type": "apply_status", "status": "status.hunters_mark", "duration": 8 }]
+      "effects": [{ "type": "apply_status", "status": "status.hunters_mark", "duration": 8 }],
+      "ranks": [
+        {
+          "rank": 2,
+          "effects": [{ "type": "apply_status", "status": "status.hunters_mark", "duration": 10 }]
+        },
+        {
+          "rank": 3,
+          "effects": [
+            { "type": "apply_status", "status": "status.hunters_mark", "duration": 10 },
+            {
+              "type": "extra_targets",
+              "radius": 5,
+              "effects": [{ "type": "apply_status", "status": "status.hunters_mark", "duration": 10 }]
+            }
+          ]
+        },
+        {
+          "rank": 4,
+          "effects": [
+            { "type": "apply_status", "status": "status.hunters_mark_strong", "duration": 10 },
+            {
+              "type": "extra_targets",
+              "radius": 5,
+              "effects": [{ "type": "apply_status", "status": "status.hunters_mark_strong", "duration": 10 }]
+            }
+          ]
+        },
+        {
+          "rank": 5,
+          "effects": [
+            { "type": "apply_status", "status": "status.hunters_mark_slowing", "duration": 10 },
+            {
+              "type": "extra_targets",
+              "radius": 5,
+              "effects": [{ "type": "apply_status", "status": "status.hunters_mark_slowing", "duration": 10 }]
+            }
+          ]
+        }
+      ]
     },
     {
       "id": "archer.quick_retreat",
@@ -33,7 +86,72 @@
       "tags": ["mobility"],
       "cooldown": 8,
       "targeting": { "type": "self" },
-      "effects": [{ "type": "displacement", "kind": "dash", "distance": 5, "direction": "backward" }]
+      "effects": [{ "type": "displacement", "kind": "dash", "distance": 5, "direction": "backward" }],
+      "ranks": [
+        { "rank": 2, "cooldown": 7 },
+        {
+          "rank": 3,
+          "effects": [
+            { "type": "displacement", "kind": "dash", "distance": 6, "direction": "backward" },
+            { "type": "apply_status", "status": "status.retreat_focus", "duration": 2, "target": "self" }
+          ]
+        },
+        { "rank": 4, "cooldown": 6 },
+        { "rank": 5, "cooldownCharges": 2 }
+      ]
+    },
+    {
+      "id": "archer.rain_of_arrows",
+      "name": "Chuva de Flechas",
+      "tags": ["ranged", "aoe"],
+      "cost": { "resource": "mana", "amount": 45 },
+      "cooldown": 12,
+      "targeting": { "type": "circle_at_point", "range": 9, "radius": 3 },
+      "telegraph": { "shape": "circle", "delay": 0.6, "radius": 3, "anchor": "aim" },
+      "hits": { "count": 3, "interval": 0.5 },
+      "effects": [{ "type": "damage", "school": "physical", "base": 27 }],
+      "ranks": [
+        { "rank": 2, "effects": [{ "type": "damage", "school": "physical", "base": 32 }] },
+        {
+          "rank": 3,
+          "targeting": { "type": "circle_at_point", "range": 9, "radius": 4 },
+          "telegraph": { "shape": "circle", "delay": 0.6, "radius": 4, "anchor": "aim" },
+          "effects": [{ "type": "damage", "school": "physical", "base": 38 }]
+        },
+        { "rank": 4, "effects": [{ "type": "damage", "school": "physical", "base": 43 }] },
+        {
+          "rank": 5,
+          "effects": [
+            { "type": "damage", "school": "physical", "base": 48 },
+            { "type": "spawn_area", "area": "area.rain_slow", "onHit": 1 }
+          ],
+          "hits": { "count": 4, "interval": 0.5 }
+        }
+      ]
+    },
+    {
+      "id": "archer.devastating_arrow",
+      "name": "Flecha Devastadora",
+      "tags": ["ranged", "channel", "signature"],
+      "signature": true,
+      "cost": { "resource": "mana", "amount": 70 },
+      "cooldown": 60,
+      "castTime": 1.5,
+      "targeting": { "type": "unit", "range": 12, "faction": "enemy" },
+      "effects": [{ "type": "damage", "school": "physical", "base": 106 }],
+      "ranks": [
+        {
+          "rank": 2,
+          "targeting": { "type": "line", "length": 12, "width": 1.2 },
+          "effects": [{ "type": "damage", "school": "physical", "base": 138 }]
+        },
+        {
+          "rank": 3,
+          "castTime": 1.0,
+          "cooldown": 45,
+          "effects": [{ "type": "damage", "school": "physical", "base": 170 }]
+        }
+      ]
     },
     {
       "id": "archer.containment_trap",
