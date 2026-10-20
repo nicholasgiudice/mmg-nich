@@ -227,6 +227,10 @@ public sealed class ShieldInstance
     public long ExpiresAtTick { get; init; }
     public EntityId Source { get; init; }
     public string SourceId { get; init; } = "";
+
+    /// <summary>Recurso devolvido a <see cref="Source"/> quando o escudo expira com sobra (T-061). Null = não devolve.</summary>
+    public string? RefundResource { get; init; }
+    public float RefundFraction { get; init; }
 }
 
 /// <summary>Escudos ativos (absorvem na ordem de criação, antes da vida).</summary>
@@ -249,6 +253,8 @@ public sealed class ShieldState : IComponent, IReplicated
                 ExpiresAtTick = s.ExpiresAtTick,
                 Source = s.Source,
                 SourceId = s.SourceId,
+                RefundResource = s.RefundResource,
+                RefundFraction = s.RefundFraction,
             });
         }
 
@@ -264,6 +270,8 @@ public sealed class ShieldState : IComponent, IReplicated
             hasher.Add(s.Remaining);
             hasher.Add(s.ExpiresAtTick);
             hasher.Add(s.Source.Value);
+            hasher.Add(s.RefundResource ?? "");
+            hasher.Add(s.RefundFraction);
         }
     }
 }

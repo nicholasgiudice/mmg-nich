@@ -261,6 +261,11 @@ internal static partial class GameDataValidator
         for (var i = 0; i < effects.Count; i++)
         {
             var c = ctx.At($".{field}[{i}]");
+            if (effects[i].OnHit is { } onHit && (onHit < 1 || onHit > AbilityDefinition.MaxRank))
+            {
+                c.Error("onHit", $"Deve estar em 1..{AbilityDefinition.MaxRank}.");
+            }
+
             switch (effects[i])
             {
                 case DamageEffect d:
@@ -278,6 +283,12 @@ internal static partial class GameDataValidator
                 case ShieldEffect s:
                     c.Positive("amount", s.Amount);
                     c.PositiveTicks("duration", s.DurationTicks);
+                    if (s.Refund is { } refund)
+                    {
+                        if (string.IsNullOrWhiteSpace(refund.Resource)) { c.Error("refund.resource", "Recurso vazio."); }
+                        if (!(refund.Fraction > 0 && refund.Fraction <= 1)) { c.Error("refund.fraction", "Deve estar em (0, 1]."); }
+                    }
+
                     break;
                 case ApplyStatusEffect a:
                     c.Exists("status", a.Status, refs.Statuses, "status");
@@ -286,7 +297,7 @@ internal static partial class GameDataValidator
                 case RemoveStatusEffect r:
                     if (string.IsNullOrWhiteSpace(r.Tag) && r.Tags.Count == 0) { c.Error("tag", "Informe 'tag' ou 'tags'."); }
                     if (r.Tags.Any(string.IsNullOrWhiteSpace)) { c.Error("tags", "Tag vazia."); }
-                    if (r.Count < 1) { c.Error("count", "Deve ser pelo menos 1."); }
+                    if (r.Count < 0) { c.Error("count", "Deve ser maior ou igual a 0 (0 = todos)."); }
                     break;
                 case DisplacementEffect m:
                     c.Positive("distance", m.Distance);
@@ -299,6 +310,25 @@ internal static partial class GameDataValidator
                     break;
                 case SpawnAreaEffect sa:
                     c.Exists("area", sa.Area, refs.Areas, "área");
+                    break;
+                case ChainEffect ch:
+                    if (ch.Jumps < 1) { c.Error("jumps", "Deve ser pelo menos 1."); }
+                    c.Positive("radius", ch.Radius);
+                    c.Positive("multiplier", ch.Multiplier);
+                    if (ch.Effects.Count == 0) { c.Error("effects", "Precisa de pelo menos um efeito."); }
+                    ValidateEffects(ch.Effects, c, "effects", refs);
+                    break;
+                case ExtraTargetsEffect et:
+                    c.Positive("radius", et.Radius);
+                    if (et.Count < 0) { c.Error("count", "Deve ser maior ou igual a 0 (0 = todos no raio)."); }
+                    c.Positive("multiplier", et.Multiplier);
+                    if (et.Effects.Count == 0) { c.Error("effects", "Precisa de pelo menos um efeito."); }
+                    ValidateEffects(et.Effects, c, "effects", refs);
+                    break;
+                case ReviveEffect rv:
+                    c.Positive("radius", rv.Radius);
+                    if (!(rv.HealthFraction > 0 && rv.HealthFraction <= 1)) { c.Error("healthFraction", "Deve estar em (0, 1]."); }
+                    if (rv.Count < 1) { c.Error("count", "Deve ser pelo menos 1."); }
                     break;
                 case SummonEffect su:
                     c.Exists("monster", su.Monster, refs.Monsters, "monstro");
@@ -324,6 +354,19 @@ internal static partial class GameDataValidator
         {
             if (fr.ArcDegrees <= 0 || fr.ArcDegrees > 360) { ctx.Error("frontal.arcDegrees", "Deve estar entre 0 (exclusivo) e 360."); }
             ctx.NonNegative("frontal.damageTakenMultiplier", fr.DamageTakenMultiplier);
+            if (fr.ReflectMeleeFraction is < 0 or > 1) { ctx.Error("frontal.reflectMeleeFraction", "Deve estar em 0..1."); }
+        }
+
+        if (x.ImmuneToTags.Any(string.IsNullOrWhiteSpace)) { ctx.Error("immuneToTags", "Tag vazia."); }
+        if (x.Empower is { } emp)
+        {
+            if (emp.Abilities.Count == 0) { ctx.Error("empower.abilities", "Informe pelo menos uma habilidade."); }
+            for (var k = 0; k < emp.Abilities.Count; k++)
+            {
+                ctx.Exists($"empower.abilities[{k}]", emp.Abilities[k], refs.Abilities, "habilidade");
+            }
+
+            ctx.Positive("empower.multiplier", emp.Multiplier);
         }
 
         for (var i = 0; i < x.Periodic.Count; i++)

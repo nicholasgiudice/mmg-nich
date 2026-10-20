@@ -71,6 +71,9 @@ public sealed record AbilityDefinition
 
     /// <summary>Número de acertos efetivo (pelo menos 1).</summary>
     public int HitCount => Math.Max(1, Hits?.Count ?? 1);
+
+    /// <summary>Corpo a corpo (arco curto). Usado pelo reflexo da Guarda Firme (T-061).</summary>
+    public bool IsMelee => Targeting is MeleeArcTargeting;
 }
 
 /// <summary>Acertos de um uso (T-060). <see cref="IntervalTicks"/> = tempo entre acertos (JSON "interval", segundos).</summary>
@@ -138,6 +141,19 @@ public sealed record FrontalModifier
 
     /// <summary>Multiplicador de dano recebido quando a fonte está no arco (0.5 = -50%).</summary>
     public required double DamageTakenMultiplier { get; init; }
+
+    /// <summary>Fração do dano corpo a corpo BLOQUEADO pelo arco devolvida a quem atacou (Guarda Firme NH5, T-061). 0 = nada.</summary>
+    public double ReflectMeleeFraction { get; init; }
+}
+
+/// <summary>
+/// Fortalece o próximo uso de uma das <see cref="Abilities"/> de quem tem o status (Recuo Rápido NH3, T-061):
+/// a potência daquele uso (dano, cura, escudo, em todos os acertos) é multiplicada e o status é consumido.
+/// </summary>
+public sealed record EmpowerDefinition
+{
+    public required IReadOnlyList<string> Abilities { get; init; }
+    public required double Multiplier { get; init; }
 }
 
 public sealed record StatusFlags
@@ -166,6 +182,12 @@ public sealed record StatusDefinition
     public StatModifiers Modifiers { get; init; } = new();
     public StatusFlags Flags { get; init; } = new();
     public FrontalModifier? Frontal { get; init; }
+
+    /// <summary>Enquanto ativo, status novos com qualquer uma destas tags não pegam (Purificação NH5, T-061).</summary>
+    public IReadOnlyList<string> ImmuneToTags { get; init; } = [];
+
+    /// <summary>Fortalece o próximo uso de certas habilidades e é consumido (T-061).</summary>
+    public EmpowerDefinition? Empower { get; init; }
 }
 
 public sealed record AreaDefinition

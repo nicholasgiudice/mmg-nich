@@ -16,4 +16,7 @@ public sealed record EntitySpawned(EntityId Entity) : GameEvent;
 
 public sealed record EntityDied(EntityId Entity) : GameEvent;
 
+/// <summary>Entidade caída voltou à vida (T-061, Milagre) com <paramref name="Health"/> de vida. By = quem levantou.</summary>
+public sealed record EntityRevived(EntityId Entity, EntityId By, string SourceId, float Health) : GameEvent;
+
 public sealed record EntityRemoved(EntityId Entity) : GameEvent;

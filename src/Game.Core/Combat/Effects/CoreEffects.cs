@@ -23,7 +23,9 @@ public static class CoreEffects
     public static float Round(double value) => (float)Math.Round(value, MidpointRounding.AwayFromZero);
 
     private static void OnDamage(EffectContext c, DamageEffect e) =>
-        DamageResolver.Deal(c.World, c.Source, c.Target!, c.SourceId, e.Base * TagBonus(c.Target!, e), e.School);
+        DamageResolver.Deal(
+            c.World, c.Source, c.Target!, c.SourceId, e.Base * TagBonus(c.Target!, e) * c.Power, e.School,
+            melee: c.Ability?.IsMelee ?? false);
 
     /// <summary>1 + soma dos bônus <c>bonusVsTags</c> das tags que o alvo possui (mínimo 0).</summary>
     public static double TagBonus(Entity target, DamageEffect e)
@@ -54,7 +56,7 @@ public static class CoreEffects
             return;
         }
 
-        var amount = Math.Max(0, Round(e.Base));
+        var amount = Math.Max(0, Round(e.Base * c.Power));
         var effective = Math.Min(amount, health.Max - health.Current);
         health.Current += effective;
         c.World.Events.Publish(new HealApplied(c.SourceEntityId, target.Id, c.SourceId, amount, effective, amount - effective));
@@ -70,7 +72,7 @@ public static class CoreEffects
             target.Add(state);
         }
 
-        var amount = Math.Max(0, Round(e.Amount));
+        var amount = Math.Max(0, Round(e.Amount * c.Power));
         var expires = c.World.Tick + e.DurationTicks;
         var id = state.NextShieldId++;
         state.Shields.Add(new ShieldInstance
@@ -80,6 +82,8 @@ public static class CoreEffects
             ExpiresAtTick = expires,
             Source = c.SourceEntityId,
             SourceId = c.SourceId,
+            RefundResource = e.Refund?.Resource,
+            RefundFraction = (float)(e.Refund?.Fraction ?? 0),
         });
         c.World.Events.Publish(new ShieldApplied(c.SourceEntityId, target.Id, c.SourceId, id, amount, expires));
     }
@@ -150,8 +154,13 @@ public static class DamageResolver
     /// <summary>
     /// final = round(base × causado × recebido × (1 − resistência)), mínimo 0; escudos absorvem antes da vida.
     /// Publica DamageDealt e, se matar, CastInterrupted(Died) + EntityDied. Retorna o dano final (Amount) ou 0 se o alvo é inválido.
+    /// <paramref name="melee"/>: golpe corpo a corpo (reflexo da Guarda Firme, T-061). <paramref name="applyModifiers"/> false =
+    /// ignora multiplicadores de causado/recebido (dano devolvido, que já vem calculado).
+    /// Depois do dano, avisa as reações registradas (<see cref="IDamageReaction"/>).
     /// </summary>
-    public static float Deal(World world, Entity? source, Entity target, string sourceId, double baseAmount, DamageSchool school)
+    public static float Deal(
+        World world, Entity? source, Entity target, string sourceId, double baseAmount, DamageSchool school,
+        bool melee = false, bool applyModifiers = true)
     {
         var health = target.TryGet<Health>();
         if (health is null || !health.IsAlive || target.IsRemoved)
@@ -160,8 +169,8 @@ public static class DamageResolver
         }
 
         var svc = world.Combat;
-        var dealt = source is null ? 1.0 : svc.DamageDealtMultiplier(world, source, target, school);
-        var taken = svc.DamageTakenMultiplier(world, target, source, school);
+        var dealt = source is null || !applyModifiers ? 1.0 : svc.DamageDealtMultiplier(world, source, target, school);
+        var taken = applyModifiers ? svc.DamageTakenMultiplier(world, target, source, school) : 1.0;
         var resist = target.TryGet<UnitInfo>()?.ResistanceTo(school) ?? 0;
         var amount = Math.Max(0, CoreEffects.Round(baseAmount * dealt * taken * Math.Max(0, 1 - resist)));
 
@@ -195,6 +204,11 @@ public static class DamageResolver
         {
             CastControl.Cancel(world, target, CastInterruptReason.Died, source?.Id);
             world.Kill(target);
+        }
+
+        if (amount > 0)
+        {
+            svc.AfterDamage(world, new DamageReport(source, target, sourceId, school, amount, melee));
         }
 
         return amount;

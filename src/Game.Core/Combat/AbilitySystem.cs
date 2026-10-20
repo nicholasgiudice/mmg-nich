@@ -103,8 +103,25 @@ public sealed class AbilitySystem : ISimulationSystem
                 {
                     shields.Shields.RemoveAt(i--);
                     world.Events.Publish(new ShieldExpired(e.Id, s.Id, s.Remaining, ShieldEndReason.Expired));
+                    RefundShield(world, s);
                 }
             }
+        }
+    }
+
+    /// <summary>T-061 (Barreira NH3+): escudo que expira com sobra devolve uma fração dela, em recurso, a quem o criou.</summary>
+    private static void RefundShield(World world, ShieldInstance s)
+    {
+        if (s.RefundResource is not { } resource || s.RefundFraction <= 0 || s.Remaining <= 0
+            || world.Find(s.Source) is not { IsAlive: true } owner)
+        {
+            return;
+        }
+
+        var amount = CoreEffects.Round(s.Remaining * s.RefundFraction);
+        if (amount > 0)
+        {
+            Resources.ResourceModule.Change(world, owner, resource, amount, Resources.ResourceChangeReason.Effect, s.SourceId);
         }
     }
 
@@ -236,25 +253,30 @@ public sealed class AbilitySystem : ISimulationSystem
             st.IsBasicAttack(ability.Id), ready, st.ChargesRemaining(ability)));
 
         var rank = st.RankOf(ability.Id);
-        ApplyHit(world, caster, ability, res, target, aim, rank);
-        ScheduleExtraHits(world, caster, ability, rank, target, aim);
+        var power = world.Combat.ConsumeAbilityPower(world, caster, ability.Id); // T-061: fortalecer o próximo uso
+        ApplyHit(world, caster, ability, res, target, aim, rank, power, 1);
+        ScheduleExtraHits(world, caster, ability, rank, target, aim, power);
     }
 
     /// <summary>Efeitos de um acerto: direto nos alvos resolvidos ou, com telegráfo (T-012), no tick de resolução.</summary>
-    private static void ApplyHit(World world, Entity caster, AbilityDefinition ability, TargetResolution res, EntityId? target, Vector2? aim, int rank)
+    private static void ApplyHit(
+        World world, Entity caster, AbilityDefinition ability, TargetResolution res, EntityId? target, Vector2? aim, int rank,
+        double power, int hitIndex)
     {
         caster.Get<Transform>().Facing = res.Direction;
         if (ability.Telegraph is not null)
         {
-            Telegraphs.TelegraphService.Start(world, caster, ability, res.Direction, aim, target.HasValue ? world.Find(target.Value) : null, rank);
+            Telegraphs.TelegraphService.Start(
+                world, caster, ability, res.Direction, aim, target.HasValue ? world.Find(target.Value) : null, rank, power, hitIndex);
             return;
         }
 
-        EffectApplier.Apply(world, ability.Effects, caster, res.Targets, ability.Id, ability, aim, res.Direction);
+        EffectApplier.Apply(world, ability.Effects, caster, res.Targets, ability.Id, ability, aim, res.Direction, power, hitIndex);
     }
 
     /// <summary>Acertos 2..N (T-060): agora mesmo se o intervalo é zero, senão agendados no <see cref="PendingHits"/> da fonte.</summary>
-    private static void ScheduleExtraHits(World world, Entity caster, AbilityDefinition ability, int rank, EntityId? target, Vector2? aim)
+    private static void ScheduleExtraHits(
+        World world, Entity caster, AbilityDefinition ability, int rank, EntityId? target, Vector2? aim, double power)
     {
         var count = ability.HitCount;
         if (count <= 1)
@@ -265,7 +287,7 @@ public sealed class AbilitySystem : ISimulationSystem
         var interval = ability.Hits!.IntervalTicks;
         for (var i = 2; i <= count; i++)
         {
-            var hit = new PendingHit(ability.Id, rank, i, count, world.Tick + ((long)(i - 1) * interval), target, aim);
+            var hit = new PendingHit(ability.Id, rank, i, count, world.Tick + ((long)(i - 1) * interval), target, aim, power);
             if (interval == 0)
             {
                 ExtraHit(world, caster, hit);
@@ -350,7 +372,7 @@ public sealed class AbilitySystem : ISimulationSystem
         }
 
         world.Events.Publish(new AbilityHit(caster.Id, ability.Id, hit.HitIndex, hit.HitCount, res.Targets.Select(t => t.Id).ToList()));
-        ApplyHit(world, caster, ability, res, target, aim, hit.Rank);
+        ApplyHit(world, caster, ability, res, target, aim, hit.Rank, hit.Power, hit.HitIndex);
     }
 
     /// <summary>Devolve as cargas por recarga (T-060), uma por vez, reiniciando a recarga enquanto faltar alguma.</summary>

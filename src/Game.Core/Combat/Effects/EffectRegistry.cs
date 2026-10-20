@@ -35,6 +35,15 @@ public sealed class EffectContext
     /// <summary>Direção de mira normalizada a partir da fonte (facing se não houver mira).</summary>
     public Vector2 AimDirection { get; init; }
 
+    /// <summary>
+    /// Potência do uso (T-061): multiplica dano, cura e escudo. 1 = normal; saltos e alvos extras usam frações e
+    /// um status que fortalece o próximo uso (Recuo Rápido) aumenta.
+    /// </summary>
+    public double Power { get; init; } = 1;
+
+    /// <summary>Acerto atual (1..N) de uma habilidade com vários acertos; 1 fora disso.</summary>
+    public int HitIndex { get; init; } = 1;
+
     public EntityId SourceEntityId => Source?.Id ?? EntityId.None;
 }
 
@@ -81,13 +90,20 @@ public static class EffectApplier
         string sourceId,
         AbilityDefinition? ability = null,
         Vector2? aimPoint = null,
-        Vector2? aimDirection = null)
+        Vector2? aimDirection = null,
+        double power = 1,
+        int hitIndex = 1)
     {
         var dir = aimDirection ?? source?.TryGet<Simulation.Components.Transform>()?.Facing ?? new Vector2(0, 1);
         var registry = world.Combat.Effects;
         IReadOnlyList<Entity>? selfOnly = null;
         foreach (var effect in effects)
         {
+            if (effect.OnHit is { } onHit && onHit != hitIndex)
+            {
+                continue; // T-061: efeito só de um acerto
+            }
+
             var scope = registry.ScopeOf(effect); // lança erro claro se não registrado
             var effectTargets = targets;
             if (effect.Target == EffectTarget.Self)
@@ -103,7 +119,7 @@ public static class EffectApplier
 
             if (scope == EffectScope.PerCast)
             {
-                registry.Invoke(Make(world, source, null, effectTargets, sourceId, ability, aimPoint, dir), effect);
+                registry.Invoke(Make(world, source, null, effectTargets, sourceId, ability, aimPoint, dir, power, hitIndex), effect);
                 continue;
             }
 
@@ -111,7 +127,7 @@ public static class EffectApplier
             {
                 if (t.IsAlive)
                 {
-                    registry.Invoke(Make(world, source, t, effectTargets, sourceId, ability, aimPoint, dir), effect);
+                    registry.Invoke(Make(world, source, t, effectTargets, sourceId, ability, aimPoint, dir, power, hitIndex), effect);
                 }
             }
         }
@@ -119,7 +135,7 @@ public static class EffectApplier
 
     private static EffectContext Make(
         World world, Entity? source, Entity? target, IReadOnlyList<Entity> targets, string sourceId,
-        AbilityDefinition? ability, Vector2? aim, Vector2 dir) =>
+        AbilityDefinition? ability, Vector2? aim, Vector2 dir, double power, int hitIndex) =>
         new()
         {
             World = world,
@@ -130,5 +146,7 @@ public static class EffectApplier
             Ability = ability,
             AimPoint = aim,
             AimDirection = dir,
+            Power = power,
+            HitIndex = hitIndex,
         };
 }

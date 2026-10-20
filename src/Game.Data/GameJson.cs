@@ -58,7 +58,10 @@ public static class GameJson
                 (typeof(ThreatEffect), "threat"),
                 (typeof(ResourceEffect), "resource"),
                 (typeof(SpawnAreaEffect), "spawn_area"),
-                (typeof(SummonEffect), "summon"));
+                (typeof(SummonEffect), "summon"),
+                (typeof(ChainEffect), "chain"),
+                (typeof(ExtraTargetsEffect), "extra_targets"),
+                (typeof(ReviveEffect), "revive"));
         }
 
         foreach (var property in info.Properties)

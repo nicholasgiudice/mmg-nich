@@ -15,6 +15,41 @@ public static class StatusModule
             .Register<RemoveStatusEffect>((c, e) => StatusManager.RemoveByTags(c.World, c.Target!, e.Tags.Count > 0 ? e.Tags : [e.Tag], e.Count, c.SourceEntityId));
         s.Gates.Add(new StatusGate());
         s.Modifiers.Add(new StatusModifierSource());
+        s.DamageReactions.Add(new FrontalReflectReaction());
+    }
+}
+
+/// <summary>
+/// Guarda Firme NH5 (T-061): devolve a quem atacou corpo a corpo, pela frente, <c>reflectMeleeFraction</c> do dano que o
+/// arco bloqueou. Bloqueado = dano sem a redução frontal − dano recebido. O dano devolvido não passa por multiplicadores.
+/// </summary>
+public sealed class FrontalReflectReaction : IDamageReaction
+{
+    public void AfterDamage(World world, DamageReport damage)
+    {
+        if (!damage.Melee || damage.Source is not { IsAlive: true } attacker || damage.Source == damage.Target)
+        {
+            return;
+        }
+
+        foreach (var s in StatusManager.Active(world, damage.Target).ToList())
+        {
+            var def = StatusManager.Def(world, s);
+            if (def.Frontal is not { ReflectMeleeFraction: > 0 } f
+                || f.DamageTakenMultiplier >= 1
+                || !StatusModifierSource.IsInFrontArc(damage.Target, attacker, f.ArcDegrees))
+            {
+                continue;
+            }
+
+            var mult = Math.Pow(f.DamageTakenMultiplier, s.Stacks);
+            var blocked = mult <= 0 ? damage.Amount : (damage.Amount / mult) - damage.Amount;
+            var reflected = Effects.CoreEffects.Round(blocked * f.ReflectMeleeFraction);
+            if (reflected > 0 && attacker.IsAlive)
+            {
+                Effects.DamageResolver.Deal(world, damage.Target, attacker, s.StatusId, reflected, damage.School, applyModifiers: false);
+            }
+        }
     }
 }
 
@@ -55,6 +90,22 @@ public sealed class StatusModifierSource : IModifierSource
             }
 
             m *= Math.Pow(d.Modifiers.SpeedMultiplier, s.Stacks);
+        }
+
+        return m;
+    }
+
+    /// <summary>Status com <c>empower</c> para esta habilidade (T-061): multiplicam a potência do uso e são consumidos.</summary>
+    public double ConsumeAbilityPower(World world, Entity caster, string abilityId)
+    {
+        var m = 1.0;
+        foreach (var s in StatusManager.Active(world, caster).ToList())
+        {
+            if (StatusManager.Def(world, s).Empower is { } emp && emp.Abilities.Contains(abilityId))
+            {
+                m *= emp.Multiplier;
+                StatusManager.Remove(world, caster, s.StatusId, caster.Id);
+            }
         }
 
         return m;

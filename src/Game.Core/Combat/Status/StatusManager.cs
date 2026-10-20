@@ -38,7 +38,8 @@ public static class StatusManager
     // ---------- aplicação ----------
 
     /// <summary>
-    /// Aplica um status. Retorna a instância (nova ou renovada) ou null se o alvo é inválido/morto ou resistiu (controle imune).
+    /// Aplica um status. Retorna a instância (nova ou renovada) ou null se o alvo é inválido/morto ou resistiu (controle imune,
+    /// ou imunidade por tag de outro status — T-061).
     /// <paramref name="durationTicks"/> null = duração padrão da definição. Controle (tag "control") passa pelas regras de rank e retorno decrescente.
     /// </summary>
     public static StatusInstance? Apply(World world, Entity? source, Entity target, string statusId, int? durationTicks = null)
@@ -54,6 +55,12 @@ public static class StatusManager
         }
 
         var sourceId = source?.Id ?? EntityId.None;
+        if (IsImmune(world, target, def))
+        {
+            world.Events.Publish(new StatusResisted(sourceId, target.Id, statusId));
+            return null;
+        }
+
         var effects = target.TryGet<StatusEffects>();
         if (effects is null)
         {
@@ -122,6 +129,10 @@ public static class StatusManager
         return inst;
     }
 
+    /// <summary>Algum status ativo do alvo dá imunidade (<c>immuneToTags</c>, T-061) a uma das tags de <paramref name="def"/>?</summary>
+    public static bool IsImmune(World world, Entity target, StatusDefinition def) =>
+        def.Tags.Count > 0 && Active(world, target).Any(s => Def(world, s).ImmuneToTags.Any(def.Tags.Contains));
+
     /// <summary>Produto dos <c>controlDurationMultiplier</c> dos status ativos do alvo (^acúmulos). 1 = sem redução (T-017).</summary>
     public static double ControlDurationMultiplier(World world, Entity target)
     {
@@ -168,7 +179,10 @@ public static class StatusManager
     public static int RemoveByTag(World world, Entity target, string tag, int count, EntityId by) =>
         RemoveByTags(world, target, [tag], count, by);
 
-    /// <summary>Como <see cref="RemoveByTag"/>, mas casa status com QUALQUER uma das tags (T-017: purificar veneno ou maldição).</summary>
+    /// <summary>
+    /// Como <see cref="RemoveByTag"/>, mas casa status com QUALQUER uma das tags (T-017: purificar veneno ou maldição).
+    /// <paramref name="count"/> 0 = todos os que casarem (T-061).
+    /// </summary>
     public static int RemoveByTags(World world, Entity target, IReadOnlyList<string> tags, int count, EntityId by)
     {
         var fx = target.TryGet<StatusEffects>();
@@ -180,7 +194,7 @@ public static class StatusManager
         var removed = 0;
         foreach (var s in fx.Active.ToList())
         {
-            if (removed >= count)
+            if (count > 0 && removed >= count)
             {
                 break;
             }
@@ -188,6 +202,29 @@ public static class StatusManager
             if (IsActive(world, s) && Def(world, s).Tags.Any(t => tags.Contains(t)))
             {
                 fx.Active.Remove(s);
+                world.Events.Publish(new StatusRemoved(target.Id, s.StatusId, s.Id, by));
+                removed++;
+            }
+        }
+
+        return removed;
+    }
+
+    /// <summary>Remove todos os status ativos (ex.: ao levantar um caído, T-061). Retorna quantos removeu.</summary>
+    public static int RemoveAll(World world, Entity target, EntityId by)
+    {
+        var fx = target.TryGet<StatusEffects>();
+        if (fx is null)
+        {
+            return 0;
+        }
+
+        var removed = 0;
+        foreach (var s in fx.Active.ToList())
+        {
+            fx.Active.Remove(s);
+            if (IsActive(world, s))
+            {
                 world.Events.Publish(new StatusRemoved(target.Id, s.StatusId, s.Id, by));
                 removed++;
             }
