@@ -4,7 +4,7 @@ As classes são arquétipos iniciais. Evoluções e especializações ficam fora
 
 **Recurso de todas as classes: Mana** (decisão de 2026-10-17, T-027), que **só regenera com o tempo** (5 por segundo + Inteligência e equipamento; decisão de 2026-10-19, T-032). Nenhuma classe ganha Mana ao atacar, apanhar, curar ou proteger.
 
-**Habilidades:** cada classe tem um ataque básico e **5 habilidades no MVP** — 4 normais e 1 de assinatura —, uma por tecla (1–5). São aprendidas com pontos de habilidade (1 por nível) e têm níveis de habilidade que aumentam o valor e mudam o comportamento; valores, custos e o que muda em cada nível estão em `design/progression-v0.1.md` (§7). As habilidades em "Depois do MVP" ficam para especializações.
+**Habilidades:** cada classe tem um ataque básico e **5 habilidades no MVP** — 4 normais e 1 de assinatura —, uma por tecla (1–5). São aprendidas com pontos de habilidade (1 por nível) e têm níveis de habilidade que aumentam o valor e mudam o comportamento; as regras estão em `design/progression-v0.1.md` (§7) e **todos os níveis de cada habilidade** em `design/skills-v0.1.md`. As habilidades em "Depois do MVP" ficam para especializações.
 
 ## Guerreiro
 

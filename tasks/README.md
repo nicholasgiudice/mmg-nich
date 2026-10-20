@@ -121,6 +121,7 @@ Cenários (os cinco do design): Guerreiro × 3 Lobos; Arqueiro × Lobo + Saltead
 | [T-031](fase-0/T-031-design-progressao.md) | Design de progressão: atributos, equipamento e reformulação das habilidades | qualquer | Humano + Forte | 025 |
 | [T-032](fase-0/T-032-ajustes-classes-mana.md) | Ajustes de classes, Mana só por tempo e níveis de habilidade | VPS ou Windows | Médio | 027, 031 |
 | [T-033](fase-0/T-033-ataque-automatico.md) | Cliente: ataque básico automático no alvo selecionado | Windows | Leve | 026 |
+| [T-034](fase-0/T-034-niveis-de-habilidade.md) | Design: todos os níveis de todas as habilidades; trilhas de habilidades e de arte | qualquer | Humano + Médio | 032 |
 
 ### Ondas de execução
 
@@ -205,6 +206,46 @@ T-104 ────────────────────────�
 
 ---
 
+## 6c. Trilhas paralelas
+
+Trabalho que não depende da rede: pode rodar em paralelo à fase 1 ou depois dela, quando o designer decidir. Cada trilha tem sua pasta em `tasks/`.
+
+### Trilha de habilidades (`tasks/trilha-habilidades/`)
+
+Implementa os níveis de habilidade de `design/skills-v0.1.md` (hoje só existe o NH1 no jogo).
+
+| ID | Tarefa | Ambiente | Modelo | Depende de |
+|---|---|---|---|---|
+| [T-060](trilha-habilidades/T-060-core-niveis-de-habilidade.md) | Core: níveis de habilidade (NH) e múltiplos acertos | VPS | **Forte** | 034 |
+| [T-061](trilha-habilidades/T-061-core-efeitos-dos-niveis.md) | Core: efeitos novos usados pelos NH | VPS | **Forte** | 060 |
+| [T-062](trilha-habilidades/T-062-dados-niveis-e-novas-habilidades.md) | Dados: todos os NH e as habilidades que faltam (Chuva, assinaturas) | VPS | Médio | 060, 061 |
+| [T-063](trilha-habilidades/T-063-simulador-e-balanceamento-por-nivel.md) | Simulador e balanceamento por NH | VPS | Médio | 062 |
+| [T-064](trilha-habilidades/T-064-cliente-niveis-de-habilidade.md) | Cliente: escolha de NH no menu e visual dos acertos extras | Windows | Médio | 062 |
+
+Os pontos de habilidade por nível do personagem dependem de níveis e XP, que entram na fase 2 (T-120); até lá os NH são escolhidos no menu de cenários (T-064).
+
+### Trilha de arte e mapas (`tasks/trilha-arte/`)
+
+Arte com pacotes de assets, estilo simples como o Tibia mas não idêntico (decisão de 2026-10-19). Antecipa o pipeline de mapas que estava na fase 3.
+
+| ID | Tarefa | Ambiente | Modelo | Depende de |
+|---|---|---|---|---|
+| [T-050](trilha-arte/T-050-direcao-de-arte.md) | Direção de arte e escolha dos pacotes | Windows | Humano + Leve | — |
+| [T-051](trilha-arte/T-051-pipeline-mapas-tiled.md) | Pipeline de mapas: Tiled → Core | VPS | **Forte** | — |
+| [T-052](trilha-arte/T-052-mapas-no-cliente.md) | Cliente: mapas do Tiled com o tileset | Windows | Médio | 050, 051 |
+| [T-053](trilha-arte/T-053-sprites-e-animacoes.md) | Cliente: sprites e animações | Windows | Médio | 050 |
+| [T-054](trilha-arte/T-054-efeitos-visuais.md) | Cliente: efeitos visuais de habilidades, áreas e telegráfos | Windows | Leve | 053 |
+| [T-055](trilha-arte/T-055-mapas-cidade-e-campos.md) | Mapas: Cidade-Fortaleza e Campos da Vigília | Windows | Humano + Médio | 051, 052, 053 |
+
+```text
+Habilidades:  T-034 ─► T-060 ─► T-061 ─► T-062 ─┬─► T-063
+                                                 └─► T-064
+Arte/mapas:   T-050 ─┬─► T-053 ─► T-054 ─┐
+              T-051 ─┴─► T-052 ──────────┴─► T-055
+```
+
+---
+
 ## 7. Fases seguintes (esboço)
 
 Serão convertidas em arquivos de tarefa no fim de cada fase (T-120 para a fase 2). A fase 1 já está detalhada na seção 6b.
@@ -226,6 +267,8 @@ Serão convertidas em arquivos de tarefa no fim de cada fase (T-120 para a fase 
 | Cliente: tela de personagem (atributos), inventário/equipamento, barra com liberação por nível | Windows | Médio |
 
 ### Fase 3 — Primeiro mapa completo
+
+As convenções do Tiled, o carregador de mapa e a importação no Godot foram antecipados para a trilha de arte e mapas (T-051, T-052); a Cidade e os Campos também (T-055).
 
 | Tarefa | Ambiente | Modelo |
 |---|---|---|

@@ -201,59 +201,16 @@ Revisão do designer (2026-10-19, T-032): as habilidades são **aprendidas com p
 
 **Calibração**: o NH1 de cada habilidade, no nível 1 com equipamento inicial, dá os números do protótipo (`balance-v0.5.md`).
 
-### Guerreiro (FOR, arma)
+### Habilidades de cada classe
 
-Ataque básico: **Golpe de Espada** — 1,0 × ARMA + 1,0 × FOR = 18, a cada 0,9 s.
+**Todos os níveis de todas as habilidades** (valor de cada NH, número de acertos, durações, recargas e efeitos extras) estão em **`design/skills-v0.1.md`**. Resumo do conjunto do MVP:
 
-| Habilidade | Papel | Custo / recarga | NH1 | NH2 / NH4 | NH3 | NH5 |
-|---|---|---|---|---|---|---|
-| **Golpe Pesado** | dano alto + interrupção (0,4 s de conjuração) | 30 / 6 s | 15 + 1,0 × ARMA + 2,5 × FOR = 51, interrompe | × 1,2 / × 1,6 | × 1,4 e atordoa 0,5 s | × 1,8, atordoa 1 s e arco 90° → 120° |
-| **Provocação** | atrai os monstros próximos | 0 / 10 s | raio 8, 3 s | duração 3,5 s / recarga 8 s | raio 10, duração 4 s | o Guerreiro recebe 15% menos dano por 4 s depois de provocar |
-| **Golpe Circular** | área curta + ameaça | 25 / 5 s | 5 + 0,5 × ARMA + 1,6 × FOR = 27 | × 1,2 / 2 giros de 100% | **2 giros** de 85% cada | **3 giros** de 85% e aplica Sangramento |
-| **Guarda Firme** | reduz o dano recebido, anda mais devagar | 0 / 14 s | −40% de dano por 4 s, −50% de velocidade | duração 5 s / recarga 12 s | −50% de dano e só −30% de velocidade | devolve 20% do dano corpo a corpo bloqueado ao atacante |
-| **Muralha Viva** (assinatura) | escudo no grupo | 80 / 90 s | escudo 40 + 2,0 × VIT em aliados a até 5 tiles | NH2: × 1,3 e raio 7 | NH3: × 1,6 e remove atordoamento/enraizamento dos aliados | — |
-
-### Arqueiro (DES, arma)
-
-Ataque básico: **Disparo** — 1,0 × ARMA + 1,0 × DES = 18, a cada 1,0 s.
-
-| Habilidade | Papel | Custo / recarga | NH1 | NH2 / NH4 | NH3 | NH5 |
-|---|---|---|---|---|---|---|
-| **Disparo Potente** (novo, T-032) | tiro forte em um alvo | 25 / 7 s | **1 flecha**: 10 + 1,0 × ARMA + 2,0 × DES = 40 | × 1,2 / 2 flechas de 100% | **2 flechas** de 85% | **3 flechas** de 85% |
-| **Marca do Caçador** | o alvo recebe mais dano de todos | 10 / 12 s | +16% + 0,75% × DES (25% no nível 1, máx. 60%), 8 s | duração 10 s / +5 pontos percentuais no bônus (máx. 65%) | marca também o inimigo mais próximo do alvo | marcados ficam 20% mais lentos |
-| **Recuo Rápido** | cria distância | 0 / 8 s | salto de 5 tiles para trás | recarga 7 s / recarga 6 s | 6 tiles e o próximo disparo em até 2 s causa +30% | **2 cargas** |
-| **Chuva de Flechas** | área com preparação (telegráfo aliado) | 45 / 12 s | 3 ondas de 10 + 1,4 × DES = 27 cada, raio 3 | × 1,2 / × 1,6 | × 1,4 e raio 4 | × 1,8, **4 ondas** e lentidão de 20% na área |
-| **Flecha Devastadora** (assinatura) | disparo canalizado (1,5 s) em linha longa | 70 / 60 s | 40 + 1,0 × ARMA + 5,0 × DES | NH2: × 1,3 e atravessa todos os inimigos da linha | NH3: × 1,6, canalização 1,0 s e recarga 45 s | — |
-
-Fora do MVP: **Armadilha de Contenção** (a barra tem 5 teclas; saiu para o Disparo Potente entrar — continua nos dados para uma especialização), Flecha Perfurante, Tiro Debilitante.
-
-### Mago (INT)
-
-Ataque básico: **Projétil Arcano** — 3 + 0,9 × INT = 15, a cada 1,0 s, **sem custo**.
-
-| Habilidade | Papel | Custo / recarga | NH1 | NH2 / NH4 | NH3 | NH5 |
-|---|---|---|---|---|---|---|
-| **Explosão Elemental** | área à distância, instantânea | 80 / 8 s | **1 acerto**: 18 + 2,0 × INT = 44, raio 3 | × 1,2 / 2 acertos de 100% | **2 acertos** de 85% (0,4 s entre eles) | **3 acertos** de 85% |
-| **Prisão de Gelo** | congela um alvo | 25 / 10 s | 3 + 0,45 × INT = 9 e congela 2,5 s | × 1,2 e 3 s / × 1,6 e 3,5 s | congela também inimigos a até 2 tiles do alvo | congelados recebem +20% de dano de todas as fontes |
-| **Barreira Arcana** | escudo próprio | 30 / 15 s | 19 + 2,0 × INT = 45 por 6 s | × 1,2 / × 1,6 | × 1,4 e, ao acabar, devolve em Mana 30% do escudo que sobrou | × 1,8 e protege também o aliado mais próximo (50% do valor) |
-| **Campo de Relâmpagos** | zona de dano à distância | 40 / 12 s | impacto 4 + 0,6 × INT = 12; zona de **raio 3,5** com 2 + 0,45 × INT = 8 por segundo, 5 s | × 1,2 / × 1,6 | × 1,4 e dura 7 s | × 1,8 e pulsos a cada 0,5 s |
-| **Cataclismo Arcano** (assinatura) | área grande com telegráfo de 1,5 s | 100 / 120 s | 60 + 6,0 × INT, raio 5 | NH2: × 1,3 e raio 6 | NH3: × 1,6 e deixa o chão em chamas por 4 s | — |
-
-Fora do MVP: Combustão, Dissipar Magia.
-
-### Clérigo (INT, arma)
-
-Ataque básico: **Golpe Sagrado** — 1,0 × ARMA + 0,6 × INT = 12, a cada 1,1 s, bônus contra mortos-vivos.
-
-| Habilidade | Papel | Custo / recarga | NH1 | NH2 / NH4 | NH3 | NH5 |
-|---|---|---|---|---|---|---|
-| **Cura Direta** | cura um aliado (0,8 s de conjuração) | 20 / 4 s | 26 + 2,0 × INT = 50 | × 1,2 / × 1,6 | × 1,4 e conjuração 0,5 s | × 1,8 e cura também o aliado mais ferido próximo (50% do valor) |
-| **Corrente Sagrada** | dano + cura própria limitada | 25 / 6 s | 15 + 2,0 × INT = 39 e cura 10 o Clérigo | × 1,2 / × 1,6 | salta para um 2º inimigo (70%) | salta para 3 inimigos e a cura própria dobra |
-| **Escudo Sagrado** | escudo em um aliado | 15 / 10 s | 21 + 2,0 × INT = 45 | × 1,2 / × 1,6 | × 1,4 e remove um veneno do alvo | × 1,8 e protege também o aliado mais ferido |
-| **Purificação** | remove veneno ou maldição | 0 / 8 s | remove 1 efeito | recarga 7 s / recarga 6 s | remove 2 efeitos | também cura 20 + 1,0 × INT e dá 2 s de imunidade a veneno e maldição |
-| **Milagre** (assinatura) | cura grande no grupo | 90 / 120 s | 60 + 4,0 × INT em todos os aliados a até 8 tiles | NH2: × 1,3 | NH3: × 1,6 e levanta um aliado caído próximo com 30% da vida | — |
-
-Fora do MVP: Bênção, Oração Restauradora.
+| Classe | Ataque básico | Habilidades normais (5 NH) | Assinatura (3 NH, nível 12) | Fora do MVP |
+|---|---|---|---|---|
+| Guerreiro (FOR, arma) | Golpe de Espada | Golpe Pesado, Provocação, Golpe Circular, Guarda Firme | Muralha Viva | Investida, Interceptação |
+| Arqueiro (DES, arma) | Disparo | Disparo Potente, Marca do Caçador, Recuo Rápido, Chuva de Flechas | Flecha Devastadora | Armadilha de Contenção, Flecha Perfurante, Tiro Debilitante |
+| Mago (INT) | Projétil Arcano (sem custo) | Explosão Elemental, Prisão de Gelo, Barreira Arcana, Campo de Relâmpagos | Cataclismo Arcano | Combustão, Dissipar Magia |
+| Clérigo (INT, arma) | Golpe Sagrado | Cura Direta, Corrente Sagrada, Escudo Sagrado, Purificação | Milagre | Bênção, Oração Restauradora |
 
 ### Exemplos de distribuição (nível 15, 15 pontos)
 
@@ -273,7 +230,7 @@ Arma rara de dano 18, 50 pontos no atributo de dano e 20 em AGI (FOR/DES 62, AGI
 | | Guerreiro | Arqueiro |
 |---|---|---|
 | Ataque básico | Golpe de Espada 80, a cada 0,79 s | Disparo 80, a cada 0,88 s |
-| Dano principal (NH5) | Golpe Pesado (15 + 18 + 155) × 1,8 = 338 e atordoa 1 s | Disparo Potente 3 × (10 + 18 + 124) × 0,85 = 388 em 3 flechas |
+| Dano principal (NH5) | Golpe Pesado 27 + 1,8 × 18 + 4,5 × 62 = 338 e atordoa 1 s | Disparo Potente 3 flechas × (8 + 0,85 × 18 + 1,7 × 62) = 3 × 129 = 386 |
 | Bônus | — | Marca NH5: +60% em todo dano no alvo e lentidão |
 | Crítico | 11,5% | 11,5% |
 
