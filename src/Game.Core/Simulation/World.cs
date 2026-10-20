@@ -124,6 +124,24 @@ public sealed class World
         Events.Publish(new EntityDied(e.Id));
     }
 
+    /// <summary>
+    /// Levanta uma entidade morta (não removida) com <paramref name="health"/> de vida e publica EntityRevived (T-061).
+    /// Mortos continuam no mundo como "caídos" até alguém removê-los. Retorna false se não estava morta.
+    /// </summary>
+    public bool Revive(Entity e, float health, EntityId by, string sourceId)
+    {
+        var h = e.Get<Health>();
+        if (h.IsAlive || e.IsRemoved)
+        {
+            return false;
+        }
+
+        h.Current = Math.Clamp(health, 1, h.Max);
+        h.IsAlive = true;
+        Events.Publish(new EntityRevived(e.Id, by, sourceId, h.Current));
+        return true;
+    }
+
     public void Enqueue(Intent intent) => _pendingIntents.Enqueue(intent);
 
     public void Step()

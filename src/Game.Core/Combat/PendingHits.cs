@@ -5,7 +5,7 @@ namespace Game.Core.Combat;
 
 /// <summary>Um acerto extra agendado de uma habilidade com vários acertos (T-060).</summary>
 public sealed record PendingHit(
-    string AbilityId, int Rank, int HitIndex, int HitCount, long DueTick, EntityId? Target, Vector2? AimPoint);
+    string AbilityId, int Rank, int HitIndex, int HitCount, long DueTick, EntityId? Target, Vector2? AimPoint, double Power = 1);
 
 /// <summary>
 /// Acertos extras ainda por acontecer (flechas 2 e 3, explosões repetidas...). Estado interno do servidor: o
@@ -33,6 +33,7 @@ public sealed class PendingHits : IComponent
             hasher.Add(h.DueTick);
             hasher.Add(h.Target?.Value ?? 0);
             hasher.Add(h.AimPoint ?? new Vector2(float.NaN, float.NaN));
+            hasher.Add((float)h.Power);
         }
     }
 }

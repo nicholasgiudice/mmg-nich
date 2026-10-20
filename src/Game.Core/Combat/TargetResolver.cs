@@ -26,8 +26,16 @@ public static class TargetResolver
     public static bool IsBeneficial(AbilityDefinition ability)
     {
         var onTargets = ability.Effects.Where(e => e.Target == EffectTarget.Targets).ToList();
-        return onTargets.Count > 0 && onTargets.All(e => e is HealEffect or ShieldEffect or RemoveStatusEffect);
+        return onTargets.Count > 0 && onTargets.All(IsBeneficialEffect);
     }
+
+    private static bool IsBeneficialEffect(EffectDefinition e) => e switch
+    {
+        HealEffect or ShieldEffect or RemoveStatusEffect or ReviveEffect => true,
+        ExtraTargetsEffect x => x.Effects.All(IsBeneficialEffect),
+        ChainEffect x => x.Effects.All(IsBeneficialEffect),
+        _ => false,
+    };
 
     public static Vector2 AimDirection(Entity caster, Entity? target, Vector2? aim)
     {

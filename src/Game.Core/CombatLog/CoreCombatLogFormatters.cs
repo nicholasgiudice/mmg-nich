@@ -87,6 +87,10 @@ public static class CoreCombatLogFormatters
         });
 
         f.Register<EntityDied>((c, e) => c.Entry(e, LogCategory.Morte, $"{c.Name(e.Entity)} foi derrotado", e.Entity));
+        f.Register<EntityRevived>((c, e) => c.Entry(
+            e, LogCategory.Morte,
+            $"{c.Name(e.Entity)} foi levantado por {c.Name(e.By)} com {c.SourceLabel(e.SourceId)} ({CombatLogContext.Number(e.Health)} de vida)",
+            e.By, e.Entity));
 
         return f;
     }

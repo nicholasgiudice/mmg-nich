@@ -17,6 +17,10 @@ public sealed class TelegraphState : IComponent, IReplicated
 
     /// <summary>NH da habilidade quando o telegráfo nasceu (T-060): a resolução usa a definição desse nível.</summary>
     public int Rank { get; init; } = 1;
+
+    /// <summary>Potência do uso (T-061) e acerto (1..N) que este telegráfo resolve.</summary>
+    public double Power { get; init; } = 1;
+    public int HitIndex { get; init; } = 1;
     public TelegraphShape Shape { get; init; }
     public float Radius { get; init; }
     public float Length { get; init; }
@@ -39,6 +43,8 @@ public sealed class TelegraphState : IComponent, IReplicated
         hasher.Add(Source.Value);
         hasher.Add(AbilityId);
         hasher.Add(Rank);
+        hasher.Add((float)Power);
+        hasher.Add(HitIndex);
         hasher.Add((int)Shape);
         hasher.Add(Radius);
         hasher.Add(Length);

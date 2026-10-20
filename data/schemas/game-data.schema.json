@@ -225,37 +225,58 @@
     "effect": {
       "oneOf": [
         { "type": "object", "additionalProperties": false, "required": ["type", "base"],
-          "properties": { "target": { "$ref": "#/$defs/effectTarget" }, "type": { "const": "damage" }, "base": { "type": "number", "minimum": 0 }, "school": { "$ref": "#/$defs/school" },
+          "properties": { "target": { "$ref": "#/$defs/effectTarget" }, "onHit": { "$ref": "#/$defs/onHit" }, "type": { "const": "damage" }, "base": { "type": "number", "minimum": 0 }, "school": { "$ref": "#/$defs/school" },
             "bonusVsTags": { "type": "object", "additionalProperties": { "type": "number", "exclusiveMinimum": -1 }, "description": "{ \"undead\": 0.5 } = +50% contra alvos com a tag; somam." } } },
         { "type": "object", "additionalProperties": false, "required": ["type", "base"],
-          "properties": { "target": { "$ref": "#/$defs/effectTarget" }, "type": { "const": "heal" }, "base": { "type": "number", "minimum": 0 } } },
+          "properties": { "target": { "$ref": "#/$defs/effectTarget" }, "onHit": { "$ref": "#/$defs/onHit" }, "type": { "const": "heal" }, "base": { "type": "number", "minimum": 0 } } },
         { "type": "object", "additionalProperties": false, "required": ["type", "amount", "duration"],
-          "properties": { "target": { "$ref": "#/$defs/effectTarget" }, "type": { "const": "shield" }, "amount": { "type": "number", "exclusiveMinimum": 0 }, "duration": { "$ref": "#/$defs/seconds" } } },
+          "properties": { "target": { "$ref": "#/$defs/effectTarget" }, "onHit": { "$ref": "#/$defs/onHit" }, "type": { "const": "shield" }, "amount": { "type": "number", "exclusiveMinimum": 0 }, "duration": { "$ref": "#/$defs/seconds" },
+            "refund": { "type": "object", "additionalProperties": false, "required": ["resource", "fraction"],
+              "description": "Ao expirar com sobra, devolve round(sobra × fraction) do recurso a quem criou o escudo.",
+              "properties": { "resource": { "type": "string" }, "fraction": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 } } } } },
         { "type": "object", "additionalProperties": false, "required": ["type", "status"],
-          "properties": { "target": { "$ref": "#/$defs/effectTarget" }, "type": { "const": "apply_status" }, "status": { "$ref": "#/$defs/id" }, "duration": { "$ref": "#/$defs/seconds" } } },
+          "properties": { "target": { "$ref": "#/$defs/effectTarget" }, "onHit": { "$ref": "#/$defs/onHit" }, "type": { "const": "apply_status" }, "status": { "$ref": "#/$defs/id" }, "duration": { "$ref": "#/$defs/seconds" } } },
         { "type": "object", "additionalProperties": false, "required": ["type"],
           "description": "Informe tag ou tags (qualquer uma das tags).",
-          "properties": { "target": { "$ref": "#/$defs/effectTarget" }, "type": { "const": "remove_status" }, "tag": { "type": "string" }, "tags": { "$ref": "#/$defs/stringList" }, "count": { "type": "integer", "minimum": 1 } } },
+          "properties": { "target": { "$ref": "#/$defs/effectTarget" }, "onHit": { "$ref": "#/$defs/onHit" }, "type": { "const": "remove_status" }, "tag": { "type": "string" }, "tags": { "$ref": "#/$defs/stringList" }, "count": { "type": "integer", "minimum": 0, "description": "0 = todos os que casarem." } } },
         { "type": "object", "additionalProperties": false, "required": ["type", "kind", "distance"],
           "properties": {
             "target": { "$ref": "#/$defs/effectTarget" },
+            "onHit": { "$ref": "#/$defs/onHit" },
             "type": { "const": "displacement" },
             "kind": { "enum": ["dash", "knockback"] },
             "distance": { "type": "number", "exclusiveMinimum": 0 },
             "direction": { "enum": ["aim", "away_from_source", "toward_target", "backward"] }
           } },
         { "type": "object", "additionalProperties": false, "required": ["type"],
-          "properties": { "target": { "$ref": "#/$defs/effectTarget" }, "type": { "const": "interrupt" } } },
+          "properties": { "target": { "$ref": "#/$defs/effectTarget" }, "onHit": { "$ref": "#/$defs/onHit" }, "type": { "const": "interrupt" } } },
         { "type": "object", "additionalProperties": false, "required": ["type"],
-          "properties": { "target": { "$ref": "#/$defs/effectTarget" }, "type": { "const": "threat" }, "amount": { "type": "number", "minimum": 0 }, "tauntDuration": { "$ref": "#/$defs/seconds" } } },
+          "properties": { "target": { "$ref": "#/$defs/effectTarget" }, "onHit": { "$ref": "#/$defs/onHit" }, "type": { "const": "threat" }, "amount": { "type": "number", "minimum": 0 }, "tauntDuration": { "$ref": "#/$defs/seconds" } } },
         { "type": "object", "additionalProperties": false, "required": ["type", "resource", "amount"],
-          "properties": { "target": { "$ref": "#/$defs/effectTarget" }, "type": { "const": "resource" }, "resource": { "type": "string" }, "amount": { "type": "number" } } },
+          "properties": { "target": { "$ref": "#/$defs/effectTarget" }, "onHit": { "$ref": "#/$defs/onHit" }, "type": { "const": "resource" }, "resource": { "type": "string" }, "amount": { "type": "number" } } },
         { "type": "object", "additionalProperties": false, "required": ["type", "area"],
-          "properties": { "target": { "$ref": "#/$defs/effectTarget" }, "type": { "const": "spawn_area" }, "area": { "$ref": "#/$defs/id" } } },
+          "properties": { "target": { "$ref": "#/$defs/effectTarget" }, "onHit": { "$ref": "#/$defs/onHit" }, "type": { "const": "spawn_area" }, "area": { "$ref": "#/$defs/id" } } },
         { "type": "object", "additionalProperties": false, "required": ["type", "monster"],
-          "properties": { "target": { "$ref": "#/$defs/effectTarget" }, "type": { "const": "summon" }, "monster": { "$ref": "#/$defs/id" }, "count": { "type": "integer", "minimum": 1 }, "radius": { "type": "number", "minimum": 0 }, "maxAlive": { "type": "integer", "minimum": 0 } } }
+          "properties": { "target": { "$ref": "#/$defs/effectTarget" }, "onHit": { "$ref": "#/$defs/onHit" }, "type": { "const": "summon" }, "monster": { "$ref": "#/$defs/id" }, "count": { "type": "integer", "minimum": 1 }, "radius": { "type": "number", "minimum": 0 }, "maxAlive": { "type": "integer", "minimum": 0 } } },
+        { "type": "object", "additionalProperties": false, "required": ["type", "jumps", "radius", "effects"],
+          "description": "Saltos: do alvo para o mais próximo ainda não atingido, até jumps vezes, aplicando effects com a potência × multiplier.",
+          "properties": { "target": { "$ref": "#/$defs/effectTarget" }, "onHit": { "$ref": "#/$defs/onHit" }, "type": { "const": "chain" },
+            "jumps": { "type": "integer", "minimum": 1 }, "radius": { "type": "number", "exclusiveMinimum": 0 },
+            "multiplier": { "type": "number", "exclusiveMinimum": 0 }, "affects": { "$ref": "#/$defs/faction" }, "effects": { "$ref": "#/$defs/effects" } } },
+        { "type": "object", "additionalProperties": false, "required": ["type", "radius", "effects"],
+          "description": "Alvos extras em volta do alvo (nearest ou most_injured); count 0 = todos no raio.",
+          "properties": { "target": { "$ref": "#/$defs/effectTarget" }, "onHit": { "$ref": "#/$defs/onHit" }, "type": { "const": "extra_targets" },
+            "radius": { "type": "number", "exclusiveMinimum": 0 }, "select": { "enum": ["nearest", "most_injured"] },
+            "count": { "type": "integer", "minimum": 0 }, "multiplier": { "type": "number", "exclusiveMinimum": 0 },
+            "affects": { "$ref": "#/$defs/faction" }, "effects": { "$ref": "#/$defs/effects" } } },
+        { "type": "object", "additionalProperties": false, "required": ["type", "radius", "healthFraction"],
+          "description": "Levanta aliados caídos perto do alvo com uma fração da vida máxima.",
+          "properties": { "target": { "$ref": "#/$defs/effectTarget" }, "onHit": { "$ref": "#/$defs/onHit" }, "type": { "const": "revive" },
+            "radius": { "type": "number", "exclusiveMinimum": 0 }, "healthFraction": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 },
+            "count": { "type": "integer", "minimum": 1 } } }
       ]
     },
+    "onHit": { "type": "integer", "minimum": 1, "maximum": 5, "description": "Só neste acerto de uma habilidade com vários acertos (1 = o primeiro)." },
     "effects": { "type": "array", "items": { "$ref": "#/$defs/effect" } },
     "effectTarget": { "enum": ["targets", "self"], "description": "targets (padrão) = alvos da habilidade; self = o conjurador." },
     "status": {
@@ -284,8 +305,17 @@
           "required": ["arcDegrees", "damageTakenMultiplier"],
           "properties": {
             "arcDegrees": { "type": "number", "exclusiveMinimum": 0, "maximum": 360 },
-            "damageTakenMultiplier": { "type": "number", "minimum": 0 }
+            "damageTakenMultiplier": { "type": "number", "minimum": 0 },
+            "reflectMeleeFraction": { "type": "number", "minimum": 0, "maximum": 1, "description": "Fração do dano corpo a corpo bloqueado devolvida a quem atacou." }
           }
+        },
+        "immuneToTags": { "$ref": "#/$defs/stringList" },
+        "empower": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["abilities", "multiplier"],
+          "description": "Fortalece o próximo uso de uma destas habilidades (potência × multiplier) e é consumido.",
+          "properties": { "abilities": { "$ref": "#/$defs/stringList" }, "multiplier": { "type": "number", "exclusiveMinimum": 0 } }
         },
         "modifiers": {
           "type": "object",
