@@ -14,6 +14,9 @@ public sealed class TelegraphState : IComponent, IReplicated
 {
     public EntityId Source { get; init; }
     public string AbilityId { get; init; } = "";
+
+    /// <summary>NH da habilidade quando o telegráfo nasceu (T-060): a resolução usa a definição desse nível.</summary>
+    public int Rank { get; init; } = 1;
     public TelegraphShape Shape { get; init; }
     public float Radius { get; init; }
     public float Length { get; init; }
@@ -35,6 +38,7 @@ public sealed class TelegraphState : IComponent, IReplicated
     {
         hasher.Add(Source.Value);
         hasher.Add(AbilityId);
+        hasher.Add(Rank);
         hasher.Add((int)Shape);
         hasher.Add(Radius);
         hasher.Add(Length);

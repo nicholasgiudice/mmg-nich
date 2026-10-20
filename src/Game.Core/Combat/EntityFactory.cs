@@ -9,9 +9,18 @@ namespace Game.Core.Combat;
 /// <summary>Cria entidades e mundos a partir de definições (o Core recebe as definições já carregadas).</summary>
 public static class EntityFactory
 {
-    public static Entity SpawnPlayer(World world, ClassDefinition def, Vector2 position)
+    /// <param name="ranks">NH por habilidade (T-060); ausentes ficam no NH1. Valores fora do intervalo da habilidade são limitados.</param>
+    public static Entity SpawnPlayer(World world, ClassDefinition def, Vector2 position, IReadOnlyDictionary<string, int>? ranks = null)
     {
         var abilities = new AbilityState { BasicAttackId = def.BasicAttack };
+        foreach (var (abilityId, rank) in ranks ?? new Dictionary<string, int>())
+        {
+            if (world.Content.Abilities.TryGetValue(abilityId, out var ability))
+            {
+                abilities.Ranks[abilityId] = Math.Clamp(rank, 1, ability.HighestRank);
+            }
+        }
+
         abilities.Known.Add(def.BasicAttack);
         foreach (var a in def.Abilities.Where(a => a != def.BasicAttack))
         {
@@ -67,7 +76,7 @@ public static class EncounterSetup
         var arena = content.Arenas[encounter.Arena];
         var world = WorldBuilder.CreateDefault(seed, EntityFactory.BuildMap(arena), content);
         var players = encounter.Players
-            .Select(p => EntityFactory.SpawnPlayer(world, content.Classes[p.Class], Pos(p.Position)))
+            .Select(p => EntityFactory.SpawnPlayer(world, content.Classes[p.Class], Pos(p.Position), p.Ranks))
             .ToList();
         var enemies = encounter.Enemies
             .Select(e => EntityFactory.SpawnMonster(world, content.Monsters[e.Monster], Pos(e.Position)))

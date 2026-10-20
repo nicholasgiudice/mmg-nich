@@ -44,6 +44,57 @@ public sealed record AbilityDefinition
     /// </summary>
     public TelegraphDefinition? Telegraph { get; init; }
     public IReadOnlyList<EffectDefinition> Effects { get; init; } = [];
+
+    /// <summary>Habilidade de assinatura (T-060): no máximo <see cref="MaxSignatureRank"/> níveis em vez de <see cref="MaxRank"/>.</summary>
+    public bool Signature { get; init; }
+
+    /// <summary>
+    /// Acertos por uso (T-060). Null = 1. Os acertos extras repetem os efeitos (ou o telegráfo) a cada intervalo;
+    /// alvo único morto passa para o inimigo mais próximo.
+    /// </summary>
+    public AbilityHitsDefinition? Hits { get; init; }
+
+    /// <summary>Usos guardados que recarregam um a um (T-060; ex.: Recuo Rápido com 2 cargas). 1 = recarga normal.</summary>
+    public int CooldownCharges { get; init; } = 1;
+
+    /// <summary>
+    /// Níveis de habilidade a partir do NH2 (T-060). Cada nível sobrescreve só o que declara e herda o resto do nível
+    /// anterior. A definição efetiva de um NH vem de <c>ContentCatalog.AbilityAt</c>.
+    /// </summary>
+    public IReadOnlyList<AbilityRankDefinition> Ranks { get; init; } = [];
+
+    public const int MaxRank = 5;
+    public const int MaxSignatureRank = 3;
+
+    /// <summary>Maior NH desta habilidade (1 + níveis declarados).</summary>
+    public int HighestRank => 1 + Ranks.Count;
+
+    /// <summary>Número de acertos efetivo (pelo menos 1).</summary>
+    public int HitCount => Math.Max(1, Hits?.Count ?? 1);
+}
+
+/// <summary>Acertos de um uso (T-060). <see cref="IntervalTicks"/> = tempo entre acertos (JSON "interval", segundos).</summary>
+public sealed record AbilityHitsDefinition
+{
+    public int Count { get; init; } = 1;
+    public int IntervalTicks { get; init; }
+}
+
+/// <summary>
+/// Um nível de habilidade (NH2 em diante). Campos nulos herdam do nível anterior; <see cref="Effects"/> declarado
+/// substitui a lista inteira de efeitos.
+/// </summary>
+public sealed record AbilityRankDefinition
+{
+    public required int Rank { get; init; }
+    public ResourceCost? Cost { get; init; }
+    public int? CooldownTicks { get; init; }
+    public int? CastTimeTicks { get; init; }
+    public TargetingDefinition? Targeting { get; init; }
+    public TelegraphDefinition? Telegraph { get; init; }
+    public IReadOnlyList<EffectDefinition>? Effects { get; init; }
+    public AbilityHitsDefinition? Hits { get; init; }
+    public int? CooldownCharges { get; init; }
 }
 
 /// <summary>
@@ -186,6 +237,9 @@ public sealed record PlayerSpawnDefinition
 {
     public required string Class { get; init; }
     public required PositionDefinition Position { get; init; }
+
+    /// <summary>NH por habilidade (T-060), para encontros de teste; ausente = NH1.</summary>
+    public IReadOnlyDictionary<string, int> Ranks { get; init; } = new Dictionary<string, int>();
 }
 
 public sealed record EnemySpawnDefinition

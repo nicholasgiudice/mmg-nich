@@ -96,7 +96,41 @@ public sealed class AbilityState : IComponent, IReplicated
     /// <summary>Cargas já gastas por habilidade (ausente = 0). Restantes = <c>AbilityDefinition.Charges</c> - gastas.</summary>
     public SortedDictionary<string, int> ChargesUsed { get; } = new(StringComparer.Ordinal);
 
+    // Criados sob demanda: o protótipo (tudo no NH1, sem cargas por recarga) não paga a alocação a cada snapshot.
+    private SortedDictionary<string, int>? _ranks;
+    private SortedDictionary<string, int>? _cooldownChargesSpent;
+
+    /// <summary>NH de cada habilidade (T-060). Ausente = NH1.</summary>
+    public SortedDictionary<string, int> Ranks => _ranks ??= new(StringComparer.Ordinal);
+
+    /// <summary>
+    /// Cargas por recarga em uso (T-060, só habilidades com <c>CooldownCharges</c> &gt; 1): quantas estão recarregando.
+    /// A próxima volta em <see cref="ReadyAtTick"/>.
+    /// </summary>
+    public SortedDictionary<string, int> CooldownChargesSpent => _cooldownChargesSpent ??= new(StringComparer.Ordinal);
+
+    /// <summary>Há cargas por recarga em uso (sem criar o dicionário).</summary>
+    public bool HasCooldownChargesSpent => _cooldownChargesSpent is { Count: > 0 };
+
     public bool Knows(string abilityId) => Known.Contains(abilityId) || Consumables.Contains(abilityId);
+
+    /// <summary>NH da habilidade (T-060); 1 quando não definido.</summary>
+    public int RankOf(string abilityId) => _ranks is not null && _ranks.TryGetValue(abilityId, out var r) ? r : 1;
+
+    /// <summary>
+    /// Em recarga para usar agora? Com cargas por recarga, só quando todas estão recarregando; senão, pela
+    /// recarga normal.
+    /// </summary>
+    public bool IsOnCooldown(AbilityDefinition ability, long currentTick) =>
+        ability.CooldownCharges > 1
+            ? _cooldownChargesSpent is not null && _cooldownChargesSpent.TryGetValue(ability.Id, out var spent) && spent >= ability.CooldownCharges
+            : CooldownRemaining(ability.Id, currentTick) > 0;
+
+    /// <summary>Cargas prontas para usar agora (1 ou 0 para habilidades sem cargas por recarga).</summary>
+    public int CooldownChargesReady(AbilityDefinition ability, long currentTick) =>
+        ability.CooldownCharges > 1
+            ? ability.CooldownCharges - (_cooldownChargesSpent is not null && _cooldownChargesSpent.TryGetValue(ability.Id, out var spent) ? spent : 0)
+            : CooldownRemaining(ability.Id, currentTick) > 0 ? 0 : 1;
 
     /// <summary>Usos restantes da habilidade, ou null se ilimitada.</summary>
     public int? ChargesRemaining(AbilityDefinition ability) =>
@@ -122,6 +156,16 @@ public sealed class AbilityState : IComponent, IReplicated
             c.ReadyAtTick[kv.Key] = kv.Value;
         }
 
+        if (_ranks is { Count: > 0 })
+        {
+            c._ranks = new SortedDictionary<string, int>(_ranks, StringComparer.Ordinal);
+        }
+
+        if (_cooldownChargesSpent is { Count: > 0 })
+        {
+            c._cooldownChargesSpent = new SortedDictionary<string, int>(_cooldownChargesSpent, StringComparer.Ordinal);
+        }
+
         return c;
     }
 
@@ -145,6 +189,18 @@ public sealed class AbilityState : IComponent, IReplicated
         }
 
         foreach (var kv in ChargesUsed)
+        {
+            hasher.Add(kv.Key);
+            hasher.Add(kv.Value);
+        }
+
+        foreach (var kv in _ranks ?? [])
+        {
+            hasher.Add(kv.Key);
+            hasher.Add(kv.Value);
+        }
+
+        foreach (var kv in _cooldownChargesSpent ?? [])
         {
             hasher.Add(kv.Key);
             hasher.Add(kv.Value);

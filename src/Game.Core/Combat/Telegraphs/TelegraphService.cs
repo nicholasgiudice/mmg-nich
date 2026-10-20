@@ -14,7 +14,7 @@ public static class TelegraphService
     /// Cria o telegráfo de uma habilidade com <see cref="AbilityDefinition.Telegraph"/> (chamado pelo pipeline ao concluir a conjuração).
     /// Origem: posição da fonte (<c>Source</c>) ou ponto mirado/posição do alvo (<c>Aim</c>).
     /// </summary>
-    public static Entity Start(World world, Entity caster, AbilityDefinition ability, Vector2 direction, Vector2? aim, Entity? target)
+    public static Entity Start(World world, Entity caster, AbilityDefinition ability, Vector2 direction, Vector2? aim, Entity? target, int rank = 1)
     {
         var def = ability.Telegraph!;
         var casterPos = caster.Get<Transform>().Position;
@@ -26,6 +26,7 @@ public static class TelegraphService
         {
             Source = caster.Id,
             AbilityId = ability.Id,
+            Rank = rank,
             Shape = def.Shape,
             Radius = (float)def.Radius,
             Length = (float)def.Length,
@@ -71,7 +72,7 @@ public static class TelegraphService
     {
         var tr = telegraph.Get<Transform>();
         var source = world.Find(t.Source);
-        if (source is null || !source.IsAlive || !world.Content.Abilities.TryGetValue(t.AbilityId, out var ability))
+        if (source is null || !source.IsAlive || world.Content.AbilityAt(t.AbilityId, t.Rank) is not { } ability)
         {
             world.Events.Publish(new TelegraphResolved(telegraph.Id, t.Source, t.AbilityId, [], true));
             world.Remove(telegraph.Id);

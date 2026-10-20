@@ -27,4 +27,18 @@
 
 ## Resultado
 
-_(preencher ao concluir)_
+Concluída em 2026-10-19 no Windows (a tarefa é de VPS; feita aqui a pedido do designer — só `dotnet` e testes).
+
+**Feito:**
+1. **Formato nos dados** (`AbilityDefinition`, sem código de leitura novo — o `System.Text.Json` mapeia os campos): `signature` (máx. 3 NH), `hits: { count, interval }` (segundos → ticks), `cooldownCharges` e `ranks` — lista do NH2 em diante, cada nível com sobrescritas parciais (`cost`, `cooldown`, `castTime`, `targeting`, `telegraph`, `effects` (substitui a lista inteira), `hits`, `cooldownCharges`) que **herdam do nível anterior**. JSON Schema atualizado. Validação: níveis 2, 3... em ordem; máximo 5 (3 na assinatura); `hits.count` 1–5; `cooldownCharges` ≥ 1; cada nível validado como a base (alvo, telegráfo, efeitos); NH dos encontros referem habilidades existentes e dentro do intervalo.
+2. **Resolução**: `AbilityRanks.Resolve` monta a definição efetiva de um NH; `ContentCatalog.AbilityAt(id, nh)` devolve a versão **pré-calculada** na criação do catálogo (imutável, segura com vários mundos em paralelo; NH fora do intervalo é limitado). `AbilitySystem` (validação, conjuração, execução, cargas) e a resolução dos telegráfos (`TelegraphState.Rank`) usam o NH da entidade.
+3. **Estado**: `AbilityState.Ranks` (NH por habilidade, ausente = NH1; replicado e no hash) e `CooldownChargesSpent`. Os dois dicionários são criados sob demanda, para o protótipo (tudo NH1) não pagar alocação nos snapshots.
+4. **Múltiplos acertos**: o 1º acerto é o próprio uso; os demais vão para `PendingHits` (componente **interno**, não replicado) e saem no tick previsto, publicando `AbilityHit` (índice/total e alvos) e aplicando os efeitos (ou um telegráfo por acerto, para habilidades com telegráfo como a futura Chuva de Flechas). Alvo único morto/fora de alcance → o acerto vai para o inimigo (ou aliado, conforme a habilidade) mais próximo ao alcance; sem ninguém, o acerto se perde. Fonte morta → acertos pendentes cancelados. Acertos extras não custam recurso nem mexem na recarga.
+5. **Cargas por recarga** (`cooldownCharges` > 1): cada uso gasta uma carga; a recarga começa na primeira e as cargas voltam uma a uma; "em recarga" só quando todas estão gastas. `AbilityState.IsOnCooldown` / `CooldownChargesReady`.
+6. **NH na criação**: `EntityFactory.SpawnPlayer(..., ranks)` e `PlayerSpawnDefinition.Ranks` (encontros de teste com NH por jogador).
+
+**Testes:** `tests/Game.Core.Tests/AbilityRankTests.cs` (13: herança entre níveis, 1/1/2/3 flechas com o dano de cada NH, intervalo e `AbilityHit`, flecha extra indo para o próximo inimigo, acerto perdido sem alvo, área com 3 acertos em todos, fonte morta, cargas por recarga, NH1 sem cargas, NH do encontro replicado) e `tests/Game.Data.Tests/AbilityRankLoaderTests.cs` (5: carregamento e conversão de segundos, ordem dos níveis, limite 5/3, campos inválidos, NH do encontro). Todos os testes anteriores passam sem mudança (protótipo em NH1 inalterado); snapshot replicado da Matriarca 7,9 KB (antes 7,3 KB).
+
+**Fora das áreas listadas:** nenhuma (`data/schemas/` incluído).
+
+**Pendências / para as próximas tarefas:** NH 0 ("habilidade não aprendida") ainda não existe — fica para a tela de pontos (T-064/fase 2); HUD e bots ainda leem a definição base (custo/recarga do NH1) — T-063 e T-064; `AbilityHit` sem linha própria no log (o dano de cada acerto já aparece).
