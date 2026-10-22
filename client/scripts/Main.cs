@@ -147,6 +147,11 @@ public partial class Main : Node2D
                 LogAbilityEvents(_authority, events);
             }
 
+            if (_args.ContainsKey("protocol-check"))
+            {
+                ProtocolCheck(_authority, events);
+            }
+
             _worldView.SelectedEntity = _input.SelectedTarget;
             _worldView.Render(_authority, events);
             _hud.Render(_authority, _input.SelectedTarget, aim, events);
@@ -273,6 +278,27 @@ public partial class Main : Node2D
         var ordered = MenuScreen.OrderedEncounterIds(_content);
         var index = _settings is null ? -1 : ordered.IndexOf(_settings.EncounterId);
         return index >= 0 && index + 1 < ordered.Count ? ordered[index + 1] : null;
+    }
+
+    private bool _protocolChecked;
+
+    /// <summary>
+    /// <c>--protocol-check</c> (T-103): serializa o snapshot e os eventos do frame com o <c>Game.Protocol</c> dentro do
+    /// Godot, lê de volta e imprime o tamanho — confirma que o MemoryPack funciona no runtime .NET do Godot.
+    /// </summary>
+    private void ProtocolCheck(IGameAuthority authority, IReadOnlyList<GameEvent> events)
+    {
+        if (_protocolChecked || _elapsed < 1.0 || authority.Latest is not { } latest)
+        {
+            return;
+        }
+
+        _protocolChecked = true;
+        var snapshot = Game.Protocol.ProtocolSerializer.Serialize(Game.Protocol.SnapshotMessage.From(latest));
+        var back = (Game.Protocol.SnapshotMessage)Game.Protocol.ProtocolSerializer.Deserialize(snapshot);
+        var eventBytes = Game.Protocol.ProtocolSerializer.Serialize(new Game.Protocol.EventsMessage(latest.Tick, events.ToArray()));
+        GD.Print($"[protocol] v{Game.Protocol.ProtocolVersion.Current}: snapshot {snapshot.Length} B, "
+            + $"{back.Entities.Length}/{latest.Entities.Count} entidades de volta; {events.Count} eventos {eventBytes.Length} B");
     }
 
     private void CaptureIfRequested()
