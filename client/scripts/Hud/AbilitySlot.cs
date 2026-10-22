@@ -12,9 +12,10 @@ public readonly record struct AbilitySlotState(
     bool NoResource,
     bool OutOfRange,
     bool Casting,
-    string? Charges);
+    string? Charges,
+    string Rank = "");
 
-/// <summary>Um slot: sigla, tecla, custo, varredura de recarga e estado indisponível.</summary>
+/// <summary>Um slot: sigla, tecla, custo, NH (T-064), cargas, varredura de recarga e estado indisponível.</summary>
 public partial class AbilitySlot : Control
 {
     public const float SlotSize = 52f;
@@ -72,6 +73,11 @@ public partial class AbilitySlot : Control
         if (_state.Cost.Length > 0)
         {
             DrawString(font, new Vector2(0, Size.Y - 3), _state.Cost, HorizontalAlignment.Right, Size.X - 3, 10, new Color(0.8f, 0.9f, 1f));
+        }
+
+        if (_state.Rank.Length > 0)
+        {
+            DrawString(font, new Vector2(3, Size.Y - 3), _state.Rank, HorizontalAlignment.Left, -1, 10, new Color(1f, 0.85f, 0.45f));
         }
 
         if (_state.Charges is { } charges)

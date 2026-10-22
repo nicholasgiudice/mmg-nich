@@ -20,6 +20,7 @@ namespace MmoRpgClient;
 /// câmera, pausa (Esc), reinício (R) e tela de resultado.
 /// Argumentos de depuração (depois de <c>--</c> na linha de comando; pulam o menu):
 /// <c>--encounter=id</c>, <c>--class=id</c>, <c>--seed=n</c>, <c>--time-scale=n</c>, <c>--fake-authority</c>,
+/// <c>--ranks=nh1|focado|espalhado</c> e <c>--rank=habilidade:NH,...</c> (NH do jogador),
 /// <c>--auto-move=x,y</c> (mantém as teclas de movimento pelo sinal de x e y), <c>--hold=attack,...</c> (mantém ações),
 /// <c>--demo-input=attack,ability_1,...</c> (aperta ações em sequência mirando o inimigo mais próximo e
 /// imprime as respostas da autoridade) e <c>--capture=caminho.png</c> (salva a tela e fecha; após 2 s, ou
@@ -79,7 +80,12 @@ public partial class Main : Node2D
             var (authority, map, content) = CreateAuthority();
             _authority = authority;
             _content = content;
-            _input = new PlayerInput(content.Abilities);
+            // T-064: a entrada usa as definições no NH do jogador (raio da prévia, alcance, cargas).
+            var plan = _settings?.ClassId is { } cls && content.Classes.TryGetValue(cls, out var classDef)
+                ? Match.SkillPlan.For(classDef, content).Ranks
+                : new Dictionary<string, int>();
+            _input = new PlayerInput(content.Abilities.ToDictionary(
+                kv => kv.Key, kv => content.AbilityAt(kv.Key, plan.GetValueOrDefault(kv.Key, 1)) ?? kv.Value));
             _hud.SetContent(content);
             _worldView.SetContent(content);
             GetNode<ArenaView>("Arena").Map = map;
@@ -169,6 +175,16 @@ public partial class Main : Node2D
             _args.GetValueOrDefault("encounter", DefaultEncounter),
             _args.GetValueOrDefault("class"),
             _args.TryGetValue("seed", out var s) && ulong.TryParse(s, out var parsed) ? parsed : 1UL);
+        // --ranks=perfil e --rank=id:n,... (depuração, T-064): ajustam o plano de NH da classe do jogador.
+        var playerClass = settings.ClassId is { } c && content.Classes.ContainsKey(c)
+            ? c
+            : content.Encounters.TryGetValue(settings.EncounterId, out var enc) ? MatchSetup.SuggestedClass(enc) : null;
+        if (playerClass is not null)
+        {
+            Match.SkillPlan.For(content.Classes[playerClass], content)
+                .ApplyArgs(_args.GetValueOrDefault("ranks"), _args.GetValueOrDefault("rank"));
+        }
+
         var match = MatchSetup.Create(content, settings);
         MatchSettings.Current = _settings = settings with { ClassId = match.PlayerClass };
         _encounterName = match.Encounter.Name;

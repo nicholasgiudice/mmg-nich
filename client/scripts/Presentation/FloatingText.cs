@@ -11,6 +11,9 @@ public partial class FloatingText : Node2D
     private readonly Label _label = new();
     private double _age;
 
+    /// <summary>Segundos desde que apareceu.</summary>
+    public double Age => _age;
+
     public static FloatingText Create(string text, Color color)
     {
         var node = new FloatingText { ZIndex = 10 };

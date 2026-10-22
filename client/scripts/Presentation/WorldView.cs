@@ -76,6 +76,25 @@ public partial class WorldView : Node2D
                         _ => "Interrompido",
                     }, InterruptColor);
                     break;
+                case AbilityExecuted used when MultiHit(latest, used.Source, used.AbilityId) is { } first:
+                    // T-064: habilidade com vários acertos — "×3" uma vez e o rastro de cada acerto em alvo único.
+                    ShowText(used.Source, $"{first.Name} ×{first.HitCount}", HitCountColor);
+                    ShotTrails(used.Source, used.Targets, first);
+                    break;
+                case AbilityHit extra:
+                    if (_content.Abilities.TryGetValue(extra.AbilityId, out var extraDef))
+                    {
+                        ShotTrails(extra.Source, extra.Targets, extraDef);
+                    }
+
+                    break;
+                case Game.Core.Combat.Effects.ChainJumped jump
+                    when _views.TryGetValue(jump.From, out var fromView) && _views.TryGetValue(jump.To, out var toView):
+                    AddChild(TrailView.Create(fromView.Position, toView.Position, 7f, ChainColor, lifetime: 0.8));
+                    break;
+                case EntityRevived revived:
+                    ShowText(revived.Entity, "Levantado!", Hud.HudTheme.Heal);
+                    break;
                 case HealApplied heal when heal.Effective > 0:
                     ShowText(heal.Target, $"+{heal.Effective:0}", Hud.HudTheme.Heal);
                     break;
@@ -210,6 +229,34 @@ public partial class WorldView : Node2D
             .FirstOrDefault();
 
     /// <summary>Texto flutuante acima de uma unidade; acompanha a unidade e some sozinho.</summary>
+    private static readonly Color HitCountColor = new(1f, 0.9f, 0.55f);
+    private static readonly Color ShotColor = new(1f, 0.95f, 0.75f);
+    private static readonly Color ChainColor = new(1f, 0.85f, 0.3f);
+
+    /// <summary>Definição no NH da fonte, se a habilidade tem mais de um acerto (T-064); senão null.</summary>
+    private AbilityDefinition? MultiHit(WorldSnapshot? latest, EntityId source, string abilityId)
+    {
+        var rank = latest?.Entities.FirstOrDefault(s => s.Id == source)?.TryGet<AbilityState>()?.RankOf(abilityId) ?? 1;
+        return _content.AbilityAt(abilityId, rank) is { HitCount: > 1 } def ? def : null;
+    }
+
+    /// <summary>Rastro fino da fonte até cada alvo, só para alvo único (flechas, projéteis): áreas já têm telegráfo.</summary>
+    private void ShotTrails(EntityId source, IReadOnlyList<EntityId> targets, AbilityDefinition def)
+    {
+        if (def.Targeting is not UnitTargeting || !_views.TryGetValue(source, out var from))
+        {
+            return;
+        }
+
+        foreach (var t in targets)
+        {
+            if (t != source && _views.TryGetValue(t, out var to))
+            {
+                AddChild(TrailView.Create(from.Position, to.Position, 4f, ShotColor));
+            }
+        }
+    }
+
     public void ShowText(EntityId id, string text, Color color)
     {
         if (!_views.TryGetValue(id, out var view))
@@ -217,8 +264,11 @@ public partial class WorldView : Node2D
             return;
         }
 
+        // T-064: textos em sequência rápida (flechas extras, giros) saem lado a lado em vez de um por cima do outro.
+        var recent = view.GetChildren().OfType<FloatingText>().Count(t => t.Age < 0.4);
+        var side = recent == 0 ? 0 : (recent % 2 == 1 ? 1 : -1) * ((recent + 1) / 2) * 26f;
         var label = FloatingText.Create(text, color);
-        label.Position = new Godot.Vector2(0, -view.RadiusPx - 18);
+        label.Position = new Godot.Vector2(side, -view.RadiusPx - 18 - Math.Min(recent, 4) * 5f);
         view.AddChild(label);
     }
 

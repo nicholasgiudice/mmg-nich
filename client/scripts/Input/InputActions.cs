@@ -23,8 +23,8 @@ public static class InputActions
     /// <summary>Primeiro consumível da classe (poção), tecla Q.</summary>
     public const string Consumable = "consumable_1";
 
-    /// <summary>Ações das habilidades da classe, na ordem dos slots (1, 2, 3, 4).</summary>
-    public static readonly string[] AbilitySlots = ["ability_1", "ability_2", "ability_3", "ability_4"];
+    /// <summary>Ações das habilidades da classe, na ordem dos slots (1 a 5; a 5 é a assinatura, quando tem NH).</summary>
+    public static readonly string[] AbilitySlots = ["ability_1", "ability_2", "ability_3", "ability_4", "ability_5"];
 
     public static IEnumerable<string> All =>
         new[] { MoveUp, MoveDown, MoveLeft, MoveRight, Attack, AttackKey, TargetNext, TargetClear, Consumable, Pause, Restart }.Concat(AbilitySlots);
