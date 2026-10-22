@@ -48,6 +48,14 @@ public static class MatchSetup
             encounter = encounter with { Players = players };
         }
 
+        // T-064: NH escolhidos no menu (ou nos argumentos) valem só para o jogador; os bots ficam no NH1.
+        var withRanks = encounter.Players.ToList();
+        withRanks[controlledIndex] = withRanks[controlledIndex] with
+        {
+            Ranks = SkillPlan.For(content.Classes[playerClass], content).ToSpawnRanks(),
+        };
+        encounter = encounter with { Players = withRanks };
+
         var setup = EncounterSetup.Create(settings.Seed, content, encounter);
         var controlled = setup.Players[controlledIndex];
         var director = new BotDirector(setup.World, new TelegraphHazardSource()) { Seed = settings.Seed };

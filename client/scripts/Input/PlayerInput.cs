@@ -34,7 +34,7 @@ public sealed class PlayerInput
     private Vec2 _lastMove;
     private readonly Dictionary<string, (long SentTick, long ReadyAtSend)> _lastSent = new(StringComparer.Ordinal);
 
-    /// <param name="abilities">Definições (para saber o tipo de alvo); vazio = só envia mira e alvo.</param>
+    /// <param name="abilities">Definições no NH do jogador (tipo de alvo, raio, cargas); vazio = só envia mira e alvo.</param>
     /// <param name="justPressed">Ação apertada neste frame (padrão: <c>Godot.Input.IsActionJustPressed</c>).</param>
     /// <param name="pressed">Ação mantida (padrão: <c>Godot.Input.IsActionPressed</c>).</param>
     /// <param name="justReleased">Ação solta neste frame (padrão: <c>Godot.Input.IsActionJustReleased</c>).</param>
@@ -197,7 +197,9 @@ public sealed class PlayerInput
     private bool CanRepeat(string abilityId, AbilityState abilities, long tick)
     {
         var ready = abilities.ReadyAtTick.TryGetValue(abilityId, out var t) ? t : 0;
-        if (ready > tick + 1 || abilities.IsCasting)
+        // T-060/T-064: com cargas por recarga, a habilidade pode estar pronta mesmo com a recarga correndo.
+        var onCooldown = _abilities.TryGetValue(abilityId, out var def) ? abilities.IsOnCooldown(def, tick + 1) : ready > tick + 1;
+        if (onCooldown || abilities.IsCasting)
         {
             return false;
         }

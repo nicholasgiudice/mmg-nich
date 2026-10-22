@@ -308,15 +308,23 @@ public partial class Hud : Control
     private (AbilitySlotState, string) SlotState(EntitySnapshot self, AbilityState abilities,
         IReadOnlyDictionary<EntityId, EntitySnapshot> byId, EntityId? selected, Vec2 aimPoint, double now, string id, string key)
     {
-        _content.Abilities.TryGetValue(id, out var def);
+        // T-064: a definição do NH que o jogador tem (raio, recarga, custo e acertos mudam com o NH).
+        var isBasic = id == abilities.BasicAttackId || abilities.Consumables.Contains(id);
+        var rank = abilities.RankOf(id);
+        var def = _content.AbilityAt(id, rank);
         var name = def?.Name ?? id;
         var remaining = abilities.ReadyAtTick.TryGetValue(id, out var ready) ? Math.Max(0, ready - now) : 0;
         var cdFraction = def is { CooldownTicks: > 0 } ? (float)Math.Clamp(remaining / def.CooldownTicks, 0, 1) : 0f;
         var pool = self.TryGet<ResourcePool>();
         var noResource = def?.Cost is { } cost && (pool is null || pool.Type != cost.Resource || pool.Current < cost.Amount);
+        var chargesReady = def is { CooldownCharges: > 1 } ? abilities.CooldownChargesReady(def, (long)Math.Floor(now)) : -1;
         var charges = def?.Charges is { } max
             ? Math.Max(0, max - (abilities.ChargesUsed.TryGetValue(id, out var used) ? used : 0)).ToString(CultureInfo.InvariantCulture)
-            : null;
+            : chargesReady >= 0 ? chargesReady.ToString(CultureInfo.InvariantCulture) : null;
+        if (chargesReady > 0)
+        {
+            cdFraction = 0; // ainda há carga: dá para usar (o número mostra quantas)
+        }
 
         var state = new AbilitySlotState(
             Abbreviate(name),
@@ -327,14 +335,26 @@ public partial class Hud : Control
             noResource,
             IsOutOfRange(def, self, byId, selected, aimPoint),
             abilities.Cast?.AbilityId == id,
-            charges);
+            charges,
+            isBasic ? "" : Match.SkillPlan.Roman(rank));
 
         var tooltip = name;
         if (def is not null)
         {
-            tooltip += def.Cost is { } tc ? $"\nCusto: {tc.Amount.ToString("0", Pt)} {HudTheme.ResourceName(tc.Resource)}" : "";
-            tooltip += def.CooldownTicks > 0 ? $"\nRecarga: {(def.CooldownTicks / (double)World.TickRate).ToString("0.#", Pt)} s" : "";
-            tooltip += def.CastTimeTicks > 0 ? $"\nConjuração: {(def.CastTimeTicks / (double)World.TickRate).ToString("0.#", Pt)} s" : "";
+            if (isBasic)
+            {
+                tooltip += "\n" + AbilityText.Describe(def, _content);
+            }
+            else
+            {
+                var baseDef = _content.Abilities.GetValueOrDefault(id);
+                var top = baseDef?.HighestRank ?? rank;
+                tooltip += $" — NH {Match.SkillPlan.Roman(rank)}{(baseDef?.Signature == true ? " (assinatura)" : "")}\n"
+                    + AbilityText.Describe(def, _content);
+                tooltip += rank < top && _content.AbilityAt(id, rank + 1) is { } next
+                    ? $"\n\nPróximo NH ({Match.SkillPlan.Roman(rank + 1)}):\n{AbilityText.Describe(next, _content)}"
+                    : "\n\nNH máximo.";
+            }
         }
 
         return (state, tooltip);

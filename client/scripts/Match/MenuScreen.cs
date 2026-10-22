@@ -15,12 +15,14 @@ public partial class MenuScreen : Control
 {
     public const string ScenePath = "res://scenes/Menu.tscn";
 
-    private static readonly string[] DirectArgs = ["encounter", "class", "fake-authority", "demo-input", "auto-move", "hold"];
+    private static readonly string[] DirectArgs = ["encounter", "class", "fake-authority", "demo-input", "auto-move", "hold", "ranks", "rank"];
 
     private readonly ItemList _encounters = new();
     private readonly OptionButton _classes = new();
     private readonly LineEdit _seed = new();
     private readonly Label _details = new();
+    private readonly VBoxContainer _skills = new();
+    private readonly Label _points = new();
     private readonly List<string> _encounterIds = new();
     private readonly List<string> _classIds = new();
     private ContentCatalog _content = ContentCatalog.Empty;
@@ -95,7 +97,11 @@ public partial class MenuScreen : Control
             _classIds.Add(cls.Id);
         }
 
-        _classes.ItemSelected += _ => UpdateDetails();
+        _classes.ItemSelected += _ =>
+        {
+            UpdateDetails();
+            BuildSkills();
+        };
         root.AddChild(_classes);
 
         root.AddChild(Caption("Seed (vazio = aleatória)"));
@@ -107,10 +113,46 @@ public partial class MenuScreen : Control
         play.Pressed += StartGame;
         root.AddChild(play);
 
+        // T-064: níveis de habilidade da classe (modo de teste: a regra dos pontos só é mostrada).
+        var side = new VBoxContainer { Position = new Vector2(720, 36), CustomMinimumSize = new Vector2(500, 0) };
+        side.AddThemeConstantOverride("separation", 8);
+        AddChild(side);
+        side.AddChild(Caption("Níveis de habilidade (NH)"));
+        var profiles = new HBoxContainer();
+        profiles.AddThemeConstantOverride("separation", 6);
+        foreach (var (label, profile) in new[]
+        {
+            ("NH1", SkillPlan.Profile.Nh1), ("Focado (5+5)", SkillPlan.Profile.Focused), ("Espalhado (3+3+3+3)", SkillPlan.Profile.Spread),
+        })
+        {
+            var button = new Button { Text = label };
+            button.Pressed += () =>
+            {
+                CurrentPlan()?.ApplyProfile(profile);
+                BuildSkills();
+            };
+            profiles.AddChild(button);
+        }
+
+        side.AddChild(profiles);
+        _skills.AddThemeConstantOverride("separation", 4);
+        side.AddChild(_skills);
+        side.AddChild(_points);
+        side.AddChild(new Label
+        {
+            Text = "Modo de teste: qualquer combinação vale. No jogo completo cada nível do personagem dá 1 ponto (15 no nível 15), "
+                + "o NH n exige o nível 2n − 1 e a assinatura (0–3) exige os níveis 12, 13 e 15. Os bots aliados ficam no NH1.",
+            AutowrapMode = TextServer.AutowrapMode.WordSmart,
+            CustomMinimumSize = new Vector2(500, 0),
+            Modulate = new Color(1, 1, 1, 0.6f),
+        });
+
         root.AddChild(new Label
         {
             Text = "Em jogo: WASD mover · Tab ou clique seleciona o alvo e o ataque básico é automático · 1-5 habilidades · Q poção · Esc limpa alvo/pausa · R reiniciar",
             Modulate = new Color(1, 1, 1, 0.6f),
+            AutowrapMode = TextServer.AutowrapMode.WordSmart,
+            CustomMinimumSize = new Vector2(620, 0), // não estica a coluna por cima do painel de NH
         });
 
         // Volta selecionando o último encontro jogado.
@@ -122,6 +164,83 @@ public partial class MenuScreen : Control
             _classes.Select(ci);
             UpdateDetails();
         }
+
+        BuildSkills();
+    }
+
+    private SkillPlan? CurrentPlan() =>
+        _classes.Selected >= 0 && _content.Classes.TryGetValue(_classIds[_classes.Selected], out var cls)
+            ? SkillPlan.For(cls, _content)
+            : null;
+
+    /// <summary>Uma linha por habilidade da classe: nome, seletor de NH e resumo do NH escolhido.</summary>
+    private void BuildSkills()
+    {
+        foreach (var child in _skills.GetChildren())
+        {
+            child.QueueFree();
+        }
+
+        var plan = CurrentPlan();
+        if (plan is null)
+        {
+            return;
+        }
+
+        foreach (var ability in plan.Abilities)
+        {
+            var row = new VBoxContainer();
+            var line = new HBoxContainer();
+            line.AddThemeConstantOverride("separation", 8);
+            line.AddChild(new Label
+            {
+                Text = ability.Name + (ability.Signature ? "  (assinatura)" : ""),
+                CustomMinimumSize = new Vector2(260, 0),
+            });
+            var spin = new SpinBox
+            {
+                MinValue = SkillPlan.MinRank(ability),
+                MaxValue = SkillPlan.MaxRank(ability),
+                Step = 1,
+                Value = plan.RankOf(ability.Id),
+                CustomMinimumSize = new Vector2(80, 0),
+            };
+            var summary = new Label
+            {
+                AutowrapMode = TextServer.AutowrapMode.WordSmart,
+                CustomMinimumSize = new Vector2(500, 0),
+                Modulate = new Color(1, 1, 1, 0.65f),
+            };
+            summary.AddThemeFontSizeOverride("font_size", 12);
+            spin.ValueChanged += value =>
+            {
+                plan.Set(ability.Id, (int)value);
+                UpdateSkillSummary(summary, ability.Id, plan);
+                UpdatePoints(plan);
+            };
+            line.AddChild(spin);
+            row.AddChild(line);
+            row.AddChild(summary);
+            UpdateSkillSummary(summary, ability.Id, plan);
+            _skills.AddChild(row);
+        }
+
+        UpdatePoints(plan);
+    }
+
+    private void UpdateSkillSummary(Label summary, string abilityId, SkillPlan plan)
+    {
+        var rank = plan.RankOf(abilityId);
+        summary.Text = rank <= 0 || _content.AbilityAt(abilityId, rank) is not { } def
+            ? "Fora da barra (NH 0)."
+            : $"NH {SkillPlan.Roman(rank)}: " + Hud.AbilityText.Describe(def, _content).Replace("\n", " · ", StringComparison.Ordinal);
+    }
+
+    private void UpdatePoints(SkillPlan plan)
+    {
+        _points.Text = $"Pontos usados: {plan.PointsUsed} de {plan.PointBudget} (nível 15)"
+            + (plan.OverBudget ? " — acima do permitido no jogo completo" : "");
+        _points.AddThemeColorOverride("font_color", plan.OverBudget ? new Color(1f, 0.55f, 0.4f) : new Color(0.7f, 1f, 0.7f));
     }
 
     private void OnEncounterSelected()
