@@ -11,6 +11,9 @@ public sealed class InMemoryTransport : IServerTransport
     private ITransportHandler? _handler;
     private int _nextPeer = 1;
 
+    /// <summary>Perda simulada (T-106): devolve true para descartar o envio. Só faz sentido para <see cref="SendMode.Snapshot"/>.</summary>
+    public Func<int, SendMode, bool>? Drop { get; set; }
+
     public void Start(ITransportHandler handler) => _handler = handler;
 
     /// <summary>Um cliente novo que se conecta (o servidor vê a conexão no próximo <see cref="Poll"/>).</summary>
@@ -42,7 +45,7 @@ public sealed class InMemoryTransport : IServerTransport
 
     public void Send(int peer, ReadOnlySpan<byte> data, SendMode mode)
     {
-        if (_clients.TryGetValue(peer, out var c))
+        if (_clients.TryGetValue(peer, out var c) && Drop?.Invoke(peer, mode) != true)
         {
             c.Deliver(data.ToArray(), mode);
         }

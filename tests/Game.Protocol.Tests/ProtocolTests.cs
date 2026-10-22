@@ -36,7 +36,8 @@ public class ProtocolTests(ITestOutputHelper output)
         Assert.Equal(new Hello(1, "f", "x", null), RoundTrip(new Hello(1, "f", "x", null)));
         Assert.Equal(new Ping(123456789), RoundTrip(new Ping(123456789)));
         Assert.Equal(new Pong(5, 77), RoundTrip(new Pong(5, 77)));
-        Assert.Equal(new Welcome(new EntityId(7), 1200, "encounter.forest_matriarch", "arena.forest"), RoundTrip(new Welcome(new EntityId(7), 1200, "encounter.forest_matriarch", "arena.forest")));
+        Assert.Equal(new Welcome(new EntityId(7), 1200, "encounter.forest_matriarch", "arena.forest", 3), RoundTrip(new Welcome(new EntityId(7), 1200, "encounter.forest_matriarch", "arena.forest", 3)));
+        Assert.Equal(new SnapshotAck(3, 1199), RoundTrip(new SnapshotAck(3, 1199)));
         Assert.Equal(new Reject(RejectReason.Content, "fingerprint"), RoundTrip(new Reject(RejectReason.Content, "fingerprint")));
         Assert.Equal(new IntentAck(42, 900), RoundTrip(new IntentAck(42, 900)));
     }
