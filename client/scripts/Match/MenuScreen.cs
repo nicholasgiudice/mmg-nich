@@ -15,7 +15,10 @@ public partial class MenuScreen : Control
 {
     public const string ScenePath = "res://scenes/Menu.tscn";
 
-    private static readonly string[] DirectArgs = ["encounter", "class", "fake-authority", "demo-input", "auto-move", "hold", "ranks", "rank"];
+    private static readonly string[] DirectArgs = ["encounter", "class", "fake-authority", "demo-input", "auto-move", "hold", "ranks", "rank", "server"];
+
+    /// <summary>Erro da última partida online (recusa, queda), mostrado no menu (T-107).</summary>
+    public static string? LastError { get; set; }
 
     private readonly ItemList _encounters = new();
     private readonly OptionButton _classes = new();
@@ -23,6 +26,8 @@ public partial class MenuScreen : Control
     private readonly Label _details = new();
     private readonly VBoxContainer _skills = new();
     private readonly Label _points = new();
+    private readonly LineEdit _server = new() { Text = "127.0.0.1:7777", CustomMinimumSize = new Vector2(200, 0) };
+    private readonly LineEdit _name = new() { Text = "jogador", CustomMinimumSize = new Vector2(140, 0) };
     private readonly List<string> _encounterIds = new();
     private readonly List<string> _classIds = new();
     private ContentCatalog _content = ContentCatalog.Empty;
@@ -109,9 +114,36 @@ public partial class MenuScreen : Control
         _seed.CustomMinimumSize = new Vector2(200, 0);
         root.AddChild(_seed);
 
+        var buttons = new HBoxContainer();
+        buttons.AddThemeConstantOverride("separation", 12);
         var play = new Button { Text = "Jogar", CustomMinimumSize = new Vector2(160, 40) };
         play.Pressed += StartGame;
-        root.AddChild(play);
+        buttons.AddChild(play);
+        root.AddChild(buttons);
+
+        // T-107: jogar no servidor. A sala do servidor decide o encontro; a classe escolhida acima vai junto.
+        root.AddChild(Caption("Jogar online (servidor e seu nome)"));
+        var online = new HBoxContainer();
+        online.AddThemeConstantOverride("separation", 8);
+        if (MatchSettings.Current?.Online is { } lastOnline)
+        {
+            _server.Text = $"{lastOnline.Host}:{lastOnline.Port}";
+            _name.Text = lastOnline.Name;
+        }
+
+        online.AddChild(_server);
+        online.AddChild(_name);
+        var playOnline = new Button { Text = "Jogar online", CustomMinimumSize = new Vector2(140, 0) };
+        playOnline.Pressed += StartOnline;
+        online.AddChild(playOnline);
+        root.AddChild(online);
+        if (LastError is { } error)
+        {
+            var label = new Label { Text = error, AutowrapMode = TextServer.AutowrapMode.WordSmart, CustomMinimumSize = new Vector2(620, 0) };
+            label.AddThemeColorOverride("font_color", new Color(1f, 0.5f, 0.4f));
+            root.AddChild(label);
+            LastError = null;
+        }
 
         // T-064: níveis de habilidade da classe (modo de teste: a regra dos pontos só é mostrada).
         var side = new VBoxContainer { Position = new Vector2(720, 36), CustomMinimumSize = new Vector2(500, 0) };
@@ -289,9 +321,22 @@ public partial class MenuScreen : Control
             var id = SelectedEncounter() ?? _encounterIds[0];
             var cls = _classes.Selected >= 0 ? _classIds[_classes.Selected] : null;
             var seed = ulong.TryParse(_seed.Text.Trim(), out var s) && s > 0 ? s : MatchSettings.RandomSeed();
-            MatchSettings.Current = new MatchSettings(id, cls, seed);
+            MatchSettings.Current = new MatchSettings(id, cls, seed); // local (sem Online)
         }
 
+        GetTree().ChangeSceneToFile(Main.ScenePath);
+    }
+
+    private void StartOnline()
+    {
+        if (OnlineSettings.Parse(_server.Text, _name.Text) is not { } online)
+        {
+            _details.Text = "Endereço inválido: use host:porta (ex.: 127.0.0.1:7777).";
+            return;
+        }
+
+        var cls = _classes.Selected >= 0 ? _classIds[_classes.Selected] : null;
+        MatchSettings.Current = new MatchSettings(SelectedEncounter() ?? _encounterIds[0], cls, MatchSettings.RandomSeed(), online);
         GetTree().ChangeSceneToFile(Main.ScenePath);
     }
 

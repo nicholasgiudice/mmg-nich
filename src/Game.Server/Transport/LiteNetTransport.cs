@@ -58,6 +58,7 @@ public sealed class LiteNetTransport(int port, ILogger log, int maxConnections =
             ChannelsCount = 2,
             AutoRecycle = false,
             DisconnectTimeout = 10_000,
+            UpdateTime = 5, // envia a cada 5 ms (padrão 15): menos latência por mensagem
         };
         if (!_net.Start(port))
         {
