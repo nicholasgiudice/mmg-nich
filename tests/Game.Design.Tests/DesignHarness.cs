@@ -36,6 +36,45 @@ internal static class DesignHarness
         return Cache.GetOrAdd(key, _ => new Lazy<BatchSummary>(() => RunUncached(encounter, strategy, roles, content))).Value;
     }
 
+    /// <summary>
+    /// T-063: como <see cref="Run"/>, mas com NH: um perfil de <see cref="RankProfiles"/> e/ou pares
+    /// <c>classe:habilidade=NH</c>, mais opções extras dos bots (ex.: qual habilidade o <c>explosion_spam</c> usa).
+    /// </summary>
+    public static BatchSummary RunRanked(
+        string encounter, string strategy, string profile, IReadOnlyList<string>? pairs = null,
+        IReadOnlyDictionary<string, string>? extraOptions = null)
+    {
+        pairs ??= [];
+        var extraKey = extraOptions is null ? "" : string.Join(",", extraOptions.OrderBy(o => o.Key).Select(o => o.Key + "=" + o.Value));
+        var key = $"ranked|{encounter}|{strategy}|{profile}|{string.Join("+", pairs)}|{extraKey}";
+        return Cache.GetOrAdd(key, _ => new Lazy<BatchSummary>(() =>
+        {
+            var ranks = RankProfiles.For(profile, Content);
+            foreach (var p in pairs)
+            {
+                RankProfiles.AddPair(ranks, p);
+            }
+
+            var options = new Dictionary<string, string>(Options);
+            foreach (var (k, v) in extraOptions ?? new Dictionary<string, string>())
+            {
+                options[k] = v;
+            }
+
+            var spec = new RunSpec
+            {
+                EncounterId = encounter,
+                Strategy = strategy,
+                Options = new BotOptions(options),
+                Runs = Runs,
+                HazardSourceFactory = () => new TelegraphHazardSource(),
+                Ranks = ranks,
+                RankLabel = pairs.Count == 0 ? profile : $"{profile}+{string.Join("+", pairs)}",
+            };
+            return Batch.Run(Content, spec);
+        })).Value;
+    }
+
     private static BatchSummary RunUncached(string encounter, string strategy, IReadOnlyDictionary<string, string>? roles, ContentCatalog? content)
     {
         var spec = new RunSpec

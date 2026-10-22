@@ -57,7 +57,7 @@ public sealed class ConfigurableBot(BotPlan plan) : IBotController
         if (abilities.Cast is { } cast)
         {
             // Andar cancelaria a conjuração; conjurar andando (castWhileMoving) segue sem interferência.
-            if (ctx.World.Content.Abilities.TryGetValue(cast.AbilityId, out var def) && !def.CastWhileMoving)
+            if (ctx.AbilityDef(cast.AbilityId) is { } def && !def.CastWhileMoving)
             {
                 output.Add(new StopIntent(ctx.Self.Id));
             }

@@ -17,6 +17,8 @@ namespace Game.Sim
               --strategy <nomes>    estratégias separadas por vírgula (padrão: rotation); sufixo +dodge para sair de telegráfos
               --role <classe>=<est> estratégia de uma classe (repetível; '*' = todas); ex.: --role class.cleric=heal_only
               --opt <chave>=<valor> opção dos bots (repetível); ex.: --opt taunt=warrior.taunt  --opt class.mage:explosion=tag:aoe
+              --ranks <perfil>      NH de todas as classes: nh1 (padrão), focado (5+5+1+1, assinatura 3), espalhado (3+3+3+3, assinatura 3)
+              --rank <c>:<hab>=<n>  NH de uma habilidade (repetível, por cima do perfil); ex.: --rank class.archer:archer.power_shot=5
               --runs <n>            execuções por combinação (padrão: 100)
               --seed <n>            seed base; execução i usa seed+i (padrão: 1)
               --max-seconds <s>     limite por execução se o encontro não definir (padrão: 300)
@@ -68,8 +70,18 @@ namespace Game.Sim
                     foreach (var strategy in o.Strategies)
                     {
                         _ = BotStrategies.Create(strategy); // valida o nome cedo
+                        var ranks = RankProfiles.For(o.RankProfile, content);
+                        foreach (var r in o.RankPairs)
+                        {
+                            RankProfiles.AddPair(ranks, r);
+                        }
+
                         var spec = new RunSpec
                         {
+                            Ranks = ranks,
+                            RankLabel = o.RankPairs.Count == 0
+                                ? (o.RankProfile == RankProfiles.Nh1 ? "" : o.RankProfile)
+                                : $"{o.RankProfile}+{string.Join("+", o.RankPairs)}",
                             EncounterId = enc,
                             Strategy = strategy,
                             Roles = o.Roles,
@@ -107,6 +119,8 @@ namespace Game.Sim
             public List<string> Strategies { get; } = [];
             public Dictionary<string, string> Roles { get; } = new(StringComparer.Ordinal);
             public Dictionary<string, string> Options { get; } = new(StringComparer.Ordinal);
+            public string RankProfile { get; set; } = RankProfiles.Nh1;
+            public List<string> RankPairs { get; } = [];
             public int Runs { get; set; } = 100;
             public ulong Seed { get; set; } = 1;
             public double MaxSeconds { get; set; } = 300;
@@ -131,6 +145,8 @@ namespace Game.Sim
                     case "--strategy": o.Strategies.AddRange(Split(Next())); break;
                     case "--role": AddPair(o.Roles, Next(), "--role"); break;
                     case "--opt": AddPair(o.Options, Next(), "--opt"); break;
+                    case "--ranks": o.RankProfile = Next(); break;
+                    case "--rank": o.RankPairs.Add(Next()); break;
                     case "--runs": o.Runs = int.Parse(Next(), CultureInfo.InvariantCulture); break;
                     case "--seed": o.Seed = ulong.Parse(Next(), CultureInfo.InvariantCulture); break;
                     case "--max-seconds": o.MaxSeconds = double.Parse(Next(), CultureInfo.InvariantCulture); break;
