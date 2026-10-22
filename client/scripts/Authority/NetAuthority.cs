@@ -1,10 +1,12 @@
 using System.Diagnostics;
 using Game.Core.Authority;
 using Game.Core.Combat;
+using Game.Core.Combat.Status;
 using Game.Core.CombatLog;
 using Game.Core.Events;
 using Game.Core.Intents;
 using Game.Core.Simulation;
+using Game.Core.Simulation.Components;
 using Game.Protocol;
 using LiteNetLib;
 
@@ -35,6 +37,9 @@ public enum NetStatus
 /// dois snapshots em volta do relógio de desenho: <see cref="Previous"/>/<see cref="Latest"/>/<see cref="InterpolationFraction"/>
 /// vêm do buffer, não de um tick local.</item>
 /// <item>Eventos são entregues quando o relógio de desenho chega no tick deles (o golpe e o número aparecem juntos).</item>
+/// <item>T-108: o próprio jogador é desenhado na posição <b>prevista</b> (<see cref="MovementPredictor"/>), não na interpolada,
+/// e a barra de conjuração começa no aperto (desfeita se o servidor recusar).</item>
+/// <item>Depuração: latência e perda artificiais no próprio cliente (<c>--net-lag</c>, <c>--net-loss</c>).</item>
 /// </list>
 /// Não depende do Godot: o <c>_Process</c> chama <see cref="Advance"/>.
 /// </summary>
@@ -65,9 +70,25 @@ public sealed class NetAuthority : IGameAuthority, ICombatLogSource, IDisposable
     private double _renderTick = -1;
     private long _newestTick;
     private double _nextPingAt;
+    private MovementPredictor? _predictor;
+    private PredictionParams _params;
+    private bool _ownAlive;
+    private LocalCast? _localCast;
+    private readonly double _lagMs;
+    private readonly double _loss;
+    private readonly Random _simRandom = new();
+    private readonly List<(double At, byte[] Data)> _inbound = new();
+    private readonly List<(double At, byte[] Data, byte Channel, DeliveryMethod Method)> _outbound = new();
 
-    public NetAuthority(string host, int port, string name, string? classId, ContentCatalog content)
+    /// <summary>Conjuração mostrada antes da confirmação do servidor (T-108). Ticks no relógio de desenho.</summary>
+    private sealed record LocalCast(string AbilityId, double StartTick, double EndTick, EntityId? Target, System.Numerics.Vector2? Aim, bool CastWhileMoving);
+
+    /// <param name="lagMs">Latência artificial de ida e volta (metade em cada sentido), só para depuração.</param>
+    /// <param name="lossPercent">Perda artificial de snapshots (e das confirmações), só para depuração.</param>
+    public NetAuthority(string host, int port, string name, string? classId, ContentCatalog content, double lagMs = 0, double lossPercent = 0)
     {
+        _lagMs = Math.Max(0, lagMs);
+        _loss = Math.Clamp(lossPercent, 0, 100) / 100.0;
         _content = content;
         _name = name;
         _classId = classId;
@@ -82,9 +103,21 @@ public sealed class NetAuthority : IGameAuthority, ICombatLogSource, IDisposable
             DisconnectReason.HostUnreachable or DisconnectReason.NetworkUnreachable => $"Não foi possível chegar a {Server}.",
             _ => $"Conexão perdida ({info.Reason}).",
         });
-        _listener.NetworkReceiveEvent += (_, reader, _, _) =>
+        _listener.NetworkReceiveEvent += (_, reader, _, method) =>
         {
-            OnReceived(reader.GetRemainingBytesSpan());
+            if (_lagMs > 0 || _loss > 0)
+            {
+                // Simulação: perde só o que é não confiável (snapshots); atrasa tudo meia latência na chegada.
+                if (!(method == DeliveryMethod.Unreliable && _simRandom.NextDouble() < _loss))
+                {
+                    _inbound.Add((_clock.Elapsed.TotalMilliseconds + (_lagMs / 2), reader.GetRemainingBytes()));
+                }
+            }
+            else
+            {
+                OnReceived(reader.GetRemainingBytesSpan());
+            }
+
             reader.Recycle();
         };
         _net = new NetManager(_listener) { ChannelsCount = 2, AutoRecycle = false, DisconnectTimeout = 8_000, UpdateTime = 5 };
@@ -111,6 +144,12 @@ public sealed class NetAuthority : IGameAuthority, ICombatLogSource, IDisposable
     /// <summary>Ida e volta (ms) medida com <see cref="Ping"/>/<see cref="Pong"/>; -1 antes da primeira.</summary>
     public double PingMs { get; private set; } = -1;
 
+    /// <summary>Latência e perda artificiais ligadas (depuração).</summary>
+    public string Simulation => _lagMs > 0 || _loss > 0 ? $"simulando +{_lagMs:0} ms, {_loss * 100:0}% de perda" : "";
+
+    /// <summary>Última correção da predição (tiles) e se foi aplicada direto (depuração).</summary>
+    public (float Size, bool Snapped) LastCorrection => _predictor?.LastCorrection ?? default;
+
     /// <summary>Snapshots que não chegaram, em % dos últimos 100 ticks.</summary>
     public double LossPercent => _lossWindow.Count == 0 ? 0 : 100.0 * _lossWindow.Count(x => !x.Received) / _lossWindow.Count;
 
@@ -129,6 +168,7 @@ public sealed class NetAuthority : IGameAuthority, ICombatLogSource, IDisposable
     public void Advance(double deltaSeconds)
     {
         _net.PollEvents();
+        FlushSimulated();
         if (Status != NetStatus.Playing || _buffer.Count == 0)
         {
             return;
@@ -136,7 +176,13 @@ public sealed class NetAuthority : IGameAuthority, ICombatLogSource, IDisposable
 
         PingIfDue();
         UpdateRenderClock(deltaSeconds);
+        if (_ownAlive)
+        {
+            _predictor?.Advance(deltaSeconds, _params);
+        }
+
         SelectSnapshots();
+        ApplyPrediction();
         ReleaseEvents();
     }
 
@@ -148,8 +194,25 @@ public sealed class NetAuthority : IGameAuthority, ICombatLogSource, IDisposable
             return;
         }
 
-        var message = new IntentMessage(++_sequence, (long)Math.Floor(_renderTick), NetIntent.From(intent));
-        _peer.Send(ProtocolSerializer.Serialize(message), ReliableChannel, DeliveryMethod.ReliableOrdered);
+        var seq = ++_sequence;
+        _predictor?.Sent(seq, intent switch
+        {
+            MoveIntent m => m.Direction,
+            StopIntent => System.Numerics.Vector2.Zero,
+            _ => null,
+        });
+        if (intent is MoveIntent { Direction: var d } && d != System.Numerics.Vector2.Zero && _localCast is { CastWhileMoving: false })
+        {
+            _localCast = null; // andar cancela a conjuração (o servidor também vai cancelar)
+        }
+
+        if (intent is UseAbilityIntent use)
+        {
+            StartLocalCast(use);
+        }
+
+        var message = new IntentMessage(seq, _predictor?.Tick ?? 0, NetIntent.From(intent));
+        SendRaw(ProtocolSerializer.Serialize(message), ReliableChannel, DeliveryMethod.ReliableOrdered);
     }
 
     public IReadOnlyList<GameEvent> TakeEvents()
@@ -189,7 +252,7 @@ public sealed class NetAuthority : IGameAuthority, ICombatLogSource, IDisposable
         _peer = peer;
         Status = NetStatus.Joining;
         var hello = new Hello(ProtocolVersion.Current, _content.Fingerprint, _name, _classId);
-        peer.Send(ProtocolSerializer.Serialize(hello), ReliableChannel, DeliveryMethod.ReliableOrdered);
+        SendRaw(ProtocolSerializer.Serialize(hello), ReliableChannel, DeliveryMethod.ReliableOrdered);
     }
 
     private void OnReceived(ReadOnlySpan<byte> data)
@@ -216,7 +279,11 @@ public sealed class NetAuthority : IGameAuthority, ICombatLogSource, IDisposable
             case SnapshotDelta d:
                 OnSnapshot(d);
                 break;
+            case IntentAck ack:
+                _predictor?.Acked(ack.LastSequence, ack.Tick);
+                break;
             case EventsMessage e when e.Events.Length > 0:
+                CancelLocalCastOn(e.Events);
                 if (!_eventsByTick.TryGetValue(e.Tick, out var list))
                 {
                     _eventsByTick[e.Tick] = list = new List<GameEvent>();
@@ -244,6 +311,9 @@ public sealed class NetAuthority : IGameAuthority, ICombatLogSource, IDisposable
         Latest = null;
         Previous = null;
         _log = new CombatLogRecorder(viewer: w.ControlledEntity); // mundo novo (entrada ou reinício da sala)
+        _predictor = _content.Arenas.TryGetValue(w.ArenaId, out var arena) ? new MovementPredictor(EntityFactory.BuildMap(arena)) : new MovementPredictor(null);
+        _localCast = null;
+        _ownAlive = false;
     }
 
     private void OnSnapshot(SnapshotDelta delta)
@@ -253,8 +323,9 @@ public sealed class NetAuthority : IGameAuthority, ICombatLogSource, IDisposable
             return;
         }
 
-        _peer?.Send(ProtocolSerializer.Serialize(new SnapshotAck(delta.Epoch, delta.Tick)), SnapshotChannel, DeliveryMethod.Unreliable);
+        SendRaw(ProtocolSerializer.Serialize(new SnapshotAck(delta.Epoch, delta.Tick)), SnapshotChannel, DeliveryMethod.Unreliable);
         TrackLoss(delta.Tick);
+        Reconcile(snapshot);
         _newestTick = Math.Max(_newestTick, delta.Tick);
         _buffer.Add(snapshot);
         _buffer.Sort((a, b) => a.Tick.CompareTo(b.Tick));
@@ -288,7 +359,7 @@ public sealed class NetAuthority : IGameAuthority, ICombatLogSource, IDisposable
         }
 
         _nextPingAt = now + 1000;
-        _peer.Send(ProtocolSerializer.Serialize(new Ping((long)now)), ReliableChannel, DeliveryMethod.ReliableOrdered);
+        SendRaw(ProtocolSerializer.Serialize(new Ping((long)now)), ReliableChannel, DeliveryMethod.ReliableOrdered);
     }
 
     private void Fail(NetStatus status, string message)
@@ -300,6 +371,198 @@ public sealed class NetAuthority : IGameAuthority, ICombatLogSource, IDisposable
 
         Status = status;
         Message = message;
+    }
+
+    // ---------------- latência e perda artificiais (depuração) ----------------
+
+    private void SendRaw(byte[] data, byte channel, DeliveryMethod method)
+    {
+        if (_peer is null)
+        {
+            return;
+        }
+
+        if (_lagMs <= 0 && _loss <= 0)
+        {
+            _peer.Send(data, channel, method);
+            return;
+        }
+
+        if (method == DeliveryMethod.Unreliable && _simRandom.NextDouble() < _loss)
+        {
+            return;
+        }
+
+        _outbound.Add((_clock.Elapsed.TotalMilliseconds + (_lagMs / 2), data, channel, method));
+    }
+
+    private void FlushSimulated()
+    {
+        if (_inbound.Count == 0 && _outbound.Count == 0)
+        {
+            return;
+        }
+
+        var now = _clock.Elapsed.TotalMilliseconds;
+        for (var i = 0; i < _outbound.Count; i++)
+        {
+            if (_outbound[i].At <= now)
+            {
+                _peer?.Send(_outbound[i].Data, _outbound[i].Channel, _outbound[i].Method);
+                _outbound.RemoveAt(i--);
+            }
+        }
+
+        for (var i = 0; i < _inbound.Count; i++)
+        {
+            if (_inbound[i].At <= now)
+            {
+                var data = _inbound[i].Data;
+                _inbound.RemoveAt(i--);
+                OnReceived(data);
+            }
+        }
+    }
+
+    // ---------------- predição (T-108) ----------------
+
+    /// <summary>Snapshot mais novo: parâmetros do movimento e reconciliação da posição prevista.</summary>
+    private void Reconcile(WorldSnapshot snapshot)
+    {
+        if (_predictor is null || Welcome is null || snapshot.Entities.FirstOrDefault(e => e.Id == Welcome.ControlledEntity) is not { } own)
+        {
+            return;
+        }
+
+        _ownAlive = own.TryGet<Health>()?.IsAlive ?? true;
+        if (own.TryGet<Transform>() is not { } t || own.TryGet<Movement>() is not { } mv)
+        {
+            return;
+        }
+
+        _params = new PredictionParams(mv.Speed, SpeedMultiplier(own, snapshot.Tick), own.TryGet<Collider>()?.Radius ?? 0f, mv.LockFacing);
+        if (!_ownAlive)
+        {
+            _predictor.Reset(t.Position);
+            return;
+        }
+
+        _predictor.Reconcile(snapshot.Tick, t.Position, _params);
+    }
+
+    /// <summary>Mesma conta do <c>StatusModifierSource</c> do Core, com os status que o servidor mandou.</summary>
+    private float SpeedMultiplier(EntitySnapshot own, long tick)
+    {
+        var m = 1.0;
+        foreach (var s in own.TryGet<StatusEffects>()?.Active ?? [])
+        {
+            if (s.ExpiresAtTick <= tick || !_content.Statuses.TryGetValue(s.StatusId, out var def))
+            {
+                continue;
+            }
+
+            if (def.Flags.Stunned || def.Flags.Rooted)
+            {
+                return 0;
+            }
+
+            m *= Math.Pow(def.Modifiers.SpeedMultiplier, s.Stacks);
+        }
+
+        return (float)Math.Max(0, m);
+    }
+
+    /// <summary>Troca, nos snapshots de desenho, a posição do próprio jogador pela prevista e acrescenta a conjuração local.</summary>
+    private void ApplyPrediction()
+    {
+        if (Welcome is not { } w || Latest is null)
+        {
+            return;
+        }
+
+        var id = w.ControlledEntity;
+        var predicted = _ownAlive && _predictor is { Ready: true } p ? p : null;
+        var ownLatest = Latest.Entities.FirstOrDefault(e => e.Id == id);
+        if (_localCast is { } lc && (_renderTick > lc.EndTick + 2 || ownLatest?.TryGet<AbilityState>()?.Cast is not null))
+        {
+            _localCast = null; // terminou, ou o servidor já mostra a conjuração dele
+        }
+
+        if (predicted is null && _localCast is null)
+        {
+            return;
+        }
+
+        IEnumerable<IComponent> Patch(EntitySnapshot e)
+        {
+            foreach (var c in e.Components)
+            {
+                if (predicted is not null && c is Transform t)
+                {
+                    var dir = predicted.Direction;
+                    var facing = dir != System.Numerics.Vector2.Zero && !_params.LockFacing ? System.Numerics.Vector2.Normalize(dir) : t.Facing;
+                    yield return new Transform { Position = predicted.RenderPosition, Facing = facing };
+                }
+                else if (_localCast is { } cast && c is AbilityState { Cast: null } st)
+                {
+                    var copy = (AbilityState)st.Clone();
+                    copy.Cast = new CastState
+                    {
+                        AbilityId = cast.AbilityId,
+                        StartTick = (long)Math.Floor(cast.StartTick),
+                        EndTick = (long)Math.Ceiling(cast.EndTick),
+                        Target = cast.Target,
+                        AimPoint = cast.Aim,
+                    };
+                    yield return copy;
+                }
+                else
+                {
+                    yield return c;
+                }
+            }
+        }
+
+        WorldSnapshot Replace(WorldSnapshot s) =>
+            new(s.Tick, s.Entities.Select(e => e.Id == id ? EntitySnapshot.Create(id, Patch(e).ToList()) : e).ToList());
+
+        Latest = Replace(Latest);
+        if (Previous is not null)
+        {
+            Previous = Replace(Previous);
+        }
+    }
+
+    /// <summary>Barra de conjuração local no aperto (só visual; o servidor decide se a conjuração existe).</summary>
+    private void StartLocalCast(UseAbilityIntent use)
+    {
+        var own = Latest?.Entities.FirstOrDefault(e => e.Id == use.Entity)?.TryGet<AbilityState>();
+        if (own is null || own.IsCasting || _localCast is not null
+            || _content.AbilityAt(use.AbilityId, own.RankOf(use.AbilityId)) is not { CastTimeTicks: > 0 } def)
+        {
+            return;
+        }
+
+        _localCast = new LocalCast(def.Id, _renderTick, _renderTick + def.CastTimeTicks, use.Target, use.AimPoint, def.CastWhileMoving);
+    }
+
+    /// <summary>Recusa ou interrupção chegou: desfaz a barra local na hora (não espera o relógio de desenho).</summary>
+    private void CancelLocalCastOn(IEnumerable<GameEvent> events)
+    {
+        if (_localCast is not { } cast || Welcome is not { } w)
+        {
+            return;
+        }
+
+        foreach (var e in events)
+        {
+            if ((e is AbilityRejected r && r.Source == w.ControlledEntity && r.AbilityId == cast.AbilityId)
+                || (e is CastInterrupted ci && ci.Entity == w.ControlledEntity))
+            {
+                _localCast = null;
+                return;
+            }
+        }
     }
 
     // ---------------- interpolação ----------------
