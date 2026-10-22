@@ -109,6 +109,9 @@ public sealed class AbilityState : IComponent, IReplicated
     /// </summary>
     public SortedDictionary<string, int> CooldownChargesSpent => _cooldownChargesSpent ??= new(StringComparer.Ordinal);
 
+    /// <summary>Há NH definidos (sem criar o dicionário; usado pela serialização da T-103).</summary>
+    internal bool HasRanks => _ranks is { Count: > 0 };
+
     /// <summary>Há cargas por recarga em uso (sem criar o dicionário).</summary>
     public bool HasCooldownChargesSpent => _cooldownChargesSpent is { Count: > 0 };
 

@@ -4,4 +4,10 @@
     <TargetFramework>$(SharedTargetFramework)</TargetFramework>
   </PropertyGroup>
 
+  <ItemGroup>
+    <!-- T-103: o protocolo reconstrói estado recebido pela rede (GameEvent.Tick, Health.IsAlive são internal set).
+         O Core não referencia o Game.Protocol. -->
+    <InternalsVisibleTo Include="Game.Protocol" />
+  </ItemGroup>
+
 </Project>
