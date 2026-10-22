@@ -61,7 +61,7 @@ public class RankDesignTests
         Assert.True(spam.WinRate <= 0.50 || spam.TimeToWinMean > rot.TimeToWinMean, $"{Fmt(spam)} vs {Fmt(rot)}");
     }
 
-    [Theory(Skip = "Decisão de design pendente (balance-v0.6.md): com ratos do nível 1, a Explosão e o Campo a partir do NH3 vencem sozinhos antes de a Mana acabar.")]
+    [Theory(Skip = "Aceito no protótipo (balance-v0.6.md §4, opção 1): com ratos do nível 1 a Explosão e o Campo no NH3+ vencem sozinhos. Reativar com encontros por nível.")]
     [InlineData("mage.elemental_blast")]
     [InlineData("mage.lightning_field")]
     public void Mage_rank_5_area_skill_does_not_solve_the_rats_alone(string ability)

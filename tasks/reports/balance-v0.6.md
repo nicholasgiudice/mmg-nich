@@ -2,7 +2,7 @@
 
 Primeira medição dos **níveis de habilidade (NH)** da trilha T-060..T-062. Simulador `tests/Game.Sim`, 100 seeds por linha, as mesmas opções dos testes de design (`class.mage:explosion=mage.elemental_blast`). Base: `balance-v0.5.md` (NH1).
 
-**Nenhum número de `data/` mudou nesta tarefa**, por isso `design/skills-v0.1.md` continua igual. Há uma decisão de design pendente (seção 4).
+**Nenhum número de `data/` mudou nesta tarefa**, por isso `design/skills-v0.1.md` continua igual. Decisão do designer sobre o Mago na seção 4.
 
 ## 1. O que o simulador e os bots ganharam
 
@@ -46,7 +46,7 @@ Regra do NH1: o `explosion_spam` da habilidade vence no máximo 50% **ou** demor
 | **Explosão Elemental** | Quatro Ratos | 100%, 25,9 s | **100%, 16,6 s** | **falha** |
 | **Campo de Relâmpagos** | Quatro Ratos | 100%, 24,1 s | **100%, 20,2 s** | **falha** |
 
-## 4. Decisão pendente: Explosão e Campo do Mago
+## 4. Explosão e Campo do Mago (decidido: opção 1)
 
 No NH1 o spam da Explosão perde (18%) porque a Mana acaba antes dos ratos. Do **NH3** em diante (2 explosões = 1,7× o dano pelos mesmos 80 de Mana) a Explosão sozinha já mata os 4 ratos antes de a Mana acabar:
 
@@ -71,6 +71,8 @@ Opções para o designer:
 1. **Aceitar no protótipo e medir no nível certo** (recomendado): a regra vale para o "perfil esperado" (§8), isto é, NH5 contra monstros do nível 9. Fica como teste ignorado (`RankDesignTests.Mage_rank_5_area_skill_does_not_solve_the_rats_alone`) até existirem encontros por nível.
 2. **Cortar os acertos extras** da Explosão (ex.: 70% do NH1 por explosão em vez de 85%): ainda não basta pelos números acima, e muda a regra geral dos NH.
 3. **Mudar a regra**: exigir só "o spam vence no máximo 50% **no NH1**" (como hoje) e, nos NH altos, que a rotação não seja mais lenta que **1,5×** o spam.
+
+**Decisão do designer (2026-10-22): opção 1.** Aceito no protótipo; o teste do Mago fica ignorado até existirem encontros por nível, e a regra é medida de novo com NH5 contra monstros do nível 9.
 
 ## 5. Testes
 
