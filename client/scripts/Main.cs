@@ -21,6 +21,7 @@ namespace MmoRpgClient;
 /// Argumentos de depuração (depois de <c>--</c> na linha de comando; pulam o menu):
 /// <c>--encounter=id</c>, <c>--class=id</c>, <c>--seed=n</c>, <c>--time-scale=n</c>, <c>--fake-authority</c>,
 /// <c>--ranks=nh1|focado|espalhado</c> e <c>--rank=habilidade:NH,...</c> (NH do jogador),
+/// <c>--server=host:porta</c> e <c>--name=nome</c> (jogar online, T-107),
 /// <c>--auto-move=x,y</c> (mantém as teclas de movimento pelo sinal de x e y), <c>--hold=attack,...</c> (mantém ações),
 /// <c>--demo-input=attack,ability_1,...</c> (aperta ações em sequência mirando o inimigo mais próximo e
 /// imprime as respostas da autoridade) e <c>--capture=caminho.png</c> (salva a tela e fecha; após 2 s, ou
@@ -54,6 +55,9 @@ public partial class Main : Node2D
     private string _encounterName = "";
     private bool _paused;
     private double _endedAt = -1;
+    private int _welcomesSeen;
+    private double _leaveAt = -1;
+    private Label? _netMessage;
 
     public override void _Ready()
     {
@@ -80,16 +84,27 @@ public partial class Main : Node2D
             var (authority, map, content) = CreateAuthority();
             _authority = authority;
             _content = content;
-            // T-064: a entrada usa as definições no NH do jogador (raio da prévia, alcance, cargas).
-            var plan = _settings?.ClassId is { } cls && content.Classes.TryGetValue(cls, out var classDef)
-                ? Match.SkillPlan.For(classDef, content).Ranks
-                : new Dictionary<string, int>();
-            _input = new PlayerInput(content.Abilities.ToDictionary(
-                kv => kv.Key, kv => content.AbilityAt(kv.Key, plan.GetValueOrDefault(kv.Key, 1)) ?? kv.Value));
+            if (authority is NetAuthority)
+            {
+                _input = new PlayerInput(content.Abilities); // online: o servidor ainda não recebe NH (todas no NH1)
+            }
+            else
+            {
+                // T-064: a entrada usa as definições no NH do jogador (raio da prévia, alcance, cargas).
+                var plan = _settings?.ClassId is { } cls && content.Classes.TryGetValue(cls, out var classDef)
+                    ? Match.SkillPlan.For(classDef, content).Ranks
+                    : new Dictionary<string, int>();
+                _input = new PlayerInput(content.Abilities.ToDictionary(
+                    kv => kv.Key, kv => content.AbilityAt(kv.Key, plan.GetValueOrDefault(kv.Key, 1)) ?? kv.Value));
+            }
+
             _hud.SetContent(content);
             _worldView.SetContent(content);
-            GetNode<ArenaView>("Arena").Map = map;
-            _camera.SetBounds(map);
+            if (map is not null)
+            {
+                GetNode<ArenaView>("Arena").Map = map;
+                _camera.SetBounds(map);
+            }
         }
         catch (Exception ex)
         {
@@ -121,6 +136,12 @@ public partial class Main : Node2D
 
         HandleMatchKeys();
         var running = !_paused && !_overlay.IsOpen;
+        if (_authority is NetAuthority net && !UpdateOnline(net, delta))
+        {
+            CaptureIfRequested();
+            return; // conectando, recusado ou caiu: nada para desenhar ainda
+        }
+
         if (_authority is not null && _input is not null)
         {
 
@@ -134,9 +155,15 @@ public partial class Main : Node2D
             }
 
             IReadOnlyList<GameEvent> events = Array.Empty<GameEvent>();
-            if (running)
+            var online = _authority is NetAuthority;
+            if (running || online)
             {
-                _input.Update(_authority, aim, hovered, _hud.IsPointerOverUi());
+                // Online o mundo não pausa: a rede continua (só a entrada para).
+                if (running)
+                {
+                    _input.Update(_authority, aim, hovered, _hud.IsPointerOverUi());
+                }
+
                 _authority.Advance(delta);
                 events = _authority.TakeEvents();
                 UpdateOutcome(events);
@@ -161,14 +188,17 @@ public partial class Main : Node2D
                 _aimPreview.Show(_input.PreviewAbility, playerPx, Units.ToPixels(_input.PreviewPoint));
             }
 
-            _info.Text = $"Core {CoreInfo.Version} · {Engine.GetFramesPerSecond()} FPS · tick {_authority.CurrentTick}\n"
+            var netLine = _authority is NetAuthority n
+                ? $" · online {n.Server} · ping {(n.PingMs < 0 ? "?" : n.PingMs.ToString("0", System.Globalization.CultureInfo.InvariantCulture))} ms · perda {n.LossPercent:0}%"
+                : "";
+            _info.Text = $"Core {CoreInfo.Version} · {Engine.GetFramesPerSecond()} FPS · tick {_authority.CurrentTick}{netLine}\n"
                 + "WASD mover · Tab/clique seleciona e ataca sozinho · 1-5 habilidades · Q poção · R reiniciar · Esc pausa";
         }
 
         CaptureIfRequested();
     }
 
-    private (IGameAuthority Authority, GridMap Map, ContentCatalog Content) CreateAuthority()
+    private (IGameAuthority Authority, GridMap? Map, ContentCatalog Content) CreateAuthority()
     {
         if (_args.ContainsKey("fake-authority"))
         {
@@ -176,6 +206,18 @@ public partial class Main : Node2D
         }
 
         var content = ContentLoader.Load();
+
+        // T-107: online (menu "Jogar online" ou --server=host:porta). O mapa vem com o Welcome.
+        var online = MatchSettings.Current?.Online
+            ?? (_args.TryGetValue("server", out var server) ? OnlineSettings.Parse(server, _args.GetValueOrDefault("name", "jogador")) : null);
+        if (online is not null)
+        {
+            var cls = MatchSettings.Current?.ClassId ?? _args.GetValueOrDefault("class");
+            MatchSettings.Current = _settings = (MatchSettings.Current ?? new MatchSettings(DefaultEncounter, cls, 1)) with { Online = online };
+            _info.Text = $"Conectando a {online.Host}:{online.Port}...";
+            return (new NetAuthority(online.Host, online.Port, online.Name, cls, content), null, content);
+        }
+
         var settings = MatchSettings.Current ?? new MatchSettings(
             _args.GetValueOrDefault("encounter", DefaultEncounter),
             _args.GetValueOrDefault("class"),
@@ -245,7 +287,7 @@ public partial class Main : Node2D
         }
         else if (_elapsed - _endedAt >= ResultDelaySeconds && _demo is null)
         {
-            _overlay.ShowResult(_tracker, _settings, _encounterName, NextEncounterId() is not null);
+            _overlay.ShowResult(_tracker, _settings, _encounterName, _authority is not NetAuthority && NextEncounterId() is not null);
         }
     }
 
@@ -254,6 +296,91 @@ public partial class Main : Node2D
         _paused = false;
         _overlay.Close();
     }
+
+    /// <summary>Online (T-107): mapa a cada Welcome, mensagens de conexão e volta ao menu. Devolve true se há jogo para desenhar.</summary>
+    private bool UpdateOnline(NetAuthority net, double delta)
+    {
+        if (net.Status is NetStatus.Rejected or NetStatus.Disconnected)
+        {
+            if (_leaveAt < 0)
+            {
+                _leaveAt = _elapsed + 4.0;
+                GD.Print($"[net] {net.Message}");
+                MenuScreen.LastError = net.Message;
+            }
+
+            ShowNetMessage($"{net.Message}\n\nVoltando ao menu...");
+            if (_elapsed >= _leaveAt && !_args.ContainsKey("capture"))
+            {
+                BackToMenu();
+            }
+
+            return false;
+        }
+
+        if (net.Status != NetStatus.Playing || net.Welcome is not { } welcome)
+        {
+            net.Advance(delta);
+            ShowNetMessage(net.Status == NetStatus.Connecting ? $"Conectando a {net.Server}..." : $"Entrando na sala de {net.Server}...");
+            if (net.Status != NetStatus.Playing)
+            {
+                return false;
+            }
+
+            welcome = net.Welcome!;
+        }
+
+        ShowNetMessage(null);
+
+        if (net.WelcomeCount != _welcomesSeen)
+        {
+            // Entrada ou reinício da sala: arena, câmera e resultado recomeçam.
+            _welcomesSeen = net.WelcomeCount;
+            var map = EntityFactory.BuildMap(_content.Arenas[welcome.ArenaId]);
+            GetNode<ArenaView>("Arena").Map = map;
+            _camera.SetBounds(map);
+            _content.Encounters.TryGetValue(welcome.EncounterId, out var encounter);
+            _encounterName = encounter?.Name ?? welcome.EncounterId;
+            _tracker = new MatchTracker(welcome.ControlledEntity, encounter?.Defeat.TimeLimitTicks);
+            _endedAt = -1;
+            _overlay.Close();
+            GD.Print($"[net] na sala {welcome.EncounterId} como {welcome.ControlledEntity} (época {welcome.Epoch})");
+        }
+
+        return true;
+    }
+
+    /// <summary>Mensagem de conexão no centro da tela; com mensagem o HUD some (ainda não há jogo para mostrar).</summary>
+    private void ShowNetMessage(string? text)
+    {
+        if (_netMessage is null && text is not null)
+        {
+            _netMessage = new Label
+            {
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+                AutowrapMode = TextServer.AutowrapMode.WordSmart,
+                AnchorRight = 1,
+                AnchorBottom = 1,
+            };
+            _netMessage.AddThemeFontSizeOverride("font_size", 22);
+            _info.GetParent().AddChild(_netMessage);
+        }
+
+        if (_netMessage is not null)
+        {
+            _netMessage.Visible = text is not null;
+            _netMessage.Text = text ?? "";
+        }
+
+        _hud.Visible = text is null;
+        if (text is not null)
+        {
+            _info.Text = ""; // a mensagem central já diz tudo
+        }
+    }
+
+    public override void _ExitTree() => (_authority as IDisposable)?.Dispose();
 
     private void Restart() => GetTree().ReloadCurrentScene();
 
