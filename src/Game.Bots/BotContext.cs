@@ -33,6 +33,9 @@ public sealed class BotContext(World world, Entity self, BotOptions options, IHa
     public AbilityState Abilities => Self.Get<AbilityState>();
     public float HealthFraction => HealthOf(Self);
 
+    /// <summary>Definição da habilidade no NH que este bot tem (T-063); null se não existe.</summary>
+    public Game.Core.Definitions.AbilityDefinition? AbilityDef(string id) => World.Content.AbilityAt(id, Abilities.RankOf(id));
+
     public static float HealthOf(Entity e) =>
         e.TryGet<Health>() is { Max: > 0 } h ? h.Current / h.Max : 1f;
 

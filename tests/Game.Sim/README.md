@@ -19,9 +19,13 @@ dotnet run --project tests/Game.Sim -- --encounter encounter.matriarch \
 # fixtures do simulador
 dotnet run --project tests/Game.Sim -- --data tests/Game.Sim/Fixtures --strategy rotation,kite --runs 1000
 dotnet run --project tests/Game.Sim -- --list
+
+# níveis de habilidade (T-063): perfil pronto e/ou uma habilidade
+dotnet run --project tests/Game.Sim -- --encounter encounter.four_rats --ranks espalhado
+dotnet run --project tests/Game.Sim -- --encounter encounter.four_rats --rank class.mage:mage.elemental_blast=5
 ```
 
-Opções: `--data <dir>`, `--encounter <ids|all>`, `--strategy <a,b>`, `--role <classe>=<estratégia>` (repetível, `*` = todas), `--opt <chave>=<valor>` (repetível), `--runs`, `--seed` (execução *i* usa seed+*i*), `--jitter <tiles>` (variação das posições iniciais por seed; padrão 0,5), `--max-seconds` (usado se o encontro não tiver `defeat.timeLimit`), `--parallel`, `--out <arquivo.json>`, `--per-run`, `--list`. Código de saída 2 em erro de uso ou de dados.
+Opções: `--data <dir>`, `--encounter <ids|all>`, `--strategy <a,b>`, `--role <classe>=<estratégia>` (repetível, `*` = todas), `--opt <chave>=<valor>` (repetível), `--ranks <nh1|focado|espalhado>`, `--rank <classe>:<habilidade>=<NH>` (repetível, por cima do perfil), `--runs`, `--seed` (execução *i* usa seed+*i*), `--jitter <tiles>` (variação das posições iniciais por seed; padrão 0,5), `--max-seconds` (usado se o encontro não tiver `defeat.timeLimit`), `--parallel`, `--out <arquivo.json>`, `--per-run`, `--list`. Código de saída 2 em erro de uso ou de dados.
 
 ## Estratégias (`src/Game.Bots`)
 

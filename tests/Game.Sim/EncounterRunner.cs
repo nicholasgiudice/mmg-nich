@@ -33,12 +33,30 @@ public sealed record RunSpec
     /// <summary>Fonte de perigos para estratégias <c>+dodge</c> (a T-016 liga a dos telegráfos). Deve ser thread-safe/sem estado entre mundos.</summary>
     public Func<IHazardSource>? HazardSourceFactory { get; init; }
 
+    /// <summary>NH por classe (T-063): <c>class.archer</c> -> { <c>archer.power_shot</c>: 5 }. Vazio = NH do encontro (NH1).</summary>
+    public IReadOnlyDictionary<string, Dictionary<string, int>> Ranks { get; init; } = new Dictionary<string, Dictionary<string, int>>();
+
+    /// <summary>Nome do perfil de NH para relatórios (ex.: <c>focado</c>); vazio = NH1.</summary>
+    public string RankLabel { get; init; } = "";
+
     public string StrategyFor(string classId) =>
         Roles.TryGetValue(classId, out var s) ? s : Roles.TryGetValue("*", out var all) ? all : Strategy;
 
     /// <summary>Rótulo para relatórios: a estratégia padrão mais os papéis específicos.</summary>
     public string Label =>
-        Roles.Count == 0 ? Strategy : $"{Strategy} [{string.Join(", ", Roles.OrderBy(r => r.Key, StringComparer.Ordinal).Select(r => $"{r.Key}={r.Value}"))}]";
+        (Roles.Count == 0 ? Strategy : $"{Strategy} [{string.Join(", ", Roles.OrderBy(r => r.Key, StringComparer.Ordinal).Select(r => $"{r.Key}={r.Value}"))}]")
+        + (RankLabel.Length > 0 ? $" NH:{RankLabel}" : "");
+
+    /// <summary>O encontro com os NH de <see cref="Ranks"/> por cima dos NH dos jogadores.</summary>
+    public EncounterDefinition WithRanks(EncounterDefinition encounter) =>
+        Ranks.Count == 0
+            ? encounter
+            : encounter with
+            {
+                Players = encounter.Players.Select(p => Ranks.TryGetValue(p.Class, out var r)
+                    ? p with { Ranks = p.Ranks.Concat(r).GroupBy(kv => kv.Key).ToDictionary(g => g.Key, g => g.Last().Value) }
+                    : p).ToList(),
+            };
 }
 
 public enum RunOutcome
@@ -92,6 +110,7 @@ public static class EncounterRunner
         var encounter = content.Encounters.TryGetValue(spec.EncounterId, out var enc)
             ? enc
             : throw new ArgumentException($"Encontro desconhecido: {spec.EncounterId}");
+        encounter = spec.WithRanks(encounter);
         var setup = EncounterSetup.Create(seed, content, encounter);
         var world = setup.World;
         ApplyJitter(setup, seed, spec.SpawnJitter);

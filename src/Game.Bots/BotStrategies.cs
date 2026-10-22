@@ -92,7 +92,7 @@ public static class BotStrategies
         var list = new List<AbilityInfo>();
         foreach (var id in st.Known)
         {
-            if (id != st.BasicAttackId && ctx.World.Content.Abilities.TryGetValue(id, out AbilityDefinition? def))
+            if (id != st.BasicAttackId && ctx.AbilityDef(id) is { } def)
             {
                 list.Add(AbilityInfo.For(def));
             }
@@ -141,7 +141,7 @@ public sealed class DodgingController(IBotController inner, string name) : IBotC
         foreach (var intent in temp)
         {
             if (intent is UseAbilityIntent use
-                && ctx.World.Content.Abilities.TryGetValue(use.AbilityId, out var def)
+                && ctx.AbilityDef(use.AbilityId) is { } def
                 && def.CastTimeTicks == 0
                 && def.Effects.All(e => e is not DisplacementEffect))
             {
