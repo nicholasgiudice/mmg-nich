@@ -21,7 +21,8 @@ namespace MmoRpgClient;
 /// Argumentos de depuração (depois de <c>--</c> na linha de comando; pulam o menu):
 /// <c>--encounter=id</c>, <c>--class=id</c>, <c>--seed=n</c>, <c>--time-scale=n</c>, <c>--fake-authority</c>,
 /// <c>--ranks=nh1|focado|espalhado</c> e <c>--rank=habilidade:NH,...</c> (NH do jogador),
-/// <c>--server=host:porta</c> e <c>--name=nome</c> (jogar online, T-107),
+/// <c>--server=host:porta</c> e <c>--name=nome</c> (jogar online, T-107), <c>--net-lag=ms</c> e <c>--net-loss=%</c>
+/// (latência de ida e volta e perda de snapshots artificiais no cliente, T-108),
 /// <c>--auto-move=x,y</c> (mantém as teclas de movimento pelo sinal de x e y), <c>--hold=attack,...</c> (mantém ações),
 /// <c>--demo-input=attack,ability_1,...</c> (aperta ações em sequência mirando o inimigo mais próximo e
 /// imprime as respostas da autoridade) e <c>--capture=caminho.png</c> (salva a tela e fecha; após 2 s, ou
@@ -58,6 +59,9 @@ public partial class Main : Node2D
     private int _welcomesSeen;
     private double _leaveAt = -1;
     private Label? _netMessage;
+    private Godot.Vector2? _statsLast;
+    private float _statsMaxJump;
+    private double _statsNextAt = 1;
 
     public override void _Ready()
     {
@@ -182,6 +186,11 @@ public partial class Main : Node2D
             _worldView.SelectedEntity = _input.SelectedTarget;
             _worldView.Render(_authority, events);
             _hud.Render(_authority, _input.SelectedTarget, aim, events);
+            if (_authority is NetAuthority statsNet && _args.ContainsKey("net-stats"))
+            {
+                NetStats(statsNet);
+            }
+
             if (_authority.ControlledEntity is { } player && _worldView.TryGetDrawnPosition(player, out var playerPx))
             {
                 _camera.Follow(playerPx, Units.ToPixels(aim), delta);
@@ -190,6 +199,7 @@ public partial class Main : Node2D
 
             var netLine = _authority is NetAuthority n
                 ? $" · online {n.Server} · ping {(n.PingMs < 0 ? "?" : n.PingMs.ToString("0", System.Globalization.CultureInfo.InvariantCulture))} ms · perda {n.LossPercent:0}%"
+                    + (n.Simulation.Length > 0 ? $" · {n.Simulation}" : "")
                 : "";
             _info.Text = $"Core {CoreInfo.Version} · {Engine.GetFramesPerSecond()} FPS · tick {_authority.CurrentTick}{netLine}\n"
                 + "WASD mover · Tab/clique seleciona e ataca sozinho · 1-5 habilidades · Q poção · R reiniciar · Esc pausa";
@@ -215,7 +225,9 @@ public partial class Main : Node2D
             var cls = MatchSettings.Current?.ClassId ?? _args.GetValueOrDefault("class");
             MatchSettings.Current = _settings = (MatchSettings.Current ?? new MatchSettings(DefaultEncounter, cls, 1)) with { Online = online };
             _info.Text = $"Conectando a {online.Host}:{online.Port}...";
-            return (new NetAuthority(online.Host, online.Port, online.Name, cls, content), null, content);
+            var lag = double.TryParse(_args.GetValueOrDefault("net-lag"), System.Globalization.CultureInfo.InvariantCulture, out var l) ? l : 0;
+            var loss = double.TryParse(_args.GetValueOrDefault("net-loss"), System.Globalization.CultureInfo.InvariantCulture, out var p) ? p : 0;
+            return (new NetAuthority(online.Host, online.Port, online.Name, cls, content, lag, loss), null, content);
         }
 
         var settings = MatchSettings.Current ?? new MatchSettings(
@@ -348,6 +360,32 @@ public partial class Main : Node2D
         }
 
         return true;
+    }
+
+    /// <summary>
+    /// <c>--net-stats</c> (T-108): a cada segundo imprime o maior passo do jogador desenhado entre dois frames (pixels) e a
+    /// última correção da predição — para conferir que a posição não "salta" com latência e perda.
+    /// </summary>
+    private void NetStats(NetAuthority net)
+    {
+        if (net.ControlledEntity is not { } me || !_worldView.TryGetDrawnPosition(me, out var px))
+        {
+            return;
+        }
+
+        if (_statsLast is { } last)
+        {
+            _statsMaxJump = Math.Max(_statsMaxJump, last.DistanceTo(px));
+        }
+
+        _statsLast = px;
+        if (_elapsed >= _statsNextAt)
+        {
+            _statsNextAt = _elapsed + 1;
+            var (size, snapped) = net.LastCorrection;
+            GD.Print($"[pred] maior passo entre frames {_statsMaxJump:0.0} px · última correção {size * Presentation.Units.PixelsPerUnit:0.0} px{(snapped ? " (direto)" : "")} · ping {net.PingMs:0} ms · perda {net.LossPercent:0}%");
+            _statsMaxJump = 0;
+        }
     }
 
     /// <summary>Mensagem de conexão no centro da tela; com mensagem o HUD some (ainda não há jogo para mostrar).</summary>
