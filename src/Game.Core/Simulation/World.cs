@@ -89,6 +89,36 @@ public sealed class World
         return e;
     }
 
+    /// <summary>
+    /// Torna este mundo uma cópia do <paramref name="snapshot"/>: mesmas entidades, ids, componentes (clonados) e tick, sem
+    /// publicar eventos nem rodar sistemas. Para quem só recebe estado e precisa ler um <see cref="World"/> — os bots de
+    /// rede da T-109 rodam as estratégias do <c>Game.Bots</c> sobre o espelho do que o servidor mandou.
+    /// </summary>
+    public void Mirror(WorldSnapshot snapshot)
+    {
+        foreach (var e in _entities.Values)
+        {
+            e.IsRemoved = true;
+        }
+
+        _entities.Clear();
+        foreach (var s in snapshot.Entities)
+        {
+            var e = new Entity(s.Id);
+            foreach (var c in s.Components)
+            {
+                e.AddByRuntimeType(c.Clone());
+            }
+
+            _entities.Add(s.Id.Value, e);
+        }
+
+        _nextId = _entities.Count == 0 ? _nextId : Math.Max(_nextId, _entities.Keys.Last() + 1);
+        _pendingIntents.Clear();
+        Tick = snapshot.Tick;
+        _cacheDirty = true;
+    }
+
     public Entity? Find(EntityId id) => _entities.TryGetValue(id.Value, out var e) ? e : null;
 
     public bool Remove(EntityId id)

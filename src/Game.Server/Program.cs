@@ -87,10 +87,10 @@ try
             if (Stopwatch.GetElapsedTime(lastReport) >= TimeSpan.FromSeconds(10))
             {
                 lastReport = Stopwatch.GetTimestamp();
-                var (count, mean, max) = stats.TakeAndReset();
+                var (count, mean, p99, max) = stats.TakeAndReset();
                 Log.Information(
-                    "Tick: média {Mean:0.000} ms, máx {Max:0.000} ms em {Count} ticks · {Players} jogador(es) · pulados {Skipped} · snapshots fragmentados {Fragmented}",
-                    mean, max, count, room.PlayerCount, loop.Skipped, transport.FragmentedSnapshots);
+                    "Tick: média {Mean:0.000} ms, p99 {P99:0.000} ms, máx {Max:0.000} ms em {Count} ticks · {Players} jogador(es) · pulados {Skipped} · snapshots fragmentados {Fragmented}",
+                    mean, p99, max, count, room.PlayerCount, loop.Skipped, transport.FragmentedSnapshots);
             }
         },
         stop.Token);
