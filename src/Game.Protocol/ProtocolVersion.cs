@@ -15,5 +15,6 @@ namespace Game.Protocol;
 /// </summary>
 public static class ProtocolVersion
 {
-    public const int Current = 1;
+    /// <summary>2 (T-106): <c>SnapshotDelta</c>, <c>SnapshotAck</c> e época no <c>Welcome</c>.</summary>
+    public const int Current = 2;
 }

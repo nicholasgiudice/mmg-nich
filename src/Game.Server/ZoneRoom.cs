@@ -6,6 +6,7 @@ using Game.Core.Intents;
 using Game.Core.Simulation;
 using Game.Core.Simulation.Components;
 using Game.Protocol;
+using Game.Server.Interest;
 using Game.Server.Transport;
 using Serilog;
 
@@ -18,7 +19,8 @@ namespace Game.Server;
 /// <item>Cada jogador ocupa uma <b>vaga</b> de jogador do encontro com a classe pedida (mesma regra do <c>MatchSetup</c> do cliente:
 /// vaga da mesma classe; senão a primeira livre, que troca de classe).</item>
 /// <item>Intenções valem só para a entidade do próprio jogador e entram no próximo tick; <see cref="IntentAck"/> diz a última aplicada.</item>
-/// <item>A cada tick: snapshot completo para todos (não confiável) e os eventos do tick (confiável).</item>
+/// <item>A cada tick (T-106): para cada jogador, só as entidades da sua área de interesse (grade), como delta em relação ao
+/// último tick que ele confirmou (não confiável), e só os eventos dessas entidades (confiável).</item>
 /// <item>Quem cai: a entidade para (ou vira bot) e some depois de <see cref="ServerOptions.DisconnectGraceSeconds"/>;
 /// voltando com o mesmo nome antes disso, retoma a vaga. Sem jogadores, a sala reinicia o encontro.</item>
 /// </list>
@@ -41,6 +43,8 @@ public sealed class ZoneRoom : ITransportHandler
     private readonly Dictionary<int, long> _closeAt = new();
     private BotDirector? _bots;
     private ulong _seed;
+    private int _epoch = 1;
+    private readonly InterestGrid _grid;
 
     public ZoneRoom(ContentCatalog content, ServerOptions options, IServerTransport transport, ILogger log)
     {
@@ -52,6 +56,7 @@ public sealed class ZoneRoom : ITransportHandler
             ? enc
             : throw new ArgumentException($"Encontro desconhecido: {options.EncounterId}");
         _seed = options.Seed;
+        _grid = new InterestGrid(options.InterestCellSize, options.InterestRadiusCells);
         World = CreateWorld();
     }
 
@@ -72,7 +77,7 @@ public sealed class ZoneRoom : ITransportHandler
 
     public void OnConnected(int peer)
     {
-        _connections[peer] = new Connection(peer);
+        _connections[peer] = new Connection(peer, _options.MaxDeltaAgeTicks);
         _log.Information("Conexão {Peer} aberta", peer);
     }
 
@@ -125,6 +130,9 @@ public sealed class ZoneRoom : ITransportHandler
                     c.Pending.Enqueue(intent);
                 }
 
+                break;
+            case SnapshotAck ack:
+                c.View.Ack(ack.Epoch, ack.Tick);
                 break;
             case Ping ping:
                 Send(peer, new Pong(ping.ClientTimeMs, World.Tick));
@@ -216,8 +224,10 @@ public sealed class ZoneRoom : ITransportHandler
         c.Slot = index;
         c.LastApplied = 0;
         c.Pending.Clear();
+        c.View.Reset(_epoch);
+        c.LastPosition = null;
         RebuildBots();
-        Send(c.Peer, new Welcome(slot.Entity!.Id, World.Tick, _encounter.Id, _encounter.Arena));
+        Send(c.Peer, new Welcome(slot.Entity!.Id, World.Tick, _encounter.Id, _encounter.Arena, _epoch));
     }
 
     /// <summary>Troca a entidade da vaga (classe diferente ou removida): nasce onde a anterior estava, ou no ponto da vaga.</summary>
@@ -295,15 +305,20 @@ public sealed class ZoneRoom : ITransportHandler
             return;
         }
 
-        var snapshot = ProtocolSerializer.Serialize(SnapshotMessage.From(World.Snapshot(SnapshotScope.Replicated)));
-        var events = World.LastTickEvents.Count > 0
-            ? ProtocolSerializer.Serialize(new EventsMessage(World.Tick, World.LastTickEvents.ToArray()))
-            : null;
+        // Uma vez por tick: estado em bytes (para os deltas) e a grade de interesse.
+        var snapshot = World.Snapshot(SnapshotScope.Replicated);
+        var current = EntityState.FromSnapshot(snapshot);
+        _grid.Rebuild(snapshot);
         foreach (var c in players)
         {
-            if (events is not null)
+            var visible = VisibleTo(c);
+
+            // Eventos: de quem ele vê agora ou tinha no último envio (morreu, saiu do mundo neste tick).
+            var known = c.View.LastSent;
+            var events = World.LastTickEvents.Where(e => EventEntities.Relevant(e, visible, known)).ToArray();
+            if (events.Length > 0)
             {
-                _transport.Send(c.Peer, events, SendMode.Reliable);
+                Send(c.Peer, new EventsMessage(World.Tick, events));
             }
 
             if (c.AckDue)
@@ -312,9 +327,41 @@ public sealed class ZoneRoom : ITransportHandler
                 Send(c.Peer, new IntentAck(c.LastApplied, World.Tick));
             }
 
-            _transport.Send(c.Peer, snapshot, SendMode.Snapshot);
+            var delta = c.View.Build(World.Tick, current, visible, _slots[c.Slot!.Value].Entity?.Id);
+            var bytes = ProtocolSerializer.Serialize(delta);
+            c.SnapshotBytes += bytes.Length;
+            _transport.Send(c.Peer, bytes, SendMode.Snapshot);
         }
     }
+
+    /// <summary>Entidades que o jogador vê: em volta da própria entidade (ou da última posição dela).</summary>
+    private HashSet<EntityId> VisibleTo(Connection c)
+    {
+        var slot = _slots[c.Slot!.Value];
+        if (slot.Entity is { } e && _grid.PositionOf(e.Id) is { } pos)
+        {
+            c.LastPosition = pos;
+        }
+
+        var visible = _grid.Visible(c.LastPosition ?? slot.SpawnPosition);
+        if (slot.Entity is { } own)
+        {
+            visible.Add(own.Id);
+        }
+
+        return visible;
+    }
+
+    /// <summary>Só para testes: o que o jogador da conexão deveria ver agora (mesma regra do envio).</summary>
+    internal HashSet<EntityId> VisibleToPeer(int peer)
+    {
+        _grid.Rebuild(World.Snapshot(SnapshotScope.Replicated));
+        return VisibleTo(_connections[peer]);
+    }
+
+    /// <summary>Bytes de snapshot (delta) mandados para cada jogador desde que entrou (medição da T-106).</summary>
+    public IReadOnlyDictionary<int, long> SnapshotBytesByPeer =>
+        _connections.Values.Where(c => c.Slot is not null).ToDictionary(c => c.Peer, c => c.SnapshotBytes);
 
     private void CloseRefused()
     {
@@ -355,6 +402,7 @@ public sealed class ZoneRoom : ITransportHandler
     public void Restart(string reason)
     {
         _seed++;
+        _epoch++;
         Restarts++;
         var keep = _connections.Values.Where(c => c.Slot is not null).Select(c => (c, _slots[c.Slot!.Value].ClassId)).ToList();
         World = CreateWorld();
@@ -394,9 +442,12 @@ public sealed class ZoneRoom : ITransportHandler
 
     private void Send(int peer, INetMessage message) => _transport.Send(peer, ProtocolSerializer.Serialize(message), SendMode.Reliable);
 
-    private sealed class Connection(int peer)
+    private sealed class Connection(int peer, int maxDeltaAgeTicks)
     {
         public int Peer { get; } = peer;
+        public ClientView View { get; } = new(maxDeltaAgeTicks);
+        public Vector2? LastPosition { get; set; }
+        public long SnapshotBytes { get; set; }
         public string Name { get; set; } = "";
         public int? Slot { get; set; }
         public Queue<IntentMessage> Pending { get; } = new();

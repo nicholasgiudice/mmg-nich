@@ -19,6 +19,8 @@ namespace Game.Protocol;
 [MemoryPackUnion(6, typeof(EventsMessage))]
 [MemoryPackUnion(7, typeof(Pong))]
 [MemoryPackUnion(8, typeof(IntentAck))]
+[MemoryPackUnion(9, typeof(SnapshotDelta))]
+[MemoryPackUnion(10, typeof(SnapshotAck))]
 public partial interface INetMessage;
 
 // ---------------- cliente → servidor ----------------
@@ -34,15 +36,25 @@ public sealed partial record Hello(int ProtocolVersion, string ContentFingerprin
 [MemoryPackable]
 public sealed partial record IntentMessage(uint Sequence, long ClientTick, NetIntent Intent) : INetMessage;
 
+/// <summary>
+/// O cliente aplicou o <see cref="SnapshotDelta"/> do <paramref name="Tick"/> (T-106): o servidor passa a mandar deltas
+/// a partir dele. Pode ir no canal não confiável; vale o maior tick confirmado da mesma <paramref name="Epoch"/>.
+/// </summary>
+[MemoryPackable]
+public sealed partial record SnapshotAck(int Epoch, long Tick) : INetMessage;
+
 /// <summary>Medição de latência: o servidor devolve o mesmo valor num <see cref="Pong"/>.</summary>
 [MemoryPackable]
 public sealed partial record Ping(long ClientTimeMs) : INetMessage;
 
 // ---------------- servidor → cliente ----------------
 
-/// <summary>Entrada aceita: entidade controlada, tick atual e onde o jogo acontece.</summary>
+/// <summary>
+/// Entrada aceita: entidade controlada, tick atual e onde o jogo acontece. <paramref name="Epoch"/> muda a cada reinício
+/// da sala (T-106): ids e ticks recomeçam, então o cliente descarta todo o estado da época anterior.
+/// </summary>
 [MemoryPackable]
-public sealed partial record Welcome(EntityId ControlledEntity, long Tick, string EncounterId, string ArenaId) : INetMessage;
+public sealed partial record Welcome(EntityId ControlledEntity, long Tick, string EncounterId, string ArenaId, int Epoch) : INetMessage;
 
 public enum RejectReason : byte
 {
@@ -63,7 +75,10 @@ public enum RejectReason : byte
 [MemoryPackable]
 public sealed partial record Reject(RejectReason Reason, string Detail) : INetMessage;
 
-/// <summary>Estado replicável do mundo no <paramref name="Tick"/> (componentes <c>IReplicated</c>).</summary>
+/// <summary>
+/// Estado replicável completo do mundo no <paramref name="Tick"/> (componentes <c>IReplicated</c>). Desde a T-106 o
+/// servidor manda <see cref="SnapshotDelta"/>; este formato fica para ferramentas e testes.
+/// </summary>
 [MemoryPackable]
 public sealed partial record SnapshotMessage(long Tick, EntitySnapshot[] Entities) : INetMessage
 {
@@ -71,6 +86,26 @@ public sealed partial record SnapshotMessage(long Tick, EntitySnapshot[] Entitie
 
     public WorldSnapshot ToWorldSnapshot() => new(Tick, Entities);
 }
+
+/// <summary>
+/// Estado visível pelo jogador no <paramref name="Tick"/> (T-106), como diferença em relação ao tick
+/// <paramref name="BaseTick"/> que o cliente confirmou com <see cref="SnapshotAck"/>. <paramref name="BaseTick"/> 0 =
+/// completo: o cliente descarta o que tinha. <paramref name="Removed"/> = entidades que saíram do interesse ou do mundo.
+/// Aplique com <see cref="SnapshotReconstructor"/>.
+/// </summary>
+[MemoryPackable]
+public sealed partial record SnapshotDelta(int Epoch, long Tick, long BaseTick, EntityDelta[] Entities, EntityId[] Removed) : INetMessage
+{
+    public bool IsFull => BaseTick == 0;
+}
+
+/// <summary>
+/// Uma entidade num <see cref="SnapshotDelta"/>. <paramref name="Full"/> = entrou no interesse (ou o snapshot é completo):
+/// <paramref name="Components"/> é tudo que ela tem. Senão, só os componentes que mudaram, e
+/// <paramref name="RemovedComponents"/> as tags (<see cref="ComponentCodecs.Tags"/>) dos que ela perdeu.
+/// </summary>
+/// <remarks>Formato compacto próprio (id e contagens em varint, um byte de flags): é a parte que mais se repete na rede.</remarks>
+public sealed record EntityDelta(EntityId Id, bool Full, IComponent[] Components, byte[] RemovedComponents);
 
 /// <summary>Eventos publicados no <paramref name="Tick"/> (o <c>Tick</c> de cada evento chega igual ao do servidor).</summary>
 [MemoryPackable]
