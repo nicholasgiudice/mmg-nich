@@ -9,7 +9,13 @@
       "radius": 0.45,
       "resource": { "type": "mana", "max": 100, "initial": 100, "regenPerSecond": 5 },
       "basicAttack": "warrior.sword_strike",
-      "abilities": ["warrior.heavy_strike", "warrior.whirlwind", "warrior.firm_guard", "warrior.taunt"],
+      "abilities": [
+        "warrior.heavy_strike",
+        "warrior.whirlwind",
+        "warrior.firm_guard",
+        "warrior.taunt",
+        "warrior.living_wall"
+      ],
       "consumables": ["item.minor_healing_potion"]
     },
     {
@@ -20,7 +26,13 @@
       "radius": 0.4,
       "resource": { "type": "mana", "max": 100, "initial": 100, "regenPerSecond": 5 },
       "basicAttack": "archer.shot",
-      "abilities": ["archer.power_shot", "archer.hunters_mark", "archer.quick_retreat"],
+      "abilities": [
+        "archer.power_shot",
+        "archer.hunters_mark",
+        "archer.quick_retreat",
+        "archer.rain_of_arrows",
+        "archer.devastating_arrow"
+      ],
       "consumables": ["item.minor_healing_potion"]
     },
     {
@@ -31,7 +43,13 @@
       "radius": 0.4,
       "resource": { "type": "mana", "max": 100, "initial": 100, "regenPerSecond": 5 },
       "basicAttack": "mage.arcane_missile",
-      "abilities": ["mage.elemental_blast", "mage.ice_prison", "mage.arcane_barrier", "mage.lightning_field"],
+      "abilities": [
+        "mage.elemental_blast",
+        "mage.ice_prison",
+        "mage.arcane_barrier",
+        "mage.lightning_field",
+        "mage.arcane_cataclysm"
+      ],
       "consumables": ["item.minor_healing_potion"]
     },
     {
@@ -42,7 +60,7 @@
       "radius": 0.45,
       "resource": { "type": "mana", "max": 100, "initial": 100, "regenPerSecond": 5 },
       "basicAttack": "cleric.holy_strike",
-      "abilities": ["cleric.direct_heal", "cleric.sacred_shield", "cleric.holy_chain", "cleric.purify"],
+      "abilities": ["cleric.direct_heal", "cleric.sacred_shield", "cleric.holy_chain", "cleric.purify", "cleric.miracle"],
       "consumables": ["item.minor_healing_potion"]
     }
   ]

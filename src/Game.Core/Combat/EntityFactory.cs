@@ -9,7 +9,10 @@ namespace Game.Core.Combat;
 /// <summary>Cria entidades e mundos a partir de definições (o Core recebe as definições já carregadas).</summary>
 public static class EntityFactory
 {
-    /// <param name="ranks">NH por habilidade (T-060); ausentes ficam no NH1. Valores fora do intervalo da habilidade são limitados.</param>
+    /// <param name="ranks">
+    /// NH por habilidade (T-060); ausentes ficam no NH1. Valores fora do intervalo da habilidade são limitados.
+    /// Assinaturas (T-062) começam no NH0: só entram nas habilidades conhecidas (barra) com NH informado aqui.
+    /// </param>
     public static Entity SpawnPlayer(World world, ClassDefinition def, Vector2 position, IReadOnlyDictionary<string, int>? ranks = null)
     {
         var abilities = new AbilityState { BasicAttackId = def.BasicAttack };
@@ -24,7 +27,11 @@ public static class EntityFactory
         abilities.Known.Add(def.BasicAttack);
         foreach (var a in def.Abilities.Where(a => a != def.BasicAttack))
         {
-            abilities.Known.Add(a);
+            var signature = world.Content.Abilities.TryGetValue(a, out var ad) && ad.Signature;
+            if (!signature || abilities.Ranks.ContainsKey(a))
+            {
+                abilities.Known.Add(a);
+            }
         }
 
         abilities.Consumables.AddRange(def.Consumables.Where(c => !abilities.Known.Contains(c)).Distinct());
