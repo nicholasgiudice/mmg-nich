@@ -51,7 +51,7 @@ public static class CoreCombatLogFormatters
             var absorbed = e.Absorbed > 0 ? $" ({CombatLogContext.Number(e.Absorbed)} absorvidos)" : "";
             var text =
                 $"{c.Origin(e.Source, e.SourceId)} {Verb(c, e)} em {c.Name(e.Target)}: " +
-                $"{CombatLogContext.Number(e.Amount)} de dano{absorbed}";
+                $"{CombatLogContext.Number(e.Amount)} de dano{(e.Critical ? " (crítico)" : "")}{absorbed}";
             return c.Entry(e, LogCategory.Dano, text, e.Source, e.Target);
         });
 
@@ -60,12 +60,12 @@ public static class CoreCombatLogFormatters
             var over = e.Overheal > 0 ? $" ({CombatLogContext.Number(e.Overheal)} excedentes)" : "";
             var text =
                 $"{c.Origin(e.Source, e.SourceId)} curou {c.Name(e.Target)} em " +
-                $"{CombatLogContext.Number(e.Effective)} de vida{over}";
+                $"{CombatLogContext.Number(e.Effective)} de vida{(e.Critical ? " (crítico)" : "")}{over}";
             return c.Entry(e, LogCategory.Cura, text, e.Source, e.Target);
         });
 
         f.Register<ShieldApplied>((c, e) => c.Entry(e, LogCategory.Status,
-            $"{c.Origin(e.Source, e.SourceId)} concedeu escudo de {CombatLogContext.Number(e.Amount)} a " +
+            $"{c.Origin(e.Source, e.SourceId)} concedeu escudo de {CombatLogContext.Number(e.Amount)}{(e.Critical ? " (crítico)" : "")} a " +
             $"{c.Name(e.Target)} por {CombatLogContext.Seconds(e.ExpiresAtTick - e.Tick)} s",
             e.Source, e.Target));
 

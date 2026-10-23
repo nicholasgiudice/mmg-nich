@@ -98,7 +98,20 @@ internal static partial class GameDataValidator
     {
         var x = e.Value;
         var ctx = new Ctx(e.File, e.Path, errors);
-        ctx.Positive("health", x.Health);
+        if (x.Attributes is null)
+        {
+            ctx.Positive("health", x.Health);
+        }
+        else
+        {
+            // T-201: vida pelos atributos.
+            ctx.Positive("baseHealth", x.BaseHealth);
+            ctx.NonNegative("healthGrowth", x.HealthGrowth);
+            var a = x.Attributes;
+            if (a.Str < 0 || a.Dex < 0 || a.Agi < 0 || a.Int < 0 || a.Vit < 0) { ctx.Error("attributes", "Atributos não podem ser negativos."); }
+            if (x.StartingWeapon is { } w) { ctx.NonNegative("startingWeapon.damage", w.Damage); }
+        }
+
         ctx.NonNegative("speed", x.Speed);
         ctx.Positive("radius", x.Radius);
         ctx.Positive("resource.max", x.Resource.Max);
@@ -270,6 +283,7 @@ internal static partial class GameDataValidator
             {
                 case DamageEffect d:
                     c.NonNegative("base", d.Base);
+                    ValidateScaling(d.Scaling, c);
                     foreach (var (tag, bonus) in d.BonusVsTags)
                     {
                         if (string.IsNullOrWhiteSpace(tag)) { c.Error("bonusVsTags", "Tag vazia."); }
@@ -279,9 +293,11 @@ internal static partial class GameDataValidator
                     break;
                 case HealEffect h:
                     c.NonNegative("base", h.Base);
+                    ValidateScaling(h.Scaling, c);
                     break;
                 case ShieldEffect s:
                     c.Positive("amount", s.Amount);
+                    ValidateScaling(s.Scaling, c);
                     c.PositiveTicks("duration", s.DurationTicks);
                     if (s.Refund is { } refund)
                     {
@@ -340,6 +356,20 @@ internal static partial class GameDataValidator
         }
     }
 
+    /// <summary>T-201: chaves conhecidas (<see cref="ScalingKeys"/>) e coeficientes não negativos.</summary>
+    private static void ValidateScaling(IReadOnlyDictionary<string, double> scaling, Ctx c)
+    {
+        foreach (var (key, coef) in scaling)
+        {
+            if (!ScalingKeys.All.Contains(key))
+            {
+                c.Error($"scaling.{key}", $"Estatística desconhecida. Use: {string.Join(", ", ScalingKeys.All)}.");
+            }
+
+            c.NonNegative($"scaling.{key}", coef);
+        }
+    }
+
     private static void ValidateStatus(Entry<StatusDefinition> e, Refs refs, List<LoadError> errors)
     {
         var x = e.Value;
@@ -379,6 +409,20 @@ internal static partial class GameDataValidator
 
     private static void ValidateRules(RulesDefinition rules, List<LoadError> errors)
     {
+        var st = rules.Stats;
+        var sc = new Ctx("rules", "rules.stats", errors);
+        sc.NonNegative("healthPerVit", st.HealthPerVit);
+        sc.NonNegative("manaBase", st.ManaBase);
+        sc.NonNegative("manaPerInt", st.ManaPerInt);
+        sc.NonNegative("manaRegenPerInt", st.ManaRegenPerInt);
+        if (st.CritBase is < 0 or > 1) { sc.Error("critBase", "Chance de crítico deve estar em 0..1."); }
+        if (st.CritMax is < 0 or > 1) { sc.Error("critMax", "Chance de crítico deve estar em 0..1."); }
+        if (st.CritMultiplier < 1) { sc.Error("critMultiplier", "Deve ser pelo menos 1."); }
+        sc.NonNegative("attackSpeedPerAgi", st.AttackSpeedPerAgi);
+        sc.NonNegative("attackSpeedMax", st.AttackSpeedMax);
+        sc.Positive("defenseBase", st.DefenseBase);
+        if (st.DefenseMax is < 0 or > 1) { sc.Error("defenseMax", "Deve estar em 0..1."); }
+
         if (rules.Control is { } control)
         {
             var ctx = new Ctx("rules", "rules.control", errors);

@@ -7,11 +7,23 @@ public sealed record ClassDefinition
 {
     public required string Id { get; init; }
     public required string Name { get; init; }
-    public required double Health { get; init; }
+
+    /// <summary>Vida máxima fixa. Com <see cref="Attributes"/>, a vida vem de <see cref="BaseHealth"/> + VIT (T-201) e este campo é ignorado.</summary>
+    public double Health { get; init; }
     public required double Speed { get; init; }
     public required double Radius { get; init; }
     public required ResourceDefinition Resource { get; init; }
     public required string BasicAttack { get; init; }
+
+    /// <summary>Perfil inicial (nível 1) dos atributos (T-201). Null = classe sem atributos (vida e recurso fixos, sem escala nem crítico).</summary>
+    public AttributeSet? Attributes { get; init; }
+
+    /// <summary>Vida base da classe: vida máxima = base + VIT × <c>healthPerVit</c> + (nível − 1) × <see cref="HealthGrowth"/>.</summary>
+    public double BaseHealth { get; init; }
+    public double HealthGrowth { get; init; }
+
+    /// <summary>Arma inicial (T-201) até os itens da T-204.</summary>
+    public StartingWeaponDefinition? StartingWeapon { get; init; }
     public IReadOnlyList<string> Abilities { get; init; } = [];
 
     /// <summary>
@@ -240,6 +252,10 @@ public sealed record MonsterDefinition
     public IReadOnlyList<string> Tags { get; init; } = [];
     /// <summary>Resistência por escola (chave = nome da escola em snake_case; 0.25 = -25% de dano).</summary>
     public IReadOnlyDictionary<string, double> Resistances { get; init; } = new Dictionary<string, double>();
+
+    /// <summary>Armadura (contra dano físico) e resistência (contra as outras escolas) na fórmula de defesa da T-201.</summary>
+    public double Armor { get; init; }
+    public double Resistance { get; init; }
     public IReadOnlyList<string> Abilities { get; init; } = [];
     public required AiProfileDefinition Ai { get; init; }
 

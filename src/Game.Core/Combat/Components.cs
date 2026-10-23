@@ -16,6 +16,10 @@ public sealed class UnitInfo : IComponent, IReplicated
     /// <summary>Resistência por escola (chave = nome snake_case, ex.: "frost"; 0.25 = -25% de dano).</summary>
     public IReadOnlyDictionary<string, double> Resistances { get; init; } = new Dictionary<string, double>();
 
+    /// <summary>Defesa de quem não tem <c>CharacterStats</c> (monstros, T-201): armadura contra físico, resistência contra o resto.</summary>
+    public double Armor { get; init; }
+    public double Resistance { get; init; }
+
     public bool HasTag(string tag) => Tags.Contains(tag);
 
     public double ResistanceTo(DamageSchool school) =>
@@ -39,6 +43,8 @@ public sealed class UnitInfo : IComponent, IReplicated
     {
         hasher.Add(DefinitionId);
         hasher.Add((int)Rank);
+        hasher.Add((float)Armor);
+        hasher.Add((float)Resistance);
         foreach (var kv in Resistances.OrderBy(k => k.Key, StringComparer.Ordinal))
         {
             hasher.Add(kv.Key);

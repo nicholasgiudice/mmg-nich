@@ -87,13 +87,13 @@ public static class EventCodecs
 
             case DamageDealt x:
                 w.Id(x.Source); w.Id(x.Target); w.S(x.SourceId); w.E(x.School); w.F(x.Amount); w.F(x.Absorbed);
-                w.F(x.Applied); w.F(x.Overkill); w.B(x.Killed);
+                w.F(x.Applied); w.F(x.Overkill); w.B(x.Killed); w.B(x.Critical);
                 break;
             case HealApplied x:
-                w.Id(x.Source); w.Id(x.Target); w.S(x.SourceId); w.F(x.Amount); w.F(x.Effective); w.F(x.Overheal);
+                w.Id(x.Source); w.Id(x.Target); w.S(x.SourceId); w.F(x.Amount); w.F(x.Effective); w.F(x.Overheal); w.B(x.Critical);
                 break;
             case ShieldApplied x:
-                w.Id(x.Source); w.Id(x.Target); w.S(x.SourceId); w.I(x.ShieldId); w.F(x.Amount); w.L(x.ExpiresAtTick);
+                w.Id(x.Source); w.Id(x.Target); w.S(x.SourceId); w.I(x.ShieldId); w.F(x.Amount); w.L(x.ExpiresAtTick); w.B(x.Critical);
                 break;
             case ShieldExpired x: w.Id(x.Entity); w.I(x.ShieldId); w.F(x.Remaining); w.E(x.Reason); break;
             case Displaced x:
@@ -166,9 +166,9 @@ public static class EventCodecs
             13 => new AbilityHit(r.Id(), r.S(), r.I(), r.I(), r.Ids()),
             14 => new CastInterrupted(r.Id(), r.S(), r.E<CastInterruptReason>(), r.IdOpt()),
 
-            20 => new DamageDealt(r.Id(), r.Id(), r.S(), r.E<DamageSchool>(), r.F(), r.F(), r.F(), r.F(), r.B()),
-            21 => new HealApplied(r.Id(), r.Id(), r.S(), r.F(), r.F(), r.F()),
-            22 => new ShieldApplied(r.Id(), r.Id(), r.S(), r.I(), r.F(), r.L()),
+            20 => new DamageDealt(r.Id(), r.Id(), r.S(), r.E<DamageSchool>(), r.F(), r.F(), r.F(), r.F(), r.B(), r.B()),
+            21 => new HealApplied(r.Id(), r.Id(), r.S(), r.F(), r.F(), r.F(), r.B()),
+            22 => new ShieldApplied(r.Id(), r.Id(), r.S(), r.I(), r.F(), r.L(), r.B()),
             23 => new ShieldExpired(r.Id(), r.I(), r.F(), r.E<ShieldEndReason>()),
             24 => new Displaced(r.Id(), r.Id(), r.S(), r.E<DisplacementKind>(), r.V(), r.V(), r.F()),
             25 => new ChainJumped(r.Id(), r.Id(), r.Id(), r.S(), r.I()),

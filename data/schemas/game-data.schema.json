@@ -18,6 +18,26 @@
       "type": "object",
       "description": "Regras globais; uma seção por assunto (control, threat...).",
       "properties": {
+        "stats": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "T-201: estatísticas derivadas (vida por VIT, Mana, crítico, velocidade de ataque, defesa).",
+          "properties": {
+            "healthPerVit": { "type": "number", "minimum": 0 },
+            "manaBase": { "type": "number", "minimum": 0 },
+            "manaPerInt": { "type": "number", "minimum": 0 },
+            "manaRegenPerInt": { "type": "number", "minimum": 0 },
+            "critBase": { "type": "number", "minimum": 0, "maximum": 1 },
+            "critPerAgi": { "type": "number", "minimum": 0 },
+            "critMax": { "type": "number", "minimum": 0, "maximum": 1 },
+            "critMultiplier": { "type": "number", "minimum": 1 },
+            "attackSpeedPerAgi": { "type": "number", "minimum": 0 },
+            "attackSpeedMax": { "type": "number", "minimum": 0 },
+            "defenseBase": { "type": "number", "exclusiveMinimum": 0 },
+            "defensePerAttackerLevel": { "type": "number", "minimum": 0 },
+            "defenseMax": { "type": "number", "minimum": 0, "maximum": 1 }
+          }
+        },
         "control": {
           "type": "object",
           "additionalProperties": false,
@@ -75,11 +95,32 @@
     "class": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "name", "health", "speed", "radius", "resource", "basicAttack"],
+      "required": ["id", "name", "speed", "radius", "resource", "basicAttack"],
+      "description": "Informe health (vida fixa) ou attributes + baseHealth (T-201: vida e Mana pelos atributos).",
       "properties": {
         "id": { "$ref": "#/$defs/id" },
         "name": { "type": "string" },
         "health": { "type": "number", "exclusiveMinimum": 0 },
+        "attributes": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Perfil inicial (nível 1): FOR, DES, AGI, INT, VIT.",
+          "properties": {
+            "str": { "type": "integer", "minimum": 0 },
+            "dex": { "type": "integer", "minimum": 0 },
+            "agi": { "type": "integer", "minimum": 0 },
+            "int": { "type": "integer", "minimum": 0 },
+            "vit": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "baseHealth": { "type": "number", "exclusiveMinimum": 0 },
+        "healthGrowth": { "type": "number", "minimum": 0 },
+        "startingWeapon": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Arma inicial até os itens (T-204): dano de arma e INT extra (cajado).",
+          "properties": { "damage": { "type": "number", "minimum": 0 }, "int": { "type": "integer", "minimum": 0 } }
+        },
         "speed": { "type": "number", "minimum": 0 },
         "radius": { "type": "number", "exclusiveMinimum": 0 },
         "resource": {
@@ -146,6 +187,18 @@
         "targeting": { "$ref": "#/$defs/targeting" },
         "telegraph": { "$ref": "#/$defs/telegraph" },
         "effects": { "type": "array", "items": { "$ref": "#/$defs/effect" } },
+    "scaling": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "T-201: valor = base + soma de coeficiente × estatística da fonte (weapon = dano da arma).",
+      "properties": {
+        "weapon": { "type": "number", "minimum": 0 },
+        "str": { "type": "number", "minimum": 0 },
+        "dex": { "type": "number", "minimum": 0 },
+        "int": { "type": "number", "minimum": 0 },
+        "vit": { "type": "number", "minimum": 0 }
+      }
+    },
         "hits": { "$ref": "#/$defs/abilityHits" },
         "cooldownCharges": { "type": "integer", "minimum": 1 }
       }
@@ -225,12 +278,12 @@
     "effect": {
       "oneOf": [
         { "type": "object", "additionalProperties": false, "required": ["type", "base"],
-          "properties": { "target": { "$ref": "#/$defs/effectTarget" }, "onHit": { "$ref": "#/$defs/onHit" }, "type": { "const": "damage" }, "base": { "type": "number", "minimum": 0 }, "school": { "$ref": "#/$defs/school" },
+          "properties": { "target": { "$ref": "#/$defs/effectTarget" }, "onHit": { "$ref": "#/$defs/onHit" }, "type": { "const": "damage" }, "base": { "type": "number", "minimum": 0 }, "scaling": { "$ref": "#/$defs/scaling" }, "school": { "$ref": "#/$defs/school" },
             "bonusVsTags": { "type": "object", "additionalProperties": { "type": "number", "exclusiveMinimum": -1 }, "description": "{ \"undead\": 0.5 } = +50% contra alvos com a tag; somam." } } },
         { "type": "object", "additionalProperties": false, "required": ["type", "base"],
-          "properties": { "target": { "$ref": "#/$defs/effectTarget" }, "onHit": { "$ref": "#/$defs/onHit" }, "type": { "const": "heal" }, "base": { "type": "number", "minimum": 0 } } },
+          "properties": { "target": { "$ref": "#/$defs/effectTarget" }, "onHit": { "$ref": "#/$defs/onHit" }, "type": { "const": "heal" }, "base": { "type": "number", "minimum": 0 }, "scaling": { "$ref": "#/$defs/scaling" } } },
         { "type": "object", "additionalProperties": false, "required": ["type", "amount", "duration"],
-          "properties": { "target": { "$ref": "#/$defs/effectTarget" }, "onHit": { "$ref": "#/$defs/onHit" }, "type": { "const": "shield" }, "amount": { "type": "number", "exclusiveMinimum": 0 }, "duration": { "$ref": "#/$defs/seconds" },
+          "properties": { "target": { "$ref": "#/$defs/effectTarget" }, "onHit": { "$ref": "#/$defs/onHit" }, "type": { "const": "shield" }, "amount": { "type": "number", "exclusiveMinimum": 0 }, "duration": { "$ref": "#/$defs/seconds" }, "scaling": { "$ref": "#/$defs/scaling" },
             "refund": { "type": "object", "additionalProperties": false, "required": ["resource", "fraction"],
               "description": "Ao expirar com sobra, devolve round(sobra × fraction) do recurso a quem criou o escudo.",
               "properties": { "resource": { "type": "string" }, "fraction": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 } } } } },
@@ -366,6 +419,8 @@
           "propertyNames": { "$ref": "#/$defs/school" },
           "additionalProperties": { "type": "number" }
         },
+        "armor": { "type": "number", "minimum": 0, "description": "T-201: defesa contra dano físico." },
+        "resistance": { "type": "number", "minimum": 0, "description": "T-201: defesa contra as outras escolas." },
         "abilities": { "$ref": "#/$defs/idList" },
         "ai": {
           "type": "object",

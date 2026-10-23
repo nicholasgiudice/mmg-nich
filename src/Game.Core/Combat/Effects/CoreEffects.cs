@@ -22,10 +22,15 @@ public static class CoreEffects
     /// <summary>Arredondamento de valores de combate: inteiro, metades para longe do zero.</summary>
     public static float Round(double value) => (float)Math.Round(value, MidpointRounding.AwayFromZero);
 
-    private static void OnDamage(EffectContext c, DamageEffect e) =>
-        DamageResolver.Deal(
-            c.World, c.Source, c.Target!, c.SourceId, e.Base * TagBonus(c.Target!, e) * c.Power, e.School,
-            melee: c.Ability?.IsMelee ?? false);
+    private static void OnDamage(EffectContext c, DamageEffect e)
+    {
+        // T-201: base + escala pelas estatísticas da fonte; crítico só para quem tem estatísticas.
+        var crit = Stats.StatMath.RollCrit(c.World, c.Source);
+        var value = Stats.StatMath.Scaled(e.Base, e.Scaling, c.Source) * TagBonus(c.Target!, e) * c.Power * CritFactor(c.World, crit);
+        DamageResolver.Deal(c.World, c.Source, c.Target!, c.SourceId, value, e.School, melee: c.Ability?.IsMelee ?? false, critical: crit);
+    }
+
+    private static double CritFactor(World world, bool crit) => crit ? world.Content.Rules.Stats.CritMultiplier : 1;
 
     /// <summary>1 + soma dos bônus <c>bonusVsTags</c> das tags que o alvo possui (mínimo 0).</summary>
     public static double TagBonus(Entity target, DamageEffect e)
@@ -56,10 +61,11 @@ public static class CoreEffects
             return;
         }
 
-        var amount = Math.Max(0, Round(e.Base * c.Power));
+        var crit = Stats.StatMath.RollCrit(c.World, c.Source); // crítico vale para cura (design §10)
+        var amount = Math.Max(0, Round(Stats.StatMath.Scaled(e.Base, e.Scaling, c.Source) * c.Power * CritFactor(c.World, crit)));
         var effective = Math.Min(amount, health.Max - health.Current);
         health.Current += effective;
-        c.World.Events.Publish(new HealApplied(c.SourceEntityId, target.Id, c.SourceId, amount, effective, amount - effective));
+        c.World.Events.Publish(new HealApplied(c.SourceEntityId, target.Id, c.SourceId, amount, effective, amount - effective, crit));
     }
 
     private static void OnShield(EffectContext c, ShieldEffect e)
@@ -72,7 +78,8 @@ public static class CoreEffects
             target.Add(state);
         }
 
-        var amount = Math.Max(0, Round(e.Amount * c.Power));
+        var crit = Stats.StatMath.RollCrit(c.World, c.Source); // e para escudo
+        var amount = Math.Max(0, Round(Stats.StatMath.Scaled(e.Amount, e.Scaling, c.Source) * c.Power * CritFactor(c.World, crit)));
         var expires = c.World.Tick + e.DurationTicks;
         var id = state.NextShieldId++;
         state.Shields.Add(new ShieldInstance
@@ -85,7 +92,7 @@ public static class CoreEffects
             RefundResource = e.Refund?.Resource,
             RefundFraction = (float)(e.Refund?.Fraction ?? 0),
         });
-        c.World.Events.Publish(new ShieldApplied(c.SourceEntityId, target.Id, c.SourceId, id, amount, expires));
+        c.World.Events.Publish(new ShieldApplied(c.SourceEntityId, target.Id, c.SourceId, id, amount, expires, crit));
     }
 
     private static void OnInterrupt(EffectContext c, InterruptEffect e) =>
@@ -152,7 +159,8 @@ public static class CoreEffects
 public static class DamageResolver
 {
     /// <summary>
-    /// final = round(base × causado × recebido × (1 − resistência)), mínimo 0; escudos absorvem antes da vida.
+    /// final = round(base × causado × recebido × (1 − resistência) × (1 − defesa)), mínimo 0; escudos absorvem antes da vida.
+    /// Defesa (T-201): armadura contra físico, resistência contra o resto, pela fórmula das <c>StatRules</c>.
     /// Publica DamageDealt e, se matar, CastInterrupted(Died) + EntityDied. Retorna o dano final (Amount) ou 0 se o alvo é inválido.
     /// <paramref name="melee"/>: golpe corpo a corpo (reflexo da Guarda Firme, T-061). <paramref name="applyModifiers"/> false =
     /// ignora multiplicadores de causado/recebido (dano devolvido, que já vem calculado).
@@ -160,7 +168,7 @@ public static class DamageResolver
     /// </summary>
     public static float Deal(
         World world, Entity? source, Entity target, string sourceId, double baseAmount, DamageSchool school,
-        bool melee = false, bool applyModifiers = true)
+        bool melee = false, bool applyModifiers = true, bool critical = false)
     {
         var health = target.TryGet<Health>();
         if (health is null || !health.IsAlive || target.IsRemoved)
@@ -172,7 +180,8 @@ public static class DamageResolver
         var dealt = source is null || !applyModifiers ? 1.0 : svc.DamageDealtMultiplier(world, source, target, school);
         var taken = applyModifiers ? svc.DamageTakenMultiplier(world, target, source, school) : 1.0;
         var resist = target.TryGet<UnitInfo>()?.ResistanceTo(school) ?? 0;
-        var amount = Math.Max(0, CoreEffects.Round(baseAmount * dealt * taken * Math.Max(0, 1 - resist)));
+        var defense = applyModifiers ? Stats.StatMath.DefenseReduction(world, target, source, school) : 0;
+        var amount = Math.Max(0, CoreEffects.Round(baseAmount * dealt * taken * Math.Max(0, 1 - resist) * (1 - defense)));
 
         var remaining = amount;
         var absorbed = 0f;
@@ -199,7 +208,7 @@ public static class DamageResolver
         health.Current -= applied;
         var killed = health.Current <= 0;
         world.Events.Publish(new DamageDealt(
-            source?.Id ?? EntityId.None, target.Id, sourceId, school, amount, absorbed, applied, overkill, killed));
+            source?.Id ?? EntityId.None, target.Id, sourceId, school, amount, absorbed, applied, overkill, killed, critical));
         if (killed)
         {
             CastControl.Cancel(world, target, CastInterruptReason.Died, source?.Id);

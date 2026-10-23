@@ -9,6 +9,9 @@ public sealed record RulesDefinition
     // ---- seção T-009 ----
     public ControlRules? Control { get; init; }
 
+    // ---- seção T-201 (estatísticas derivadas) ----
+    public StatRules Stats { get; init; } = new();
+
     // ---- seção T-011 (threat): adicione abaixo ----
 }
 

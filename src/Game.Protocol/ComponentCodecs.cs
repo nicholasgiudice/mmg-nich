@@ -2,6 +2,7 @@ using System.Buffers;
 using Game.Core.Combat;
 using Game.Core.Combat.Areas;
 using Game.Core.Combat.Phases;
+using Game.Core.Combat.Stats;
 using Game.Core.Combat.Status;
 using Game.Core.Combat.Telegraphs;
 using Game.Core.Definitions;
@@ -34,6 +35,7 @@ public static class ComponentCodecs
         [typeof(TelegraphState)] = 11,
         [typeof(AreaState)] = 12,
         [typeof(PhaseState)] = 13,
+        [typeof(CharacterStats)] = 14,
     };
 
     internal static void Write<TB>(ref MemoryPackWriter<TB> w, IComponent component)
@@ -84,6 +86,8 @@ public static class ComponentCodecs
                     w.D(value);
                 }
 
+                w.D(u.Armor);
+                w.D(u.Resistance);
                 break;
             case AbilityState a:
                 WriteAbilities(ref w, a);
@@ -158,6 +162,17 @@ public static class ComponentCodecs
                 w.I(p.Index);
                 w.L(p.EnteredTick);
                 break;
+            case CharacterStats s:
+                w.I(s.Level);
+                w.I(s.Str);
+                w.I(s.Dex);
+                w.I(s.Agi);
+                w.I(s.Int);
+                w.I(s.Vit);
+                w.F(s.WeaponDamage);
+                w.F(s.Armor);
+                w.F(s.Resistance);
+                break;
         }
     }
 
@@ -202,7 +217,7 @@ public static class ComponentCodecs
                         res[r.S()] = r.D();
                     }
 
-                    return new UnitInfo { DefinitionId = id, Name = name, Tags = tags, Rank = rank, Resistances = res };
+                    return new UnitInfo { DefinitionId = id, Name = name, Tags = tags, Rank = rank, Resistances = res, Armor = r.D(), Resistance = r.D() };
                 }
 
             case 8:
@@ -287,6 +302,19 @@ public static class ComponentCodecs
                 };
             case 13:
                 return new PhaseState { Index = r.I(), EnteredTick = r.L() };
+            case 14:
+                return new CharacterStats
+                {
+                    Level = r.I(),
+                    Str = r.I(),
+                    Dex = r.I(),
+                    Agi = r.I(),
+                    Int = r.I(),
+                    Vit = r.I(),
+                    WeaponDamage = r.F(),
+                    Armor = r.F(),
+                    Resistance = r.F(),
+                };
             default:
                 throw new MemoryPackSerializationException($"Tag de componente desconhecida: {tag}");
         }

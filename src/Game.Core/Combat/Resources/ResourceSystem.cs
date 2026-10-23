@@ -249,7 +249,13 @@ public sealed class ResourceSystem : ISimulationSystem
                 continue;
             }
 
-            if (!world.Content.Classes.TryGetValue(info.DefinitionId, out var cls) || cls.Resource.RegenPerSecond == 0)
+            var regen = world.Content.Classes.TryGetValue(info.DefinitionId, out var cls) ? cls.Resource.RegenPerSecond : 0;
+            if (cls is not null && e.TryGet<Stats.CharacterStats>() is { } stats && cls.Resource.Type == EntityFactory.ManaResource)
+            {
+                regen += Stats.StatMath.ManaRegenBonus(stats, world.Content.Rules.Stats); // T-201: + INT × 0,05 por segundo
+            }
+
+            if (cls is null || regen == 0)
             {
                 continue;
             }
@@ -261,7 +267,7 @@ public sealed class ResourceSystem : ISimulationSystem
                 continue;
             }
 
-            state.RegenRemainder += (float)(cls.Resource.RegenPerSecond / World.TickRate);
+            state.RegenRemainder += (float)(regen / World.TickRate);
             var whole = MathF.Truncate(state.RegenRemainder);
             if (whole == 0)
             {

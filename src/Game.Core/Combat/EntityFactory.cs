@@ -9,6 +9,9 @@ namespace Game.Core.Combat;
 /// <summary>Cria entidades e mundos a partir de definições (o Core recebe as definições já carregadas).</summary>
 public static class EntityFactory
 {
+    /// <summary>Tipo de recurso que a INT aumenta (Mana máxima e regeneração, T-201).</summary>
+    public const string ManaResource = "mana";
+
     /// <param name="ranks">
     /// NH por habilidade (T-060); ausentes ficam no NH1. Valores fora do intervalo da habilidade são limitados.
     /// Assinaturas (T-062) começam no NH0: só entram nas habilidades conhecidas (barra) com NH informado aqui.
@@ -36,15 +39,28 @@ public static class EntityFactory
 
         abilities.Consumables.AddRange(def.Consumables.Where(c => !abilities.Known.Contains(c)).Distinct());
 
-        return world.Spawn(
+        // T-201: com perfil de atributos, vida e Mana saem das estatísticas (regras em data/rules.json, seção stats).
+        var stats = Stats.StatMath.FromClass(def);
+        var rules = world.Content.Rules.Stats;
+        var health = stats is null ? def.Health : Stats.StatMath.MaxHealth(def, stats, rules);
+        var resourceMax = stats is not null && def.Resource.Type == ManaResource ? Stats.StatMath.MaxMana(stats, rules) : def.Resource.Max;
+        var resourceStart = def.Resource.Initial >= def.Resource.Max ? resourceMax : Math.Min(def.Resource.Initial, resourceMax);
+
+        var player = world.Spawn(
             new Transform { Position = position },
-            new Health((float)def.Health),
+            new Health((float)health),
             new FactionTag(Faction.Player),
-            new ResourcePool(def.Resource.Type, (float)def.Resource.Max, (float)def.Resource.Initial),
+            new ResourcePool(def.Resource.Type, (float)resourceMax, (float)resourceStart),
             new Movement((float)def.Speed),
             new Collider((float)def.Radius),
             new UnitInfo { DefinitionId = def.Id, Name = def.Name },
             abilities);
+        if (stats is not null)
+        {
+            player.Add(stats);
+        }
+
+        return player;
     }
 
     public static Entity SpawnMonster(World world, MonsterDefinition def, Vector2 position)
@@ -64,6 +80,8 @@ public static class EntityFactory
                 Tags = def.Tags,
                 Rank = def.Rank,
                 Resistances = def.Resistances,
+                Armor = def.Armor,
+                Resistance = def.Resistance,
             },
             abilities);
     }
