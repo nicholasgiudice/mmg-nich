@@ -120,8 +120,8 @@ public static class StatMath
     public static bool RollCrit(World world, Entity? source) =>
         source?.TryGet<CharacterStats>() is { } s && world.Random.NextFloat() < CritChance(s, world.Content.Rules.Stats);
 
-    /// <summary>Nível de quem ataca (personagem: <see cref="CharacterStats.Level"/>; resto: 1 até a T-203).</summary>
-    public static int LevelOf(Entity? e) => e?.TryGet<CharacterStats>()?.Level ?? 1;
+    /// <summary>Nível da entidade: personagem pelo <see cref="CharacterStats.Level"/>, monstro pelo <see cref="UnitInfo.Level"/> (T-203); sem nenhum, 1.</summary>
+    public static int LevelOf(Entity? e) => e?.TryGet<CharacterStats>()?.Level ?? e?.TryGet<UnitInfo>()?.Level ?? 1;
 
     /// <summary>Fração do dano que a defesa do alvo tira: D / (D + base + porNível × nível do atacante), teto da regra.</summary>
     public static double DefenseReduction(World world, Entity target, Entity? attacker, DamageSchool school)

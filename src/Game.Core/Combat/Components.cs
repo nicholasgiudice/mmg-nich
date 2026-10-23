@@ -13,6 +13,9 @@ public sealed class UnitInfo : IComponent, IReplicated
     public IReadOnlyList<string> Tags { get; init; } = [];
     public MonsterRank Rank { get; init; } = MonsterRank.Normal;
 
+    /// <summary>Nível de quem não tem <c>CharacterStats</c> (monstros, T-203).</summary>
+    public int Level { get; init; } = 1;
+
     /// <summary>Resistência por escola (chave = nome snake_case, ex.: "frost"; 0.25 = -25% de dano).</summary>
     public IReadOnlyDictionary<string, double> Resistances { get; init; } = new Dictionary<string, double>();
 
@@ -43,6 +46,7 @@ public sealed class UnitInfo : IComponent, IReplicated
     {
         hasher.Add(DefinitionId);
         hasher.Add((int)Rank);
+        hasher.Add(Level);
         hasher.Add((float)Armor);
         hasher.Add((float)Resistance);
         foreach (var kv in Resistances.OrderBy(k => k.Key, StringComparer.Ordinal))

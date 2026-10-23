@@ -19,6 +19,24 @@
       "defenseBase": 40,
       "defensePerAttackerLevel": 8,
       "defenseMax": 0.6
+    },
+    "progression": {
+      "maxLevel": 15,
+      "xpCurveBase": 50,
+      "xpCurveExponent": 1.8,
+      "xpPerMonsterLevel": 6,
+      "xpByRank": { "normal": 1, "elite": 5, "boss": 30 },
+      "xpBonusPerLevelAbove": 0.1,
+      "xpMaxBonus": 0.3,
+      "xpPenaltyPerLevelBelow": 0.2,
+      "xpZeroLevelsBelow": 5,
+      "groupBonusPerMember": 0.1,
+      "participationWindow": 30,
+      "combatTimeout": 5,
+      "attributePointsPerLevel": 5,
+      "skillPointsPerLevel": 1,
+      "skillRankLevels": [1, 3, 5, 7, 9],
+      "signatureRankLevels": [12, 13, 15]
     }
   },
   "threat": {

@@ -12,6 +12,9 @@ public sealed record RulesDefinition
     // ---- seção T-201 (estatísticas derivadas) ----
     public StatRules Stats { get; init; } = new();
 
+    // ---- seção T-203 (níveis, XP e pontos) ----
+    public ProgressionRules Progression { get; init; } = new();
+
     // ---- seção T-011 (threat): adicione abaixo ----
 }
 

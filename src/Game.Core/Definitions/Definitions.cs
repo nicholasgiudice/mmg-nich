@@ -249,6 +249,9 @@ public sealed record MonsterDefinition
     public required double Speed { get; init; }
     public required double Radius { get; init; }
     public MonsterRank Rank { get; init; } = MonsterRank.Normal;
+
+    /// <summary>Nível do monstro (T-203): XP ao matar e nível do atacante na defesa.</summary>
+    public int Level { get; init; } = 1;
     public IReadOnlyList<string> Tags { get; init; } = [];
     /// <summary>Resistência por escola (chave = nome da escola em snake_case; 0.25 = -25% de dano).</summary>
     public IReadOnlyDictionary<string, double> Resistances { get; init; } = new Dictionary<string, double>();

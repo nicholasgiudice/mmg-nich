@@ -18,6 +18,8 @@ public static class ProtocolVersion
     /// <summary>
     /// 2 (T-106): <c>SnapshotDelta</c>, <c>SnapshotAck</c> e época no <c>Welcome</c>.
     /// 3 (T-201): componente <c>CharacterStats</c>, defesa no <c>UnitInfo</c> e crítico nos eventos de dano, cura e escudo.
+    /// 4 (T-203): componente <c>CharacterProgress</c>, nível no <c>UnitInfo</c>, eventos de XP, nível e pontos e intenções
+    /// de pontos no <c>NetIntent</c>.
     /// </summary>
-    public const int Current = 3;
+    public const int Current = 4;
 }

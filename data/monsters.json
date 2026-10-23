@@ -4,6 +4,7 @@
     {
       "id": "monster.field_rat",
       "name": "Rato de Campo",
+      "level": 1,
       "health": 150,
       "speed": 4.0,
       "radius": 0.3,
@@ -14,6 +15,7 @@
     {
       "id": "monster.grey_wolf",
       "name": "Lobo Cinzento",
+      "level": 2,
       "health": 220,
       "speed": 4.0,
       "radius": 0.4,
@@ -24,6 +26,7 @@
     {
       "id": "monster.road_bandit",
       "name": "Salteador da Estrada",
+      "level": 3,
       "health": 80,
       "speed": 4.0,
       "radius": 0.4,
@@ -34,6 +37,7 @@
     {
       "id": "monster.skeleton_guard",
       "name": "Guarda Esquelético",
+      "level": 9,
       "health": 440,
       "speed": 3.2,
       "radius": 0.5,
@@ -44,6 +48,7 @@
     {
       "id": "monster.spider_small",
       "name": "Aranha Menor",
+      "level": 5,
       "health": 70,
       "speed": 4.0,
       "radius": 0.35,
@@ -54,6 +59,7 @@
     {
       "id": "monster.spider_big",
       "name": "Aranha Grande",
+      "level": 6,
       "health": 400,
       "speed": 3.4,
       "radius": 0.6,
@@ -65,6 +71,7 @@
     {
       "id": "monster.forest_matriarch",
       "name": "Matriarca da Floresta",
+      "level": 8,
       "rank": "boss",
       "health": 8800,
       "speed": 3.4,

@@ -38,6 +38,37 @@
             "defenseMax": { "type": "number", "minimum": 0, "maximum": 1 }
           }
         },
+        "progression": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "T-203: níveis, XP por monstro, divisão em grupo, pontos e requisito de nível por NH.",
+          "properties": {
+            "maxLevel": { "type": "integer", "minimum": 1 },
+            "xpCurveBase": { "type": "number", "exclusiveMinimum": 0 },
+            "xpCurveExponent": { "type": "number", "minimum": 0 },
+            "xpPerMonsterLevel": { "type": "number", "minimum": 0 },
+            "xpByRank": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "normal": { "type": "number", "minimum": 0 },
+                "elite": { "type": "number", "minimum": 0 },
+                "boss": { "type": "number", "minimum": 0 }
+              }
+            },
+            "xpBonusPerLevelAbove": { "type": "number", "minimum": 0 },
+            "xpMaxBonus": { "type": "number", "minimum": 0 },
+            "xpPenaltyPerLevelBelow": { "type": "number", "minimum": 0, "maximum": 1 },
+            "xpZeroLevelsBelow": { "type": "integer", "minimum": 1 },
+            "groupBonusPerMember": { "type": "number", "minimum": 0 },
+            "participationWindow": { "$ref": "#/$defs/seconds" },
+            "combatTimeout": { "$ref": "#/$defs/seconds" },
+            "attributePointsPerLevel": { "type": "integer", "minimum": 0 },
+            "skillPointsPerLevel": { "type": "integer", "minimum": 0 },
+            "skillRankLevels": { "type": "array", "minItems": 5, "items": { "type": "integer", "minimum": 1 } },
+            "signatureRankLevels": { "type": "array", "minItems": 3, "items": { "type": "integer", "minimum": 1 } }
+          }
+        },
         "control": {
           "type": "object",
           "additionalProperties": false,
@@ -413,6 +444,7 @@
         "speed": { "type": "number", "minimum": 0 },
         "radius": { "type": "number", "exclusiveMinimum": 0 },
         "rank": { "enum": ["normal", "elite", "boss"] },
+        "level": { "type": "integer", "minimum": 1, "description": "T-203: nível do monstro (XP ao matar, nível do atacante na defesa)." },
         "tags": { "$ref": "#/$defs/stringList" },
         "resistances": {
           "type": "object",

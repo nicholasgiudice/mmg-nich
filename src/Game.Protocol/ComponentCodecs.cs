@@ -2,6 +2,7 @@ using System.Buffers;
 using Game.Core.Combat;
 using Game.Core.Combat.Areas;
 using Game.Core.Combat.Phases;
+using Game.Core.Combat.Progression;
 using Game.Core.Combat.Stats;
 using Game.Core.Combat.Status;
 using Game.Core.Combat.Telegraphs;
@@ -36,6 +37,7 @@ public static class ComponentCodecs
         [typeof(AreaState)] = 12,
         [typeof(PhaseState)] = 13,
         [typeof(CharacterStats)] = 14,
+        [typeof(CharacterProgress)] = 15,
     };
 
     internal static void Write<TB>(ref MemoryPackWriter<TB> w, IComponent component)
@@ -79,6 +81,7 @@ public static class ComponentCodecs
                 w.S(u.Name);
                 w.Strs(u.Tags);
                 w.E(u.Rank);
+                w.I(u.Level);
                 w.I(u.Resistances.Count);
                 foreach (var (school, value) in u.Resistances.OrderBy(kv => kv.Key, StringComparer.Ordinal))
                 {
@@ -173,6 +176,17 @@ public static class ComponentCodecs
                 w.F(s.Armor);
                 w.F(s.Resistance);
                 break;
+            case CharacterProgress p:
+                w.I(p.Experience);
+                w.I(p.ExperienceToNext);
+                w.I(p.AttributePoints);
+                w.I(p.SkillPoints);
+                w.I(p.AllocatedStr);
+                w.I(p.AllocatedDex);
+                w.I(p.AllocatedAgi);
+                w.I(p.AllocatedInt);
+                w.I(p.AllocatedVit);
+                break;
         }
     }
 
@@ -210,6 +224,7 @@ public static class ComponentCodecs
                     var name = r.S();
                     var tags = r.Strs();
                     var rank = r.E<MonsterRank>();
+                    var level = r.I();
                     var n = Wire.Count(ref r);
                     var res = new Dictionary<string, double>(n, StringComparer.Ordinal);
                     for (var i = 0; i < n; i++)
@@ -217,7 +232,7 @@ public static class ComponentCodecs
                         res[r.S()] = r.D();
                     }
 
-                    return new UnitInfo { DefinitionId = id, Name = name, Tags = tags, Rank = rank, Resistances = res, Armor = r.D(), Resistance = r.D() };
+                    return new UnitInfo { DefinitionId = id, Name = name, Tags = tags, Rank = rank, Level = level, Resistances = res, Armor = r.D(), Resistance = r.D() };
                 }
 
             case 8:
@@ -314,6 +329,19 @@ public static class ComponentCodecs
                     WeaponDamage = r.F(),
                     Armor = r.F(),
                     Resistance = r.F(),
+                };
+            case 15:
+                return new CharacterProgress
+                {
+                    Experience = r.I(),
+                    ExperienceToNext = r.I(),
+                    AttributePoints = r.I(),
+                    SkillPoints = r.I(),
+                    AllocatedStr = r.I(),
+                    AllocatedDex = r.I(),
+                    AllocatedAgi = r.I(),
+                    AllocatedInt = r.I(),
+                    AllocatedVit = r.I(),
                 };
             default:
                 throw new MemoryPackSerializationException($"Tag de componente desconhecida: {tag}");
