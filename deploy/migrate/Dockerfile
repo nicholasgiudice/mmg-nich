@@ -8,6 +8,8 @@ RUN dotnet tool install --global dotnet-ef --version 10.0.13
 ENV PATH="$PATH:/root/.dotnet/tools"
 COPY global.json Directory.Build.props ./
 COPY src/Game.Persistence/ src/Game.Persistence/
+# O "dotnet ef" não restaura para o runtime pedido: sem isto falha com NETSDK1004 (project.assets.json).
+RUN dotnet restore src/Game.Persistence --runtime linux-x64
 RUN dotnet ef migrations bundle --project src/Game.Persistence --configuration Release \
     --runtime linux-x64 --self-contained --output /out/efbundle
 

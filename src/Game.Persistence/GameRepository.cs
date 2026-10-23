@@ -162,7 +162,12 @@ public sealed class GameRepository(DbContextOptions<GameDbContext> options, Time
 
     private GameDbContext Db() => new(options);
 
-    private DateTimeOffset Now() => _time.GetUtcNow();
+    // timestamptz guarda microssegundos; truncar aqui mantém a entidade devolvida igual à que volta do banco.
+    private DateTimeOffset Now()
+    {
+        var now = _time.GetUtcNow();
+        return now.AddTicks(-(now.Ticks % (TimeSpan.TicksPerMillisecond / 1000)));
+    }
 
     private static bool IsUniqueViolation(DbUpdateException ex) => ex.InnerException is PostgresException { SqlState: UniqueViolation };
 }

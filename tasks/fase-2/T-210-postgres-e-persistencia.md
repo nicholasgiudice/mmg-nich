@@ -67,3 +67,13 @@
 
 - O estado de progressão é `string` jsonb com versão do formato; o dono do formato são as T-203/T-204.
 - O hash da senha é só uma coluna: o algoritmo fica para a autenticação (T-211).
+
+**Validação na VPS (2026-10-23)**
+
+- **Correção 1 — build do `migrate` falhava** com `NETSDK1004` (`project.assets.json` não encontrado): o `dotnet ef migrations bundle --runtime linux-x64` não restaura para o runtime pedido. `deploy/migrate/Dockerfile` ganhou `RUN dotnet restore src/Game.Persistence --runtime linux-x64` antes do bundle.
+- **Correção 2 — `Save_checks_the_version_and_reports_conflicts` falhava** (`CreatedAt` diferente em 0,5 µs): o relógio do Linux tem resolução de 100 ns e o `timestamptz` guarda microssegundos, então a entidade devolvida por `CreateCharacterAsync` não batia com a lida do banco (no Windows o relógio é mais grosseiro e passava). `GameRepository.Now()` agora trunca para microssegundos.
+- `docker compose up -d --build`: `migrate` aplicou `20261023020840_InitialCreate` e saiu com 0; tabelas `accounts`, `characters` e `__EFMigrationsHistory` criadas; `ps` mostra o postgres só com `5432/tcp` (sem porta no host); game-server escutando `0.0.0.0:7777/udp`.
+- Testes de integração contra o banco de `test-db.sh`: 9 passaram, 0 pulados (3 execuções seguidas).
+- `./scripts/check.sh` completo passou.
+- T-207: `docker compose stop game-server` termina o log em "Servidor parado"; subiu de novo normalmente.
+- Ruído conhecido, sem efeito: o log do `migrate` mostra `Cannot load library libgssapi_krb5.so.2` (a imagem `runtime-deps` não tem Kerberos; o Npgsql tenta carregá-lo e segue sem) e, na primeira execução, um `Failed executing DbCommand` ao ler `__EFMigrationsHistory` antes de ela existir (comportamento normal do EF Core).
