@@ -19,6 +19,7 @@ public sealed record ServerOptions
           --disconnect-grace <s>    segundos até remover a entidade de quem caiu (padrão 30)
           --max-catch-up <n>        ticks recuperados de uma vez quando o servidor atrasa (padrão 5)
           --max-players <n>         conexões aceitas (padrão 8; vagas do encontro limitam quem joga)
+          --restart-after <s>       segundos mostrando o fim do encontro antes de recomeçar (padrão 10; 0 = não recomeça)
           --interest-cell <tiles>   tamanho da célula da grade de interesse (padrão 16)
           --interest-radius <n>     células em volta do jogador que ele vê (padrão 2)
           --max-delta-age <ticks>   base de delta mais velha aceita; além disso vai snapshot completo (padrão 40)
@@ -34,6 +35,9 @@ public sealed record ServerOptions
     public double DisconnectGraceSeconds { get; init; } = 30;
     public int MaxCatchUpTicks { get; init; } = 5;
     public int MaxConnections { get; init; } = 8;
+
+    /// <summary>Segundos mostrando o fim do encontro (vitória ou derrota) antes de recomeçar; 0 = fica no fim.</summary>
+    public double RestartAfterSeconds { get; init; } = 10;
 
     /// <summary>Grade de interesse (T-106): célula em tiles e raio em células.</summary>
     public float InterestCellSize { get; init; } = 16;
@@ -72,6 +76,7 @@ public sealed record ServerOptions
                 "--disconnect-grace" => o with { DisconnectGraceSeconds = double.Parse(Next(), CultureInfo.InvariantCulture) },
                 "--max-catch-up" => o with { MaxCatchUpTicks = int.Parse(Next(), CultureInfo.InvariantCulture) },
                 "--max-players" => o with { MaxConnections = int.Parse(Next(), CultureInfo.InvariantCulture) },
+                "--restart-after" => o with { RestartAfterSeconds = double.Parse(Next(), CultureInfo.InvariantCulture) },
                 "--interest-cell" => o with { InterestCellSize = float.Parse(Next(), CultureInfo.InvariantCulture) },
                 "--interest-radius" => o with { InterestRadiusCells = int.Parse(Next(), CultureInfo.InvariantCulture) },
                 "--max-delta-age" => o with { MaxDeltaAgeTicks = Math.Clamp(int.Parse(Next(), CultureInfo.InvariantCulture), 1, Game.Protocol.SnapshotReconstructor.History) },

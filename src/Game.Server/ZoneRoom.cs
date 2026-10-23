@@ -23,6 +23,9 @@ namespace Game.Server;
 /// último tick que ele confirmou (não confiável), e só os eventos dessas entidades (confiável).</item>
 /// <item>Quem cai: a entidade para (ou vira bot) e some depois de <see cref="ServerOptions.DisconnectGraceSeconds"/>;
 /// voltando com o mesmo nome antes disso, retoma a vaga. Sem jogadores, a sala reinicia o encontro.</item>
+/// <item>Ciclo da luta: sala sem jogadores fica <b>parada</b> no começo (os bots não lutam sozinhos); quem entra numa sala vazia
+/// começa a luta do zero; no fim (vitória, derrota ou tempo esgotado) a sala mostra o resultado por
+/// <see cref="ServerOptions.RestartAfterSeconds"/> e recomeça para quem está nela.</item>
 /// </list>
 /// </summary>
 public sealed class ZoneRoom : ITransportHandler
@@ -44,6 +47,7 @@ public sealed class ZoneRoom : ITransportHandler
     private BotDirector? _bots;
     private ulong _seed;
     private int _epoch = 1;
+    private long? _endedAtTick;
     private readonly InterestGrid _grid;
 
     public ZoneRoom(ContentCatalog content, ServerOptions options, IServerTransport transport, ILogger log)
@@ -68,6 +72,9 @@ public sealed class ZoneRoom : ITransportHandler
     public int PlayerCount => _connections.Values.Count(c => c.Slot is not null);
 
     public int Restarts { get; private set; }
+
+    /// <summary>Como o encontro terminou (null = em andamento).</summary>
+    public string? Outcome { get; private set; }
 
     /// <summary>Entidade de cada vaga (null = removida depois da desconexão) e quem a controla.</summary>
     public IReadOnlyList<(EntityId? Entity, string Class, string? Player, bool Bot)> Slots =>
@@ -177,6 +184,13 @@ public sealed class ZoneRoom : ITransportHandler
         }
 
         c.Name = name;
+        if (PlayerCount == 0 && (World.Tick > 0 || Outcome is not null))
+        {
+            // Primeiro a entrar numa sala vazia: luta do zero (não a que sobrou).
+            Restart("primeiro jogador entrou");
+            index = ChooseSlot(name, hello.ClassId);
+        }
+
         Occupy(c, index, hello.ClassId);
         _log.Information("{Name} entrou na vaga {Slot} como {Class} (entidade {Entity})", name, index, _slots[index].ClassId, _slots[index].Entity!.Id);
     }
@@ -269,6 +283,11 @@ public sealed class ZoneRoom : ITransportHandler
     public void Step()
     {
         CloseRefused();
+        if (PlayerCount == 0)
+        {
+            return; // sala vazia fica parada: ninguém vê, ninguém luta (nem os bots)
+        }
+
         RemoveAbandoned();
 
         foreach (var c in _connections.Values)
@@ -295,6 +314,32 @@ public sealed class ZoneRoom : ITransportHandler
         _bots?.Tick();
         World.Step();
         Broadcast();
+        CheckEnd();
+    }
+
+    /// <summary>Vitória (inimigos mortos), derrota (jogadores mortos) ou tempo esgotado; recomeça depois do intervalo.</summary>
+    private void CheckEnd()
+    {
+        if (Outcome is null)
+        {
+            bool Alive(Faction f) => World.Entities.Any(e => e.IsAlive && e.TryGet<FactionTag>()?.Faction == f && e.Has<Health>());
+            Outcome = !Alive(Faction.Monster) ? "vitória"
+                : !Alive(Faction.Player) ? "derrota"
+                : _encounter.Defeat.TimeLimitTicks is { } limit && World.Tick >= limit ? "tempo esgotado"
+                : null;
+            if (Outcome is not null)
+            {
+                _endedAtTick = World.Tick;
+                _log.Information("Encontro terminou: {Outcome} em {Seconds:0} s", Outcome, World.Tick / (double)World.TickRate);
+            }
+
+            return;
+        }
+
+        if (_options.RestartAfterSeconds > 0 && World.Tick - _endedAtTick >= (long)Math.Round(_options.RestartAfterSeconds * World.TickRate))
+        {
+            Restart($"fim do encontro ({Outcome})");
+        }
     }
 
     private void Broadcast()
@@ -404,6 +449,8 @@ public sealed class ZoneRoom : ITransportHandler
         _seed++;
         _epoch++;
         Restarts++;
+        Outcome = null;
+        _endedAtTick = null;
         var keep = _connections.Values.Where(c => c.Slot is not null).Select(c => (c, _slots[c.Slot!.Value].ClassId)).ToList();
         World = CreateWorld();
         _log.Information("Sala reiniciada ({Reason}); seed {Seed}", reason, _seed);
