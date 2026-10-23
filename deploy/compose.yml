@@ -9,7 +9,7 @@ services:
       context: ..
       dockerfile: deploy/game-server/Dockerfile
     image: mmo-rpg/game-server:dev
-    command: ["--encounter", "${GAME_ENCOUNTER:-encounter.forest_matriarch}", "--bots", "${GAME_BOTS:-true}"]
+    command: ["--encounter", "${GAME_ENCOUNTER:-encounter.forest_matriarch}", "--bots", "${GAME_BOTS:-true}", "--restart-after", "${GAME_RESTART_AFTER:-10}"]
     ports:
       - "7777:7777/udp"
     restart: unless-stopped
