@@ -1,0 +1,5 @@
+# Contexto do build do Docker = raiz do repositório (deploy/compose.yml).
+**/bin/
+**/obj/
+client/
+.git/

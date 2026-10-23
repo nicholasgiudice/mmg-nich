@@ -91,6 +91,54 @@ Para testar se a porta UDP do jogo é alcançável de fora:
 
 Se uma mudança no ufw cortar o SSH, entre pelo console web do provedor e rode `ufw disable`.
 
+## Servidor de jogo na VPS (Docker)
+
+Configurado na T-110: `deploy/game-server/Dockerfile` (imagem só com o runtime .NET, usuário `app` sem root, `data/` em `/app/data`) e `deploy/compose.yml` (serviço `game-server`, só `7777/udp` publicada, `restart: unless-stopped`). O Docker sobe com a VPS, então o servidor volta sozinho depois de um reinício. Todos os comandos rodam na raiz do repositório.
+
+**Subir** (constrói a imagem se preciso):
+
+```bash
+docker compose -f deploy/compose.yml up -d --build
+docker compose -f deploy/compose.yml ps
+```
+
+O encontro e os bots vêm de variáveis (no shell ou num `.env` em `deploy/`):
+
+```bash
+GAME_ENCOUNTER=encounter.forest_matriarch GAME_BOTS=false docker compose -f deploy/compose.yml up -d
+```
+
+| Variável | Padrão | Vira |
+|---|---|---|
+| `GAME_ENCOUNTER` | `encounter.forest_matriarch` | `--encounter` |
+| `GAME_BOTS` | `true` | `--bots` (vagas sem jogador jogam como bots) |
+
+**Ver logs** (deve aparecer `Escutando UDP na porta 7777`):
+
+```bash
+docker compose -f deploy/compose.yml logs -f game-server
+```
+
+**Reiniciar o encontro** pelo console do servidor:
+
+```bash
+docker compose -f deploy/compose.yml attach --sig-proxy=false game-server
+```
+
+Digite `restart` (ou `status`) e Enter. Para sair do console use **Ctrl+C**: com `--sig-proxy=false` ele só desconecta o terminal. Sem essa opção, o Ctrl+C é repassado e **para o servidor**. Para reiniciar o processo inteiro: `docker compose -f deploy/compose.yml restart game-server`.
+
+**Atualizar** (puxa a `main`, roda `check.sh --fast`, reconstrói, reinicia e mostra o log):
+
+```bash
+./scripts/deploy-dev.sh
+```
+
+**Parar:** `docker compose -f deploy/compose.yml down`.
+
+**Conectar do Windows:** no cliente, menu **Jogar online** com `31.97.162.124:7777`, ou abra o cliente com `--server=31.97.162.124:7777`. O conteúdo (`data/`) do cliente precisa ser o mesmo do servidor: o fingerprint é conferido na conexão.
+
+**Alternativa com systemd** (se o Docker atrapalhar o UDP ou o debug): `deploy/systemd/mmo-game-server.service` é uma unidade de exemplo (publica em `/opt/mmo-rpg/game-server`, usuário `mmo-game`, `Restart=always`). Os passos de instalação estão no comentário do arquivo. Ela **não está ativada**, e as duas formas não podem rodar juntas, porque usam a mesma porta.
+
 ## Documentação
 
 - `docs/vision-mvp-v0.1.md` — visão, escopo e decisões;
