@@ -1,4 +1,5 @@
 using Game.Core.Combat;
+using Game.Core.Combat.Status;
 using Game.Core.Definitions;
 using Game.Core.Events;
 using Game.Core.Simulation;
@@ -77,6 +78,8 @@ public static class CoreCombatLogFormatters
             return c.Entry(e, LogCategory.Status, text, e.Entity);
         });
 
+        RegisterStatus(f);
+
         f.Register<Displaced>((c, e) =>
         {
             var distance = CombatLogContext.Number(e.Distance);
@@ -93,6 +96,47 @@ public static class CoreCombatLogFormatters
             e.By, e.Entity));
 
         return f;
+    }
+
+    /// <summary>Status (T-207): aplicado, renovado, acumulado, expirado, removido e resistido.</summary>
+    private static void RegisterStatus(CombatLogFormatters f)
+    {
+        f.Register<StatusApplied>((c, e) =>
+        {
+            var status = c.SourceLabel(e.StatusId);
+            var stacks = e.Stacks > 1 ? $", {e.Stacks} acúmulos" : "";
+            var duration = $"({CombatLogContext.Seconds(e.ExpiresAtTick - e.Tick)} s{stacks})";
+            var text = e.Source.IsNone || e.Source == e.Target
+                ? $"{c.Name(e.Target)} recebeu {status} {duration}"
+                : $"{c.Name(e.Source)} aplicou {status} em {c.Name(e.Target)} {duration}";
+            return c.Entry(e, LogCategory.Status, text, e.Source, e.Target);
+        });
+
+        f.Register<StatusRefreshed>((c, e) => c.Entry(e, LogCategory.Status,
+            $"{c.SourceLabel(e.StatusId)} em {c.Name(e.Target)} foi renovado ({CombatLogContext.Seconds(e.ExpiresAtTick - e.Tick)} s)",
+            e.Source, e.Target));
+
+        f.Register<StatusStacked>((c, e) => c.Entry(e, LogCategory.Status,
+            $"{c.SourceLabel(e.StatusId)} em {c.Name(e.Target)}: {e.Stacks} acúmulos ({CombatLogContext.Seconds(e.ExpiresAtTick - e.Tick)} s)",
+            e.Source, e.Target));
+
+        f.Register<StatusExpired>((c, e) => c.Entry(e, LogCategory.Status,
+            $"{c.SourceLabel(e.StatusId)} em {c.Name(e.Entity)} terminou", e.Entity));
+
+        f.Register<StatusRemoved>((c, e) =>
+        {
+            var status = c.SourceLabel(e.StatusId);
+            var text = e.By.IsNone
+                ? $"{status} foi removido de {c.Name(e.Entity)}"
+                : $"{c.Name(e.By)} removeu {status} de {c.Name(e.Entity)}";
+            return c.Entry(e, LogCategory.Status, text, e.By, e.Entity);
+        });
+
+        f.Register<StatusResisted>((c, e) =>
+        {
+            var from = e.Source.IsNone || e.Source == e.Target ? "" : $" de {c.Name(e.Source)}";
+            return c.Entry(e, LogCategory.Status, $"{c.Name(e.Target)} resistiu a {c.SourceLabel(e.StatusId)}{from}", e.Source, e.Target);
+        });
     }
 
     /// <summary>"usou Mordida" quando a fonte é uma entidade e a origem é habilidade; senão, "causou dano".</summary>

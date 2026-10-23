@@ -1,5 +1,6 @@
 using System.Numerics;
 using Game.Core.Combat;
+using Game.Core.Combat.Status;
 using Game.Core.CombatLog;
 using Game.Core.Definitions;
 using Game.Core.Events;
@@ -310,5 +311,69 @@ public class CombatLogTests
         var death = Assert.Single(deaths);
         Assert.Single(death.Entries); // só a linha de morte: o dano é antigo demais
         Assert.Empty(death.DamageBySources);
+    }
+
+    // ---------- status (T-207) ----------
+
+    [Fact]
+    public void Status_applied_names_source_target_and_duration()
+    {
+        var s = NewScene();
+        var expires = s.World.Tick + 1 + 40;
+        Tick(s, new StatusApplied(s.Wolf.Id, s.Player.Id, "status.bleed", 1, 1, expires, 40));
+
+        Assert.Equal("Lobo Cinzento aplicou Sangramento em Você (2,0 s)", LastText(s));
+        var entry = s.Log.Entries[^1];
+        Assert.Equal(LogCategory.Status, entry.Category);
+        Assert.Equal(new[] { s.Wolf.Id, s.Player.Id }, entry.Involved);
+    }
+
+    [Fact]
+    public void Status_applied_without_other_source_reads_as_received_with_stacks()
+    {
+        var s = NewScene();
+        var expires = s.World.Tick + 1 + 60;
+        Tick(s, new StatusApplied(EntityId.None, s.Wolf.Id, "status.bleed", 1, 2, expires, 60));
+        Assert.Equal("Lobo Cinzento recebeu Sangramento (3,0 s, 2 acúmulos)", LastText(s));
+
+        Tick(s, new StatusApplied(s.Mage.Id, s.Mage.Id, "status.bleed", 2, 1, s.World.Tick + 1 + 20, 20));
+        Assert.Equal("Mago recebeu Sangramento (1,0 s)", LastText(s));
+    }
+
+    [Fact]
+    public void Status_refreshed_and_stacked_show_remaining_time()
+    {
+        var s = NewScene();
+        Tick(s, new StatusRefreshed(s.Wolf.Id, s.Player.Id, "status.bleed", 1, 1, s.World.Tick + 1 + 40));
+        Assert.Equal("Sangramento em Você foi renovado (2,0 s)", LastText(s));
+
+        Tick(s, new StatusStacked(s.Wolf.Id, s.Player.Id, "status.bleed", 1, 3, s.World.Tick + 1 + 50));
+        Assert.Equal("Sangramento em Você: 3 acúmulos (2,5 s)", LastText(s));
+    }
+
+    [Fact]
+    public void Status_end_texts_depend_on_how_it_ended()
+    {
+        var s = NewScene();
+        Tick(s, new StatusExpired(s.Player.Id, "status.bleed", 1));
+        Assert.Equal("Sangramento em Você terminou", LastText(s));
+
+        Tick(s, new StatusRemoved(s.Player.Id, "status.bleed", 2, s.Priest.Id));
+        Assert.Equal("Clérigo removeu Sangramento de Você", LastText(s));
+        Assert.Equal(new[] { s.Priest.Id, s.Player.Id }, s.Log.Entries[^1].Involved);
+
+        Tick(s, new StatusRemoved(s.Player.Id, "status.bleed", 3, EntityId.None));
+        Assert.Equal("Sangramento foi removido de Você", LastText(s));
+    }
+
+    [Fact]
+    public void Status_resisted_names_who_tried()
+    {
+        var s = NewScene();
+        Tick(s, new StatusResisted(s.Player.Id, s.Wolf.Id, "status.bleed"));
+        Assert.Equal("Lobo Cinzento resistiu a Sangramento de Você", LastText(s));
+
+        Tick(s, new StatusResisted(EntityId.None, s.Wolf.Id, "status.bleed"));
+        Assert.Equal("Lobo Cinzento resistiu a Sangramento", LastText(s));
     }
 }

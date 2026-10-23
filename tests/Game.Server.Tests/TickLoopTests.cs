@@ -1,5 +1,6 @@
 using Game.Server;
 using Serilog.Core;
+using Serilog.Events;
 
 namespace Game.Server.Tests;
 
@@ -59,5 +60,17 @@ public class TickLoopTests
         Assert.False(o.FillWithBots);
         Assert.Equal(5, o.DisconnectGraceSeconds);
         Assert.Throws<ArgumentException>(() => ServerOptions.Parse(["--nope"], _ => null));
+    }
+
+    [Fact]
+    public void Log_level_comes_from_option_or_environment_and_option_wins()
+    {
+        Assert.Equal(LogEventLevel.Information, ServerOptions.Parse([], _ => null).LogLevel);
+        Assert.Equal(LogEventLevel.Debug, ServerOptions.Parse([], k => k == "MMO_LOG_LEVEL" ? "debug" : null).LogLevel);
+        Assert.Equal(LogEventLevel.Warning, ServerOptions.Parse(["--log-level", "warn"], k => k == "MMO_LOG_LEVEL" ? "debug" : null).LogLevel);
+        Assert.Equal(LogEventLevel.Error, ServerOptions.Parse(["--log-level", "ERROR"], _ => null).LogLevel);
+        Assert.Equal(LogEventLevel.Information, ServerOptions.ParseLogLevel("info"));
+        Assert.Throws<ArgumentException>(() => ServerOptions.Parse(["--log-level", "loud"], _ => null));
+        Assert.Throws<ArgumentException>(() => ServerOptions.ParseLogLevel("3"));
     }
 }

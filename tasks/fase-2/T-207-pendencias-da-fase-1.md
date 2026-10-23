@@ -23,4 +23,29 @@ Pendências registradas nos Resultados da fase 1 (T-102, T-110) e no relatório 
 
 ## Resultado
 
-_(preencher ao concluir)_
+**Feito**
+
+- **Nível de log:**
+  - `--log-level` e `MMO_LOG_LEVEL` aceitam `verbose`, `debug`, `info`, `warning`, `error` e `fatal`, além dos apelidos `info`/`warn`, sem diferenciar maiúsculas; a opção vence a variável. Fica em `ServerOptions.LogLevel` e o padrão é `info`.
+  - O logger usa um `LoggingLevelSwitch`, ajustado logo depois de ler as opções; assim, erros de opção ainda aparecem no log.
+  - `deploy/compose.yml` repassa `GAME_LOG_LEVEL` (padrão `info`).
+- **SIGTERM:** `PosixSignalRegistration` para `SIGTERM` cancela o loop do mesmo jeito que o Ctrl+C. O servidor registra "Servidor parado" e, ao descartar o transporte (`NetManager.Stop`), manda a desconexão para os clientes.
+- **Log de combate dos status** (`CoreCombatLogFormatters.RegisterStatus`, categoria Status):
+  - aplicado: "Lobo Cinzento aplicou Sangramento em Você (2,0 s)". Sem fonte ou aplicado em si mesmo: "X recebeu Sangramento (3,0 s, 2 acúmulos)";
+  - renovado: "Sangramento em Você foi renovado (2,0 s)";
+  - acumulado: "Sangramento em Você: 3 acúmulos (2,5 s)";
+  - expirado: "Sangramento em Você terminou";
+  - removido: "Clérigo removeu Sangramento de Você" ou "Sangramento foi removido de Você";
+  - resistido: "Lobo Cinzento resistiu a Sangramento de Você".
+- **Testes:**
+  - `tests/Game.Core.Tests/CombatLogTests.cs`: 5 testes, um por texto/variação dos status;
+  - `tests/Game.Server.Tests/TickLoopTests.cs`: opção, variável, prioridade, apelidos e valores inválidos (incluindo número).
+
+**Desvios**
+
+- A linha de `GAME_LOG_LEVEL` no `README.md` da raiz (tabela do deploy) está fora das áreas da tarefa; a mudança foi mínima.
+- `src/Game.Server/README.md` também foi atualizado.
+
+**Pendências**
+
+- A parada por SIGTERM não foi verificada num Linux real: no Windows não dá para mandar SIGTERM. Na VPS, conferir com `docker compose -f deploy/compose.yml stop` e `docker compose -f deploy/compose.yml logs game-server`: o log deve terminar em "Servidor parado".
