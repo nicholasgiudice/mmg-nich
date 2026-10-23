@@ -28,4 +28,8 @@ Responder: **o combate continua bom pela internet, com o servidor na VPS e quatr
 
 ## Resultado
 
-_(preencher: decisão tomada)_
+**Decisão: seguir para a fase 2 (T-120).** Relatório: `tasks/reports/playtest-online-v0.1.md`.
+
+- O designer jogou sozinho contra a VPS e achou o combate online "bem fluido": ping de 14–22 ms, 0% de perda, nenhuma correção visível da predição e nenhuma queda.
+- O que incomodou foi chegar com a luta em andamento. Isso foi corrigido no servidor: sala vazia parada, luta do zero para quem entra e reinício automático no fim.
+- **Não feito:** o teste em grupo com convidados (passo 2), por falta de pessoas. Ficou como primeira pendência do próximo playtest, junto com ping alto real e NH online.
