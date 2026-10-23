@@ -52,6 +52,9 @@ public class ProtocolTests(ITestOutputHelper output)
             new StopIntent(new EntityId(99)),
             new UseAbilityIntent(new EntityId(99), "mage.elemental_blast", null, new Vector2(4.5f, 7.25f)),
             new UseAbilityIntent(new EntityId(99), "archer.power_shot", new EntityId(12)),
+            new SpendAttributePointIntent(new EntityId(99), Game.Core.Definitions.AttributeKind.Vit),
+            new RaiseSkillRankIntent(new EntityId(99), "archer.hunters_mark"),
+            new ResetPointsIntent(new EntityId(99)),
         };
 
         for (var i = 0; i < intents.Length; i++)
@@ -63,6 +66,36 @@ public class ProtocolTests(ITestOutputHelper output)
 
         Assert.Null(new NetIntent(NetIntentKind.UseAbility, default, null, null, null).ToIntent(me));
         Assert.Null(new NetIntent(NetIntentKind.Move, new Vector2(float.NaN, 0), null, null, null).ToIntent(me));
+        Assert.Null(new NetIntent(NetIntentKind.RaiseSkillRank, default, "", null, null).ToIntent(me));
+        Assert.Null(new NetIntent(NetIntentKind.SpendAttributePoint, default, null, null, null, (Game.Core.Definitions.AttributeKind)99).ToIntent(me));
+    }
+
+    [Fact]
+    public void Character_progress_and_monster_level_round_trip()
+    {
+        var content = RealContent();
+        var world = WorldBuilder.CreateDefault(5, null, content);
+        var hero = Game.Core.Combat.Progression.Leveling.SpawnCharacter(world, content.Classes["class.archer"], new Vector2(1, 1), new Game.Core.Combat.Progression.CharacterBuild
+        {
+            Level = 6,
+            Experience = 40,
+            Allocated = new Game.Core.Definitions.AttributeSet { Str = 1, Dex = 12, Agi = 6, Int = 2, Vit = 3 },
+            SkillRanks = new Dictionary<string, int> { ["archer.power_shot"] = 3 },
+        });
+        EntityFactory.SpawnMonster(world, content.Monsters["monster.forest_matriarch"], new Vector2(5, 5));
+
+        var snap = world.Snapshot(SnapshotScope.Replicated);
+        var msg = RoundTrip(SnapshotMessage.From(snap));
+
+        for (var i = 0; i < snap.Entities.Count; i++)
+        {
+            Assert.Equal(snap.Entities[i].Components.Select(Hash), msg.Entities[i].Components.Select(Hash));
+        }
+
+        var progress = msg.Entities[0].Components.OfType<Game.Core.Combat.Progression.CharacterProgress>().Single();
+        Assert.Equal((40, 1, 3, 12), (progress.Experience, progress.AttributePoints, progress.SkillPoints, progress.AllocatedDex));
+        Assert.Equal(8, msg.Entities[1].Components.OfType<UnitInfo>().Single().Level);
+        Assert.Equal(hero.Id, msg.Entities[0].Id);
     }
 
     [Fact]

@@ -3,6 +3,7 @@ using Game.Core.Combat;
 using Game.Core.Combat.Areas;
 using Game.Core.Combat.Effects;
 using Game.Core.Combat.Phases;
+using Game.Core.Combat.Progression;
 using Game.Core.Combat.Resources;
 using Game.Core.Combat.Status;
 using Game.Core.Combat.Telegraphs;
@@ -55,6 +56,12 @@ public static class EventCodecs
         [typeof(AreaExpired)] = 73,
         [typeof(MonsterSummoned)] = 74,
         [typeof(PhaseChanged)] = 80,
+        [typeof(XpGained)] = 90,
+        [typeof(LevelUp)] = 91,
+        [typeof(AttributeRaised)] = 92,
+        [typeof(SkillRankRaised)] = 93,
+        [typeof(PointsReset)] = 94,
+        [typeof(ProgressionRejected)] = 95,
     };
 
     internal static void Write<TB>(ref MemoryPackWriter<TB> w, GameEvent e)
@@ -140,6 +147,13 @@ public static class EventCodecs
             case PhaseChanged x:
                 w.Id(x.Entity); w.S(x.MonsterId); w.S(x.Phase); w.I(x.Previous); w.I(x.Index); w.F(x.HealthPercent);
                 break;
+
+            case XpGained x: w.Id(x.Entity); w.I(x.Amount); w.Id(x.Monster); w.S(x.SourceId); break;
+            case LevelUp x: w.Id(x.Entity); w.I(x.Level); w.I(x.AttributePoints); w.I(x.SkillPoints); break;
+            case AttributeRaised x: w.Id(x.Entity); w.E(x.Attribute); w.I(x.Value); break;
+            case SkillRankRaised x: w.Id(x.Entity); w.S(x.AbilityId); w.I(x.Rank); break;
+            case PointsReset x: w.Id(x.Entity); w.I(x.AttributePoints); w.I(x.SkillPoints); break;
+            case ProgressionRejected x: w.Id(x.Entity); w.S(x.Id); w.E(x.Reason); break;
         }
     }
 
@@ -196,6 +210,13 @@ public static class EventCodecs
             74 => new MonsterSummoned(r.Id(), r.Id(), r.S(), r.V()),
 
             80 => new PhaseChanged(r.Id(), r.S(), r.S(), r.I(), r.I(), r.F()),
+
+            90 => new XpGained(r.Id(), r.I(), r.Id(), r.S()),
+            91 => new LevelUp(r.Id(), r.I(), r.I(), r.I()),
+            92 => new AttributeRaised(r.Id(), r.E<AttributeKind>(), r.I()),
+            93 => new SkillRankRaised(r.Id(), r.S(), r.I()),
+            94 => new PointsReset(r.Id(), r.I(), r.I()),
+            95 => new ProgressionRejected(r.Id(), r.S(), r.E<ProgressionRejectReason>()),
             _ => throw new MemoryPackSerializationException($"Tag de evento desconhecida: {tag}"),
         };
         e.Tick = tick;

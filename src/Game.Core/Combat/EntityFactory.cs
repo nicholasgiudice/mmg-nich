@@ -79,6 +79,7 @@ public static class EntityFactory
                 Name = def.Name,
                 Tags = def.Tags,
                 Rank = def.Rank,
+                Level = def.Level,
                 Resistances = def.Resistances,
                 Armor = def.Armor,
                 Resistance = def.Resistance,

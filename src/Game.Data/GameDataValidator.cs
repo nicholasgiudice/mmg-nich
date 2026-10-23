@@ -423,6 +423,8 @@ internal static partial class GameDataValidator
         sc.Positive("defenseBase", st.DefenseBase);
         if (st.DefenseMax is < 0 or > 1) { sc.Error("defenseMax", "Deve estar em 0..1."); }
 
+        ValidateProgression(rules.Progression, new Ctx("rules", "rules.progression", errors));
+
         if (rules.Control is { } control)
         {
             var ctx = new Ctx("rules", "rules.control", errors);
@@ -436,6 +438,38 @@ internal static partial class GameDataValidator
             }
 
             if (control.Diminishing.Steps.Count > 1) { ctx.PositiveTicks("diminishing.window", control.Diminishing.WindowTicks); }
+        }
+    }
+
+    private static void ValidateProgression(ProgressionRules p, Ctx c)
+    {
+        if (p.MaxLevel < 1) { c.Error("maxLevel", "Deve ser pelo menos 1."); }
+        c.Positive("xpCurveBase", p.XpCurveBase);
+        c.NonNegative("xpCurveExponent", p.XpCurveExponent);
+        c.NonNegative("xpPerMonsterLevel", p.XpPerMonsterLevel);
+        c.NonNegative("xpByRank.normal", p.XpByRank.Normal);
+        c.NonNegative("xpByRank.elite", p.XpByRank.Elite);
+        c.NonNegative("xpByRank.boss", p.XpByRank.Boss);
+        c.NonNegative("xpBonusPerLevelAbove", p.XpBonusPerLevelAbove);
+        c.NonNegative("xpMaxBonus", p.XpMaxBonus);
+        if (p.XpPenaltyPerLevelBelow is < 0 or > 1) { c.Error("xpPenaltyPerLevelBelow", "Deve estar em 0..1."); }
+        if (p.XpZeroLevelsBelow < 1) { c.Error("xpZeroLevelsBelow", "Deve ser pelo menos 1."); }
+        c.NonNegative("groupBonusPerMember", p.GroupBonusPerMember);
+        c.PositiveTicks("participationWindow", p.ParticipationWindowTicks);
+        c.NonNegative("combatTimeout", p.CombatTimeoutTicks);
+        c.NonNegative("attributePointsPerLevel", p.AttributePointsPerLevel);
+        c.NonNegative("skillPointsPerLevel", p.SkillPointsPerLevel);
+        RankLevels(c, "skillRankLevels", p.SkillRankLevels, AbilityDefinition.MaxRank, p.MaxLevel);
+        RankLevels(c, "signatureRankLevels", p.SignatureRankLevels, AbilityDefinition.MaxSignatureRank, p.MaxLevel);
+
+        static void RankLevels(Ctx c, string field, IReadOnlyList<int> levels, int ranks, int maxLevel)
+        {
+            if (levels.Count < ranks) { c.Error(field, $"Precisa do nível exigido para cada um dos {ranks} NH."); }
+            for (var i = 0; i < levels.Count; i++)
+            {
+                if (levels[i] < 1 || levels[i] > maxLevel) { c.Error($"{field}[{i}]", $"Nível deve estar em 1..{maxLevel}."); }
+                if (i > 0 && levels[i] < levels[i - 1]) { c.Error($"{field}[{i}]", "Os níveis não podem diminuir de um NH para o seguinte."); }
+            }
         }
     }
 
@@ -459,6 +493,7 @@ internal static partial class GameDataValidator
         ctx.Positive("health", x.Health);
         ctx.NonNegative("speed", x.Speed);
         ctx.Positive("radius", x.Radius);
+        if (x.Level < 1) { ctx.Error("level", "Nível deve ser pelo menos 1."); }
         foreach (var (school, _) in x.Resistances)
         {
             if (!Enum.GetNames<DamageSchool>().Any(n => string.Equals(n, school.Replace("_", ""), StringComparison.OrdinalIgnoreCase)))

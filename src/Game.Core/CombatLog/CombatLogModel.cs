@@ -15,6 +15,9 @@ public enum LogCategory
 
     /// <summary>Ações: conjurações, rejeições, interrupções e deslocamentos forçados.</summary>
     Habilidade,
+
+    /// <summary>XP, níveis e pontos (T-203).</summary>
+    Progressao,
 }
 
 /// <summary>
