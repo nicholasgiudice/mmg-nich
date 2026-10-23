@@ -1,0 +1,34 @@
+# Alternativa ao Docker (T-110): servidor de jogo direto no systemd. Exemplo, não ativado.
+#
+# Instalação (como root, na raiz do repositório):
+#   useradd --system --no-create-home --shell /usr/sbin/nologin mmo-game
+#   dotnet publish src/Game.Server -c Release -o /opt/mmo-rpg/game-server
+#   rsync -a --delete data/ /opt/mmo-rpg/data/
+#   cp deploy/systemd/mmo-game-server.service /etc/systemd/system/
+#   docker compose -f deploy/compose.yml down   # libera a porta 7777/udp
+#   systemctl daemon-reload && systemctl enable --now mmo-game-server
+# Logs: journalctl -u mmo-game-server -f
+# Sem console (stdin): para reiniciar o encontro, systemctl restart mmo-game-server.
+
+[Unit]
+Description=MMO RPG - servidor de zona (UDP 7777)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=mmo-game
+Group=mmo-game
+WorkingDirectory=/opt/mmo-rpg/game-server
+Environment=MMO_DATA_DIR=/opt/mmo-rpg/data
+Environment=DOTNET_CLI_TELEMETRY_OPTOUT=1
+ExecStart=/usr/bin/dotnet /opt/mmo-rpg/game-server/Game.Server.dll --encounter encounter.forest_matriarch --bots true
+Restart=always
+RestartSec=2
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
