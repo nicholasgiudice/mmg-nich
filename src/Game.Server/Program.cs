@@ -1,14 +1,18 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using Game.Protocol;
 using Game.Server;
 using Game.Server.Transport;
 using Serilog;
+using Serilog.Core;
 
 Console.OutputEncoding = System.Text.Encoding.UTF8; // acentos no console do Windows
 
+// Nível ajustável depois de ler as opções (--log-level / MMO_LOG_LEVEL); erros de opção já saem no log.
+var logLevel = new LoggingLevelSwitch();
 Log.Logger = new LoggerConfiguration()
-    .MinimumLevel.Information()
+    .MinimumLevel.ControlledBy(logLevel)
     .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}", formatProvider: System.Globalization.CultureInfo.InvariantCulture)
     .CreateLogger();
 
@@ -21,6 +25,7 @@ if (args.Contains("--help") || args.Contains("-h"))
 try
 {
     var options = ServerOptions.Parse(args);
+    logLevel.MinimumLevel = options.LogLevel;
     var content = options.LoadContent();
     Log.Information("Servidor de zona — protocolo v{Version}, conteúdo {Fingerprint}, dados em {Data}", ProtocolVersion.Current, content.Fingerprint, options.DataDir);
 
@@ -37,6 +42,13 @@ try
         e.Cancel = true;
         stop.Cancel();
     };
+
+    // SIGTERM (docker compose stop, systemd) para como o Ctrl+C: sai do loop, avisa as conexões e registra "Servidor parado".
+    using var sigterm = PosixSignalRegistration.Create(PosixSignal.SIGTERM, ctx =>
+    {
+        ctx.Cancel = true;
+        stop.Cancel();
+    });
     var input = new Thread(() =>
     {
         while (!stop.IsCancellationRequested && Console.ReadLine() is { } line)

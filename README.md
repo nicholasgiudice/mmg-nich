@@ -113,6 +113,7 @@ GAME_ENCOUNTER=encounter.forest_matriarch GAME_BOTS=false docker compose -f depl
 | `GAME_ENCOUNTER` | `encounter.forest_matriarch` | `--encounter` |
 | `GAME_BOTS` | `true` | `--bots` (vagas sem jogador jogam como bots) |
 | `GAME_RESTART_AFTER` | `10` | `--restart-after` (segundos mostrando o fim do encontro antes de recomeçar; 0 = não recomeça) |
+| `GAME_LOG_LEVEL` | `info` | `--log-level` (`verbose`, `debug`, `info`, `warning`, `error`, `fatal`) |
 
 **Ver logs** (deve aparecer `Escutando UDP na porta 7777`):
 

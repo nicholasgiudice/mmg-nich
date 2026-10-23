@@ -1,6 +1,7 @@
 using System.Globalization;
 using Game.Core.Combat;
 using Game.Data;
+using Serilog.Events;
 
 namespace Game.Server;
 
@@ -23,6 +24,7 @@ public sealed record ServerOptions
           --interest-cell <tiles>   tamanho da célula da grade de interesse (padrão 16)
           --interest-radius <n>     células em volta do jogador que ele vê (padrão 2)
           --max-delta-age <ticks>   base de delta mais velha aceita; além disso vai snapshot completo (padrão 40)
+          --log-level <nível>       verbose · debug · info · warning · error · fatal (padrão info; env MMO_LOG_LEVEL)
 
         Console: restart · status · quit
         """;
@@ -46,6 +48,9 @@ public sealed record ServerOptions
     /// <summary>Base de delta mais velha aceita (ticks; ≤ <c>SnapshotReconstructor.History</c>). Mais velha = snapshot completo.</summary>
     public int MaxDeltaAgeTicks { get; init; } = 40;
 
+    /// <summary>Nível mínimo do log do servidor (T-207).</summary>
+    public LogEventLevel LogLevel { get; init; } = LogEventLevel.Information;
+
     /// <summary>Estratégia dos bots nas vagas livres (a mesma dos companheiros do cliente: grupo que se move).</summary>
     public string BotStrategy { get; init; } = "kite+dodge";
 
@@ -61,6 +66,11 @@ public sealed record ServerOptions
         if (env("MMO_PORT") is { Length: > 0 } portEnv)
         {
             o = o with { Port = int.Parse(portEnv, CultureInfo.InvariantCulture) };
+        }
+
+        if (env("MMO_LOG_LEVEL") is { Length: > 0 } levelEnv)
+        {
+            o = o with { LogLevel = ParseLogLevel(levelEnv) };
         }
 
         for (var i = 0; i < args.Count; i++)
@@ -80,12 +90,22 @@ public sealed record ServerOptions
                 "--interest-cell" => o with { InterestCellSize = float.Parse(Next(), CultureInfo.InvariantCulture) },
                 "--interest-radius" => o with { InterestRadiusCells = int.Parse(Next(), CultureInfo.InvariantCulture) },
                 "--max-delta-age" => o with { MaxDeltaAgeTicks = Math.Clamp(int.Parse(Next(), CultureInfo.InvariantCulture), 1, Game.Protocol.SnapshotReconstructor.History) },
+                "--log-level" => o with { LogLevel = ParseLogLevel(Next()) },
                 _ => throw new ArgumentException($"Opção desconhecida: {args[i]}"),
             };
         }
 
         return o;
     }
+
+    /// <summary>Nome do nível (Serilog, sem diferenciar maiúsculas) ou apelido curto: info, warn.</summary>
+    public static LogEventLevel ParseLogLevel(string value) => value.Trim().ToLowerInvariant() switch
+    {
+        "info" => LogEventLevel.Information,
+        "warn" => LogEventLevel.Warning,
+        var v when Enum.TryParse<LogEventLevel>(v, ignoreCase: true, out var level) && Enum.IsDefined(level) && !int.TryParse(v, out _) => level,
+        _ => throw new ArgumentException($"Nível de log inválido: {value}. Use verbose, debug, info, warning, error ou fatal."),
+    };
 
     /// <summary>Carrega <c>data/</c> como o simulador e o cliente fazem (mesmo fingerprint).</summary>
     public ContentCatalog LoadContent()
