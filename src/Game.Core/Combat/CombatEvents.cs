@@ -71,16 +71,17 @@ public sealed record CastInterrupted(EntityId Entity, string AbilityId, CastInte
 /// Absorbed = parte absorvida por escudos; Applied = vida realmente removida; Overkill = Amount - Absorbed - Applied.
 /// Source é None para dano sem fonte. SourceId = id da habilidade/status/área de origem.
 /// </summary>
+/// <summary>Dano aplicado. <paramref name="Critical"/> = acerto crítico (T-201).</summary>
 public sealed record DamageDealt(
     EntityId Source, EntityId Target, string SourceId, DamageSchool School, float Amount, float Absorbed,
-    float Applied, float Overkill, bool Killed) : GameEvent;
+    float Applied, float Overkill, bool Killed, bool Critical = false) : GameEvent;
 
 /// <summary>Cura. Amount = valor após arredondamento; Effective = vida realmente recuperada; Overheal = excedente.</summary>
 public sealed record HealApplied(
-    EntityId Source, EntityId Target, string SourceId, float Amount, float Effective, float Overheal) : GameEvent;
+    EntityId Source, EntityId Target, string SourceId, float Amount, float Effective, float Overheal, bool Critical = false) : GameEvent;
 
 public sealed record ShieldApplied(
-    EntityId Source, EntityId Target, string SourceId, int ShieldId, float Amount, long ExpiresAtTick) : GameEvent;
+    EntityId Source, EntityId Target, string SourceId, int ShieldId, float Amount, long ExpiresAtTick, bool Critical = false) : GameEvent;
 
 public sealed record ShieldExpired(EntityId Entity, int ShieldId, float Remaining, ShieldEndReason Reason) : GameEvent;
 

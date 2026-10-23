@@ -30,4 +30,49 @@ Primeira peça de `design/progression-v0.1.md` (§3–§5, §9 passo 1). Hoje o 
 
 ## Resultado
 
-_(preencher ao concluir)_
+**Feito**
+
+- **Estatísticas do personagem** (`src/Game.Core/Combat/Stats/CharacterStats.cs`): o componente `CharacterStats` guarda nível, FOR, DES, AGI, INT, VIT, dano de arma, armadura e resistência. É replicável, com a tag 14 em `ComponentCodecs`. As contas ficam em `StatMath`: perfil da classe, vida e Mana máximas, regeneração, crítico, velocidade de ataque, escala e defesa. Crítico e velocidade de ataque são calculados a partir da AGI, não guardados no componente.
+- **Perfil das classes** (`data/classes.json`): `attributes`, `baseHealth`, `healthGrowth` e `startingWeapon` (`damage`, e `int` para o cajado do Mago) entram no lugar de `health`.
+  - A vida no nível 1 é igual à do protótipo: Guerreiro 240, Arqueiro 130, Mago 110 e Clérigo 150.
+  - `health` continua válido para classes sem perfil (testes e fixtures).
+- **Escala** (`scaling`) em `damage`, `heal` e `shield`, também dentro dos `ranks`, porque os efeitos dos NH usam os mesmos records.
+  - Chaves: `weapon`, `str`, `dex`, `int`, `vit`.
+  - Fonte sem `CharacterStats` (monstros, áreas sem dono) usa só a base.
+- **Derivados**, em `data/rules.json` na seção `stats` (os padrões do Core são os mesmos números do design):
+  - Mana máxima = 80 + 2 × INT;
+  - regeneração = a da classe + INT × 0,05 por segundo;
+  - vida = base + VIT × 10 + (nível − 1) × crescimento.
+- **AGI:**
+  - a recarga do ataque básico é dividida por (1 + AGI × 0,005), com bônus de no máximo 50%; só o ataque básico é afetado;
+  - crítico = 5% + AGI × 0,25%, com teto de 40%.
+- **Crítico:** multiplica por 1,5 o dano, a cura e o escudo. Usa `world.Random`, e o RNG só é consumido quando a fonte tem `CharacterStats`. Por isso monstros não critam e não mexem na sequência do RNG. `DamageDealt`, `HealApplied` e `ShieldApplied` ganharam `Critical`, e o log mostra "(crítico)".
+- **Defesa:** D / (D + 40 + 8 × nível do atacante), com teto de 60%. A armadura reduz dano físico; a resistência, as outras escolas. Monstros têm `armor` e `resistance` nos dados (padrão 0), copiados para `UnitInfo`. A redução entra depois dos modificadores e antes dos escudos.
+- **Protocolo:** `ProtocolVersion` passou para 3, por causa do componente novo, dos campos novos em `UnitInfo` e de `Critical` nos eventos.
+- **Validação:** feita em `Game.Data` e no JSON Schema (`$defs/scaling`, perfil da classe, defesa de monstro, `rules.stats`).
+- **Testes:**
+  - `tests/Game.Core.Tests/StatsTests.cs`: escala, fonte sem estatísticas, cura e escudo com INT, defesa por nível do atacante e teto, escola certa, crítico ×1,5 com flag, crítico determinístico por seed, AGI só no ataque básico e teto, vida e Mana do perfil real das quatro classes, cajado e regeneração com INT, crescimento por nível;
+  - `tests/Game.Data.Tests/StatsLoaderTests.cs`: carregamento e erros do perfil, da escala, da defesa de monstro e de `rules.stats`.
+
+**Desvios (decisão do designer)**
+
+O critério pedia que os testes de design passassem "sem mudar números", mas o perfil não reproduz exatamente o protótipo:
+
+- a Mana passou a vir da INT (Mago 106 e 5,65/s, antes 100 e 5/s);
+- o crítico acrescenta em média cerca de 6–7% ao dano de quem tem estatísticas.
+
+Com isso, dois testes de design saíram da faixa:
+
+| Teste | Antes do ajuste | Ajuste | Depois |
+|---|---|---|---|
+| Matriarca, grupo equilibrado | 91–92% de vitórias | vida 8000 → **8800** (`data/monsters.json`) | 81%, cerca de 207 s |
+| Explosão do Mago sem rotação | 75% e mais rápida que a rotação | custo 80 → **90** de Mana (`data/abilities_mage.json`) | 54% e mais lenta que a rotação |
+
+- Na Matriarca, a taxa de vitórias variou de forma irregular com a vida: 8300 deu 92%, 8800 deu 81% e 9600 deu 85%.
+- Os dois arquivos estão fora das áreas da tarefa. Mudei o mínimo, e a T-202 (conversão das habilidades) e o balanceamento devem revisar esses números.
+- Outros arquivos fora da lista: `CombatEvents.cs` e o formatador do log, pelo campo `Critical`.
+
+**Pendências**
+
+- O cliente ainda não mostra crítico (número maior ou cor) nem a ficha de atributos. Fica para a interface da fase 2.
+- Nível fixo em 1 até a T-203; itens de verdade (arma e armadura) na T-204. Por enquanto o jogador tem armadura e resistência 0.

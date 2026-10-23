@@ -15,6 +15,9 @@ namespace Game.Protocol;
 /// </summary>
 public static class ProtocolVersion
 {
-    /// <summary>2 (T-106): <c>SnapshotDelta</c>, <c>SnapshotAck</c> e época no <c>Welcome</c>.</summary>
-    public const int Current = 2;
+    /// <summary>
+    /// 2 (T-106): <c>SnapshotDelta</c>, <c>SnapshotAck</c> e época no <c>Welcome</c>.
+    /// 3 (T-201): componente <c>CharacterStats</c>, defesa no <c>UnitInfo</c> e crítico nos eventos de dano, cura e escudo.
+    /// </summary>
+    public const int Current = 3;
 }

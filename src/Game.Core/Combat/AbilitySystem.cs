@@ -239,7 +239,7 @@ public sealed class AbilitySystem : ISimulationSystem
         }
         else
         {
-            ready = world.Tick + ability.CooldownTicks;
+            ready = world.Tick + CooldownFor(world, caster, st, ability);
             st.ReadyAtTick[ability.Id] = ready;
         }
 
@@ -256,6 +256,17 @@ public sealed class AbilitySystem : ISimulationSystem
         var power = world.Combat.ConsumeAbilityPower(world, caster, ability.Id); // T-061: fortalecer o próximo uso
         ApplyHit(world, caster, ability, res, target, aim, rank, power, 1);
         ScheduleExtraHits(world, caster, ability, rank, target, aim, power);
+    }
+
+    /// <summary>Recarga do uso: a do ataque básico é dividida pelo fator de AGI (T-201); as outras ficam como estão.</summary>
+    private static long CooldownFor(World world, Entity caster, AbilityState st, AbilityDefinition ability)
+    {
+        if (!st.IsBasicAttack(ability.Id) || caster.TryGet<Stats.CharacterStats>() is not { } stats)
+        {
+            return ability.CooldownTicks;
+        }
+
+        return (long)Math.Round(ability.CooldownTicks / Stats.StatMath.AttackSpeedFactor(stats, world.Content.Rules.Stats), MidpointRounding.AwayFromZero);
     }
 
     /// <summary>Efeitos de um acerto: direto nos alvos resolvidos ou, com telegráfo (T-012), no tick de resolução.</summary>

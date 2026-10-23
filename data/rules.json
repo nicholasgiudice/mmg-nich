@@ -4,6 +4,21 @@
     "control": {
       "durationByRank": { "normal": 1.0, "elite": 0.5, "boss": 0.25 },
       "diminishing": { "window": 15, "steps": [1.0, 0.5, 0.25, 0.0] }
+    },
+    "stats": {
+      "healthPerVit": 10,
+      "manaBase": 80,
+      "manaPerInt": 2,
+      "manaRegenPerInt": 0.05,
+      "critBase": 0.05,
+      "critPerAgi": 0.0025,
+      "critMax": 0.4,
+      "critMultiplier": 1.5,
+      "attackSpeedPerAgi": 0.005,
+      "attackSpeedMax": 0.5,
+      "defenseBase": 40,
+      "defensePerAttackerLevel": 8,
+      "defenseMax": 0.6
     }
   },
   "threat": {

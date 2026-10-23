@@ -13,9 +13,21 @@ public abstract record EffectDefinition
     public int? OnHit { get; init; }
 }
 
+/// <summary>
+/// Escala por estatística da fonte (T-201): valor = base + Σ coeficiente × estatística. Chaves: <c>weapon</c> (ARMA),
+/// <c>str</c>, <c>dex</c>, <c>int</c>, <c>vit</c> (AGI não entra: atua na recarga e no crítico). Fonte sem estatísticas = só a base.
+/// </summary>
+public static class ScalingKeys
+{
+    public static readonly IReadOnlySet<string> All = new HashSet<string>(StringComparer.Ordinal) { "weapon", "str", "dex", "int", "vit" };
+}
+
 public sealed record DamageEffect : EffectDefinition
 {
     public required double Base { get; init; }
+
+    /// <summary>Escala pelas estatísticas da fonte (T-201). Vazio = valor fixo.</summary>
+    public IReadOnlyDictionary<string, double> Scaling { get; init; } = new Dictionary<string, double>();
     public DamageSchool School { get; init; } = DamageSchool.Physical;
 
     /// <summary>Bônus por tag do alvo (T-017): <c>{ "undead": 0.5 }</c> = +50% contra alvos com a tag. Bônus de tags diferentes somam.</summary>
@@ -25,12 +37,18 @@ public sealed record DamageEffect : EffectDefinition
 public sealed record HealEffect : EffectDefinition
 {
     public required double Base { get; init; }
+
+    /// <summary>Escala pelas estatísticas da fonte (T-201).</summary>
+    public IReadOnlyDictionary<string, double> Scaling { get; init; } = new Dictionary<string, double>();
 }
 
 public sealed record ShieldEffect : EffectDefinition
 {
     public required double Amount { get; init; }
     public required int DurationTicks { get; init; }
+
+    /// <summary>Escala pelas estatísticas da fonte (T-201).</summary>
+    public IReadOnlyDictionary<string, double> Scaling { get; init; } = new Dictionary<string, double>();
 
     /// <summary>Ao acabar o tempo, devolve a quem criou o escudo uma fração do que sobrou, em recurso (Barreira NH3+, T-061).</summary>
     public ShieldRefundDefinition? Refund { get; init; }
