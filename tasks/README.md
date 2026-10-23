@@ -53,8 +53,8 @@ Fluxo para você:
 | Fase | Objetivo | Estado do plano |
 |---|---|---|
 | **0 — Protótipo de combate** | Arena local, 4 classes com 3 habilidades + ataque básico, 4 inimigos, Matriarca simplificada, simulador de encontros | **Concluída** (T-025: aprovada como base; seção 6) |
-| **1 — Rede mínima** | Servidor dedicado na VPS, 4 jogadores na mesma arena, login de desenvolvimento | **Detalhada** (T-030; seção 6b) |
-| **2 — Persistência e progressão** | Contas, personagens, inventário, Cidade + Campos online; atributos, níveis, equipamento e habilidades reformuladas (`design/progression-v0.1.md`) | Esboço (seção 7) — detalhada pela T-120 |
+| **1 — Rede mínima** | Servidor dedicado na VPS, 4 jogadores na mesma arena, login de desenvolvimento | **Concluída** (T-111: playtest online aprovado; seção 6b) |
+| **2 — Persistência e progressão** | Contas, personagens, inventário, Cidade + Campos online; atributos, níveis, equipamento e habilidades reformuladas (`design/progression-v0.1.md`) | **Detalhada** (T-120; seção 6d) |
 | **3 — Primeiro mapa completo** | Floresta, Ruínas, Cripta instanciada, Vigia Sem Rosto | Esboço |
 | **4 — Operação** | CI/CD, métricas, testes de carga, produção separada | Esboço |
 
@@ -246,11 +246,77 @@ Arte/mapas:   T-050 ─┬─► T-053 ─► T-054 ─┐
 
 ---
 
+## 6d. Tarefas da fase 2 (persistência e progressão)
+
+Detalhadas pela T-120 a partir de `design/progression-v0.1.md` (§9: Core antes do conteúdo, conteúdo antes do balanceamento), do esboço da seção 7 e dos Resultados da fase 1. A trilha de habilidades (NH) já está pronta; a de arte e mapas não — a T-214 usa mapas provisórios se a T-051/T-055 ainda não existirem.
+
+### Índice
+
+| ID | Tarefa | Ambiente | Modelo | Depende de |
+|---|---|---|---|---|
+| **Progressão no Core** | | | | |
+| [T-201](fase-2/T-201-core-atributos-e-escala.md) | Core: atributos, escala das habilidades, defesa e crítico | VPS | **Forte** | — |
+| [T-202](fase-2/T-202-dados-escala-das-habilidades.md) | Dados: escala de todas as habilidades e NH | VPS | Médio | 201 |
+| [T-203](fase-2/T-203-core-niveis-xp-e-pontos.md) | Core: níveis, XP, pontos de atributo e de habilidade | VPS | **Forte** | 201 |
+| [T-204](fase-2/T-204-core-itens-equipamento-e-queda.md) | Core: itens, inventário, equipamento e queda | VPS | **Forte** | 201 |
+| [T-205](fase-2/T-205-dados-itens-e-niveis-dos-monstros.md) | Dados: itens, tabelas de queda e níveis dos monstros | VPS | Médio | 203, 204 |
+| [T-206](fase-2/T-206-simulador-perfis-por-nivel.md) | Simulador: perfis por nível e equipamento, testes de design da progressão | VPS | Médio | 202, 203, 205 |
+| [T-207](fase-2/T-207-pendencias-da-fase-1.md) | Servidor e log: pendências da fase 1 (nível de log, SIGTERM, log de status) | VPS | Leve | — |
+| **Contas e persistência** | | | | |
+| [T-210](fase-2/T-210-postgres-e-persistencia.md) | PostgreSQL no Compose e camada de persistência | VPS | Médio | — |
+| [T-211](fase-2/T-211-api-contas-e-personagens.md) | `Game.Api`: cadastro, login, token e personagens | VPS | **Forte** | 210 |
+| [T-212](fase-2/T-212-servidor-personagem-persistente.md) | Servidor: entra com token, carrega e salva o personagem | VPS | **Forte** | 203, 204, 210, 211 |
+| [T-213](fase-2/T-213-caddy-https-e-backup.md) | Caddy com HTTPS para a API e backup do banco fora da VPS | VPS | Humano + Leve | 211 |
+| **Mundo** | | | | |
+| [T-214](fase-2/T-214-servidor-zonas-cidade-e-campos.md) | Servidor: zonas abertas, Cidade e Campos, troca pelo portão | VPS | **Forte** | 212 |
+| [T-215](fase-2/T-215-dados-campos-da-vigilia.md) | Dados: Campos da Vigília (surgimentos e níveis) | VPS | Médio | 205, 214 |
+| **Cliente** | | | | |
+| [T-220](fase-2/T-220-cliente-login-e-personagens.md) | Cliente: login, seleção e criação de personagem | Windows | Médio | 211 |
+| [T-221](fase-2/T-221-cliente-personagem-e-habilidades.md) | Cliente: tela de personagem (atributos) e de habilidades (pontos e NH) | Windows | Médio | 203, 212 |
+| [T-222](fase-2/T-222-cliente-inventario-e-equipamento.md) | Cliente: inventário, equipamento e saque | Windows | Médio | 204, 212 |
+| [T-223](fase-2/T-223-cliente-zonas.md) | Cliente: troca de zona, Cidade e Campos | Windows | Médio | 214, 220 |
+| **Fechamento** | | | | |
+| [T-230](fase-2/T-230-playtest-fase-2.md) | Playtest da fase 2 (inclui as 4 pessoas pendentes da T-111) | Windows | Humano | 206, 207, 213, 215, 221, 222, 223 |
+| [T-240](fase-2/T-240-planejar-fase-3.md) | Detalhar a fase 3 em tarefas | VPS | **Forte** | 230 |
+
+### Ondas de execução
+
+| Onda | VPS | Windows |
+|---|---|---|
+| 1 | T-201, T-207, T-210 | — |
+| 2 | T-202, T-203, T-204, T-211 | — |
+| 3 | T-205, T-212, T-213 | T-220 |
+| 4 | T-206, T-214 | T-221, T-222 |
+| 5 | T-215 | T-223 |
+| 6 | — | T-230 |
+| 7 | T-240 | — |
+
+Cuidados de integração: T-203 e T-204 mexem no Core e no protocolo ao mesmo tempo (ambas sobem `ProtocolVersion` e criam tags de componente): integre a 203 antes da 204 e ajuste a versão e as tags na segunda. A T-207 toca o servidor e o log, sem conflito com a onda 1. A T-210 só adiciona projeto e serviço novos.
+
+### Grafo de dependências
+
+```text
+T-201 ─┬─► T-202 ───────────────────────────────┐
+       ├─► T-203 ─┬─► T-205 ─┬──────────────────┼─► T-206 ─────────┐
+       └─► T-204 ─┘          └─► T-215 ◄─┐      │                  │
+T-210 ─► T-211 ─┬─► T-212 ◄── (203, 204) │      │                  │
+                │     ├─► T-214 ─────────┘      │                  │
+                │     ├─► T-221 ◄── 203         │                  ├─► T-230 ─► T-240
+                │     └─► T-222 ◄── 204         │                  │
+                ├─► T-213 ──────────────────────┼──────────────────┤
+                └─► T-220 ─► T-223 ◄── T-214    │                  │
+T-207 ──────────────────────────────────────────┴──────────────────┘
+```
+
+---
+
 ## 7. Fases seguintes (esboço)
 
-Serão convertidas em arquivos de tarefa no fim de cada fase (T-120 para a fase 2). A fase 1 já está detalhada na seção 6b.
+Serão convertidas em arquivos de tarefa no fim de cada fase (T-240 para a fase 3). As fases 1 e 2 já estão detalhadas nas seções 6b e 6d.
 
 ### Fase 2 — Persistência e progressão
+
+Detalhada na seção 6d (T-120). Esboço original, mantido como histórico:
 
 | Tarefa | Ambiente | Modelo |
 |---|---|---|
