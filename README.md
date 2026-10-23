@@ -137,6 +137,41 @@ Digite `restart` (ou `status`) e Enter. Para sair do console use **Ctrl+C**: com
 
 **Parar:** `docker compose -f deploy/compose.yml down`.
 
+### Banco de dados (PostgreSQL)
+
+Configurado na T-210. O `deploy/compose.yml` sobe o serviço `postgres` (imagem `postgres:17-alpine`, volume `pgdata`, **sem porta publicada**: só os serviços do Compose o alcançam). Também sobe o `migrate`, que aplica as migrations do `src/Game.Persistence` a cada `up` e sai.
+
+**Primeira vez:** crie `deploy/.env` (fora do Git) com a senha. Sem ele, o `docker compose` recusa subir.
+
+```bash
+cp deploy/.env.example deploy/.env
+sed -i "s/troque-esta-senha/$(openssl rand -hex 24)/" deploy/.env
+docker compose -f deploy/compose.yml up -d --build
+docker compose -f deploy/compose.yml logs migrate
+```
+
+**Abrir um console SQL:**
+
+```bash
+docker compose -f deploy/compose.yml exec postgres psql -U mmo -d mmo
+```
+
+**Nova migration** (depois de mudar as entidades; o teste `Model_has_no_changes_missing_a_migration` acusa se faltar):
+
+```bash
+dotnet tool install --global dotnet-ef --version 10.0.13
+dotnet ef migrations add NomeDaMudanca --project src/Game.Persistence --output-dir Migrations
+```
+
+**Testes de integração:** os testes de `tests/Game.Persistence.Tests` que usam o banco são pulados sem a variável `MMO_TEST_DB`. Na VPS, use um PostgreSQL descartável, separado do banco do Compose:
+
+```bash
+./deploy/test-db.sh up
+export MMO_TEST_DB="Host=127.0.0.1;Port=55432;Username=postgres;Password=test;Database=postgres"
+dotnet test tests/Game.Persistence.Tests
+./deploy/test-db.sh down
+```
+
 **Conectar do Windows:** no cliente, menu **Jogar online** com `31.97.162.124:7777`, ou abra o cliente com `--server=31.97.162.124:7777`. O conteúdo (`data/`) do cliente precisa ser o mesmo do servidor: o fingerprint é conferido na conexão.
 
 **Alternativa com systemd** (se o Docker atrapalhar o UDP ou o debug): `deploy/systemd/mmo-game-server.service` é uma unidade de exemplo (publica em `/opt/mmo-rpg/game-server`, usuário `mmo-game`, `Restart=always`). Os passos de instalação estão no comentário do arquivo. Ela **não está ativada**, e as duas formas não podem rodar juntas, porque usam a mesma porta.

@@ -1,6 +1,7 @@
-# Deploy de desenvolvimento (T-110). Na raiz do repositório:
+# Deploy de desenvolvimento (T-110, T-210). Na raiz do repositório:
 #   docker compose -f deploy/compose.yml up -d --build
-# Portas publicadas aqui ignoram o ufw: publique só 7777/udp.
+# Precisa de deploy/.env com POSTGRES_PASSWORD (modelo em deploy/.env.example).
+# Portas publicadas aqui ignoram o ufw: publique só 7777/udp. O PostgreSQL fica só na rede interna.
 name: mmo-rpg
 
 services:
@@ -14,3 +15,34 @@ services:
       - "7777:7777/udp"
     restart: unless-stopped
     stdin_open: true # console do servidor via "docker compose attach" (restart · status)
+
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-mmo}
+      POSTGRES_DB: ${POSTGRES_DB:-mmo}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD em deploy/.env (modelo em deploy/.env.example)}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+    # sem "ports:": só os serviços do Compose alcançam o banco
+
+  migrate:
+    build:
+      context: ..
+      dockerfile: deploy/migrate/Dockerfile
+    image: mmo-rpg/migrate:dev
+    environment:
+      MMO_DB_CONNECTION: "Host=postgres;Database=${POSTGRES_DB:-mmo};Username=${POSTGRES_USER:-mmo};Password=${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD em deploy/.env}"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no" # aplica as migrations pendentes e sai
+
+volumes:
+  pgdata:
