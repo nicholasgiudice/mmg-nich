@@ -24,7 +24,7 @@ internal static class RealContent
             .Select(f => (Path.GetFileName(f), File.ReadAllText(f)));
         var db = GameDataLoader.LoadSources(sources).GetDatabaseOrThrow();
         return new ContentCatalog(db.Classes.Values, db.Abilities.Values, db.Statuses.Values, db.Areas.Values,
-            db.Monsters.Values, db.Arenas.Values, db.Encounters.Values)
+            db.Monsters.Values, db.Arenas.Values, db.Encounters.Values, db.Items.Values)
         {
             Rules = db.Rules,
             Threat = db.Threat,

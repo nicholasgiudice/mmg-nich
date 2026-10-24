@@ -20,6 +20,8 @@ public static class ProtocolVersion
     /// 3 (T-201): componente <c>CharacterStats</c>, defesa no <c>UnitInfo</c> e crítico nos eventos de dano, cura e escudo.
     /// 4 (T-203): componente <c>CharacterProgress</c>, nível no <c>UnitInfo</c>, eventos de XP, nível e pontos e intenções
     /// de pontos no <c>NetIntent</c>.
+    /// 5 (T-204): componentes <c>Inventory</c>, <c>Equipment</c> e <c>GroundItem</c>, bônus de vida, crítico e Mana/s no
+    /// <c>CharacterStats</c>, eventos de itens e intenções de equipar, desequipar, pegar e largar (campo <c>Slot</c>).
     /// </summary>
-    public const int Current = 4;
+    public const int Current = 5;
 }

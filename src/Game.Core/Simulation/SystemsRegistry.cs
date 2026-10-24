@@ -19,5 +19,6 @@ public static class SystemsRegistry
         b.AddSystem(SystemOrder.Ai, new Combat.Ai.AiSystem()); // T-011
         b.AddSystem(SystemOrder.Death, new Systems.DeathSystem());
         b.AddSystem(SystemOrder.Progression, new Combat.Progression.ProgressionSystem()); // T-203
+        b.AddSystem(SystemOrder.Items, new Combat.Items.ItemSystem()); // T-204
     }
 }

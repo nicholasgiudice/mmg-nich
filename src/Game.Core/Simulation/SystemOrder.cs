@@ -20,5 +20,6 @@ public static class SystemOrder
     public const int Ai = 5000;         // T-011
     public const int Death = 9000;      // converte vida <= 0 em EntityDied; deve ser quase o último
     public const int Progression = 9500; // T-203: XP pelas mortes do tick e intenções de pontos (depois de Death)
+    public const int Items = 9600;       // T-204: intenções de itens e prazo dos itens no chão (a queda sai da progressão)
     public const int CombatLog = 9900;  // T-013 (apenas lê eventos)
 }

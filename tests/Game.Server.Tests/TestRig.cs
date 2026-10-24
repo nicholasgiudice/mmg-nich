@@ -77,7 +77,7 @@ internal sealed class TestRig
             Enemies = enemies.Select(e => new EnemySpawnDefinition { Monster = e.Monster, Position = new PositionDefinition(e.X, e.Y) }).ToList(),
         };
         return new ContentCatalog(c.Classes.Values, c.Abilities.Values, c.Statuses.Values, c.Areas.Values,
-            c.Monsters.Values.Append(dummy), c.Arenas.Values.Append(arena), c.Encounters.Values.Append(encounter))
+            c.Monsters.Values.Append(dummy), c.Arenas.Values.Append(arena), c.Encounters.Values.Append(encounter), c.Items.Values)
         {
             Rules = c.Rules,
             Threat = c.Threat,

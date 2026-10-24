@@ -98,7 +98,7 @@ internal static class DesignHarness
             Players = real.Players.Where(p => p.Class != "class.cleric").ToList(),
         };
         return new ContentCatalog(c.Classes.Values, c.Abilities.Values, c.Statuses.Values, c.Areas.Values,
-            c.Monsters.Values, c.Arenas.Values, c.Encounters.Values.Append(derived))
+            c.Monsters.Values, c.Arenas.Values, c.Encounters.Values.Append(derived), c.Items.Values)
         {
             Rules = c.Rules,
             Threat = c.Threat,

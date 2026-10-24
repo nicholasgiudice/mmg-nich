@@ -34,7 +34,7 @@ internal sealed record Entry<T>(T Value, string File, string Path);
 /// <summary>
 /// Lê arquivos <c>*.json</c> com objetos raiz do tipo
 /// <c>{ "classes": [...], "abilities": [...], "statuses": [...], "areas": [...],
-/// "monsters": [...], "arenas": [...], "encounters": [...] }</c> e valida o conjunto.
+/// "monsters": [...], "arenas": [...], "encounters": [...], "items": [...] }</c> e valida o conjunto.
 /// </summary>
 public static class GameDataLoader
 {
@@ -86,7 +86,8 @@ public static class GameDataLoader
             content.Areas.Select(e => e.Value),
             content.Monsters.Select(e => e.Value),
             content.Arenas.Select(e => e.Value),
-            content.Encounters.Select(e => e.Value))
+            content.Encounters.Select(e => e.Value),
+            content.Items.Select(e => e.Value))
         {
             Rules = content.Rules,
             Threat = content.Threat ?? new Game.Core.Combat.Threat.ThreatRules(),
@@ -127,6 +128,7 @@ public static class GameDataLoader
                     case "monsters": ReadList(file, property, content.Monsters, errors); break;
                     case "arenas": ReadList(file, property, content.Arenas, errors); break;
                     case "encounters": ReadList(file, property, content.Encounters, errors); break;
+                    case "items": ReadList(file, property, content.Items, errors); break;
                     case "rules": ReadRules(file, property, content.RuleSections, errors); break;
                     case "threat": ReadObject<Game.Core.Combat.Threat.ThreatRules>(file, property, v => content.Threat = v, errors); break;
                     case "$schema": break;
@@ -293,6 +295,7 @@ internal sealed class RawContent
     public List<Entry<MonsterDefinition>> Monsters { get; } = [];
     public List<Entry<ArenaDefinition>> Arenas { get; } = [];
     public List<Entry<EncounterDefinition>> Encounters { get; } = [];
+    public List<Entry<ItemBaseDefinition>> Items { get; } = [];
 
     /// <summary>Seções de "rules" (nome -> JSON, arquivo de origem).</summary>
     public Dictionary<string, (JsonElement Value, string File)> RuleSections { get; } = new(StringComparer.Ordinal);

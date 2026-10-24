@@ -18,6 +18,9 @@ public enum LogCategory
 
     /// <summary>XP, níveis e pontos (T-203).</summary>
     Progressao,
+
+    /// <summary>Quedas, saque e equipamento (T-204).</summary>
+    Itens,
 }
 
 /// <summary>

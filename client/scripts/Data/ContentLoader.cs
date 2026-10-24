@@ -34,7 +34,7 @@ public static class ContentLoader
 
         var db = result.Database!;
         return new ContentCatalog(db.Classes.Values, db.Abilities.Values, db.Statuses.Values, db.Areas.Values,
-            db.Monsters.Values, db.Arenas.Values, db.Encounters.Values)
+            db.Monsters.Values, db.Arenas.Values, db.Encounters.Values, db.Items.Values)
         {
             Rules = db.Rules,
             Threat = db.Threat,

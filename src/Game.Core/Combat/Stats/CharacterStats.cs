@@ -6,7 +6,7 @@ namespace Game.Core.Combat.Stats;
 
 /// <summary>
 /// Estatísticas de um personagem (T-201, <c>design/progression-v0.1.md</c> §3–§4): atributos finais (perfil + pontos +
-/// equipamento), dano de arma, armadura, resistência e nível. As derivadas (crítico, velocidade de ataque) saem daqui
+/// equipamento), dano de arma, armadura, resistência e nível. Os bônus de vida, crítico e Mana/s vêm dos afixos (T-204). As derivadas (crítico, velocidade de ataque) saem daqui
 /// com as <see cref="StatRules"/> (<see cref="StatMath"/>). Replicável: o cliente mostra.
 /// </summary>
 public sealed class CharacterStats : IComponent, IReplicated
@@ -27,6 +27,15 @@ public sealed class CharacterStats : IComponent, IReplicated
     /// <summary>Reduz dano das outras escolas (arcano, fogo, gelo, natureza, sagrado).</summary>
     public float Resistance { get; set; }
 
+    /// <summary>Vida máxima a mais (afixos, T-204).</summary>
+    public float HealthBonus { get; set; }
+
+    /// <summary>Chance de crítico a mais (fração; afixos, T-204). Soma antes do teto.</summary>
+    public float CritBonus { get; set; }
+
+    /// <summary>Mana por segundo a mais (afixos, T-204).</summary>
+    public float ManaRegen { get; set; }
+
     public IComponent Clone() => new CharacterStats
     {
         Level = Level,
@@ -38,6 +47,9 @@ public sealed class CharacterStats : IComponent, IReplicated
         WeaponDamage = WeaponDamage,
         Armor = Armor,
         Resistance = Resistance,
+        HealthBonus = HealthBonus,
+        CritBonus = CritBonus,
+        ManaRegen = ManaRegen,
     };
 
     public void WriteHash(StateHasher hasher)
@@ -51,13 +63,19 @@ public sealed class CharacterStats : IComponent, IReplicated
         hasher.Add(WeaponDamage);
         hasher.Add(Armor);
         hasher.Add(Resistance);
+        hasher.Add(HealthBonus);
+        hasher.Add(CritBonus);
+        hasher.Add(ManaRegen);
     }
 }
 
 /// <summary>Contas das estatísticas (T-201). Tudo determinístico; o crítico usa o RNG da simulação.</summary>
 public static class StatMath
 {
-    /// <summary>Estatísticas no nível 1 a partir do perfil da classe e da arma inicial; null se a classe não tem atributos.</summary>
+    /// <summary>
+    /// Estatísticas no nível 1 só com o perfil da classe (sem equipamento: ver <see cref="Items.ItemMath.Recompute"/>);
+    /// null se a classe não tem atributos.
+    /// </summary>
     public static CharacterStats? FromClass(ClassDefinition cls)
     {
         if (cls.Attributes is not { } a)
@@ -65,25 +83,17 @@ public static class StatMath
             return null;
         }
 
-        return new CharacterStats
-        {
-            Str = a.Str,
-            Dex = a.Dex,
-            Agi = a.Agi,
-            Int = a.Int + (cls.StartingWeapon?.Int ?? 0),
-            Vit = a.Vit,
-            WeaponDamage = (float)(cls.StartingWeapon?.Damage ?? 0),
-        };
+        return new CharacterStats { Str = a.Str, Dex = a.Dex, Agi = a.Agi, Int = a.Int, Vit = a.Vit };
     }
 
     public static double MaxHealth(ClassDefinition cls, CharacterStats s, StatRules r) =>
-        cls.BaseHealth + (s.Vit * r.HealthPerVit) + ((s.Level - 1) * cls.HealthGrowth);
+        cls.BaseHealth + (s.Vit * r.HealthPerVit) + ((s.Level - 1) * cls.HealthGrowth) + s.HealthBonus;
 
     public static double MaxMana(CharacterStats s, StatRules r) => r.ManaBase + (r.ManaPerInt * s.Int);
 
-    public static double ManaRegenBonus(CharacterStats s, StatRules r) => s.Int * r.ManaRegenPerInt;
+    public static double ManaRegenBonus(CharacterStats s, StatRules r) => (s.Int * r.ManaRegenPerInt) + s.ManaRegen;
 
-    public static double CritChance(CharacterStats s, StatRules r) => Math.Min(r.CritMax, r.CritBase + (s.Agi * r.CritPerAgi));
+    public static double CritChance(CharacterStats s, StatRules r) => Math.Min(r.CritMax, r.CritBase + (s.Agi * r.CritPerAgi) + s.CritBonus);
 
     /// <summary>Divisor da recarga do ataque básico: 1 + min(AGI × porPonto, máximo).</summary>
     public static double AttackSpeedFactor(CharacterStats s, StatRules r) => 1 + Math.Min(r.AttackSpeedMax, s.Agi * r.AttackSpeedPerAgi);

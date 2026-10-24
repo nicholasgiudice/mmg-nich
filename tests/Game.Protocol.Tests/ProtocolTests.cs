@@ -55,6 +55,10 @@ public class ProtocolTests(ITestOutputHelper output)
             new SpendAttributePointIntent(new EntityId(99), Game.Core.Definitions.AttributeKind.Vit),
             new RaiseSkillRankIntent(new EntityId(99), "archer.hunters_mark"),
             new ResetPointsIntent(new EntityId(99)),
+            new EquipItemIntent(new EntityId(99), 17),
+            new UnequipItemIntent(new EntityId(99), Game.Core.Definitions.EquipSlot.Feet),
+            new PickUpItemIntent(new EntityId(99), new EntityId(41)),
+            new DropItemIntent(new EntityId(99), 29),
         };
 
         for (var i = 0; i < intents.Length; i++)
@@ -68,6 +72,39 @@ public class ProtocolTests(ITestOutputHelper output)
         Assert.Null(new NetIntent(NetIntentKind.Move, new Vector2(float.NaN, 0), null, null, null).ToIntent(me));
         Assert.Null(new NetIntent(NetIntentKind.RaiseSkillRank, default, "", null, null).ToIntent(me));
         Assert.Null(new NetIntent(NetIntentKind.SpendAttributePoint, default, null, null, null, (Game.Core.Definitions.AttributeKind)99).ToIntent(me));
+        Assert.Null(new NetIntent(NetIntentKind.UnequipItem, default, null, null, null, Slot: 6).ToIntent(me));
+        Assert.Null(new NetIntent(NetIntentKind.PickUpItem, default, null, null, null).ToIntent(me));
+    }
+
+    [Fact]
+    public void Inventory_equipment_and_ground_items_round_trip()
+    {
+        var content = RealContent();
+        var world = WorldBuilder.CreateDefault(5, null, content);
+        var hero = Game.Core.Combat.Progression.Leveling.SpawnCharacter(world, content.Classes["class.mage"], new Vector2(1, 1));
+        var ring = new Game.Core.Combat.Items.ItemInstance("accessory.ring", 7, Game.Core.Definitions.ItemRarity.Rare, ["affix.crit", "affix.mana_regen"]);
+        hero.Get<Game.Core.Combat.Items.Inventory>()[3] = ring;
+        hero.Get<Game.Core.Combat.Items.Inventory>()[29] = Game.Core.Combat.Items.ItemInstance.Common("armor.light_feet", 2);
+        Assert.Null(Game.Core.Combat.Items.Gear.Equip(world, hero, 3));
+        Game.Core.Combat.Items.Gear.SpawnGround(world, new Vector2(4, 2), ring with { Level = 8 }, [hero.Id.Value, 9], EntityId.None);
+
+        var snap = world.Snapshot(SnapshotScope.Replicated);
+        var msg = RoundTrip(SnapshotMessage.From(snap));
+
+        for (var i = 0; i < snap.Entities.Count; i++)
+        {
+            Assert.Equal(snap.Entities[i].Components.Select(Hash), msg.Entities[i].Components.Select(Hash));
+        }
+
+        var inv = msg.Entities[0].Components.OfType<Game.Core.Combat.Items.Inventory>().Single();
+        Assert.Equal((30, "armor.light_feet"), (inv.Capacity, inv[29]!.BaseId));
+        var eq = msg.Entities[0].Components.OfType<Game.Core.Combat.Items.Equipment>().Single();
+        Assert.Equal(new[] { "affix.crit", "affix.mana_regen" }, eq[Game.Core.Definitions.EquipSlot.Accessory]!.Affixes);
+        var stats = msg.Entities[0].Components.OfType<Game.Core.Combat.Stats.CharacterStats>().Single();
+        Assert.True(stats.CritBonus > 0 && stats.ManaRegen > 0 && stats.Resistance > 0);
+        var ground = msg.Entities[1].Components.OfType<Game.Core.Combat.Items.GroundItem>().Single();
+        Assert.Equal(8, ground.Item.Level);
+        Assert.Equal(new[] { hero.Id.Value, 9 }, ground.Owners);
     }
 
     [Fact]
@@ -209,7 +246,7 @@ public class ProtocolTests(ITestOutputHelper output)
 
         var db = GameDataLoader.LoadDirectory(Path.Combine(dir.FullName, "data")).GetDatabaseOrThrow();
         return new ContentCatalog(db.Classes.Values, db.Abilities.Values, db.Statuses.Values, db.Areas.Values,
-            db.Monsters.Values, db.Arenas.Values, db.Encounters.Values)
+            db.Monsters.Values, db.Arenas.Values, db.Encounters.Values, db.Items.Values)
         {
             Rules = db.Rules,
             Threat = db.Threat,

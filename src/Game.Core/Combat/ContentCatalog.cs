@@ -17,7 +17,8 @@ public sealed class ContentCatalog
         IEnumerable<AreaDefinition>? areas = null,
         IEnumerable<MonsterDefinition>? monsters = null,
         IEnumerable<ArenaDefinition>? arenas = null,
-        IEnumerable<EncounterDefinition>? encounters = null)
+        IEnumerable<EncounterDefinition>? encounters = null,
+        IEnumerable<ItemBaseDefinition>? items = null)
     {
         Classes = Index(classes, x => x.Id);
         Abilities = Index(abilities, x => x.Id);
@@ -26,6 +27,7 @@ public sealed class ContentCatalog
         Monsters = Index(monsters, x => x.Id);
         Arenas = Index(arenas, x => x.Id);
         Encounters = Index(encounters, x => x.Id);
+        Items = Index(items, x => x.Id);
 
         // NH pré-calculados: o catálogo é imutável e compartilhado entre mundos (inclusive em paralelo).
         foreach (var a in Abilities.Values)
@@ -49,6 +51,9 @@ public sealed class ContentCatalog
     public IReadOnlyDictionary<string, MonsterDefinition> Monsters { get; }
     public IReadOnlyDictionary<string, ArenaDefinition> Arenas { get; }
     public IReadOnlyDictionary<string, EncounterDefinition> Encounters { get; }
+
+    /// <summary>Itens base (T-204). As regras de afixos e queda estão em <see cref="RulesDefinition.Items"/>.</summary>
+    public IReadOnlyDictionary<string, ItemBaseDefinition> Items { get; }
 
     /// <summary>Regras globais (data/rules.json). Seções ausentes = padrões neutros.</summary>
     public RulesDefinition Rules { get; init; } = new();
