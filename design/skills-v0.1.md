@@ -76,7 +76,7 @@ Custo 80, recarga 90 s. Escudo de 6 s em todos os aliados no raio (inclui o Guer
 
 ## Arqueiro
 
-Ataque básico (sem NH): **Disparo** — 1 × ARMA + 1 × DES = 18, a cada 1,0 s.
+Ataque básico (sem NH): **Disparo** — 1 × ARMA + 0,92 × DES = 17, a cada 1,0 s. (Corrigido na T-202: a calibração da T-031 é 17; com 1 × DES dava 18.)
 
 ### Disparo Potente — tiro forte em um alvo
 
