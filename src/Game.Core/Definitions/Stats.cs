@@ -10,13 +10,6 @@ public sealed record AttributeSet
     public int Vit { get; init; }
 }
 
-/// <summary>Arma inicial da classe (T-201) até existirem itens (T-204): dano de arma (ARMA) e INT extra (cajado).</summary>
-public sealed record StartingWeaponDefinition
-{
-    public double Damage { get; init; }
-    public int Int { get; init; }
-}
-
 /// <summary>
 /// Números das estatísticas derivadas (T-201, data/rules.json, seção <c>stats</c>; §3–§4 do design de progressão).
 /// Os padrões são os do design, então valem também sem a seção.

@@ -66,6 +66,11 @@ public sealed class CombatLogContext
             return status.Name;
         }
 
+        if (content.Items.TryGetValue(sourceId, out var item))
+        {
+            return item.Name;
+        }
+
         return sourceId;
     }
 

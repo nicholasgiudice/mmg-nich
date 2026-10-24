@@ -27,6 +27,7 @@ internal static partial class GameDataValidator
         foreach (var e in c.Areas) { ValidateArea(e, refs, errors); }
         foreach (var e in c.Monsters) { ValidateMonster(e, refs, errors); }
         ValidateRules(c.Rules, errors);
+        ValidateItems(c, classes, errors);
         foreach (var e in c.Arenas) { ValidateArena(e, errors); }
         var abilityDefs = c.Abilities.GroupBy(a => a.Value.Id).ToDictionary(g => g.Key, g => g.First().Value, StringComparer.Ordinal);
         foreach (var e in c.Encounters)
@@ -109,7 +110,6 @@ internal static partial class GameDataValidator
             ctx.NonNegative("healthGrowth", x.HealthGrowth);
             var a = x.Attributes;
             if (a.Str < 0 || a.Dex < 0 || a.Agi < 0 || a.Int < 0 || a.Vit < 0) { ctx.Error("attributes", "Atributos não podem ser negativos."); }
-            if (x.StartingWeapon is { } w) { ctx.NonNegative("startingWeapon.damage", w.Damage); }
         }
 
         ctx.NonNegative("speed", x.Speed);

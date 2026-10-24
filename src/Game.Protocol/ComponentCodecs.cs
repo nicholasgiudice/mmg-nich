@@ -1,6 +1,7 @@
 using System.Buffers;
 using Game.Core.Combat;
 using Game.Core.Combat.Areas;
+using Game.Core.Combat.Items;
 using Game.Core.Combat.Phases;
 using Game.Core.Combat.Progression;
 using Game.Core.Combat.Stats;
@@ -38,6 +39,9 @@ public static class ComponentCodecs
         [typeof(PhaseState)] = 13,
         [typeof(CharacterStats)] = 14,
         [typeof(CharacterProgress)] = 15,
+        [typeof(Inventory)] = 16,
+        [typeof(Equipment)] = 17,
+        [typeof(GroundItem)] = 18,
     };
 
     internal static void Write<TB>(ref MemoryPackWriter<TB> w, IComponent component)
@@ -175,6 +179,9 @@ public static class ComponentCodecs
                 w.F(s.WeaponDamage);
                 w.F(s.Armor);
                 w.F(s.Resistance);
+                w.F(s.HealthBonus);
+                w.F(s.CritBonus);
+                w.F(s.ManaRegen);
                 break;
             case CharacterProgress p:
                 w.I(p.Experience);
@@ -186,6 +193,38 @@ public static class ComponentCodecs
                 w.I(p.AllocatedAgi);
                 w.I(p.AllocatedInt);
                 w.I(p.AllocatedVit);
+                break;
+            case Inventory inv:
+                w.I(inv.Capacity);
+                foreach (var item in inv.Slots)
+                {
+                    w.B(item is not null);
+                    if (item is not null)
+                    {
+                        WriteItem(ref w, item);
+                    }
+                }
+
+                break;
+            case Equipment eq:
+                var equipped = eq.Items.ToList();
+                w.I(equipped.Count);
+                foreach (var (slot, item) in equipped)
+                {
+                    w.E(slot);
+                    WriteItem(ref w, item);
+                }
+
+                break;
+            case GroundItem g:
+                WriteItem(ref w, g.Item);
+                w.I(g.Owners.Count);
+                foreach (var o in g.Owners)
+                {
+                    w.I(o);
+                }
+
+                w.L(g.ExpiresAtTick);
                 break;
         }
     }
@@ -329,6 +368,9 @@ public static class ComponentCodecs
                     WeaponDamage = r.F(),
                     Armor = r.F(),
                     Resistance = r.F(),
+                    HealthBonus = r.F(),
+                    CritBonus = r.F(),
+                    ManaRegen = r.F(),
                 };
             case 15:
                 return new CharacterProgress
@@ -343,10 +385,57 @@ public static class ComponentCodecs
                     AllocatedInt = r.I(),
                     AllocatedVit = r.I(),
                 };
+            case 16:
+                {
+                    var inv = new Inventory(Wire.Count(ref r));
+                    for (var i = 0; i < inv.Capacity; i++)
+                    {
+                        inv[i] = r.B() ? ReadItem(ref r) : null;
+                    }
+
+                    return inv;
+                }
+
+            case 17:
+                {
+                    var eq = new Equipment();
+                    var n = Wire.Count(ref r);
+                    for (var i = 0; i < n; i++)
+                    {
+                        var slot = r.E<EquipSlot>();
+                        eq[slot] = ReadItem(ref r);
+                    }
+
+                    return eq;
+                }
+
+            case 18:
+                {
+                    var item = ReadItem(ref r);
+                    var owners = new int[Wire.Count(ref r)];
+                    for (var i = 0; i < owners.Length; i++)
+                    {
+                        owners[i] = r.I();
+                    }
+
+                    return new GroundItem { Item = item, Owners = owners, ExpiresAtTick = r.L() };
+                }
+
             default:
                 throw new MemoryPackSerializationException($"Tag de componente desconhecida: {tag}");
         }
     }
+
+    private static void WriteItem<TB>(ref MemoryPackWriter<TB> w, ItemInstance item)
+        where TB : IBufferWriter<byte>
+    {
+        w.S(item.BaseId);
+        w.I(item.Level);
+        w.E(item.Rarity);
+        w.Strs(item.Affixes);
+    }
+
+    private static ItemInstance ReadItem(ref MemoryPackReader r) => new(r.S(), r.I(), r.E<ItemRarity>(), r.Strs());
 
     private static Faction? OptFaction(int v) =>
         v < 0 ? null : Enum.IsDefined((Faction)v) ? (Faction)v : throw new MemoryPackSerializationException($"Facção inválida: {v}");

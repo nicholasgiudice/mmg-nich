@@ -14,6 +14,7 @@
     "monsters": { "type": "array", "items": { "$ref": "#/$defs/monster" } },
     "arenas": { "type": "array", "items": { "$ref": "#/$defs/arena" } },
     "encounters": { "type": "array", "items": { "$ref": "#/$defs/encounter" } },
+    "items": { "type": "array", "items": { "$ref": "#/$defs/item" } },
     "rules": {
       "type": "object",
       "description": "Regras globais; uma seção por assunto (control, threat...).",
@@ -69,6 +70,44 @@
             "signatureRankLevels": { "type": "array", "minItems": 3, "items": { "type": "integer", "minimum": 1 } }
           }
         },
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "T-204: inventário, item no chão, tipos de armadura, afixos por raridade e tabelas de queda por categoria.",
+          "properties": {
+            "inventorySize": { "type": "integer", "minimum": 1 },
+            "pickupRange": { "type": "number", "exclusiveMinimum": 0 },
+            "groundDuration": { "$ref": "#/$defs/seconds" },
+            "armorTypes": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "heavy": { "$ref": "#/$defs/armorType" },
+                "medium": { "$ref": "#/$defs/armorType" },
+                "light": { "$ref": "#/$defs/armorType" }
+              }
+            },
+            "affixCount": { "$ref": "#/$defs/rarityValues" },
+            "affixes": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["id", "name", "value"],
+                "properties": { "id": { "$ref": "#/$defs/id" }, "name": { "type": "string" }, "value": { "$ref": "#/$defs/itemStat" } }
+              }
+            },
+            "drops": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "normal": { "$ref": "#/$defs/dropTable" },
+                "elite": { "$ref": "#/$defs/dropTable" },
+                "boss": { "$ref": "#/$defs/dropTable" }
+              }
+            }
+          }
+        },
         "control": {
           "type": "object",
           "additionalProperties": false,
@@ -107,6 +146,63 @@
     }
   },
   "$defs": {
+    "itemStat": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["stat"],
+      "description": "Valor = base + perLevel × nível do item. crit em fração (0,01 = 1%); mana_regen por segundo.",
+      "properties": {
+        "stat": {
+          "enum": ["weapon_damage", "armor", "resistance", "str", "dex", "agi", "int", "vit", "health", "crit", "mana_regen"]
+        },
+        "base": { "type": "number", "minimum": 0 },
+        "perLevel": { "type": "number", "minimum": 0 }
+      }
+    },
+    "item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "slot"],
+      "description": "T-204: item base. armorType obrigatório em head/chest/hands/feet; classes vazio = as do tipo de armadura ou todas.",
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "name": { "type": "string" },
+        "slot": { "enum": ["weapon", "head", "chest", "hands", "feet", "accessory"] },
+        "classes": { "$ref": "#/$defs/idList" },
+        "armorType": { "enum": ["heavy", "medium", "light"] },
+        "stats": { "type": "array", "items": { "$ref": "#/$defs/itemStat" } }
+      }
+    },
+    "armorType": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "classes": { "$ref": "#/$defs/idList" },
+        "armorMultiplier": { "type": "number", "minimum": 0 },
+        "resistanceFromArmor": { "type": "number", "minimum": 0 }
+      }
+    },
+    "rarityValues": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "common": { "type": "number", "minimum": 0 },
+        "uncommon": { "type": "number", "minimum": 0 },
+        "rare": { "type": "number", "minimum": 0 },
+        "epic": { "type": "number", "minimum": 0 }
+      }
+    },
+    "dropTable": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "chance": { "type": "number", "minimum": 0, "maximum": 1 },
+        "count": { "type": "integer", "minimum": 1 },
+        "rarity": { "$ref": "#/$defs/rarityValues" },
+        "guaranteedRarity": { "enum": ["common", "uncommon", "rare", "epic"] },
+        "items": { "$ref": "#/$defs/idList" }
+      }
+    },
     "id": {
       "type": "string",
       "pattern": "^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)*$",
@@ -146,11 +242,15 @@
         },
         "baseHealth": { "type": "number", "exclusiveMinimum": 0 },
         "healthGrowth": { "type": "number", "minimum": 0 },
-        "startingWeapon": {
-          "type": "object",
-          "additionalProperties": false,
-          "description": "Arma inicial até os itens (T-204): dano de arma e INT extra (cajado).",
-          "properties": { "damage": { "type": "number", "minimum": 0 }, "int": { "type": "integer", "minimum": 0 } }
+        "startingEquipment": {
+          "type": "array",
+          "description": "T-204: itens com que a classe começa equipada (comuns, sem afixos).",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["item"],
+            "properties": { "item": { "$ref": "#/$defs/id" }, "level": { "type": "integer", "minimum": 1 } }
+          }
         },
         "speed": { "type": "number", "minimum": 0 },
         "radius": { "type": "number", "exclusiveMinimum": 0 },

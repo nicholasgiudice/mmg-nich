@@ -2,6 +2,7 @@ using System.Buffers;
 using Game.Core.Combat;
 using Game.Core.Combat.Areas;
 using Game.Core.Combat.Effects;
+using Game.Core.Combat.Items;
 using Game.Core.Combat.Phases;
 using Game.Core.Combat.Progression;
 using Game.Core.Combat.Resources;
@@ -62,6 +63,12 @@ public static class EventCodecs
         [typeof(SkillRankRaised)] = 93,
         [typeof(PointsReset)] = 94,
         [typeof(ProgressionRejected)] = 95,
+        [typeof(ItemDropped)] = 100,
+        [typeof(ItemPickedUp)] = 101,
+        [typeof(ItemEquipped)] = 102,
+        [typeof(ItemUnequipped)] = 103,
+        [typeof(GroundItemExpired)] = 104,
+        [typeof(ItemRejected)] = 105,
     };
 
     internal static void Write<TB>(ref MemoryPackWriter<TB> w, GameEvent e)
@@ -154,6 +161,13 @@ public static class EventCodecs
             case SkillRankRaised x: w.Id(x.Entity); w.S(x.AbilityId); w.I(x.Rank); break;
             case PointsReset x: w.Id(x.Entity); w.I(x.AttributePoints); w.I(x.SkillPoints); break;
             case ProgressionRejected x: w.Id(x.Entity); w.S(x.Id); w.E(x.Reason); break;
+
+            case ItemDropped x: w.Id(x.Item); w.Id(x.Source); w.S(x.BaseId); w.I(x.Level); w.E(x.Rarity); break;
+            case ItemPickedUp x: w.Id(x.Entity); w.Id(x.Item); w.S(x.BaseId); w.I(x.InventorySlot); break;
+            case ItemEquipped x: w.Id(x.Entity); w.E(x.Slot); w.S(x.BaseId); w.S(x.PreviousId); break;
+            case ItemUnequipped x: w.Id(x.Entity); w.E(x.Slot); w.S(x.BaseId); w.I(x.InventorySlot); break;
+            case GroundItemExpired x: w.Id(x.Item); w.S(x.BaseId); break;
+            case ItemRejected x: w.Id(x.Entity); w.E(x.Action); w.E(x.Reason); break;
         }
     }
 
@@ -217,6 +231,13 @@ public static class EventCodecs
             93 => new SkillRankRaised(r.Id(), r.S(), r.I()),
             94 => new PointsReset(r.Id(), r.I(), r.I()),
             95 => new ProgressionRejected(r.Id(), r.S(), r.E<ProgressionRejectReason>()),
+
+            100 => new ItemDropped(r.Id(), r.Id(), r.S(), r.I(), r.E<ItemRarity>()),
+            101 => new ItemPickedUp(r.Id(), r.Id(), r.S(), r.I()),
+            102 => new ItemEquipped(r.Id(), r.E<EquipSlot>(), r.S(), r.S()),
+            103 => new ItemUnequipped(r.Id(), r.E<EquipSlot>(), r.S(), r.I()),
+            104 => new GroundItemExpired(r.Id(), r.S()),
+            105 => new ItemRejected(r.Id(), r.E<ItemAction>(), r.E<ItemRejectReason>()),
             _ => throw new MemoryPackSerializationException($"Tag de evento desconhecida: {tag}"),
         };
         e.Tick = tick;

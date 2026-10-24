@@ -1,0 +1,263 @@
+{
+  "$schema": "./schemas/game-data.schema.json",
+  "items": [
+    {
+      "id": "weapon.sword",
+      "name": "Espada",
+      "slot": "weapon",
+      "classes": ["class.warrior"],
+      "stats": [{ "stat": "weapon_damage", "base": 4, "perLevel": 1.0 }]
+    },
+    {
+      "id": "weapon.axe",
+      "name": "Machado",
+      "slot": "weapon",
+      "classes": ["class.warrior"],
+      "stats": [{ "stat": "weapon_damage", "base": 4, "perLevel": 1.0 }]
+    },
+    {
+      "id": "weapon.war_mace",
+      "name": "Maça de Guerra",
+      "slot": "weapon",
+      "classes": ["class.warrior"],
+      "stats": [{ "stat": "weapon_damage", "base": 4, "perLevel": 1.0 }]
+    },
+    {
+      "id": "weapon.bow",
+      "name": "Arco",
+      "slot": "weapon",
+      "classes": ["class.archer"],
+      "stats": [{ "stat": "weapon_damage", "base": 4, "perLevel": 1.0 }]
+    },
+    {
+      "id": "weapon.mace",
+      "name": "Maça",
+      "slot": "weapon",
+      "classes": ["class.cleric"],
+      "stats": [{ "stat": "weapon_damage", "base": 3, "perLevel": 0.9 }]
+    },
+    {
+      "id": "weapon.scepter",
+      "name": "Cetro",
+      "slot": "weapon",
+      "classes": ["class.cleric"],
+      "stats": [
+        { "stat": "weapon_damage", "base": 2, "perLevel": 0.6 },
+        { "stat": "int", "base": 1, "perLevel": 0.5 }
+      ]
+    },
+    {
+      "id": "weapon.staff",
+      "name": "Cajado",
+      "slot": "weapon",
+      "classes": ["class.mage"],
+      "stats": [
+        { "stat": "weapon_damage", "base": 2, "perLevel": 0.6 },
+        { "stat": "int", "base": 1, "perLevel": 0.5 }
+      ]
+    },
+    {
+      "id": "armor.heavy_head",
+      "name": "Elmo de Placas",
+      "slot": "head",
+      "armorType": "heavy",
+      "stats": [{ "stat": "armor", "base": 3, "perLevel": 1 }]
+    },
+    {
+      "id": "armor.heavy_chest",
+      "name": "Peitoral de Placas",
+      "slot": "chest",
+      "armorType": "heavy",
+      "stats": [{ "stat": "armor", "base": 6, "perLevel": 2 }]
+    },
+    {
+      "id": "armor.heavy_hands",
+      "name": "Manoplas de Placas",
+      "slot": "hands",
+      "armorType": "heavy",
+      "stats": [{ "stat": "armor", "base": 3, "perLevel": 1 }]
+    },
+    {
+      "id": "armor.heavy_feet",
+      "name": "Botas de Placas",
+      "slot": "feet",
+      "armorType": "heavy",
+      "stats": [{ "stat": "armor", "base": 3, "perLevel": 1 }]
+    },
+    {
+      "id": "armor.medium_head",
+      "name": "Elmo de Malha",
+      "slot": "head",
+      "armorType": "medium",
+      "stats": [{ "stat": "armor", "base": 3, "perLevel": 1 }]
+    },
+    {
+      "id": "armor.medium_chest",
+      "name": "Cota de Malha",
+      "slot": "chest",
+      "armorType": "medium",
+      "stats": [{ "stat": "armor", "base": 6, "perLevel": 2 }]
+    },
+    {
+      "id": "armor.medium_hands",
+      "name": "Luvas de Malha",
+      "slot": "hands",
+      "armorType": "medium",
+      "stats": [{ "stat": "armor", "base": 3, "perLevel": 1 }]
+    },
+    {
+      "id": "armor.medium_feet",
+      "name": "Botas de Malha",
+      "slot": "feet",
+      "armorType": "medium",
+      "stats": [{ "stat": "armor", "base": 3, "perLevel": 1 }]
+    },
+    {
+      "id": "armor.light_head",
+      "name": "Capuz de Tecido",
+      "slot": "head",
+      "armorType": "light",
+      "stats": [{ "stat": "armor", "base": 3, "perLevel": 1 }]
+    },
+    {
+      "id": "armor.light_chest",
+      "name": "Túnica de Tecido",
+      "slot": "chest",
+      "armorType": "light",
+      "stats": [{ "stat": "armor", "base": 6, "perLevel": 2 }]
+    },
+    {
+      "id": "armor.light_hands",
+      "name": "Luvas de Tecido",
+      "slot": "hands",
+      "armorType": "light",
+      "stats": [{ "stat": "armor", "base": 3, "perLevel": 1 }]
+    },
+    {
+      "id": "armor.light_feet",
+      "name": "Sapatos de Tecido",
+      "slot": "feet",
+      "armorType": "light",
+      "stats": [{ "stat": "armor", "base": 3, "perLevel": 1 }]
+    },
+    {
+      "id": "accessory.ring",
+      "name": "Anel",
+      "slot": "accessory",
+      "stats": [{ "stat": "resistance", "base": 4, "perLevel": 1.5 }]
+    }
+  ],
+  "rules": {
+    "items": {
+      "inventorySize": 30,
+      "pickupRange": 2,
+      "groundDuration": 120,
+      "armorTypes": {
+        "heavy": { "classes": ["class.warrior"], "armorMultiplier": 1.5, "resistanceFromArmor": 0 },
+        "medium": { "classes": ["class.warrior", "class.archer", "class.cleric"], "armorMultiplier": 1.0, "resistanceFromArmor": 0 },
+        "light": { "classes": [], "armorMultiplier": 0.6, "resistanceFromArmor": 0.5 }
+      },
+      "affixCount": { "common": 0, "uncommon": 1, "rare": 2, "epic": 2 },
+      "affixes": [
+        { "id": "affix.str", "name": "Força", "value": { "stat": "str", "base": 1, "perLevel": 0.4 } },
+        { "id": "affix.dex", "name": "Destreza", "value": { "stat": "dex", "base": 1, "perLevel": 0.4 } },
+        { "id": "affix.agi", "name": "Agilidade", "value": { "stat": "agi", "base": 1, "perLevel": 0.4 } },
+        { "id": "affix.int", "name": "Inteligência", "value": { "stat": "int", "base": 1, "perLevel": 0.4 } },
+        { "id": "affix.vit", "name": "Vitalidade", "value": { "stat": "vit", "base": 1, "perLevel": 0.4 } },
+        { "id": "affix.health", "name": "Vida", "value": { "stat": "health", "base": 0, "perLevel": 5 } },
+        { "id": "affix.crit", "name": "Crítico", "value": { "stat": "crit", "base": 0.005, "perLevel": 0.001 } },
+        {
+          "id": "affix.mana_regen",
+          "name": "Regeneração de Mana",
+          "value": { "stat": "mana_regen", "base": 0.2, "perLevel": 0.03 }
+        },
+        { "id": "affix.armor", "name": "Armadura", "value": { "stat": "armor", "base": 0, "perLevel": 2 } },
+        { "id": "affix.resistance", "name": "Resistência", "value": { "stat": "resistance", "base": 0, "perLevel": 2 } }
+      ],
+      "drops": {
+        "normal": {
+          "chance": 0.08,
+          "count": 1,
+          "rarity": { "common": 70, "uncommon": 25, "rare": 5, "epic": 0 },
+          "items": [
+            "weapon.sword",
+            "weapon.axe",
+            "weapon.war_mace",
+            "weapon.bow",
+            "weapon.mace",
+            "weapon.scepter",
+            "weapon.staff",
+            "armor.heavy_head",
+            "armor.heavy_chest",
+            "armor.heavy_hands",
+            "armor.heavy_feet",
+            "armor.medium_head",
+            "armor.medium_chest",
+            "armor.medium_hands",
+            "armor.medium_feet",
+            "armor.light_head",
+            "armor.light_chest",
+            "armor.light_hands",
+            "armor.light_feet",
+            "accessory.ring"
+          ]
+        },
+        "elite": {
+          "chance": 0.4,
+          "count": 1,
+          "rarity": { "common": 40, "uncommon": 45, "rare": 15, "epic": 0 },
+          "items": [
+            "weapon.sword",
+            "weapon.axe",
+            "weapon.war_mace",
+            "weapon.bow",
+            "weapon.mace",
+            "weapon.scepter",
+            "weapon.staff",
+            "armor.heavy_head",
+            "armor.heavy_chest",
+            "armor.heavy_hands",
+            "armor.heavy_feet",
+            "armor.medium_head",
+            "armor.medium_chest",
+            "armor.medium_hands",
+            "armor.medium_feet",
+            "armor.light_head",
+            "armor.light_chest",
+            "armor.light_hands",
+            "armor.light_feet",
+            "accessory.ring"
+          ]
+        },
+        "boss": {
+          "chance": 1.0,
+          "count": 2,
+          "rarity": { "common": 0, "uncommon": 60, "rare": 35, "epic": 5 },
+          "guaranteedRarity": "uncommon",
+          "items": [
+            "weapon.sword",
+            "weapon.axe",
+            "weapon.war_mace",
+            "weapon.bow",
+            "weapon.mace",
+            "weapon.scepter",
+            "weapon.staff",
+            "armor.heavy_head",
+            "armor.heavy_chest",
+            "armor.heavy_hands",
+            "armor.heavy_feet",
+            "armor.medium_head",
+            "armor.medium_chest",
+            "armor.medium_hands",
+            "armor.medium_feet",
+            "armor.light_head",
+            "armor.light_chest",
+            "armor.light_hands",
+            "armor.light_feet",
+            "accessory.ring"
+          ]
+        }
+      }
+    }
+  }
+}

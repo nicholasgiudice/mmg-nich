@@ -18,6 +18,18 @@ public enum NetIntentKind : byte
     /// <summary>T-203: usa <see cref="NetIntent.AbilityId"/>.</summary>
     RaiseSkillRank,
     ResetPoints,
+
+    /// <summary>T-204: <see cref="NetIntent.Slot"/> = espaço do inventário.</summary>
+    EquipItem,
+
+    /// <summary>T-204: <see cref="NetIntent.Slot"/> = espaço de equipamento (<see cref="EquipSlot"/>).</summary>
+    UnequipItem,
+
+    /// <summary>T-204: <see cref="NetIntent.Target"/> = item no chão.</summary>
+    PickUpItem,
+
+    /// <summary>T-204: <see cref="NetIntent.Slot"/> = espaço do inventário.</summary>
+    DropItem,
 }
 
 /// <summary>
@@ -26,7 +38,13 @@ public enum NetIntentKind : byte
 /// </summary>
 [MemoryPackable]
 public sealed partial record NetIntent(
-    NetIntentKind Kind, Vector2 Direction, string? AbilityId, EntityId? Target, Vector2? AimPoint, AttributeKind Attribute = AttributeKind.Str)
+    NetIntentKind Kind,
+    Vector2 Direction,
+    string? AbilityId,
+    EntityId? Target,
+    Vector2? AimPoint,
+    AttributeKind Attribute = AttributeKind.Str,
+    int Slot = 0)
 {
     public static NetIntent From(Intent intent) => intent switch
     {
@@ -36,6 +54,10 @@ public sealed partial record NetIntent(
         SpendAttributePointIntent a => new NetIntent(NetIntentKind.SpendAttributePoint, default, null, null, null, a.Attribute),
         RaiseSkillRankIntent r => new NetIntent(NetIntentKind.RaiseSkillRank, default, r.AbilityId, null, null),
         ResetPointsIntent => new NetIntent(NetIntentKind.ResetPoints, default, null, null, null),
+        EquipItemIntent q => new NetIntent(NetIntentKind.EquipItem, default, null, null, null, Slot: q.InventorySlot),
+        UnequipItemIntent u => new NetIntent(NetIntentKind.UnequipItem, default, null, null, null, Slot: (int)u.Slot),
+        PickUpItemIntent p => new NetIntent(NetIntentKind.PickUpItem, default, null, p.Item, null),
+        DropItemIntent d => new NetIntent(NetIntentKind.DropItem, default, null, null, null, Slot: d.InventorySlot),
         _ => throw new NotSupportedException($"Intenção sem formato de rede: {intent.GetType().Name}"),
     };
 
@@ -48,6 +70,10 @@ public sealed partial record NetIntent(
         NetIntentKind.SpendAttributePoint when Enum.IsDefined(Attribute) => new SpendAttributePointIntent(entity, Attribute),
         NetIntentKind.RaiseSkillRank when !string.IsNullOrEmpty(AbilityId) => new RaiseSkillRankIntent(entity, AbilityId),
         NetIntentKind.ResetPoints => new ResetPointsIntent(entity),
+        NetIntentKind.EquipItem => new EquipItemIntent(entity, Slot),
+        NetIntentKind.UnequipItem when Enum.IsDefined((EquipSlot)Slot) => new UnequipItemIntent(entity, (EquipSlot)Slot),
+        NetIntentKind.PickUpItem when Target is { } item => new PickUpItemIntent(entity, item),
+        NetIntentKind.DropItem => new DropItemIntent(entity, Slot),
         _ => null,
     };
 }

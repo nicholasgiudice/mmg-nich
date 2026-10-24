@@ -15,6 +15,9 @@ public sealed record RulesDefinition
     // ---- seção T-203 (níveis, XP e pontos) ----
     public ProgressionRules Progression { get; init; } = new();
 
+    // ---- seção T-204 (itens, afixos e quedas; fica em data/items.json) ----
+    public ItemRules Items { get; init; } = new();
+
     // ---- seção T-011 (threat): adicione abaixo ----
 }
 

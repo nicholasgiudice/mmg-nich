@@ -73,9 +73,14 @@ public sealed class ClientView(int maxDeltaAgeTicks)
 
     /// <summary>
     /// Componentes que só o dono recebe (T-106): <c>Movement</c> (velocidade e direção desejada) serve à predição do
-    /// próprio movimento (T-108); para as outras entidades o cliente interpola posições.
+    /// próprio movimento (T-108); para as outras entidades o cliente interpola posições. <c>Inventory</c> (T-204) é
+    /// privado; o equipamento é visível para todos.
     /// </summary>
-    public static readonly IReadOnlySet<byte> OwnerOnly = new HashSet<byte> { ComponentCodecs.Tags[typeof(Game.Core.Simulation.Components.Movement)] };
+    public static readonly IReadOnlySet<byte> OwnerOnly = new HashSet<byte>
+    {
+        ComponentCodecs.Tags[typeof(Game.Core.Simulation.Components.Movement)],
+        ComponentCodecs.Tags[typeof(Game.Core.Combat.Items.Inventory)],
+    };
 
     /// <summary>Monta o delta do <paramref name="tick"/> para as entidades <paramref name="visible"/> e guarda o que foi mandado.</summary>
     public SnapshotDelta Build(long tick, IReadOnlyDictionary<EntityId, EntityState> current, IEnumerable<EntityId> visible, EntityId? owned = null)

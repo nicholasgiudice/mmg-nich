@@ -108,7 +108,8 @@ public sealed class ProgressionSystem : ISimulationSystem
 
     /// <summary>
     /// XP do monstro morto para quem causou dano nele dentro da janela e para quem curou/protegeu um desses na janela,
-    /// dividida entre todos com o bônus de grupo. Cada um recebe com o modificador do próprio nível.
+    /// dividida entre todos com o bônus de grupo. Cada um recebe com o modificador do próprio nível. Os mesmos
+    /// participantes têm direito à queda (T-204).
     /// </summary>
     private static void AwardKill(World world, EntityId monsterId)
     {
@@ -142,6 +143,8 @@ public sealed class ProgressionSystem : ISimulationSystem
             var xp = rules.Share(rules.MonsterXp(info.Level, info.Rank, level), members.Count);
             Leveling.GrantExperience(world, e, xp, monster.Id, info.DefinitionId);
         }
+
+        Items.Gear.DropLoot(world, monster, members);
     }
 }
 

@@ -6,6 +6,7 @@ using Game.Core.Intents;
 using Game.Core.Simulation;
 using Game.Core.Simulation.Components;
 using Game.Protocol;
+using Game.Server.Interest;
 using Game.Server.Transport;
 using Xunit.Abstractions;
 
@@ -24,7 +25,7 @@ public class InterestDeltaTests(ITestOutputHelper output)
 
     /// <summary>
     /// Estado esperado do jogador agora: snapshot replicado só com as entidades que ele vê, em bytes por componente;
-    /// <c>Movement</c> só na entidade dele (T-106).
+    /// <c>Movement</c> (T-106) e <c>Inventory</c> (T-204) só na entidade dele.
     /// </summary>
     private static Dictionary<EntityId, Dictionary<Type, byte[]>> Expected(TestRig rig, TestClient client)
     {
@@ -34,7 +35,7 @@ public class InterestDeltaTests(ITestOutputHelper output)
             .ToDictionary(
                 e => e.Id,
                 e => e.Components
-                    .Where(c => e.Id == client.Me || c is not Movement)
+                    .Where(c => e.Id == client.Me || !ClientView.OwnerOnly.Contains(ComponentCodecs.Tags[c.GetType()]))
                     .ToDictionary(c => c.GetType(), ProtocolSerializer.SerializeComponent));
     }
 
@@ -50,6 +51,25 @@ public class InterestDeltaTests(ITestOutputHelper output)
             {
                 Assert.True(exp[c.GetType()].AsSpan().SequenceEqual(ProtocolSerializer.SerializeComponent(c)), $"{when}: {e.Id} {c.GetType().Name} diferente");
             }
+        }
+    }
+
+    [Fact]
+    public void Inventory_goes_only_to_its_owner_and_equipment_to_everyone()
+    {
+        var rig = new TestRig();
+        var ana = rig.Join("ana", "class.warrior");
+        var bia = rig.Join("bia", "class.mage");
+        rig.Tick(5, [ana, bia]);
+
+        foreach (var (viewer, other) in new[] { (ana, bia), (bia, ana) })
+        {
+            var own = viewer.Entity(viewer.Me)!.Components;
+            var theirs = viewer.Entity(other.Me)!.Components;
+            Assert.Single(own.OfType<Game.Core.Combat.Items.Inventory>());
+            Assert.Empty(theirs.OfType<Game.Core.Combat.Items.Inventory>());
+            Assert.Single(own.OfType<Game.Core.Combat.Items.Equipment>());
+            Assert.Single(theirs.OfType<Game.Core.Combat.Items.Equipment>());
         }
     }
 

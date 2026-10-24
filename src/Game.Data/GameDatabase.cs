@@ -16,6 +16,9 @@ public sealed class GameDatabase
     public IReadOnlyDictionary<string, ArenaDefinition> Arenas { get; }
     public IReadOnlyDictionary<string, EncounterDefinition> Encounters { get; }
 
+    /// <summary>Itens base (T-204, seção "items").</summary>
+    public IReadOnlyDictionary<string, ItemBaseDefinition> Items { get; }
+
     /// <summary>Impressão digital dos JSON carregados (<see cref="ContentFingerprint"/>); cliente e servidor comparam.</summary>
     public string Fingerprint { get; init; } = "";
 
@@ -29,7 +32,8 @@ public sealed class GameDatabase
         IEnumerable<AreaDefinition> areas,
         IEnumerable<MonsterDefinition> monsters,
         IEnumerable<ArenaDefinition> arenas,
-        IEnumerable<EncounterDefinition> encounters)
+        IEnumerable<EncounterDefinition> encounters,
+        IEnumerable<ItemBaseDefinition>? items = null)
     {
         Classes = Index(classes, x => x.Id);
         Abilities = Index(abilities, x => x.Id);
@@ -38,6 +42,7 @@ public sealed class GameDatabase
         Monsters = Index(monsters, x => x.Id);
         Arenas = Index(arenas, x => x.Id);
         Encounters = Index(encounters, x => x.Id);
+        Items = Index(items ?? [], x => x.Id);
     }
 
     private static IReadOnlyDictionary<string, T> Index<T>(IEnumerable<T> items, Func<T, string> id) =>

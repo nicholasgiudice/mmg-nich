@@ -22,8 +22,8 @@ public sealed record ClassDefinition
     public double BaseHealth { get; init; }
     public double HealthGrowth { get; init; }
 
-    /// <summary>Arma inicial (T-201) até os itens da T-204.</summary>
-    public StartingWeaponDefinition? StartingWeapon { get; init; }
+    /// <summary>Itens com que a classe começa equipada (T-204; nível do item 2 calibra o protótipo). Comuns, sem afixos.</summary>
+    public IReadOnlyList<StartingItemDefinition> StartingEquipment { get; init; } = [];
     public IReadOnlyList<string> Abilities { get; init; } = [];
 
     /// <summary>

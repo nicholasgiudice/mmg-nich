@@ -40,7 +40,14 @@ public static class EntityFactory
         abilities.Consumables.AddRange(def.Consumables.Where(c => !abilities.Known.Contains(c)).Distinct());
 
         // T-201: com perfil de atributos, vida e Mana saem das estatísticas (regras em data/rules.json, seção stats).
+        // T-204: o equipamento inicial (itens de verdade) entra nas estatísticas antes da vida e da Mana.
         var stats = Stats.StatMath.FromClass(def);
+        var equipment = stats is null ? null : Items.ItemMath.StartingEquipment(world.Content, def);
+        if (stats is not null)
+        {
+            Items.ItemMath.Recompute(world.Content, def, stats, null, equipment);
+        }
+
         var rules = world.Content.Rules.Stats;
         var health = stats is null ? def.Health : Stats.StatMath.MaxHealth(def, stats, rules);
         var resourceMax = stats is not null && def.Resource.Type == ManaResource ? Stats.StatMath.MaxMana(stats, rules) : def.Resource.Max;
@@ -58,6 +65,8 @@ public static class EntityFactory
         if (stats is not null)
         {
             player.Add(stats);
+            player.Add(equipment!);
+            player.Add(new Items.Inventory(world.Content.Rules.Items.InventorySize));
         }
 
         return player;

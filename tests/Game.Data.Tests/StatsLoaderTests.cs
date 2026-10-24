@@ -2,7 +2,7 @@ using Game.Core.Definitions;
 
 namespace Game.Data.Tests;
 
-/// <summary>T-201: perfil de atributos da classe, arma inicial, escala dos efeitos, defesa de monstros e regras de estatísticas.</summary>
+/// <summary>T-201: perfil de atributos da classe, equipamento inicial (T-204), escala dos efeitos, defesa de monstros e regras de estatísticas.</summary>
 public class StatsLoaderTests
 {
     private static LoadResult Load(string json) => GameDataLoader.LoadSources([("t.json", json)]);
@@ -14,9 +14,10 @@ public class StatsLoaderTests
     private static string Profile(string attributes = """{ "str": 12, "agi": 6, "int": 4, "vit": 10 }""", string baseHealth = "140") => $$"""
         { "classes": [ { "id": "class.hero", "name": "Hero", "speed": 4, "radius": 0.4,
             "attributes": {{attributes}}, "baseHealth": {{baseHealth}}, "healthGrowth": 14,
-            "startingWeapon": { "damage": 6, "int": 2 },
+            "startingEquipment": [ { "item": "weapon.blade", "level": 2 } ],
             "resource": { "type": "mana", "max": 100 }, "basicAttack": "hero.hit" } ],
-          "abilities": [ {{Hit}} ] }
+          "abilities": [ {{Hit}} ],
+          "items": [ { "id": "weapon.blade", "name": "Lâmina", "slot": "weapon", "stats": [ { "stat": "weapon_damage", "base": 4, "perLevel": 1 } ] } ] }
         """;
 
     [Fact]
@@ -30,8 +31,8 @@ public class StatsLoaderTests
         Assert.Equal(0, c.Attributes.Dex);
         Assert.Equal(140, c.BaseHealth);
         Assert.Equal(14, c.HealthGrowth);
-        Assert.Equal(6, c.StartingWeapon!.Damage);
-        Assert.Equal(2, c.StartingWeapon.Int);
+        Assert.Equal("weapon.blade", Assert.Single(c.StartingEquipment).Item);
+        Assert.Equal(2, c.StartingEquipment[0].Level);
     }
 
     [Fact]

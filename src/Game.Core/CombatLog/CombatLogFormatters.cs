@@ -49,6 +49,6 @@ public sealed class CombatLogFormatters
 
     /// <summary>Registros com os formatadores dos eventos de combate do Core (T-008).</summary>
     public static CombatLogFormatters CreateDefault() =>
-        Combat.Progression.ProgressionLog.Register(
-            Combat.EncounterModule.RegisterLog(CoreCombatLogFormatters.Register(new CombatLogFormatters())));
+        Combat.Items.ItemLog.Register(Combat.Progression.ProgressionLog.Register(
+            Combat.EncounterModule.RegisterLog(CoreCombatLogFormatters.Register(new CombatLogFormatters()))));
 }
