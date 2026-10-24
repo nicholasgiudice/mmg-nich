@@ -424,6 +424,17 @@ internal static partial class GameDataValidator
         if (st.DefenseMax is < 0 or > 1) { sc.Error("defenseMax", "Deve estar em 0..1."); }
 
         ValidateProgression(rules.Progression, new Ctx("rules", "rules.progression", errors));
+        var mc = new Ctx("rules", "rules.monsters", errors);
+        mc.NonNegative("healthPerLevel", rules.Monsters.HealthPerLevel);
+        mc.NonNegative("powerPerLevel", rules.Monsters.PowerPerLevel);
+        foreach (var (name, growth) in new[] { ("elite", rules.Monsters.Elite), ("boss", rules.Monsters.Boss) })
+        {
+            if (growth is not null)
+            {
+                mc.NonNegative(name + ".healthPerLevel", growth.HealthPerLevel);
+                mc.NonNegative(name + ".powerPerLevel", growth.PowerPerLevel);
+            }
+        }
 
         if (rules.Control is { } control)
         {
@@ -578,6 +589,7 @@ internal static partial class GameDataValidator
         if (x.Players.Count == 0) { ctx.Error("players", "O encontro precisa de pelo menos um jogador."); }
         if (x.Enemies.Count == 0) { ctx.Error("enemies", "O encontro precisa de pelo menos um inimigo."); }
         if (x.Defeat.TimeLimitTicks is { } limit) { ctx.PositiveTicks("defeat.timeLimit", limit); }
+        if (x.MonsterLevel is < 1) { ctx.Error("monsterLevel", "Nível deve ser pelo menos 1."); }
 
         for (var i = 0; i < x.Players.Count; i++)
         {
@@ -601,6 +613,7 @@ internal static partial class GameDataValidator
         {
             ctx.Exists($"enemies[{i}].monster", x.Enemies[i].Monster, monsters, "monstro");
             CheckSpawn(ctx, $"enemies[{i}].position", x.Enemies[i].Position, arena);
+            if (x.Enemies[i].Level is < 1) { ctx.Error($"enemies[{i}].level", "Nível deve ser pelo menos 1."); }
         }
     }
 

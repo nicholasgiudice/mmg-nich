@@ -19,6 +19,13 @@ namespace Game.Sim
               --opt <chave>=<valor> opção dos bots (repetível); ex.: --opt taunt=warrior.taunt  --opt class.mage:explosion=tag:aoe
               --ranks <perfil>      NH de todas as classes: nh1 (padrão), focado (5+5+1+1, assinatura 3), espalhado (3+3+3+3, assinatura 3)
               --rank <c>:<hab>=<n>  NH de uma habilidade (repetível, por cima do perfil); ex.: --rank class.archer:archer.power_shot=5
+              --level <n>           perfil de personagem (T-206): jogadores com progressão nesse nível (sem a opção: protótipo)
+              --attrs <plano>       pontos de atributo do perfil: sugerido (padrão) ou espalhado
+              --gear <raridade>     equipamento completo do perfil: comum (padrão), incomum ou raro
+              --gear-level <n>      nível dos itens do perfil (padrão: o do personagem)
+              --skills <plano>      pontos de habilidade do perfil: focado (padrão) ou espalhado
+              --focus <c>=<h1>,<h2> par do NH focado de uma classe (repetível); ex.: --focus class.cleric=cleric.holy_chain,cleric.sacred_shield
+              --monster-level <n>   nível de todos os monstros (vida e potência por rules.monsters)
               --runs <n>            execuções por combinação (padrão: 100)
               --seed <n>            seed base; execução i usa seed+i (padrão: 1)
               --max-seconds <s>     limite por execução se o encontro não definir (padrão: 300)
@@ -79,6 +86,18 @@ namespace Game.Sim
                         var spec = new RunSpec
                         {
                             Ranks = ranks,
+                            Profile = o.Level is { } level
+                                ? new CharacterProfile
+                                {
+                                    Level = level,
+                                    Attributes = o.Attrs,
+                                    Gear = o.Gear,
+                                    GearLevel = o.GearLevel,
+                                    Skills = o.Skills,
+                                    Focus = o.Focus,
+                                }
+                                : null,
+                            MonsterLevel = o.MonsterLevel,
                             RankLabel = o.RankPairs.Count == 0
                                 ? (o.RankProfile == RankProfiles.Nh1 ? "" : o.RankProfile)
                                 : $"{o.RankProfile}+{string.Join("+", o.RankPairs)}",
@@ -121,6 +140,13 @@ namespace Game.Sim
             public Dictionary<string, string> Options { get; } = new(StringComparer.Ordinal);
             public string RankProfile { get; set; } = RankProfiles.Nh1;
             public List<string> RankPairs { get; } = [];
+            public int? Level { get; set; }
+            public AttributePlan Attrs { get; set; } = AttributePlan.Suggested;
+            public Game.Core.Definitions.ItemRarity Gear { get; set; } = Game.Core.Definitions.ItemRarity.Common;
+            public int? GearLevel { get; set; }
+            public string Skills { get; set; } = RankProfiles.Focused;
+            public int? MonsterLevel { get; set; }
+            public Dictionary<string, string[]> Focus { get; } = new(StringComparer.Ordinal);
             public int Runs { get; set; } = 100;
             public ulong Seed { get; set; } = 1;
             public double MaxSeconds { get; set; } = 300;
@@ -147,6 +173,36 @@ namespace Game.Sim
                     case "--opt": AddPair(o.Options, Next(), "--opt"); break;
                     case "--ranks": o.RankProfile = Next(); break;
                     case "--rank": o.RankPairs.Add(Next()); break;
+                    case "--level": o.Level = int.Parse(Next(), CultureInfo.InvariantCulture); break;
+                    case "--attrs":
+                        o.Attrs = Next() switch
+                        {
+                            "sugerido" => AttributePlan.Suggested,
+                            "espalhado" => AttributePlan.Spread,
+                            var v => throw new ArgumentException($"--attrs espera sugerido ou espalhado, recebeu '{v}'."),
+                        };
+                        break;
+                    case "--gear":
+                        o.Gear = Next() switch
+                        {
+                            "comum" => Game.Core.Definitions.ItemRarity.Common,
+                            "incomum" => Game.Core.Definitions.ItemRarity.Uncommon,
+                            "raro" => Game.Core.Definitions.ItemRarity.Rare,
+                            var v => throw new ArgumentException($"--gear espera comum, incomum ou raro, recebeu '{v}'."),
+                        };
+                        break;
+                    case "--gear-level": o.GearLevel = int.Parse(Next(), CultureInfo.InvariantCulture); break;
+                    case "--skills": o.Skills = Next(); break;
+                    case "--focus":
+                        {
+                            var v = Next();
+                            var eq = v.IndexOf('=', StringComparison.Ordinal);
+                            var pair = eq > 0 ? Split(v[(eq + 1)..]).ToArray() : [];
+                            o.Focus[eq > 0 ? v[..eq] : v] = pair.Length == 2 ? pair : throw new ArgumentException($"--focus espera classe=hab1,hab2, recebeu '{v}'.");
+                            break;
+                        }
+
+                    case "--monster-level": o.MonsterLevel = int.Parse(Next(), CultureInfo.InvariantCulture); break;
                     case "--runs": o.Runs = int.Parse(Next(), CultureInfo.InvariantCulture); break;
                     case "--seed": o.Seed = ulong.Parse(Next(), CultureInfo.InvariantCulture); break;
                     case "--max-seconds": o.MaxSeconds = double.Parse(Next(), CultureInfo.InvariantCulture); break;

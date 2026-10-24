@@ -7,7 +7,7 @@ namespace Game.Design.Tests;
 /// <summary>Carrega o <c>data/</c> real do repositório e roda lotes de simulação para os testes de design.</summary>
 internal static class DesignHarness
 {
-    /// <summary>Execuções (seeds) por verificação. Padrão 100 (~2 min na VPS de 2 vCPU; o limite é 5 min); sobrescreva com DESIGN_RUNS.</summary>
+    /// <summary>Execuções (seeds) por verificação. Padrão 100 (~4 min na VPS de 2 vCPU desde a T-206; o limite é 5 min); sobrescreva com DESIGN_RUNS.</summary>
     public static int Runs { get; } =
         int.TryParse(Environment.GetEnvironmentVariable("DESIGN_RUNS"), out var n) && n > 0 ? n : 100;
 
@@ -74,6 +74,44 @@ internal static class DesignHarness
             return Batch.Run(Content, spec);
         })).Value;
     }
+
+    /// <summary>
+    /// T-206: lote com perfil de personagem (todos os jogadores) e monstros num nível (<c>rules.monsters</c>).
+    /// O Clérigo solo usa Corrente e Escudo como par focado (a cura do grupo não tem uso sozinho).
+    /// </summary>
+    public static BatchSummary RunProfile(
+        string encounter, string strategy, CharacterProfile profile, int monsterLevel, IReadOnlyDictionary<string, string>? extraOptions = null)
+    {
+        profile = profile.Focus.Count > 0 || encounter == "encounter.forest_matriarch" ? profile : profile with { Focus = SoloFocus };
+        var extraKey = extraOptions is null ? "" : string.Join(",", extraOptions.OrderBy(o => o.Key).Select(o => o.Key + "=" + o.Value));
+        var ranksKey = string.Join(";", profile.Ranks.OrderBy(r => r.Key).Select(r => r.Key + ":" + string.Join(",", r.Value.OrderBy(kv => kv.Key).Select(kv => $"{kv.Key}={kv.Value}"))));
+        var key = $"profile|{encounter}|{strategy}|{profile.Label}|{ranksKey}|{monsterLevel}|{extraKey}";
+        return Cache.GetOrAdd(key, _ => new Lazy<BatchSummary>(() =>
+        {
+            var options = new Dictionary<string, string>(Options);
+            foreach (var (k, v) in extraOptions ?? new Dictionary<string, string>())
+            {
+                options[k] = v;
+            }
+
+            var spec = new RunSpec
+            {
+                EncounterId = encounter,
+                Strategy = strategy,
+                Options = new BotOptions(options),
+                Runs = Runs,
+                HazardSourceFactory = () => new TelegraphHazardSource(),
+                Profile = profile,
+                MonsterLevel = monsterLevel,
+            };
+            return Batch.Run(Content, spec);
+        })).Value;
+    }
+
+    public static readonly IReadOnlyDictionary<string, string[]> SoloFocus = new Dictionary<string, string[]>
+    {
+        ["class.cleric"] = ["cleric.holy_chain", "cleric.sacred_shield"],
+    };
 
     private static BatchSummary RunUncached(string encounter, string strategy, IReadOnlyDictionary<string, string>? roles, ContentCatalog? content)
     {

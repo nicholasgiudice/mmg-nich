@@ -26,7 +26,8 @@ public static class CoreEffects
     {
         // T-201: base + escala pelas estatísticas da fonte; crítico só para quem tem estatísticas.
         var crit = Stats.StatMath.RollCrit(c.World, c.Source);
-        var value = Stats.StatMath.Scaled(e.Base, e.Scaling, c.Source) * TagBonus(c.Target!, e) * c.Power * CritFactor(c.World, crit);
+        var value = Stats.StatMath.Scaled(e.Base, e.Scaling, c.Source) * Stats.StatMath.MonsterPower(c.World, c.Source)
+            * TagBonus(c.Target!, e) * c.Power * CritFactor(c.World, crit);
         DamageResolver.Deal(c.World, c.Source, c.Target!, c.SourceId, value, e.School, melee: c.Ability?.IsMelee ?? false, critical: crit);
     }
 
@@ -62,7 +63,8 @@ public static class CoreEffects
         }
 
         var crit = Stats.StatMath.RollCrit(c.World, c.Source); // crítico vale para cura (design §10)
-        var amount = Math.Max(0, Round(Stats.StatMath.Scaled(e.Base, e.Scaling, c.Source) * c.Power * CritFactor(c.World, crit)));
+        var amount = Math.Max(0, Round(Stats.StatMath.Scaled(e.Base, e.Scaling, c.Source) * Stats.StatMath.MonsterPower(c.World, c.Source)
+            * c.Power * CritFactor(c.World, crit)));
         var effective = Math.Min(amount, health.Max - health.Current);
         health.Current += effective;
         c.World.Events.Publish(new HealApplied(c.SourceEntityId, target.Id, c.SourceId, amount, effective, amount - effective, crit));
@@ -79,7 +81,8 @@ public static class CoreEffects
         }
 
         var crit = Stats.StatMath.RollCrit(c.World, c.Source); // e para escudo
-        var amount = Math.Max(0, Round(Stats.StatMath.Scaled(e.Amount, e.Scaling, c.Source) * c.Power * CritFactor(c.World, crit)));
+        var amount = Math.Max(0, Round(Stats.StatMath.Scaled(e.Amount, e.Scaling, c.Source) * Stats.StatMath.MonsterPower(c.World, c.Source)
+            * c.Power * CritFactor(c.World, crit)));
         var expires = c.World.Tick + e.DurationTicks;
         var id = state.NextShieldId++;
         state.Shields.Add(new ShieldInstance

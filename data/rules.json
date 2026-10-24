@@ -20,6 +20,7 @@
       "defensePerAttackerLevel": 8,
       "defenseMax": 0.6
     },
+    "monsters": { "healthPerLevel": 0.4, "powerPerLevel": 0.17, "boss": { "healthPerLevel": 0.3, "powerPerLevel": 0.38 } },
     "progression": {
       "maxLevel": 15,
       "xpCurveBase": 50,

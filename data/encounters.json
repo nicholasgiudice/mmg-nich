@@ -5,6 +5,7 @@
       "id": "encounter.three_wolves",
       "name": "Três Lobos",
       "arena": "arena.fields",
+      "monsterLevel": 1,
       "players": [{ "class": "class.warrior", "position": { "x": 5.5, "y": 10.5 } }],
       "enemies": [
         { "monster": "monster.grey_wolf", "position": { "x": 17.5, "y": 8.5 } },
@@ -18,6 +19,7 @@
       "id": "encounter.wolf_and_bandit",
       "name": "Lobo e Salteador",
       "arena": "arena.camp",
+      "monsterLevel": 1,
       "players": [{ "class": "class.archer", "position": { "x": 5.5, "y": 10.5 } }],
       "enemies": [
         { "monster": "monster.road_bandit", "position": { "x": 24.5, "y": 10.5 } },
@@ -30,6 +32,7 @@
       "id": "encounter.four_rats",
       "name": "Quatro Ratos de Campo",
       "arena": "arena.farm",
+      "monsterLevel": 1,
       "players": [{ "class": "class.mage", "position": { "x": 3.5, "y": 10.5 } }],
       "enemies": [
         { "monster": "monster.field_rat", "position": { "x": 19.5, "y": 6.5 } },
@@ -44,6 +47,7 @@
       "id": "encounter.skeleton_guard",
       "name": "Guarda Esquelético no Portão Partido",
       "arena": "arena.broken_gate",
+      "monsterLevel": 1,
       "players": [{ "class": "class.cleric", "position": { "x": 4.5, "y": 9.5 } }],
       "enemies": [{ "monster": "monster.skeleton_guard", "position": { "x": 17.5, "y": 10.5 } }],
       "victory": "all_enemies_dead",
@@ -53,6 +57,7 @@
       "id": "encounter.forest_matriarch",
       "name": "Matriarca da Floresta",
       "arena": "arena.matriarch_nest",
+      "monsterLevel": 1,
       "players": [
         { "class": "class.warrior", "position": { "x": 13.5, "y": 13.5 } },
         { "class": "class.archer", "position": { "x": 8.5, "y": 11.5 } },

@@ -70,6 +70,17 @@
             "signatureRankLevels": { "type": "array", "minItems": 3, "items": { "type": "integer", "minimum": 1 } }
           }
         },
+        "monsters": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "T-206: vida e potência dos monstros por nível: × (1 + porNível × (nível − 1)); os números de monsters.json são o nível 1.",
+          "properties": {
+            "healthPerLevel": { "type": "number", "minimum": 0 },
+            "powerPerLevel": { "type": "number", "minimum": 0 },
+            "elite": { "$ref": "#/$defs/monsterGrowth" },
+            "boss": { "$ref": "#/$defs/monsterGrowth" }
+          }
+        },
         "items": {
           "type": "object",
           "additionalProperties": false,
@@ -146,6 +157,15 @@
     }
   },
   "$defs": {
+    "monsterGrowth": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "T-206: crescimento próprio por nível de elites ou chefes.",
+      "properties": {
+        "healthPerLevel": { "type": "number", "minimum": 0 },
+        "powerPerLevel": { "type": "number", "minimum": 0 }
+      }
+    },
     "itemStat": {
       "type": "object",
       "additionalProperties": false,
@@ -609,9 +629,14 @@
             "type": "object",
             "additionalProperties": false,
             "required": ["monster", "position"],
-            "properties": { "monster": { "$ref": "#/$defs/id" }, "position": { "$ref": "#/$defs/position" } }
+            "properties": {
+              "monster": { "$ref": "#/$defs/id" },
+              "position": { "$ref": "#/$defs/position" },
+              "level": { "type": "integer", "minimum": 1, "description": "T-206: nível deste monstro." }
+            }
           }
         },
+        "monsterLevel": { "type": "integer", "minimum": 1, "description": "T-206: nível de todos os monstros do encontro." },
         "victory": { "enum": ["all_enemies_dead"] },
         "defeat": {
           "type": "object",
