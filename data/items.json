@@ -145,6 +145,12 @@
       "name": "Anel",
       "slot": "accessory",
       "stats": [{ "stat": "resistance", "base": 4, "perLevel": 1.5 }]
+    },
+    {
+      "id": "accessory.amulet",
+      "name": "Amuleto",
+      "slot": "accessory",
+      "stats": [{ "stat": "resistance", "base": 4, "perLevel": 1.5 }]
     }
   ],
   "rules": {
@@ -199,7 +205,8 @@
             "armor.light_chest",
             "armor.light_hands",
             "armor.light_feet",
-            "accessory.ring"
+            "accessory.ring",
+            "accessory.amulet"
           ]
         },
         "elite": {
@@ -226,7 +233,8 @@
             "armor.light_chest",
             "armor.light_hands",
             "armor.light_feet",
-            "accessory.ring"
+            "accessory.ring",
+            "accessory.amulet"
           ]
         },
         "boss": {
@@ -254,7 +262,8 @@
             "armor.light_chest",
             "armor.light_hands",
             "armor.light_feet",
-            "accessory.ring"
+            "accessory.ring",
+            "accessory.amulet"
           ]
         }
       }
