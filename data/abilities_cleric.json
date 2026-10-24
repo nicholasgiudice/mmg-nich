@@ -11,7 +11,8 @@
         {
           "type": "damage",
           "school": "holy",
-          "base": 12,
+          "base": 0,
+          "scaling": { "weapon": 1, "int": 0.6 },
           "bonusVsTags": { "undead": 0.25, "corrupted": 0.25 }
         }
       ]
@@ -24,22 +25,22 @@
       "cooldown": 4,
       "castTime": 0.8,
       "targeting": { "type": "unit", "range": 8, "faction": "ally" },
-      "effects": [{ "type": "heal", "base": 50 }],
+      "effects": [{ "type": "heal", "base": 26, "scaling": { "int": 2 } }],
       "ranks": [
-        { "rank": 2, "effects": [{ "type": "heal", "base": 60 }] },
-        { "rank": 3, "castTime": 0.5, "effects": [{ "type": "heal", "base": 70 }] },
-        { "rank": 4, "effects": [{ "type": "heal", "base": 80 }] },
+        { "rank": 2, "effects": [{ "type": "heal", "base": 31, "scaling": { "int": 2.4 } }] },
+        { "rank": 3, "castTime": 0.5, "effects": [{ "type": "heal", "base": 36, "scaling": { "int": 2.8 } }] },
+        { "rank": 4, "effects": [{ "type": "heal", "base": 42, "scaling": { "int": 3.2 } }] },
         {
           "rank": 5,
           "effects": [
-            { "type": "heal", "base": 90 },
+            { "type": "heal", "base": 47, "scaling": { "int": 3.6 } },
             {
               "type": "extra_targets",
               "radius": 8,
               "select": "most_injured",
               "affects": "ally",
               "multiplier": 0.5,
-              "effects": [{ "type": "heal", "base": 90 }]
+              "effects": [{ "type": "heal", "base": 47, "scaling": { "int": 3.6 } }]
             }
           ]
         }
@@ -52,34 +53,34 @@
       "cost": { "resource": "mana", "amount": 15 },
       "cooldown": 10,
       "targeting": { "type": "unit", "range": 8, "faction": "ally" },
-      "effects": [{ "type": "shield", "amount": 45, "duration": 6 }],
+      "effects": [{ "type": "shield", "amount": 21, "scaling": { "int": 2 }, "duration": 6 }],
       "ranks": [
-        { "rank": 2, "effects": [{ "type": "shield", "amount": 54, "duration": 6 }] },
+        { "rank": 2, "effects": [{ "type": "shield", "amount": 25, "scaling": { "int": 2.4 }, "duration": 6 }] },
         {
           "rank": 3,
           "effects": [
-            { "type": "shield", "amount": 63, "duration": 6 },
+            { "type": "shield", "amount": 29, "scaling": { "int": 2.8 }, "duration": 6 },
             { "type": "remove_status", "tags": ["poison"], "count": 1 }
           ]
         },
         {
           "rank": 4,
           "effects": [
-            { "type": "shield", "amount": 72, "duration": 6 },
+            { "type": "shield", "amount": 34, "scaling": { "int": 3.2 }, "duration": 6 },
             { "type": "remove_status", "tags": ["poison"], "count": 1 }
           ]
         },
         {
           "rank": 5,
           "effects": [
-            { "type": "shield", "amount": 81, "duration": 6 },
+            { "type": "shield", "amount": 38, "scaling": { "int": 3.6 }, "duration": 6 },
             { "type": "remove_status", "tags": ["poison"], "count": 1 },
             {
               "type": "extra_targets",
               "radius": 8,
               "select": "most_injured",
               "affects": "ally",
-              "effects": [{ "type": "shield", "amount": 81, "duration": 6 }]
+              "effects": [{ "type": "shield", "amount": 38, "scaling": { "int": 3.6 }, "duration": 6 }]
             }
           ]
         }
@@ -96,7 +97,8 @@
         {
           "type": "damage",
           "school": "holy",
-          "base": 39,
+          "base": 15,
+          "scaling": { "int": 2 },
           "bonusVsTags": { "undead": 0.25, "corrupted": 0.25 }
         },
         { "type": "heal", "base": 10, "target": "self" }
@@ -108,7 +110,8 @@
             {
               "type": "damage",
               "school": "holy",
-              "base": 47,
+              "base": 18,
+              "scaling": { "int": 2.4 },
               "bonusVsTags": { "undead": 0.25, "corrupted": 0.25 }
             },
             { "type": "heal", "base": 12, "target": "self" }
@@ -120,7 +123,8 @@
             {
               "type": "damage",
               "school": "holy",
-              "base": 55,
+              "base": 21,
+              "scaling": { "int": 2.8 },
               "bonusVsTags": { "undead": 0.25, "corrupted": 0.25 }
             },
             { "type": "heal", "base": 14, "target": "self" },
@@ -133,7 +137,8 @@
                 {
                   "type": "damage",
                   "school": "holy",
-                  "base": 55,
+                  "base": 21,
+                  "scaling": { "int": 2.8 },
                   "bonusVsTags": { "undead": 0.25, "corrupted": 0.25 }
                 }
               ]
@@ -146,7 +151,8 @@
             {
               "type": "damage",
               "school": "holy",
-              "base": 62,
+              "base": 24,
+              "scaling": { "int": 3.2 },
               "bonusVsTags": { "undead": 0.25, "corrupted": 0.25 }
             },
             { "type": "heal", "base": 16, "target": "self" },
@@ -159,7 +165,8 @@
                 {
                   "type": "damage",
                   "school": "holy",
-                  "base": 62,
+                  "base": 24,
+                  "scaling": { "int": 3.2 },
                   "bonusVsTags": { "undead": 0.25, "corrupted": 0.25 }
                 }
               ]
@@ -172,7 +179,8 @@
             {
               "type": "damage",
               "school": "holy",
-              "base": 70,
+              "base": 27,
+              "scaling": { "int": 3.6 },
               "bonusVsTags": { "undead": 0.25, "corrupted": 0.25 }
             },
             { "type": "heal", "base": 36, "target": "self" },
@@ -185,7 +193,8 @@
                 {
                   "type": "damage",
                   "school": "holy",
-                  "base": 70,
+                  "base": 27,
+                  "scaling": { "int": 3.6 },
                   "bonusVsTags": { "undead": 0.25, "corrupted": 0.25 }
                 }
               ]
@@ -209,7 +218,7 @@
           "rank": 5,
           "effects": [
             { "type": "remove_status", "tags": ["poison", "curse"], "count": 2 },
-            { "type": "heal", "base": 32 },
+            { "type": "heal", "base": 20, "scaling": { "int": 1 } },
             { "type": "apply_status", "status": "status.purified", "duration": 2 }
           ]
         }
@@ -223,13 +232,13 @@
       "cost": { "resource": "mana", "amount": 90 },
       "cooldown": 120,
       "targeting": { "type": "circle_self", "radius": 8 },
-      "effects": [{ "type": "heal", "base": 108 }],
+      "effects": [{ "type": "heal", "base": 60, "scaling": { "int": 4 } }],
       "ranks": [
-        { "rank": 2, "effects": [{ "type": "heal", "base": 140 }] },
+        { "rank": 2, "effects": [{ "type": "heal", "base": 78, "scaling": { "int": 5.2 } }] },
         {
           "rank": 3,
           "effects": [
-            { "type": "heal", "base": 173 },
+            { "type": "heal", "base": 96, "scaling": { "int": 6.4 } },
             { "type": "revive", "radius": 8, "healthFraction": 0.3, "target": "self" }
           ]
         }

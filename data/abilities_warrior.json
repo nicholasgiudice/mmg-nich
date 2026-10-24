@@ -7,7 +7,7 @@
       "tags": ["basic", "melee"],
       "cooldown": 0.9,
       "targeting": { "type": "melee_arc", "range": 1.7, "angle": 100 },
-      "effects": [{ "type": "damage", "school": "physical", "base": 18 }]
+      "effects": [{ "type": "damage", "school": "physical", "base": 0, "scaling": { "weapon": 1, "str": 1 } }]
     },
     {
       "id": "warrior.heavy_strike",
@@ -18,7 +18,7 @@
       "castTime": 0.4,
       "targeting": { "type": "melee_arc", "range": 1.9, "angle": 90 },
       "effects": [
-        { "type": "damage", "school": "physical", "base": 51 },
+        { "type": "damage", "school": "physical", "base": 15, "scaling": { "weapon": 1, "str": 2.5 } },
         { "type": "interrupt" },
         { "type": "threat", "amount": 20 }
       ],
@@ -26,7 +26,7 @@
         {
           "rank": 2,
           "effects": [
-            { "type": "damage", "school": "physical", "base": 61 },
+            { "type": "damage", "school": "physical", "base": 18, "scaling": { "weapon": 1.2, "str": 3 } },
             { "type": "interrupt" },
             { "type": "threat", "amount": 20 }
           ]
@@ -34,7 +34,7 @@
         {
           "rank": 3,
           "effects": [
-            { "type": "damage", "school": "physical", "base": 71 },
+            { "type": "damage", "school": "physical", "base": 21, "scaling": { "weapon": 1.4, "str": 3.5 } },
             { "type": "interrupt" },
             { "type": "apply_status", "status": "status.stunned", "duration": 0.5 },
             { "type": "threat", "amount": 20 }
@@ -43,7 +43,7 @@
         {
           "rank": 4,
           "effects": [
-            { "type": "damage", "school": "physical", "base": 82 },
+            { "type": "damage", "school": "physical", "base": 24, "scaling": { "weapon": 1.6, "str": 4 } },
             { "type": "interrupt" },
             { "type": "apply_status", "status": "status.stunned", "duration": 0.5 },
             { "type": "threat", "amount": 20 }
@@ -52,7 +52,7 @@
         {
           "rank": 5,
           "effects": [
-            { "type": "damage", "school": "physical", "base": 92 },
+            { "type": "damage", "school": "physical", "base": 27, "scaling": { "weapon": 1.8, "str": 4.5 } },
             { "type": "interrupt" },
             { "type": "apply_status", "status": "status.stunned", "duration": 1 },
             { "type": "threat", "amount": 20 }
@@ -68,25 +68,37 @@
       "cost": { "resource": "mana", "amount": 25 },
       "cooldown": 5,
       "targeting": { "type": "circle_self", "radius": 2.5 },
-      "effects": [{ "type": "damage", "school": "physical", "base": 27 }, { "type": "threat", "amount": 30 }],
+      "effects": [
+        { "type": "damage", "school": "physical", "base": 5, "scaling": { "weapon": 0.5, "str": 1.6 } },
+        { "type": "threat", "amount": 30 }
+      ],
       "ranks": [
         {
           "rank": 2,
-          "effects": [{ "type": "damage", "school": "physical", "base": 33 }, { "type": "threat", "amount": 30 }]
+          "effects": [
+            { "type": "damage", "school": "physical", "base": 6, "scaling": { "weapon": 0.6, "str": 1.92 } },
+            { "type": "threat", "amount": 30 }
+          ]
         },
         {
           "rank": 3,
-          "effects": [{ "type": "damage", "school": "physical", "base": 23 }, { "type": "threat", "amount": 30 }],
+          "effects": [
+            { "type": "damage", "school": "physical", "base": 4, "scaling": { "weapon": 0.42, "str": 1.36 } },
+            { "type": "threat", "amount": 30 }
+          ],
           "hits": { "count": 2, "interval": 0.3 }
         },
         {
           "rank": 4,
-          "effects": [{ "type": "damage", "school": "physical", "base": 27 }, { "type": "threat", "amount": 30 }]
+          "effects": [
+            { "type": "damage", "school": "physical", "base": 5, "scaling": { "weapon": 0.5, "str": 1.6 } },
+            { "type": "threat", "amount": 30 }
+          ]
         },
         {
           "rank": 5,
           "effects": [
-            { "type": "damage", "school": "physical", "base": 23 },
+            { "type": "damage", "school": "physical", "base": 4, "scaling": { "weapon": 0.42, "str": 1.36 } },
             { "type": "threat", "amount": 30 },
             { "type": "apply_status", "status": "status.bleed" }
           ],
@@ -146,17 +158,17 @@
       "cost": { "resource": "mana", "amount": 80 },
       "cooldown": 90,
       "targeting": { "type": "circle_self", "radius": 5 },
-      "effects": [{ "type": "shield", "amount": 60, "duration": 6 }],
+      "effects": [{ "type": "shield", "amount": 40, "scaling": { "vit": 2 }, "duration": 6 }],
       "ranks": [
         {
           "rank": 2,
           "targeting": { "type": "circle_self", "radius": 7 },
-          "effects": [{ "type": "shield", "amount": 78, "duration": 6 }]
+          "effects": [{ "type": "shield", "amount": 52, "scaling": { "vit": 2.6 }, "duration": 6 }]
         },
         {
           "rank": 3,
           "effects": [
-            { "type": "shield", "amount": 96, "duration": 6 },
+            { "type": "shield", "amount": 64, "scaling": { "vit": 3.2 }, "duration": 6 },
             { "type": "remove_status", "tags": ["stun", "root", "freeze"], "count": 0 }
           ]
         }

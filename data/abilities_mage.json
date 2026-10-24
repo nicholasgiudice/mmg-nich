@@ -7,7 +7,7 @@
       "tags": ["basic", "ranged"],
       "cooldown": 1.0,
       "targeting": { "type": "unit", "range": 9, "faction": "enemy" },
-      "effects": [{ "type": "damage", "school": "arcane", "base": 15 }]
+      "effects": [{ "type": "damage", "school": "arcane", "base": 3, "scaling": { "int": 0.9 } }]
     },
     {
       "id": "mage.elemental_blast",
@@ -16,18 +16,18 @@
       "cost": { "resource": "mana", "amount": 90 },
       "cooldown": 8,
       "targeting": { "type": "circle_at_point", "range": 9, "radius": 3 },
-      "effects": [{ "type": "damage", "school": "fire", "base": 44 }],
+      "effects": [{ "type": "damage", "school": "fire", "base": 18, "scaling": { "int": 2 } }],
       "ranks": [
-        { "rank": 2, "effects": [{ "type": "damage", "school": "fire", "base": 53 }] },
+        { "rank": 2, "effects": [{ "type": "damage", "school": "fire", "base": 22, "scaling": { "int": 2.4 } }] },
         {
           "rank": 3,
-          "effects": [{ "type": "damage", "school": "fire", "base": 37 }],
+          "effects": [{ "type": "damage", "school": "fire", "base": 15, "scaling": { "int": 1.7 } }],
           "hits": { "count": 2, "interval": 0.4 }
         },
-        { "rank": 4, "effects": [{ "type": "damage", "school": "fire", "base": 44 }] },
+        { "rank": 4, "effects": [{ "type": "damage", "school": "fire", "base": 18, "scaling": { "int": 2 } }] },
         {
           "rank": 5,
-          "effects": [{ "type": "damage", "school": "fire", "base": 37 }],
+          "effects": [{ "type": "damage", "school": "fire", "base": 15, "scaling": { "int": 1.7 } }],
           "hits": { "count": 3, "interval": 0.4 }
         }
       ]
@@ -40,21 +40,21 @@
       "cooldown": 10,
       "targeting": { "type": "unit", "range": 8, "faction": "enemy" },
       "effects": [
-        { "type": "damage", "school": "frost", "base": 9 },
+        { "type": "damage", "school": "frost", "base": 3, "scaling": { "int": 0.45 } },
         { "type": "apply_status", "status": "status.frozen", "duration": 2.5 }
       ],
       "ranks": [
         {
           "rank": 2,
           "effects": [
-            { "type": "damage", "school": "frost", "base": 11 },
+            { "type": "damage", "school": "frost", "base": 4, "scaling": { "int": 0.54 } },
             { "type": "apply_status", "status": "status.frozen", "duration": 3 }
           ]
         },
         {
           "rank": 3,
           "effects": [
-            { "type": "damage", "school": "frost", "base": 12 },
+            { "type": "damage", "school": "frost", "base": 4, "scaling": { "int": 0.63 } },
             { "type": "apply_status", "status": "status.frozen", "duration": 3 },
             {
               "type": "extra_targets",
@@ -67,7 +67,7 @@
         {
           "rank": 4,
           "effects": [
-            { "type": "damage", "school": "frost", "base": 14 },
+            { "type": "damage", "school": "frost", "base": 5, "scaling": { "int": 0.72 } },
             { "type": "apply_status", "status": "status.frozen", "duration": 3.5 },
             {
               "type": "extra_targets",
@@ -80,7 +80,7 @@
         {
           "rank": 5,
           "effects": [
-            { "type": "damage", "school": "frost", "base": 16 },
+            { "type": "damage", "school": "frost", "base": 5, "scaling": { "int": 0.81 } },
             { "type": "apply_status", "status": "status.frozen_deep", "duration": 3.5 },
             {
               "type": "extra_targets",
@@ -99,15 +99,16 @@
       "cost": { "resource": "mana", "amount": 30 },
       "cooldown": 15,
       "targeting": { "type": "self" },
-      "effects": [{ "type": "shield", "amount": 45, "duration": 6 }],
+      "effects": [{ "type": "shield", "amount": 19, "scaling": { "int": 2 }, "duration": 6 }],
       "ranks": [
-        { "rank": 2, "effects": [{ "type": "shield", "amount": 54, "duration": 6 }] },
+        { "rank": 2, "effects": [{ "type": "shield", "amount": 23, "scaling": { "int": 2.4 }, "duration": 6 }] },
         {
           "rank": 3,
           "effects": [
             {
               "type": "shield",
-              "amount": 63,
+              "amount": 27,
+              "scaling": { "int": 2.8 },
               "duration": 6,
               "refund": { "resource": "mana", "fraction": 0.3 }
             }
@@ -118,7 +119,8 @@
           "effects": [
             {
               "type": "shield",
-              "amount": 72,
+              "amount": 30,
+              "scaling": { "int": 3.2 },
               "duration": 6,
               "refund": { "resource": "mana", "fraction": 0.3 }
             }
@@ -129,7 +131,8 @@
           "effects": [
             {
               "type": "shield",
-              "amount": 81,
+              "amount": 34,
+              "scaling": { "int": 3.6 },
               "duration": 6,
               "refund": { "resource": "mana", "fraction": 0.3 }
             },
@@ -138,7 +141,7 @@
               "radius": 8,
               "affects": "ally",
               "multiplier": 0.5,
-              "effects": [{ "type": "shield", "amount": 81, "duration": 6 }]
+              "effects": [{ "type": "shield", "amount": 34, "scaling": { "int": 3.6 }, "duration": 6 }]
             }
           ]
         }
@@ -152,28 +155,28 @@
       "cooldown": 12,
       "targeting": { "type": "circle_at_point", "range": 9, "radius": 3.5 },
       "effects": [
-        { "type": "damage", "school": "arcane", "base": 12 },
+        { "type": "damage", "school": "arcane", "base": 4, "scaling": { "int": 0.6 } },
         { "type": "spawn_area", "area": "area.lightning_field" }
       ],
       "ranks": [
         {
           "rank": 2,
           "effects": [
-            { "type": "damage", "school": "arcane", "base": 14 },
+            { "type": "damage", "school": "arcane", "base": 5, "scaling": { "int": 0.72 } },
             { "type": "spawn_area", "area": "area.lightning_field_2" }
           ]
         },
         {
           "rank": 3,
           "effects": [
-            { "type": "damage", "school": "arcane", "base": 17 },
+            { "type": "damage", "school": "arcane", "base": 6, "scaling": { "int": 0.84 } },
             { "type": "spawn_area", "area": "area.lightning_field_3" }
           ]
         },
         {
           "rank": 4,
           "effects": [
-            { "type": "damage", "school": "arcane", "base": 18 },
+            { "type": "damage", "school": "arcane", "base": 6, "scaling": { "int": 0.96 } },
             { "type": "spawn_area", "area": "area.lightning_field_4" }
           ]
         },
@@ -181,7 +184,7 @@
           "rank": 5,
           "targeting": { "type": "circle_at_point", "range": 9, "radius": 4.5 },
           "effects": [
-            { "type": "damage", "school": "arcane", "base": 21 },
+            { "type": "damage", "school": "arcane", "base": 7, "scaling": { "int": 1.08 } },
             { "type": "spawn_area", "area": "area.lightning_field_5" }
           ]
         }
@@ -196,18 +199,18 @@
       "cooldown": 120,
       "targeting": { "type": "circle_at_point", "range": 10, "radius": 5 },
       "telegraph": { "shape": "circle", "delay": 1.5, "radius": 5, "anchor": "aim" },
-      "effects": [{ "type": "damage", "school": "arcane", "base": 138 }],
+      "effects": [{ "type": "damage", "school": "arcane", "base": 60, "scaling": { "int": 6 } }],
       "ranks": [
         {
           "rank": 2,
           "targeting": { "type": "circle_at_point", "range": 10, "radius": 6 },
           "telegraph": { "shape": "circle", "delay": 1.5, "radius": 6, "anchor": "aim" },
-          "effects": [{ "type": "damage", "school": "arcane", "base": 179 }]
+          "effects": [{ "type": "damage", "school": "arcane", "base": 78, "scaling": { "int": 7.8 } }]
         },
         {
           "rank": 3,
           "effects": [
-            { "type": "damage", "school": "arcane", "base": 221 },
+            { "type": "damage", "school": "arcane", "base": 96, "scaling": { "int": 9.6 } },
             { "type": "spawn_area", "area": "area.cataclysm_fire" }
           ]
         }
