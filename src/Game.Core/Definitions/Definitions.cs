@@ -250,7 +250,10 @@ public sealed record MonsterDefinition
     public required double Radius { get; init; }
     public MonsterRank Rank { get; init; } = MonsterRank.Normal;
 
-    /// <summary>Nível do monstro (T-203): XP ao matar e nível do atacante na defesa.</summary>
+    /// <summary>
+    /// Nível padrão do monstro (T-203): XP ao matar e nível do atacante na defesa. A vida e os números das habilidades
+    /// são os do nível 1 e crescem com o nível em que ele surge (T-206, <see cref="MonsterScalingRules"/>).
+    /// </summary>
     public int Level { get; init; } = 1;
     public IReadOnlyList<string> Tags { get; init; } = [];
     /// <summary>Resistência por escola (chave = nome da escola em snake_case; 0.25 = -25% de dano).</summary>
@@ -287,6 +290,9 @@ public sealed record EnemySpawnDefinition
 {
     public required string Monster { get; init; }
     public required PositionDefinition Position { get; init; }
+
+    /// <summary>Nível deste monstro (T-206). Null = <see cref="EncounterDefinition.MonsterLevel"/> ou o nível da definição.</summary>
+    public int? Level { get; init; }
 }
 
 public sealed record DefeatDefinition
@@ -304,4 +310,7 @@ public sealed record EncounterDefinition
     public required IReadOnlyList<EnemySpawnDefinition> Enemies { get; init; }
     public VictoryCondition Victory { get; init; } = VictoryCondition.AllEnemiesDead;
     public DefeatDefinition Defeat { get; init; } = new();
+
+    /// <summary>Nível de todos os monstros do encontro (T-206; vida e potência pela <see cref="MonsterScalingRules"/>). Null = o de cada definição.</summary>
+    public int? MonsterLevel { get; init; }
 }

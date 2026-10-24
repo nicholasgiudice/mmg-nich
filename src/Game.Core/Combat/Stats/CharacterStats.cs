@@ -126,6 +126,15 @@ public static class StatMath
         return value;
     }
 
+    /// <summary>
+    /// Potência de um monstro pelo nível (T-206, <see cref="MonsterScalingRules.PowerFactor"/>): multiplica dano, cura e
+    /// escudo dos efeitos cuja fonte é monstro. Personagens (com estatísticas) e fontes sem nível = 1.
+    /// </summary>
+    public static double MonsterPower(World world, Entity? source) =>
+        source is not null && !source.Has<CharacterStats>() && source.TryGet<FactionTag>() is { Faction: Faction.Monster }
+            ? world.Content.Rules.Monsters.PowerFactor(source.TryGet<UnitInfo>()?.Level ?? 1, source.TryGet<UnitInfo>()?.Rank ?? MonsterRank.Normal)
+            : 1;
+
     /// <summary>Sorteia crítico para a fonte (só quem tem estatísticas pode critar). Consome o RNG só nesse caso.</summary>
     public static bool RollCrit(World world, Entity? source) =>
         source?.TryGet<CharacterStats>() is { } s && world.Random.NextFloat() < CritChance(s, world.Content.Rules.Stats);

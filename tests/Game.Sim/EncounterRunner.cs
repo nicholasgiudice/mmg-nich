@@ -39,13 +39,23 @@ public sealed record RunSpec
     /// <summary>Nome do perfil de NH para relatórios (ex.: <c>focado</c>); vazio = NH1.</summary>
     public string RankLabel { get; init; } = "";
 
+    /// <summary>
+    /// Perfil de personagem (T-206): todos os jogadores nascem com progressão nesse nível, atributos, equipamento e NH.
+    /// Null = os jogadores do encontro (protótipo: nível 1, NH1, arma inicial). Com perfil, <see cref="Ranks"/> é ignorado.
+    /// </summary>
+    public CharacterProfile? Profile { get; init; }
+
+    /// <summary>Nível de todos os monstros (T-206, <c>rules.monsters</c>); null = o do encontro.</summary>
+    public int? MonsterLevel { get; init; }
+
     public string StrategyFor(string classId) =>
         Roles.TryGetValue(classId, out var s) ? s : Roles.TryGetValue("*", out var all) ? all : Strategy;
 
     /// <summary>Rótulo para relatórios: a estratégia padrão mais os papéis específicos.</summary>
     public string Label =>
         (Roles.Count == 0 ? Strategy : $"{Strategy} [{string.Join(", ", Roles.OrderBy(r => r.Key, StringComparer.Ordinal).Select(r => $"{r.Key}={r.Value}"))}]")
-        + (RankLabel.Length > 0 ? $" NH:{RankLabel}" : "");
+        + (Profile is not null ? $" [{Profile.Label}]" : RankLabel.Length > 0 ? $" NH:{RankLabel}" : "")
+        + (MonsterLevel is { } level ? $" monstros nv{level}" : "");
 
     /// <summary>O encontro com os NH de <see cref="Ranks"/> por cima dos NH dos jogadores.</summary>
     public EncounterDefinition WithRanks(EncounterDefinition encounter) =>
@@ -111,7 +121,12 @@ public static class EncounterRunner
             ? enc
             : throw new ArgumentException($"Encontro desconhecido: {spec.EncounterId}");
         encounter = spec.WithRanks(encounter);
-        var setup = EncounterSetup.Create(seed, content, encounter);
+        if (spec.MonsterLevel is { } monsterLevel)
+        {
+            encounter = encounter with { MonsterLevel = monsterLevel, Enemies = encounter.Enemies.Select(e => e with { Level = null }).ToList() };
+        }
+
+        var setup = spec.Profile is { } profile ? CreateWithProfile(seed, content, encounter, profile) : EncounterSetup.Create(seed, content, encounter);
         var world = setup.World;
         ApplyJitter(setup, seed, spec.SpawnJitter);
 
@@ -150,6 +165,20 @@ public static class EncounterRunner
         }
 
         return m.Build(seed, outcome, (int)world.Tick, world.ComputeStateHash());
+    }
+
+    /// <summary>Como <see cref="EncounterSetup.Create"/>, mas os jogadores nascem com o perfil (T-206).</summary>
+    private static EncounterWorld CreateWithProfile(ulong seed, ContentCatalog content, EncounterDefinition encounter, CharacterProfile profile)
+    {
+        var world = WorldBuilder.CreateDefault(seed, EntityFactory.BuildMap(content.Arenas[encounter.Arena]), content);
+        static Vector2 Pos(PositionDefinition p) => new((float)p.X, (float)p.Y);
+        var players = encounter.Players
+            .Select(p => CharacterProfiles.Spawn(world, content.Classes[p.Class], Pos(p.Position), profile))
+            .ToList();
+        var enemies = encounter.Enemies
+            .Select(e => EntityFactory.SpawnMonster(world, content.Monsters[e.Monster], Pos(e.Position), e.Level ?? encounter.MonsterLevel))
+            .ToList();
+        return new EncounterWorld(world, players, enemies);
     }
 
     /// <summary>Varia as posições iniciais de forma determinística por seed (o simulador não é Core; usa Random com seed explícita).</summary>

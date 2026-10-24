@@ -81,7 +81,7 @@ public static class SummonModule
         for (var i = 0; i < count; i++)
         {
             var pos = FreeSpot(world, tr.Position, ring, baseAngle + (MathF.Tau * i / count));
-            var summon = EntityFactory.SpawnMonster(world, def, pos);
+            var summon = EntityFactory.SpawnMonster(world, def, pos, source.TryGet<UnitInfo>()?.Level); // T-206: nível de quem invoca
             summon.Add(new SummonedBy { Owner = source.Id, MonsterId = e.Monster });
             if (AiState.Ensure(world, summon) is { } ai)
             {

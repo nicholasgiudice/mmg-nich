@@ -18,7 +18,44 @@ public sealed record RulesDefinition
     // ---- seção T-204 (itens, afixos e quedas; fica em data/items.json) ----
     public ItemRules Items { get; init; } = new();
 
+    // ---- seção T-206 (escala dos monstros por nível) ----
+    public MonsterScalingRules Monsters { get; init; } = new();
+
     // ---- seção T-011 (threat): adicione abaixo ----
+}
+
+/// <summary>Quanto vida e potência de um monstro crescem por nível acima do 1 (T-206). Frações: 0,4 = +40% por nível.</summary>
+public sealed record MonsterGrowth
+{
+    public double HealthPerLevel { get; init; }
+    public double PowerPerLevel { get; init; }
+}
+
+/// <summary>
+/// Escala dos monstros por nível (T-206): os números de <c>monsters.json</c> valem para o nível 1; no nível L a vida e a
+/// potência (dano, cura e escudo dos efeitos do monstro, inclusive áreas e status dele) são multiplicadas por
+/// 1 + porNível × (L − 1). Elites e chefes podem ter crescimento próprio (<see cref="Elite"/>, <see cref="Boss"/>; null =
+/// o geral). Padrão 0 = sem escala.
+/// </summary>
+public sealed record MonsterScalingRules
+{
+    public double HealthPerLevel { get; init; }
+    public double PowerPerLevel { get; init; }
+    public MonsterGrowth? Elite { get; init; }
+    public MonsterGrowth? Boss { get; init; }
+
+    public double HealthFactor(int level, MonsterRank rank = MonsterRank.Normal) =>
+        1 + ((For(rank)?.HealthPerLevel ?? HealthPerLevel) * Math.Max(0, level - 1));
+
+    public double PowerFactor(int level, MonsterRank rank = MonsterRank.Normal) =>
+        1 + ((For(rank)?.PowerPerLevel ?? PowerPerLevel) * Math.Max(0, level - 1));
+
+    private MonsterGrowth? For(MonsterRank rank) => rank switch
+    {
+        MonsterRank.Elite => Elite,
+        MonsterRank.Boss => Boss,
+        _ => null,
+    };
 }
 
 /// <summary>Multiplicador da duração de controle (status com tag "control") por rank do alvo.</summary>

@@ -1,4 +1,5 @@
 using Game.Sim;
+using Xunit.Abstractions;
 using static Game.Design.Tests.DesignHarness;
 
 namespace Game.Design.Tests;
@@ -8,7 +9,7 @@ namespace Game.Design.Tests;
 /// nível 15 com os atributos do nível 1 (o simulador ainda não tem monstros por nível): medem distribuições, não a curva.
 /// Relatório: tasks/reports/balance-v0.6.md.
 /// </summary>
-public class RankDesignTests
+public class RankDesignTests(ITestOutputHelper output)
 {
     /// <summary>Encontro solo de cada classe com a estratégia correta (a mesma dos testes de NH1).</summary>
     public static TheoryData<string, string> SoloEncounters => new()
@@ -61,15 +62,29 @@ public class RankDesignTests
         Assert.True(spam.WinRate <= 0.50 || spam.TimeToWinMean > rot.TimeToWinMean, $"{Fmt(spam)} vs {Fmt(rot)}");
     }
 
-    [Theory(Skip = "Aceito no protótipo (balance-v0.6.md §4, opção 1): com ratos do nível 1 a Explosão e o Campo no NH3+ vencem sozinhos. Reativar com encontros por nível.")]
-    [InlineData("mage.elemental_blast")]
-    [InlineData("mage.lightning_field")]
-    public void Mage_rank_5_area_skill_does_not_solve_the_rats_alone(string ability)
+    /// <summary>
+    /// T-206 (reativado; balance-v0.6.md §4): medido no nível certo, com o Mago nível 9 no perfil esperado, a habilidade
+    /// no NH5 e as outras no NH1 (o Campo leva o ponto que sobra), contra ratos do nível 9. Nos NH altos a regra é a
+    /// opção 3 da v0.6 (decisão do designer, balance-v0.7 §4): o spam vence no máximo metade das vezes, ou a rotação
+    /// não é mais que 1,5× mais lenta que ele.
+    /// </summary>
+    [Theory]
+    [InlineData("mage.elemental_blast", "mage.lightning_field")]
+    [InlineData("mage.lightning_field", "mage.elemental_blast")]
+    public void Mage_rank_5_area_skill_does_not_solve_the_rats_alone(string ability, string other)
     {
-        var pair = new[] { $"class.mage:{ability}=5" };
+        var ranks = new Dictionary<string, int>
+        {
+            [ability] = 5,
+            [other] = ability == "mage.lightning_field" ? 1 : 2,
+            ["mage.ice_prison"] = 1,
+            ["mage.arcane_barrier"] = 1,
+        };
+        var profile = CharacterProfile.Expected(9) with { Ranks = new Dictionary<string, Dictionary<string, int>> { ["class.mage"] = ranks } };
         var opt = new Dictionary<string, string> { ["class.mage:explosion"] = ability };
-        var rot = RunRanked("encounter.four_rats", "rotation", RankProfiles.Nh1, pair, opt);
-        var spam = RunRanked("encounter.four_rats", "explosion_spam", RankProfiles.Nh1, pair, opt);
-        Assert.True(spam.WinRate <= 0.50 || spam.TimeToWinMean > rot.TimeToWinMean, $"{Fmt(spam)} vs {Fmt(rot)}");
+        var rot = RunProfile("encounter.four_rats", "rotation", profile, 9, opt);
+        var spam = RunProfile("encounter.four_rats", "explosion_spam", profile, 9, opt);
+        output.WriteLine($"{Fmt(spam)} | {Fmt(rot)} | rotação/spam = {rot.TimeToWinMean / spam.TimeToWinMean:F2}");
+        Assert.True(spam.WinRate <= 0.50 || rot.TimeToWinMean <= 1.5 * spam.TimeToWinMean, $"{Fmt(spam)} vs {Fmt(rot)}");
     }
 }

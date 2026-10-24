@@ -72,13 +72,15 @@ public static class EntityFactory
         return player;
     }
 
-    public static Entity SpawnMonster(World world, MonsterDefinition def, Vector2 position)
+    /// <param name="level">Nível em que o monstro surge (T-206); null = o da definição. A vida cresce com ele.</param>
+    public static Entity SpawnMonster(World world, MonsterDefinition def, Vector2 position, int? level = null)
     {
         var abilities = new AbilityState();
         abilities.Known.AddRange(def.Abilities.Distinct());
+        var lvl = Math.Max(1, level ?? def.Level);
         return world.Spawn(
             new Transform { Position = position },
-            new Health((float)def.Health),
+            new Health((float)(def.Health * world.Content.Rules.Monsters.HealthFactor(lvl, def.Rank))),
             new FactionTag(Faction.Monster),
             new Movement((float)def.Speed),
             new Collider((float)def.Radius),
@@ -88,7 +90,7 @@ public static class EntityFactory
                 Name = def.Name,
                 Tags = def.Tags,
                 Rank = def.Rank,
-                Level = def.Level,
+                Level = lvl,
                 Resistances = def.Resistances,
                 Armor = def.Armor,
                 Resistance = def.Resistance,
@@ -114,7 +116,7 @@ public static class EncounterSetup
             .Select(p => EntityFactory.SpawnPlayer(world, content.Classes[p.Class], Pos(p.Position), p.Ranks))
             .ToList();
         var enemies = encounter.Enemies
-            .Select(e => EntityFactory.SpawnMonster(world, content.Monsters[e.Monster], Pos(e.Position)))
+            .Select(e => EntityFactory.SpawnMonster(world, content.Monsters[e.Monster], Pos(e.Position), e.Level ?? encounter.MonsterLevel))
             .ToList();
         return new EncounterWorld(world, players, enemies);
     }
