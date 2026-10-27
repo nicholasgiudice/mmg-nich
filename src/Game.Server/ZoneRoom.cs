@@ -1,12 +1,16 @@
 using System.Numerics;
+using Game.Auth;
 using Game.Bots;
 using Game.Core.Combat;
+using Game.Core.Combat.Items;
+using Game.Core.Combat.Progression;
 using Game.Core.Definitions;
 using Game.Core.Intents;
 using Game.Core.Simulation;
 using Game.Core.Simulation.Components;
 using Game.Protocol;
 using Game.Server.Interest;
+using Game.Server.Persistence;
 using Game.Server.Transport;
 using Serilog;
 
@@ -26,6 +30,10 @@ namespace Game.Server;
 /// <item>Ciclo da luta: sala sem jogadores fica <b>parada</b> no começo (os bots não lutam sozinhos); quem entra numa sala vazia
 /// começa a luta do zero; no fim (vitória, derrota ou tempo esgotado) a sala mostra o resultado por
 /// <see cref="ServerOptions.RestartAfterSeconds"/> e recomeça para quem está nela.</item>
+/// <item>Contas (T-212): com token de jogo, o personagem salvo é carregado fora do loop e entra quando chega; nasce com o
+/// build, o equipamento e o inventário salvos. É gravado (também fora do loop) ao sair, a cada
+/// <see cref="ServerOptions.SaveIntervalSeconds"/>, ao subir de nível, ao pegar item raro, no reinício da sala e na parada
+/// (<see cref="SaveAll"/>). Um personagem só entra uma vez; ao sair, a entidade some na hora (sem vaga reservada).</item>
 /// </list>
 /// </summary>
 public sealed class ZoneRoom : ITransportHandler
@@ -49,10 +57,16 @@ public sealed class ZoneRoom : ITransportHandler
     private int _epoch = 1;
     private long? _endedAtTick;
     private readonly InterestGrid _grid;
+    private readonly AccountLogin? _accounts;
 
-    public ZoneRoom(ContentCatalog content, ServerOptions options, IServerTransport transport, ILogger log)
+    // Personagens com conta conectados ou carregando, e a conexão de cada um.
+    private readonly Dictionary<Guid, int> _online = new();
+    private long _ticksSinceSave;
+
+    public ZoneRoom(ContentCatalog content, ServerOptions options, IServerTransport transport, ILogger log, AccountLogin? accounts = null)
     {
         _content = content;
+        _accounts = accounts;
         _options = options;
         _transport = transport;
         _log = log;
@@ -91,12 +105,43 @@ public sealed class ZoneRoom : ITransportHandler
     public void OnDisconnected(int peer)
     {
         _closeAt.Remove(peer);
-        if (!_connections.Remove(peer, out var c) || c.Slot is not { } index)
+        if (!_connections.Remove(peer, out var c))
+        {
+            return;
+        }
+
+        if (c.CharacterId is { } characterId && _online.TryGetValue(characterId, out var owner) && owner == peer)
+        {
+            _online.Remove(characterId);
+        }
+
+        if (c.Slot is not { } index)
         {
             return;
         }
 
         var slot = _slots[index];
+        if (c.CharacterId is not null)
+        {
+            // Com conta: grava e tira a entidade na hora (voltar exige token novo e recarrega o salvo).
+            SaveNow(c, "saída");
+            if (slot.Entity is { } entity)
+            {
+                World.Remove(entity.Id);
+            }
+
+            slot.Entity = null;
+            slot.Peer = null;
+            _log.Information("{Name} saiu (vaga {Slot}); personagem gravado", c.Name, index);
+            RebuildBots();
+            if (PlayerCount == 0)
+            {
+                Restart("todos os jogadores saíram");
+            }
+
+            return;
+        }
+
         slot.Peer = null;
         slot.ReservedFor = c.Name;
         slot.LeftAtTick = World.Tick;
@@ -152,7 +197,7 @@ public sealed class ZoneRoom : ITransportHandler
 
     private void OnHello(Connection c, Hello hello)
     {
-        if (c.Slot is not null)
+        if (c.Slot is not null || c.CharacterId is not null)
         {
             return; // repetido
         }
@@ -169,6 +214,18 @@ public sealed class ZoneRoom : ITransportHandler
             return;
         }
 
+        if (!string.IsNullOrEmpty(hello.Ticket))
+        {
+            BeginAccountLogin(c, hello.Ticket);
+            return;
+        }
+
+        if (!_options.DevLogin)
+        {
+            Refuse(c, RejectReason.Unauthorized, "token de jogo obrigatório (servidor sem --dev-login)");
+            return;
+        }
+
         var name = string.IsNullOrWhiteSpace(hello.DevName) ? $"jogador{c.Peer}" : hello.DevName.Trim();
         if (hello.ClassId is { } cls && !_content.Classes.ContainsKey(cls))
         {
@@ -176,7 +233,13 @@ public sealed class ZoneRoom : ITransportHandler
             return;
         }
 
-        var index = ChooseSlot(name, hello.ClassId);
+        Enter(c, name, hello.ClassId);
+    }
+
+    /// <summary>Ocupa uma vaga (ou recusa com sala cheia). Primeiro a entrar numa sala vazia recomeça a luta.</summary>
+    private void Enter(Connection c, string name, string? classId)
+    {
+        var index = ChooseSlot(name, classId);
         if (index < 0)
         {
             Refuse(c, RejectReason.Full, $"as {_slots.Count} vagas do encontro estão ocupadas");
@@ -188,11 +251,127 @@ public sealed class ZoneRoom : ITransportHandler
         {
             // Primeiro a entrar numa sala vazia: luta do zero (não a que sobrou).
             Restart("primeiro jogador entrou");
-            index = ChooseSlot(name, hello.ClassId);
+            index = ChooseSlot(name, classId);
         }
 
-        Occupy(c, index, hello.ClassId);
+        Occupy(c, index, classId);
         _log.Information("{Name} entrou na vaga {Slot} como {Class} (entidade {Entity})", name, index, _slots[index].ClassId, _slots[index].Entity!.Id);
+    }
+
+    // ---------------- contas (T-212) ----------------
+
+    private void BeginAccountLogin(Connection c, string token)
+    {
+        if (_accounts is null)
+        {
+            Refuse(c, RejectReason.Unauthorized, "servidor sem contas (só --dev-login)");
+            return;
+        }
+
+        var (result, ticket) = _accounts.Tickets.Consume(token);
+        if (result != TicketCheck.Valid)
+        {
+            Refuse(c, RejectReason.Unauthorized, $"token de jogo recusado: {result}");
+            return;
+        }
+
+        if (_online.ContainsKey(ticket!.CharacterId))
+        {
+            Refuse(c, RejectReason.AlreadyConnected, $"personagem {ticket.CharacterId} já está conectado");
+            return;
+        }
+
+        _online[ticket.CharacterId] = c.Peer;
+        c.CharacterId = ticket.CharacterId;
+        _accounts.Persistence.BeginLoad(c.Peer, ticket.CharacterId, ticket.AccountId);
+        _log.Information("Conexão {Peer}: token aceito, carregando o personagem {Character}", c.Peer, ticket.CharacterId);
+    }
+
+    /// <summary>Personagens que terminaram de carregar entram (na thread do loop).</summary>
+    private void ProcessLoads()
+    {
+        while (_accounts is not null && _accounts.Persistence.TryTakeLoaded(out var r))
+        {
+            if (!_connections.TryGetValue(r.Peer, out var c) || c.CharacterId != r.CharacterId || c.Slot is not null)
+            {
+                continue; // caiu enquanto carregava
+            }
+
+            string? error = r.Outcome switch
+            {
+                LoadOutcome.Loaded when !_content.Classes.TryGetValue(r.ClassId, out var cls) || cls.Attributes is null => $"classe {r.ClassId} sem progressão",
+                LoadOutcome.Loaded => Leveling.Validate(_content, _content.Classes[r.ClassId], r.State!.Build),
+                _ => r.Error ?? r.Outcome.ToString(),
+            };
+            if (error is not null)
+            {
+                _online.Remove(r.CharacterId);
+                c.CharacterId = null;
+                Refuse(c, RejectReason.Unavailable, $"personagem {r.CharacterId}: {error}");
+                continue;
+            }
+
+            c.Saved = r.State;
+            Enter(c, r.Name, r.ClassId);
+            if (c.Slot is null)
+            {
+                _online.Remove(r.CharacterId);
+                c.CharacterId = null;
+                c.Saved = null;
+            }
+        }
+    }
+
+    /// <summary>Captura o estado do personagem com conta e pede a gravação (não espera o banco).</summary>
+    private void SaveNow(Connection c, string reason)
+    {
+        if (_accounts is null || c.CharacterId is not { } id || c.Slot is not { } index
+            || _slots[index].Entity is not { } e || CharacterState.Capture(e) is not { } state)
+        {
+            return;
+        }
+
+        c.Saved = state;
+        _accounts.Persistence.Save(id, state, reason);
+    }
+
+    /// <summary>Grava todos os personagens com conta conectados (gravação periódica e parada do servidor).</summary>
+    public void SaveAll(string reason)
+    {
+        foreach (var c in _connections.Values)
+        {
+            SaveNow(c, reason);
+        }
+    }
+
+    /// <summary>Gravação periódica e por evento (subir de nível, pegar item raro ou melhor).</summary>
+    private void SaveAfterTick()
+    {
+        if (_accounts is null || _online.Count == 0)
+        {
+            return;
+        }
+
+        if (++_ticksSinceSave >= (long)Math.Round(_options.SaveIntervalSeconds * World.TickRate))
+        {
+            _ticksSinceSave = 0;
+            SaveAll("periódica");
+            return;
+        }
+
+        foreach (var ev in World.LastTickEvents)
+        {
+            var (entity, reason) = ev switch
+            {
+                LevelUp l => (l.Entity, "nível"),
+                ItemPickedUp p when World.Find(p.Entity)?.TryGet<Inventory>()?[p.InventorySlot] is { Rarity: >= ItemRarity.Rare } => (p.Entity, "item raro"),
+                _ => (default(EntityId?), ""),
+            };
+            if (entity is { } id && _connections.Values.FirstOrDefault(c => c.CharacterId is not null && c.Slot is { } i && _slots[i].Entity?.Id == id) is { } owner)
+            {
+                SaveNow(owner, reason);
+            }
+        }
     }
 
     private void Refuse(Connection c, RejectReason reason, string detail)
@@ -227,9 +406,9 @@ public sealed class ZoneRoom : ITransportHandler
     private void Occupy(Connection c, int index, string? classId)
     {
         var slot = _slots[index];
-        if (slot.Entity is null || (classId is not null && classId != slot.ClassId))
+        if (slot.Entity is null || (classId is not null && classId != slot.ClassId) || c.Saved is not null)
         {
-            Respawn(slot, classId ?? slot.ClassId);
+            Respawn(slot, classId ?? slot.ClassId, c.Saved);
         }
 
         slot.Peer = c.Peer;
@@ -244,8 +423,11 @@ public sealed class ZoneRoom : ITransportHandler
         Send(c.Peer, new Welcome(slot.Entity!.Id, World.Tick, _encounter.Id, _encounter.Arena, _epoch));
     }
 
-    /// <summary>Troca a entidade da vaga (classe diferente ou removida): nasce onde a anterior estava, ou no ponto da vaga.</summary>
-    private void Respawn(Slot slot, string classId)
+    /// <summary>
+    /// Troca a entidade da vaga (classe diferente, removida ou personagem com conta): nasce onde a anterior estava, ou no ponto
+    /// da vaga. Com <paramref name="saved"/>, nasce com o estado salvo.
+    /// </summary>
+    private void Respawn(Slot slot, string classId, CharacterState? saved = null)
     {
         var position = slot.Entity?.TryGet<Transform>()?.Position ?? slot.SpawnPosition;
         if (slot.Entity is { } old)
@@ -254,7 +436,18 @@ public sealed class ZoneRoom : ITransportHandler
         }
 
         slot.ClassId = classId;
-        slot.Entity = EntityFactory.SpawnPlayer(World, _content.Classes[classId], position);
+        if (saved is null)
+        {
+            slot.Entity = EntityFactory.SpawnPlayer(World, _content.Classes[classId], position);
+            return;
+        }
+
+        var dropped = new List<string>();
+        slot.Entity = saved.Spawn(World, _content.Classes[classId], position, dropped);
+        if (dropped.Count > 0)
+        {
+            _log.Warning("Itens salvos que o conteúdo não aceita mais foram descartados: {Items}", string.Join(", ", dropped));
+        }
     }
 
     private bool IsBotSlot(Slot s) => _options.FillWithBots && s.Peer is null && s.Entity is not null;
@@ -283,6 +476,7 @@ public sealed class ZoneRoom : ITransportHandler
     public void Step()
     {
         CloseRefused();
+        ProcessLoads();
         if (PlayerCount == 0)
         {
             return; // sala vazia fica parada: ninguém vê, ninguém luta (nem os bots)
@@ -313,6 +507,7 @@ public sealed class ZoneRoom : ITransportHandler
 
         _bots?.Tick();
         World.Step();
+        SaveAfterTick();
         Broadcast();
         CheckEnd();
     }
@@ -451,6 +646,7 @@ public sealed class ZoneRoom : ITransportHandler
         Restarts++;
         Outcome = null;
         _endedAtTick = null;
+        SaveAll("reinício da sala"); // também guarda em c.Saved o estado com que o personagem volta
         var keep = _connections.Values.Where(c => c.Slot is not null).Select(c => (c, _slots[c.Slot!.Value].ClassId)).ToList();
         World = CreateWorld();
         _log.Information("Sala reiniciada ({Reason}); seed {Seed}", reason, _seed);
@@ -484,7 +680,9 @@ public sealed class ZoneRoom : ITransportHandler
 
     /// <summary>Linha de estado para o console.</summary>
     public string Status() =>
-        $"tick {World.Tick}, {PlayerCount} jogador(es), seed {_seed}, reinícios {Restarts}; vagas: "
+        $"tick {World.Tick}, {PlayerCount} jogador(es), seed {_seed}, reinícios {Restarts}"
+        + (_accounts is { } a ? $", gravações pendentes {a.Persistence.PendingSaves} (feitas {a.Persistence.SavesCompleted}, falhas {a.Persistence.SaveFailures})" : "")
+        + "; vagas: "
         + string.Join("; ", Slots.Select((s, i) => $"{i}:{s.Class} {(s.Player ?? (s.Bot ? "bot" : "livre"))}{(s.Entity is null ? " (sem entidade)" : "")}"));
 
     private void Send(int peer, INetMessage message) => _transport.Send(peer, ProtocolSerializer.Serialize(message), SendMode.Reliable);
@@ -500,6 +698,12 @@ public sealed class ZoneRoom : ITransportHandler
         public Queue<IntentMessage> Pending { get; } = new();
         public uint LastApplied { get; set; }
         public bool AckDue { get; set; }
+
+        /// <summary>Personagem com conta (T-212); null = login de desenvolvimento.</summary>
+        public Guid? CharacterId { get; set; }
+
+        /// <summary>Último estado carregado ou capturado do personagem com conta (com ele a entidade renasce no reinício).</summary>
+        public CharacterState? Saved { get; set; }
     }
 
     private sealed class Slot

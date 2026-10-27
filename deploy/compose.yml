@@ -11,9 +11,20 @@ services:
       dockerfile: deploy/game-server/Dockerfile
     image: mmo-rpg/game-server:dev
     command: ["--encounter", "${GAME_ENCOUNTER:-encounter.forest_matriarch}", "--bots", "${GAME_BOTS:-true}", "--restart-after", "${GAME_RESTART_AFTER:-10}", "--log-level", "${GAME_LOG_LEVEL:-info}"]
+    environment:
+      # Contas (T-212): carrega e grava personagens; o token de jogo usa a mesma chave e o mesmo id de servidor da API.
+      MMO_DB_CONNECTION: "Host=postgres;Database=${POSTGRES_DB:-mmo};Username=${POSTGRES_USER:-mmo};Password=${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD em deploy/.env}"
+      MMO_GAME_TICKET_KEY: ${MMO_GAME_TICKET_KEY:?defina MMO_GAME_TICKET_KEY em deploy/.env (modelo em deploy/.env.example)}
+      MMO_GAME_SERVER_ID: ${MMO_GAME_SERVER_ID:-game.dev}
+      # Login só com nome (cliente atual e bots) até o cliente entrar com token (T-220). false = só com token.
+      MMO_DEV_LOGIN: ${GAME_DEV_LOGIN:-true}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
     ports:
       - "7777:7777/udp"
     restart: unless-stopped
+    stop_grace_period: 30s # na parada, grava os personagens conectados antes de sair (até 20 s)
     stdin_open: true # console do servidor via "docker compose attach" (restart · status)
 
   postgres:

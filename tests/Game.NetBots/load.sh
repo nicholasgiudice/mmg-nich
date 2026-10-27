@@ -29,7 +29,7 @@ ADDRS=()
 for ((i = 0; i < ROOMS; i++)); do
   port=$((PORT0 + i))
   # stdin vazio: o leitor de comandos do console termina, o servidor continua rodando
-  dotnet "$SERVER" --port "$port" --bots false --seed $((i + 1)) </dev/null >"$LOGS/server-$port.log" 2>&1 &
+  dotnet "$SERVER" --dev-login --port "$port" --bots false --seed $((i + 1)) </dev/null >"$LOGS/server-$port.log" 2>&1 &
   PIDS+=($!)
   ADDRS+=("127.0.0.1:$port")
 done
