@@ -1,7 +1,7 @@
-# Deploy de desenvolvimento (T-110, T-210). Na raiz do repositório:
+# Deploy de desenvolvimento (T-110, T-210, T-211). Na raiz do repositório:
 #   docker compose -f deploy/compose.yml up -d --build
-# Precisa de deploy/.env com POSTGRES_PASSWORD (modelo em deploy/.env.example).
-# Portas publicadas aqui ignoram o ufw: publique só 7777/udp. O PostgreSQL fica só na rede interna.
+# Precisa de deploy/.env com POSTGRES_PASSWORD, MMO_SESSION_KEY e MMO_GAME_TICKET_KEY (modelo em deploy/.env.example).
+# Portas publicadas aqui ignoram o ufw: publique só 7777/udp. O PostgreSQL e a API ficam só na rede interna.
 name: mmo-rpg
 
 services:
@@ -43,6 +43,26 @@ services:
       postgres:
         condition: service_healthy
     restart: "no" # aplica as migrations pendentes e sai
+
+  api:
+    build:
+      context: ..
+      dockerfile: deploy/api/Dockerfile
+    image: mmo-rpg/api:dev
+    environment:
+      MMO_DB_CONNECTION: "Host=postgres;Database=${POSTGRES_DB:-mmo};Username=${POSTGRES_USER:-mmo};Password=${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD em deploy/.env}"
+      MMO_SESSION_KEY: ${MMO_SESSION_KEY:?defina MMO_SESSION_KEY em deploy/.env (modelo em deploy/.env.example)}
+      MMO_GAME_TICKET_KEY: ${MMO_GAME_TICKET_KEY:?defina MMO_GAME_TICKET_KEY em deploy/.env (modelo em deploy/.env.example)}
+      MMO_GAME_SERVER_ID: ${MMO_GAME_SERVER_ID:-game.dev}
+      MMO_GAME_SERVER_ADDRESS: ${MMO_GAME_SERVER_ADDRESS:-}
+      MMO_AUTH_RATE_LIMIT: ${MMO_AUTH_RATE_LIMIT:-10}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    expose:
+      - "8080"
+    restart: unless-stopped
+    # sem "ports:": de fora, só pelo Caddy (T-213)
 
 volumes:
   pgdata:

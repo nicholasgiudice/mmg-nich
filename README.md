@@ -146,6 +146,7 @@ Configurado na T-210. O `deploy/compose.yml` sobe o serviço `postgres` (imagem 
 ```bash
 cp deploy/.env.example deploy/.env
 sed -i "s/troque-esta-senha/$(openssl rand -hex 24)/" deploy/.env
+sed -i "s|^MMO_SESSION_KEY=.*|MMO_SESSION_KEY=$(openssl rand -base64 32)|; s|^MMO_GAME_TICKET_KEY=.*|MMO_GAME_TICKET_KEY=$(openssl rand -base64 32)|" deploy/.env
 docker compose -f deploy/compose.yml up -d --build
 docker compose -f deploy/compose.yml logs migrate
 ```
@@ -168,9 +169,37 @@ dotnet ef migrations add NomeDaMudanca --project src/Game.Persistence --output-d
 ```bash
 ./deploy/test-db.sh up
 export MMO_TEST_DB="Host=127.0.0.1;Port=55432;Username=postgres;Password=test;Database=postgres"
-dotnet test tests/Game.Persistence.Tests
+dotnet test tests/Game.Persistence.Tests tests/Game.Api.Tests
 ./deploy/test-db.sh down
 ```
+
+### API de contas e personagens (`Game.Api`)
+
+Criada na T-211. ASP.NET Core minimal API no serviço `api` do Compose (porta 8080 **só na rede interna**; o acesso de fora vem pelo Caddy, T-213). Ela não aplica migrations: isso é do `migrate`.
+
+| Método e caminho | Autenticação | O que faz |
+|---|---|---|
+| `GET /` | — | saúde (`{"status":"ok"}`) |
+| `POST /accounts` | — | cadastro `{email, password}` → 201 |
+| `POST /sessions` | — | login `{email, password}` → `{token, expiresAt}` (sessão de 15 min) |
+| `GET /characters` | sessão | personagens da conta (`id, name, classId, level, zoneId`) |
+| `POST /characters` | sessão | cria `{name, classId}`: nível 1, na `zone.city`, com o equipamento inicial da classe |
+| `DELETE /characters/{id}` | sessão | apaga (só da própria conta) → 204 |
+| `POST /characters/{id}/play` | sessão | token de jogo `{ticket, expiresAt, server, address}`, válido por 60 s e uma vez só |
+
+- A sessão vai em `Authorization: Bearer <token>`. Erros seguem o ProblemDetails, com `title` em português e um `code` estável (`email_taken`, `invalid_credentials`, `name_taken`, `name_invalid`, `class_invalid`, `character_limit`, `character_not_found`…).
+- Senhas: hash do ASP.NET Identity (PBKDF2). Cadastro e login: 10 pedidos por IP por minuto (`MMO_AUTH_RATE_LIMIT`). O IP vem do `X-Forwarded-For` do Caddy.
+- Nomes: 3 a 16 letras latinas (com acento) ou dígitos, começando por letra, únicos sem diferenciar maiúsculas. Até 5 personagens por conta.
+- O token de jogo é assinado com `MMO_GAME_TICKET_KEY`. O servidor de jogo valida com a mesma chave, sem chamar a API (`src/Game.Auth`: `GameTicketReplayGuard` faz assinatura, servidor, expiração e uso único).
+- Variáveis em `deploy/.env` (modelo em `deploy/.env.example`): `MMO_SESSION_KEY` e `MMO_GAME_TICKET_KEY` (obrigatórias), `MMO_GAME_SERVER_ID`, `MMO_GAME_SERVER_ADDRESS`, `MMO_AUTH_RATE_LIMIT`.
+
+**Testar de dentro da rede do Compose** (enquanto não há Caddy):
+
+```bash
+docker run --rm --network mmo-rpg_default curlimages/curl:8.10.1 -s http://api:8080/
+```
+
+**Rodar fora do Docker** (desenvolvimento): defina `MMO_DB_CONNECTION`, `MMO_SESSION_KEY` e `MMO_GAME_TICKET_KEY` e rode `dotnet run --project src/Game.Api`.
 
 **Conectar do Windows:** no cliente, menu **Jogar online** com `31.97.162.124:7777`, ou abra o cliente com `--server=31.97.162.124:7777`. O conteúdo (`data/`) do cliente precisa ser o mesmo do servidor: o fingerprint é conferido na conexão.
 
