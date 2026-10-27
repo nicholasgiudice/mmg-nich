@@ -22,6 +22,8 @@ public static class ProtocolVersion
     /// de pontos no <c>NetIntent</c>.
     /// 5 (T-204): componentes <c>Inventory</c>, <c>Equipment</c> e <c>GroundItem</c>, bônus de vida, crítico e Mana/s no
     /// <c>CharacterStats</c>, eventos de itens e intenções de equipar, desequipar, pegar e largar (campo <c>Slot</c>).
+    /// 6 (T-212): token de jogo no <c>Hello</c> e motivos de recusa <c>Unauthorized</c>, <c>AlreadyConnected</c> e
+    /// <c>Unavailable</c>.
     /// </summary>
-    public const int Current = 5;
+    public const int Current = 6;
 }

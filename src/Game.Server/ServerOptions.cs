@@ -25,6 +25,11 @@ public sealed record ServerOptions
           --interest-radius <n>     células em volta do jogador que ele vê (padrão 2)
           --max-delta-age <ticks>   base de delta mais velha aceita; além disso vai snapshot completo (padrão 40)
           --log-level <nível>       verbose · debug · info · warning · error · fatal (padrão info; env MMO_LOG_LEVEL)
+          --dev-login               aceita entrada só com nome, sem token de jogo (testes locais e bots; env MMO_DEV_LOGIN=true)
+          --save-interval <s>       segundos entre gravações periódicas dos personagens (padrão 120)
+
+        Contas (T-212): com MMO_DB_CONNECTION, o servidor aceita o token de jogo da API e carrega/grava o personagem.
+        Exige MMO_GAME_TICKET_KEY (a mesma da API) e usa MMO_GAME_SERVER_ID (padrão game.dev; o mesmo da API).
 
         Console: restart · status · quit
         """;
@@ -51,6 +56,12 @@ public sealed record ServerOptions
     /// <summary>Nível mínimo do log do servidor (T-207).</summary>
     public LogEventLevel LogLevel { get; init; } = LogEventLevel.Information;
 
+    /// <summary>Aceita <c>Hello</c> sem token de jogo, só com nome (T-212: testes locais e bots de rede).</summary>
+    public bool DevLogin { get; init; }
+
+    /// <summary>Intervalo das gravações periódicas dos personagens com conta.</summary>
+    public double SaveIntervalSeconds { get; init; } = 120;
+
     /// <summary>Estratégia dos bots nas vagas livres (a mesma dos companheiros do cliente: grupo que se move).</summary>
     public string BotStrategy { get; init; } = "kite+dodge";
 
@@ -73,6 +84,11 @@ public sealed record ServerOptions
             o = o with { LogLevel = ParseLogLevel(levelEnv) };
         }
 
+        if (env("MMO_DEV_LOGIN") is { Length: > 0 } devEnv)
+        {
+            o = o with { DevLogin = bool.Parse(devEnv) };
+        }
+
         for (var i = 0; i < args.Count; i++)
         {
             string Next() => i + 1 < args.Count ? args[++i] : throw new ArgumentException($"Falta o valor de {args[i]}.");
@@ -91,6 +107,8 @@ public sealed record ServerOptions
                 "--interest-radius" => o with { InterestRadiusCells = int.Parse(Next(), CultureInfo.InvariantCulture) },
                 "--max-delta-age" => o with { MaxDeltaAgeTicks = Math.Clamp(int.Parse(Next(), CultureInfo.InvariantCulture), 1, Game.Protocol.SnapshotReconstructor.History) },
                 "--log-level" => o with { LogLevel = ParseLogLevel(Next()) },
+                "--dev-login" => o with { DevLogin = true },
+                "--save-interval" => o with { SaveIntervalSeconds = double.Parse(Next(), CultureInfo.InvariantCulture) },
                 _ => throw new ArgumentException($"Opção desconhecida: {args[i]}"),
             };
         }

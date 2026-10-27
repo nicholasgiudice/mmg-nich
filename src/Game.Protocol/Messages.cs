@@ -25,9 +25,13 @@ public partial interface INetMessage;
 
 // ---------------- cliente → servidor ----------------
 
-/// <summary>Primeira mensagem do cliente. <paramref name="ClassId"/> null = a classe que o servidor escolher.</summary>
+/// <summary>
+/// Primeira mensagem do cliente. Com <paramref name="Ticket"/> (token de jogo da API, T-211/T-212) o servidor carrega o
+/// personagem salvo e ignora nome e classe. Sem ele, login de desenvolvimento (só com <c>--dev-login</c>):
+/// <paramref name="DevName"/> e <paramref name="ClassId"/> (null = a classe que o servidor escolher).
+/// </summary>
 [MemoryPackable]
-public sealed partial record Hello(int ProtocolVersion, string ContentFingerprint, string DevName, string? ClassId) : INetMessage;
+public sealed partial record Hello(int ProtocolVersion, string ContentFingerprint, string DevName, string? ClassId, string? Ticket = null) : INetMessage;
 
 /// <summary>
 /// Uma intenção do jogador. <paramref name="Sequence"/> cresce a cada intenção enviada (o servidor responde com
@@ -69,6 +73,15 @@ public enum RejectReason : byte
 
     /// <summary>Mensagem inválida ou fora de ordem (ex.: intenção antes do <see cref="Hello"/>).</summary>
     BadRequest,
+
+    /// <summary>Token de jogo ausente, inválido, expirado, de outro servidor ou já usado (T-212).</summary>
+    Unauthorized,
+
+    /// <summary>O personagem já está conectado (T-212).</summary>
+    AlreadyConnected,
+
+    /// <summary>O servidor não conseguiu carregar o personagem (banco fora do ar, personagem apagado ou corrompido).</summary>
+    Unavailable,
 }
 
 /// <summary>Entrada recusada; o servidor fecha a conexão em seguida. <paramref name="Detail"/> é texto para log.</summary>

@@ -13,11 +13,12 @@ internal sealed class TestRig
 {
     public static readonly Lazy<ContentCatalog> RealContent = new(() => new ServerOptions().LoadContent());
 
-    public TestRig(string encounter = "encounter.forest_matriarch", bool bots = true, double grace = 30, ContentCatalog? content = null, ServerOptions? options = null)
+    public TestRig(string encounter = "encounter.forest_matriarch", bool bots = true, double grace = 30, ContentCatalog? content = null, ServerOptions? options = null,
+        bool devLogin = true, Game.Server.Persistence.AccountLogin? accounts = null)
     {
         Content = content ?? RealContent.Value;
-        var o = (options ?? new ServerOptions()) with { EncounterId = encounter, FillWithBots = bots, DisconnectGraceSeconds = grace };
-        Room = new ZoneRoom(Content, o, Transport, Logger.None);
+        var o = (options ?? new ServerOptions()) with { EncounterId = encounter, FillWithBots = bots, DisconnectGraceSeconds = grace, DevLogin = devLogin };
+        Room = new ZoneRoom(Content, o, Transport, Logger.None, accounts);
         Transport.Start(Room);
     }
 

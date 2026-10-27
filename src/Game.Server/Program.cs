@@ -1,8 +1,11 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using Game.Auth;
+using Game.Persistence;
 using Game.Protocol;
 using Game.Server;
+using Game.Server.Persistence;
 using Game.Server.Transport;
 using Serilog;
 using Serilog.Core;
@@ -29,8 +32,30 @@ try
     var content = options.LoadContent();
     Log.Information("Servidor de zona — protocolo v{Version}, conteúdo {Fingerprint}, dados em {Data}", ProtocolVersion.Current, content.Fingerprint, options.DataDir);
 
+    // Contas (T-212): com banco configurado, entra com o token de jogo da API; sem ele, só --dev-login.
+    using var persistence = Environment.GetEnvironmentVariable(GameDatabase.ConnectionEnv) is { Length: > 0 } connection
+        ? new CharacterPersistence(new RepositoryCharacterStore(new GameRepository(GameDatabase.Options(connection))), Log.Logger)
+        : null;
+    AccountLogin? accounts = null;
+    if (persistence is not null)
+    {
+        var serverId = Environment.GetEnvironmentVariable("MMO_GAME_SERVER_ID") is { Length: > 0 } id ? id : "game.dev";
+        var key = SignedToken.KeyFromBase64(Environment.GetEnvironmentVariable(GameTicket.KeyEnv), GameTicket.KeyEnv);
+        accounts = new AccountLogin(new GameTicketReplayGuard(key, serverId), persistence);
+        Log.Information("Contas ativas: servidor {Server}, gravação a cada {Interval} s", serverId, options.SaveIntervalSeconds);
+    }
+    else if (!options.DevLogin)
+    {
+        throw new InvalidOperationException($"Sem {GameDatabase.ConnectionEnv} e sem --dev-login ninguém consegue entrar.");
+    }
+
+    if (options.DevLogin)
+    {
+        Log.Warning("Login de desenvolvimento ativo: entra quem mandar só um nome (--dev-login)");
+    }
+
     using var transport = new LiteNetTransport(options.Port, Log.Logger, options.MaxConnections);
-    var room = new ZoneRoom(content, options, transport, Log.Logger);
+    var room = new ZoneRoom(content, options, transport, Log.Logger, accounts);
     transport.Start(room);
     Log.Information("Sala: {Encounter} ({Slots} vagas, bots {Bots})", options.EncounterId, room.Encounter.Players.Count, options.FillWithBots);
 
@@ -106,6 +131,22 @@ try
             }
         },
         stop.Token);
+
+    if (persistence is not null)
+    {
+        // Parada (SIGTERM, Ctrl+C, quit): grava todos os conectados e espera o banco antes de sair.
+        room.SaveAll("servidor parando");
+        var pending = persistence.PendingSaves;
+        var flushed = persistence.FlushAsync(TimeSpan.FromSeconds(20)).GetAwaiter().GetResult();
+        if (flushed)
+        {
+            Log.Information("Personagens gravados antes de parar ({Count})", pending);
+        }
+        else
+        {
+            Log.Error("Prazo de gravação esgotado: {Count} personagem(ns) sem gravar", persistence.PendingSaves);
+        }
+    }
 
     Log.Information("Servidor parado");
     return 0;

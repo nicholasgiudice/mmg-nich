@@ -44,7 +44,7 @@ public sealed class NetBot : IDisposable
     private uint _sequence;
     private double _nextPingAt;
 
-    public NetBot(int index, string host, int port, string? classId, string strategy, ContentCatalog content, BotOptions options, Stopwatch clock)
+    public NetBot(int index, string host, int port, string? classId, string strategy, ContentCatalog content, BotOptions options, Stopwatch clock, string? ticket = null)
     {
         Index = index;
         Server = $"{host}:{port}";
@@ -56,7 +56,7 @@ public sealed class NetBot : IDisposable
         _listener.PeerConnectedEvent += peer =>
         {
             _peer = peer;
-            Send(new Hello(ProtocolVersion.Current, content.Fingerprint, $"netbot{index}", classId), ReliableChannel, DeliveryMethod.ReliableOrdered);
+            Send(new Hello(ProtocolVersion.Current, content.Fingerprint, $"netbot{index}", classId, ticket), ReliableChannel, DeliveryMethod.ReliableOrdered);
         };
         _listener.PeerDisconnectedEvent += (_, info) =>
         {

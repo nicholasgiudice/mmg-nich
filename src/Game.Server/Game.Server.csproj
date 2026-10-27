@@ -10,6 +10,8 @@
     <ProjectReference Include="..\Game.Data\Game.Data.csproj" />
     <ProjectReference Include="..\Game.Bots\Game.Bots.csproj" />
     <ProjectReference Include="..\Game.Protocol\Game.Protocol.csproj" />
+    <ProjectReference Include="..\Game.Auth\Game.Auth.csproj" />
+    <ProjectReference Include="..\Game.Persistence\Game.Persistence.csproj" />
   </ItemGroup>
 
   <ItemGroup>

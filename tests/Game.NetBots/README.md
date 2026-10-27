@@ -4,7 +4,7 @@ Jogadores sem Godot que se conectam ao `Game.Server` por UDP, como o cliente: `H
 
 ```bash
 # servidor local + 4 bots até o encontro acabar
-dotnet run --project src/Game.Server -c Release -- --port 7777 --bots false
+dotnet run --project src/Game.Server -c Release -- --dev-login --port 7777 --bots false
 dotnet run --project tests/Game.NetBots -c Release -- --server 127.0.0.1:7777 --bots 4 --until-end
 
 # teste de carga: uma instância do servidor por sala (4 vagas), 5 minutos

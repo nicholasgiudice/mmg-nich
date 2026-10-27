@@ -18,6 +18,8 @@ const string Usage = """
       --duration <s>          quanto tempo rodar (padrão 300)
       --until-end             para quando todas as salas terminarem o encontro (vitória ou derrota)
       --data <dir>            data/ (padrão: a do repositório); precisa ser igual à do servidor
+      --ticket <token>[,...]  tokens de jogo da API (T-212): o bot i entra com o token i, no personagem salvo
+                              (sem token, entra só com nome: o servidor precisa de --dev-login)
     """;
 
 var a = args.ToList();
@@ -55,6 +57,7 @@ var content = new ContentCatalog(db.Classes.Values, db.Abilities.Values, db.Stat
 var mix = new[] { "class.warrior", "class.archer", "class.mage", "class.cleric" };
 var options = new BotOptions(new Dictionary<string, string> { ["class.mage:explosion"] = "mage.elemental_blast" });
 var clock = Stopwatch.StartNew();
+var tickets = Opt("--ticket", "").Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
 Console.WriteLine($"{count} bots ({strategy}) em {servers.Count} servidor(es), {perRoom} por sala, por até {duration:0} s; conteúdo {content.Fingerprint}");
 var bots = new List<NetBot>();
@@ -62,7 +65,7 @@ for (var i = 0; i < count; i++)
 {
     var (host, port) = servers[Math.Min(i / perRoom, servers.Count - 1)];
     var cls = classOpt == "mix" ? mix[i % mix.Length] : classOpt;
-    bots.Add(new NetBot(i, host, port, cls, strategy, content, options, clock));
+    bots.Add(new NetBot(i, host, port, cls, strategy, content, options, clock, i < tickets.Length ? tickets[i] : null));
 }
 
 var lastReport = 0.0;
