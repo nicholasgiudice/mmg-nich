@@ -1,0 +1,35 @@
+{
+  "$schema": "./schemas/game-data.schema.json",
+  "zones": [
+    {
+      "id": "zone.city",
+      "name": "Cidade-Fortaleza",
+      "arena": "arena.city",
+      "kind": "safe",
+      "spawn": { "x": 20.5, "y": 15.5 },
+      "restPerSecond": 0.05,
+      "gates": [
+        { "area": { "x": 38, "y": 13, "width": 2, "height": 4 }, "to": "zone.vigil_fields", "arrival": { "x": 3.5, "y": 31.5 } }
+      ]
+    },
+    {
+      "id": "zone.vigil_fields",
+      "name": "Campos da Vigília",
+      "arena": "arena.vigil_fields",
+      "kind": "field",
+      "spawn": { "x": 3.5, "y": 31.5 },
+      "corpse": 5,
+      "gates": [
+        { "area": { "x": 0, "y": 30, "width": 2, "height": 4 }, "to": "zone.city", "arrival": { "x": 36.5, "y": 15.5 } }
+      ],
+      "monsterSpawns": [
+        { "monster": "monster.field_rat", "position": { "x": 20.5, "y": 36.5 }, "count": 2, "radius": 2, "level": 1, "respawn": 30 },
+        { "monster": "monster.field_rat", "position": { "x": 30.5, "y": 18.5 }, "count": 4, "radius": 3, "level": 1, "respawn": 30 },
+        { "monster": "monster.grey_wolf", "position": { "x": 36.5, "y": 24.5 }, "count": 3, "radius": 2, "level": 2, "respawn": 45 },
+        { "monster": "monster.grey_wolf", "position": { "x": 59.5, "y": 48.5 }, "count": 4, "radius": 3, "level": 3, "respawn": 40 },
+        { "monster": "monster.road_bandit", "position": { "x": 80.5, "y": 14.5 }, "count": 3, "radius": 3, "level": 3, "respawn": 60 },
+        { "monster": "monster.road_bandit", "position": { "x": 82.5, "y": 11.5 }, "count": 1, "level": 4, "respawn": 90 }
+      ]
+    }
+  ]
+}

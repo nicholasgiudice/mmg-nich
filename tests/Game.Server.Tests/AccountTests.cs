@@ -109,6 +109,8 @@ internal sealed class FakeStore : ICharacterStore
         Name = c.Name,
         ClassId = c.ClassId,
         ZoneId = c.ZoneId,
+        PositionX = c.PositionX,
+        PositionY = c.PositionY,
         Level = c.Level,
         Experience = c.Experience,
         ProgressionVersion = c.ProgressionVersion,

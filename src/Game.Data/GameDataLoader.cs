@@ -92,6 +92,7 @@ public static class GameDataLoader
             Rules = content.Rules,
             Threat = content.Threat ?? new Game.Core.Combat.Threat.ThreatRules(),
             Fingerprint = ContentFingerprint.Compute(materialized),
+            Zones = content.Zones.Select(e => e.Value).ToDictionary(z => z.Id, StringComparer.Ordinal),
         };
         return new LoadResult(database, errors);
     }
@@ -129,6 +130,7 @@ public static class GameDataLoader
                     case "arenas": ReadList(file, property, content.Arenas, errors); break;
                     case "encounters": ReadList(file, property, content.Encounters, errors); break;
                     case "items": ReadList(file, property, content.Items, errors); break;
+                    case "zones": ReadList(file, property, content.Zones, errors); break;
                     case "rules": ReadRules(file, property, content.RuleSections, errors); break;
                     case "threat": ReadObject<Game.Core.Combat.Threat.ThreatRules>(file, property, v => content.Threat = v, errors); break;
                     case "$schema": break;
@@ -295,6 +297,7 @@ internal sealed class RawContent
     public List<Entry<MonsterDefinition>> Monsters { get; } = [];
     public List<Entry<ArenaDefinition>> Arenas { get; } = [];
     public List<Entry<EncounterDefinition>> Encounters { get; } = [];
+    public List<Entry<ZoneDefinition>> Zones { get; } = [];
     public List<Entry<ItemBaseDefinition>> Items { get; } = [];
 
     /// <summary>Seções de "rules" (nome -> JSON, arquivo de origem).</summary>

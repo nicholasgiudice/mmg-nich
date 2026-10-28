@@ -36,7 +36,7 @@ namespace Game.Server;
 /// (<see cref="SaveAll"/>). Um personagem só entra uma vez; ao sair, a entidade some na hora (sem vaga reservada).</item>
 /// </list>
 /// </summary>
-public sealed class ZoneRoom : ITransportHandler
+public sealed class ZoneRoom : ITransportHandler, IGameHost
 {
     /// <summary>Intenções aceitas por jogador por tick (o resto é descartado: cliente com defeito ou abuso).</summary>
     public const int MaxIntentsPerTick = 16;

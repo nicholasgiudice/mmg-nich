@@ -20,6 +20,8 @@ const string Usage = """
       --data <dir>            data/ (padrão: a do repositório); precisa ser igual à do servidor
       --ticket <token>[,...]  tokens de jogo da API (T-212): o bot i entra com o token i, no personagem salvo
                               (sem token, entra só com nome: o servidor precisa de --dev-login)
+      --roam                  mundo aberto (T-214): em vez de lutar, anda do nascimento até o portão de cada zona e troca
+                              de zona sem parar. Em qualquer modo, no mundo aberto o bot morto pede para renascer.
     """;
 
 var a = args.ToList();
@@ -53,11 +55,13 @@ var content = new ContentCatalog(db.Classes.Values, db.Abilities.Values, db.Stat
     Rules = db.Rules,
     Threat = db.Threat,
     Fingerprint = db.Fingerprint,
+    Zones = db.Zones,
 };
 var mix = new[] { "class.warrior", "class.archer", "class.mage", "class.cleric" };
 var options = new BotOptions(new Dictionary<string, string> { ["class.mage:explosion"] = "mage.elemental_blast" });
 var clock = Stopwatch.StartNew();
 var tickets = Opt("--ticket", "").Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+var roam = a.Contains("--roam");
 
 Console.WriteLine($"{count} bots ({strategy}) em {servers.Count} servidor(es), {perRoom} por sala, por até {duration:0} s; conteúdo {content.Fingerprint}");
 var bots = new List<NetBot>();
@@ -65,7 +69,7 @@ for (var i = 0; i < count; i++)
 {
     var (host, port) = servers[Math.Min(i / perRoom, servers.Count - 1)];
     var cls = classOpt == "mix" ? mix[i % mix.Length] : classOpt;
-    bots.Add(new NetBot(i, host, port, cls, strategy, content, options, clock, i < tickets.Length ? tickets[i] : null));
+    bots.Add(new NetBot(i, host, port, cls, strategy, content, options, clock, i < tickets.Length ? tickets[i] : null) { Roam = roam });
 }
 
 var lastReport = 0.0;
@@ -122,6 +126,10 @@ Console.WriteLine(string.Create(CultureInfo.InvariantCulture,
     + $"({bots.Sum(b => b.BytesReceived) / seconds / 1024:0.0} KB/s no total) · intenções {bots.Sum(b => b.IntentsSent) / seconds / count:0.0}/s por bot · "
     + $"ping médio {Avg(bots.Select(b => b.PingMs).Where(p => p >= 0)):0} ms · perda {bots.Average(b => b.LossPercent):0.0}% · quedas {bots.Sum(b => b.Disconnects)} · "
     + $"vitórias {bots.Count(b => b.Outcome == BotOutcome.Won)} · derrotas {bots.Count(b => b.Outcome == BotOutcome.Lost)}"));
+if (bots.Any(b => b.InWorld))
+{
+    Console.WriteLine($"MUNDO trocas de zona {bots.Sum(b => b.ZoneChanges)} · renascimentos {bots.Sum(b => b.Respawns)}");
+}
 
 foreach (var b in bots)
 {

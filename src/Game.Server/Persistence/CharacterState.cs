@@ -17,6 +17,9 @@ public sealed record CharacterState(CharacterBuild Build, IReadOnlyDictionary<Eq
 {
     public static CharacterState New { get; } = new(new CharacterBuild(), null, []);
 
+    /// <summary>Zona e posição (T-214, colunas <c>zone_id</c>, <c>position_x/y</c>); null = não mudam ao gravar (sala de encontro).</summary>
+    public CharacterLocation? Location { get; init; }
+
     /// <summary>Lê o estado de uma entidade criada por <see cref="Spawn"/> (null se não tem progressão).</summary>
     public static CharacterState? Capture(Entity e)
     {
@@ -86,6 +89,9 @@ public sealed record CharacterState(CharacterBuild Build, IReadOnlyDictionary<Eq
         return e;
     }
 }
+
+/// <summary>Onde o personagem está: zona e posição em tiles. Posição (0, 0) = ponto de nascimento da zona.</summary>
+public sealed record CharacterLocation(string ZoneId, float X, float Y);
 
 /// <summary>
 /// Formato do documento <c>characters.progression</c> (jsonb), versão <see cref="Version"/>. Nível e XP ficam nas colunas

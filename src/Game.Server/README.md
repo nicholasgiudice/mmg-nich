@@ -19,3 +19,21 @@ dotnet run --project src/Game.Server -- --help
 - **Log (Serilog):** conexões, recusas, entradas e saídas, e o tempo de tick a cada 10 s.
 
 Estrutura: `ZoneRoom` (sala e regras), `TickLoop` (relógio de 20 Hz sem deriva, recupera até N ticks e pula o resto com aviso), `Interest/` (`InterestGrid`, `ClientView` com o delta por cliente, `EventEntities`), `Transport/` (`LiteNetTransport` em produção, `InMemoryTransport` nos testes, com perda simulada).
+
+## Mundo aberto (T-214)
+
+`--world` (ou `MMO_WORLD=true`) troca a sala de encontro pelas zonas de `data/zones.json`: hoje a Cidade-Fortaleza (`zone.city`) e os Campos da Vigília (`zone.vigil_fields`), com mapas provisórios em `data/arenas.json` (`arena.city`, `arena.vigil_fields`) até a T-055.
+
+- `Zones/WorldServer`: conexões, entrada, intenções, portões, renascimento, gravação e envio por zona. `Zones/OpenZone`: um `World` por zona, com grade de interesse e pontos de surgimento. Só zonas com jogador avançam.
+- Entrada: com token, na zona e posição gravadas (posição (0, 0) ou zona desconhecida = nascimento da zona inicial, `--start-zone`, padrão `zone.city`); com `--dev-login`, na zona inicial, nível 1 com progressão (não gravado).
+- Cidade (`kind: safe`): sem monstros e com descanso (`restPerSecond`: fração da vida e da Mana por segundo, componente `Resting` do Core). Não há dano entre jogadores: as habilidades só acertam a facção inimiga.
+- Campos (`kind: field`): cada ponto de surgimento tem monstro, quantidade, raio, nível e `respawn`. O corpo fica `corpse` segundos e o monstro renasce em volta do ponto.
+- Portão: personagem vivo dentro da `area` vai para a zona `to`, na posição `arrival`, com o mesmo build, itens, vida e Mana. O cliente recebe um `Welcome` novo (`EncounterId` = id da zona, arena da zona, época nova).
+- Morte: o personagem fica caído até o cliente mandar `RespawnRequest`; renasce no nascimento da zona inicial, cheio, sem perder nada. Morto que sai é gravado na zona inicial.
+- Bots de rede: `--roam` anda do nascimento ao portão de cada zona sem parar; em qualquer modo, morto pede para renascer.
+
+```bash
+dotnet run --project src/Game.Server -c Release -- --world --dev-login --port 7790
+dotnet run --project tests/Game.NetBots -c Release -- --server 127.0.0.1:7790 --bots 8 --duration 60 --roam
+```
+

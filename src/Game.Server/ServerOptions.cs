@@ -27,6 +27,9 @@ public sealed record ServerOptions
           --log-level <nível>       verbose · debug · info · warning · error · fatal (padrão info; env MMO_LOG_LEVEL)
           --dev-login               aceita entrada só com nome, sem token de jogo (testes locais e bots; env MMO_DEV_LOGIN=true)
           --save-interval <s>       segundos entre gravações periódicas dos personagens (padrão 120)
+          --world                   mundo aberto (T-214): todas as zonas de data/zones.json em vez de uma sala de encontro
+                                    (env MMO_WORLD=true); --encounter, --bots e --restart-after não valem
+          --start-zone <id>         zona onde se nasce e renasce no mundo aberto (padrão zone.city)
 
         Contas (T-212): com MMO_DB_CONNECTION, o servidor aceita o token de jogo da API e carrega/grava o personagem.
         Exige MMO_GAME_TICKET_KEY (a mesma da API) e usa MMO_GAME_SERVER_ID (padrão game.dev; o mesmo da API).
@@ -59,6 +62,12 @@ public sealed record ServerOptions
     /// <summary>Aceita <c>Hello</c> sem token de jogo, só com nome (T-212: testes locais e bots de rede).</summary>
     public bool DevLogin { get; init; }
 
+    /// <summary>Mundo aberto com as zonas de <c>data/zones.json</c> (T-214) em vez da sala de encontro.</summary>
+    public bool World { get; init; }
+
+    /// <summary>Zona onde o personagem nasce (sem zona gravada) e renasce.</summary>
+    public string StartZone { get; init; } = "zone.city";
+
     /// <summary>Intervalo das gravações periódicas dos personagens com conta.</summary>
     public double SaveIntervalSeconds { get; init; } = 120;
 
@@ -89,6 +98,11 @@ public sealed record ServerOptions
             o = o with { DevLogin = bool.Parse(devEnv) };
         }
 
+        if (env("MMO_WORLD") is { Length: > 0 } worldEnv)
+        {
+            o = o with { World = bool.Parse(worldEnv) };
+        }
+
         for (var i = 0; i < args.Count; i++)
         {
             string Next() => i + 1 < args.Count ? args[++i] : throw new ArgumentException($"Falta o valor de {args[i]}.");
@@ -108,6 +122,8 @@ public sealed record ServerOptions
                 "--max-delta-age" => o with { MaxDeltaAgeTicks = Math.Clamp(int.Parse(Next(), CultureInfo.InvariantCulture), 1, Game.Protocol.SnapshotReconstructor.History) },
                 "--log-level" => o with { LogLevel = ParseLogLevel(Next()) },
                 "--dev-login" => o with { DevLogin = true },
+                "--world" => o with { World = true },
+                "--start-zone" => o with { StartZone = Next() },
                 "--save-interval" => o with { SaveIntervalSeconds = double.Parse(Next(), CultureInfo.InvariantCulture) },
                 _ => throw new ArgumentException($"Opção desconhecida: {args[i]}"),
             };
@@ -135,6 +151,7 @@ public sealed record ServerOptions
             Rules = db.Rules,
             Threat = db.Threat,
             Fingerprint = db.Fingerprint,
+            Zones = db.Zones,
         };
     }
 

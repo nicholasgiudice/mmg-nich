@@ -16,6 +16,7 @@ public static class SystemsRegistry
         b.AddSystem(SystemOrder.Status, new Combat.Status.StatusSystem());
         b.AddSystem(SystemOrder.StatusResourceBridge, new Combat.Integration.StatusRemovalBridgeSystem());
         b.AddSystem(SystemOrder.Resources, new Combat.Resources.ResourceSystem());
+        b.AddSystem(SystemOrder.Rest, new Combat.Rest.RestSystem()); // T-214
         b.AddSystem(SystemOrder.Ai, new Combat.Ai.AiSystem()); // T-011
         b.AddSystem(SystemOrder.Death, new Systems.DeathSystem());
         b.AddSystem(SystemOrder.Progression, new Combat.Progression.ProgressionSystem()); // T-203

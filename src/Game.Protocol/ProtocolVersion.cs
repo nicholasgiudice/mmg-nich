@@ -24,6 +24,7 @@ public static class ProtocolVersion
     /// <c>CharacterStats</c>, eventos de itens e intenções de equipar, desequipar, pegar e largar (campo <c>Slot</c>).
     /// 6 (T-212): token de jogo no <c>Hello</c> e motivos de recusa <c>Unauthorized</c>, <c>AlreadyConnected</c> e
     /// <c>Unavailable</c>.
+    /// 7 (T-214): mensagem <c>RespawnRequest</c>; no mundo aberto o <c>Welcome</c> leva o id da zona e se repete a cada troca.
     /// </summary>
-    public const int Current = 6;
+    public const int Current = 7;
 }
