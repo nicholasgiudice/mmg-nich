@@ -640,6 +640,7 @@
             "additionalProperties": false,
             "required": ["monster", "position"],
             "properties": {
+              "area": { "type": "string", "description": "T-215: subárea da zona (ex.: Fazenda Abandonada)." },
               "monster": { "$ref": "#/$defs/id" },
               "position": { "$ref": "#/$defs/position" },
               "count": { "type": "integer", "minimum": 1 },

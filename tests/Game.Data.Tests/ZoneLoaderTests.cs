@@ -79,4 +79,36 @@ public class ZoneLoaderTests
         Assert.Contains(fields.Gates, g => g.To == city.Id);
         Assert.All(fields.MonsterSpawns, s => Assert.InRange(s.Level ?? db.Monsters[s.Monster].Level, 1, 4));
     }
+
+    /// <summary>
+    /// T-215: as quatro subáreas do design existem, e pontos de grupos diferentes (mais de 4 tiles entre si) ficam a pelo
+    /// menos 12 tiles — o aggro por proximidade é 8 — e longe da chegada pelo portão, para o jogador puxar um grupo por vez.
+    /// </summary>
+    [Fact]
+    public void Fields_subareas_exist_and_groups_are_far_enough_apart_to_pull_one_at_a_time()
+    {
+        var dir = new DirectoryInfo(AppContext.BaseDirectory);
+        while (!File.Exists(Path.Combine(dir!.FullName, "MmoRpg.sln")))
+        {
+            dir = dir.Parent;
+        }
+
+        var db = GameDataLoader.LoadDirectory(Path.Combine(dir.FullName, "data")).GetDatabaseOrThrow();
+        var fields = db.Zones["zone.vigil_fields"];
+        Assert.Equal(
+            ["Acampamento dos Salteadores", "Clareira dos Caçadores", "Estrada Leste", "Fazenda Abandonada"],
+            fields.MonsterSpawns.Select(s => s.Area ?? "").Distinct().Order(StringComparer.Ordinal).ToArray());
+
+        static double Distance(PositionDefinition a, PositionDefinition b) => Math.Sqrt(((a.X - b.X) * (a.X - b.X)) + ((a.Y - b.Y) * (a.Y - b.Y)));
+        var points = fields.MonsterSpawns;
+        foreach (var a in points)
+        {
+            foreach (var b in points.Where(b => b != a && Distance(a.Position, b.Position) > 4))
+            {
+                Assert.True(Distance(a.Position, b.Position) >= 12, $"{a.Monster} em ({a.Position.X}, {a.Position.Y}) perto de {b.Monster} em ({b.Position.X}, {b.Position.Y})");
+            }
+
+            Assert.True(Distance(a.Position, fields.Spawn) >= 12, $"{a.Monster} perto da chegada"); // a chegada pelo portão é o nascimento
+        }
+    }
 }
