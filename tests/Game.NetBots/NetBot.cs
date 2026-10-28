@@ -1,6 +1,8 @@
 using System.Diagnostics;
+using System.Numerics;
 using Game.Bots;
 using Game.Core.Combat;
+using Game.Core.Definitions;
 using Game.Core.Intents;
 using Game.Core.Simulation;
 using Game.Core.Simulation.Components;
@@ -42,6 +44,9 @@ public sealed class NetBot : IDisposable
     private long _lastThought;
     private long _lastTick;
     private uint _sequence;
+    private long _respawnAskedAt = long.MinValue / 2;
+    private bool _respawnPending;
+    private bool _reachedSpawn;
     private double _nextPingAt;
 
     public NetBot(int index, string host, int port, string? classId, string strategy, ContentCatalog content, BotOptions options, Stopwatch clock, string? ticket = null)
@@ -99,6 +104,19 @@ public sealed class NetBot : IDisposable
     /// <summary>Recusado pelo servidor (motivo) — erro de configuração do teste, não de carga.</summary>
     public RejectReason? Rejected { get; private set; }
 
+    /// <summary>Mundo aberto (T-214): anda do nascimento ao portão de cada zona em vez de lutar.</summary>
+    public bool Roam { get; init; }
+
+    /// <summary>No mundo aberto (o <see cref="Welcome"/> é de uma zona de <c>data/zones.json</c>).</summary>
+    public bool InWorld => Zone is not null;
+
+    /// <summary><see cref="Welcome"/> de zona recebidos depois do primeiro (portão ou renascimento).</summary>
+    public int ZoneChanges { get; private set; }
+
+    public int Respawns { get; private set; }
+
+    private ZoneDefinition? Zone => Welcome is { } w && _content.Zones.TryGetValue(w.EncounterId, out var z) ? z : null;
+
     /// <summary>Recebe o que chegou e, se há snapshot novo, decide e manda as intenções.</summary>
     public void Update()
     {
@@ -116,19 +134,56 @@ public sealed class NetBot : IDisposable
 
         _lastThought = latest.Tick;
         _mirror.Mirror(latest);
-        TrackOutcome(latest);
+        if (Zone is { } zone)
+        {
+            if (_mirror.Find(Welcome.ControlledEntity) is { IsAlive: false } && latest.Tick >= _respawnAskedAt + World.TickRate)
+            {
+                _respawnAskedAt = latest.Tick;
+                _respawnPending = true;
+                Send(new RespawnRequest(), ReliableChannel, DeliveryMethod.ReliableOrdered);
+            }
+        }
+        else
+        {
+            TrackOutcome(latest); // mundo aberto não termina
+        }
+
         if (_mirror.Find(Welcome.ControlledEntity) is not { IsAlive: true } self || Outcome != BotOutcome.Playing)
         {
             return;
         }
 
         _buffer.Clear();
-        _controller.Think(new BotContext(_mirror, self, _options, _hazards, (ulong)Welcome.Epoch), _buffer);
+        if (Roam && Zone is { } here)
+        {
+            RoamIntent(here, self);
+        }
+        else
+        {
+            _controller.Think(new BotContext(_mirror, self, _options, _hazards, (ulong)Welcome.Epoch), _buffer);
+        }
+
         foreach (var intent in _buffer.Where(i => i.Entity == self.Id))
         {
             Send(new IntentMessage(++_sequence, latest.Tick, NetIntent.From(intent)), ReliableChannel, DeliveryMethod.ReliableOrdered);
             IntentsSent++;
         }
+    }
+
+    /// <summary>Primeiro vai ao nascimento da zona; de lá, ao centro do primeiro portão.</summary>
+    private void RoamIntent(ZoneDefinition zone, Entity self)
+    {
+        var position = self.Get<Transform>().Position;
+        var spawn = new Vector2((float)zone.Spawn.X, (float)zone.Spawn.Y);
+        if (Vector2.Distance(position, spawn) < 1)
+        {
+            _reachedSpawn = true;
+        }
+
+        var gate = zone.Gates[0].Area;
+        var target = _reachedSpawn ? new Vector2((float)(gate.X + (gate.Width / 2)), (float)(gate.Y + (gate.Height / 2))) : spawn;
+        var to = target - position;
+        _buffer.Add(to.LengthSquared() < 0.01f ? new StopIntent(self.Id) : new MoveIntent(self.Id, Vector2.Normalize(to)));
     }
 
     public void Dispose()
@@ -147,6 +202,14 @@ public sealed class NetBot : IDisposable
         switch (message)
         {
             case Welcome w:
+                if (Welcome is not null && _content.Zones.ContainsKey(w.EncounterId))
+                {
+                    ZoneChanges++;
+                    Respawns += _respawnPending ? 1 : 0;
+                }
+
+                _respawnPending = false;
+                _reachedSpawn = false;
                 Welcome = w;
                 _state.Reset(w.Epoch);
                 _mirror = WorldBuilder.CreateDefault((ulong)w.Epoch, EntityFactory.BuildMap(_content.Arenas[w.ArenaId]), _content);

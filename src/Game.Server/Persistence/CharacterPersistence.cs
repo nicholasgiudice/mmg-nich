@@ -165,7 +165,9 @@ public sealed class CharacterPersistence : IDisposable
         CharacterState state;
         try
         {
-            state = CharacterDocument.Read(c.ProgressionVersion, c.Progression, c.Level, c.Experience);
+            state = CharacterDocument.Read(c.ProgressionVersion, c.Progression, c.Level, c.Experience)
+                with
+            { Location = new CharacterLocation(c.ZoneId, c.PositionX, c.PositionY) };
         }
         catch (Exception ex) when (ex is System.Text.Json.JsonException or InvalidDataException or OverflowException)
         {
@@ -246,6 +248,12 @@ public sealed class CharacterPersistence : IDisposable
         record.Experience = state.Build.Experience;
         record.ProgressionVersion = CharacterDocument.Version;
         record.Progression = CharacterDocument.Write(state);
+        if (state.Location is { } at)
+        {
+            record.ZoneId = at.ZoneId;
+            record.PositionX = at.X;
+            record.PositionY = at.Y;
+        }
 
         SaveStatus status;
         try

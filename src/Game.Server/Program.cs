@@ -7,6 +7,7 @@ using Game.Protocol;
 using Game.Server;
 using Game.Server.Persistence;
 using Game.Server.Transport;
+using Game.Server.Zones;
 using Serilog;
 using Serilog.Core;
 
@@ -55,9 +56,21 @@ try
     }
 
     using var transport = new LiteNetTransport(options.Port, Log.Logger, options.MaxConnections);
-    var room = new ZoneRoom(content, options, transport, Log.Logger, accounts);
-    transport.Start(room);
-    Log.Information("Sala: {Encounter} ({Slots} vagas, bots {Bots})", options.EncounterId, room.Encounter.Players.Count, options.FillWithBots);
+    IGameHost room;
+    if (options.World)
+    {
+        var world = new WorldServer(content, options, transport, Log.Logger, accounts);
+        transport.Start(world);
+        room = world;
+        Log.Information("Mundo aberto: {Zones}; nascimento em {Start}", string.Join(", ", world.Zones.Keys), options.StartZone);
+    }
+    else
+    {
+        var encounterRoom = new ZoneRoom(content, options, transport, Log.Logger, accounts);
+        transport.Start(encounterRoom);
+        room = encounterRoom;
+        Log.Information("Sala: {Encounter} ({Slots} vagas, bots {Bots})", options.EncounterId, encounterRoom.Encounter.Players.Count, options.FillWithBots);
+    }
 
     // Console: comandos lidos em outra thread e executados na thread do loop (a sala não é thread-safe).
     var commands = new ConcurrentQueue<string>();

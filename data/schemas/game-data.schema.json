@@ -15,6 +15,7 @@
     "arenas": { "type": "array", "items": { "$ref": "#/$defs/arena" } },
     "encounters": { "type": "array", "items": { "$ref": "#/$defs/encounter" } },
     "items": { "type": "array", "items": { "$ref": "#/$defs/item" } },
+    "zones": { "type": "array", "items": { "$ref": "#/$defs/zone" } },
     "rules": {
       "type": "object",
       "description": "Regras globais; uma seção por assunto (control, threat...).",
@@ -594,6 +595,60 @@
         "id": { "$ref": "#/$defs/id" },
         "lines": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 }, "description": "'#' parede, '.' chão; retangular" },
         "scale": { "type": "number", "exclusiveMinimum": 0 }
+      }
+    },
+    "zone": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "arena", "spawn"],
+      "description": "T-214: zona do mundo aberto (um World no servidor).",
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "name": { "type": "string" },
+        "arena": { "$ref": "#/$defs/id" },
+        "kind": { "enum": ["safe", "field"], "description": "safe = Cidade (sem monstros, descanso); field = área com monstros (padrão)." },
+        "spawn": { "$ref": "#/$defs/position" },
+        "restPerSecond": { "type": "number", "minimum": 0, "maximum": 1, "description": "Fração da vida e da Mana máximas por segundo (só safe)." },
+        "corpse": { "$ref": "#/$defs/seconds", "description": "Quanto o corpo do monstro fica no chão (padrão 5 s)." },
+        "gates": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["area", "to", "arrival"],
+            "properties": {
+              "area": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["x", "y", "width", "height"],
+                "properties": {
+                  "x": { "type": "number" },
+                  "y": { "type": "number" },
+                  "width": { "type": "number", "exclusiveMinimum": 0 },
+                  "height": { "type": "number", "exclusiveMinimum": 0 }
+                }
+              },
+              "to": { "$ref": "#/$defs/id" },
+              "arrival": { "$ref": "#/$defs/position" }
+            }
+          }
+        },
+        "monsterSpawns": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["monster", "position"],
+            "properties": {
+              "monster": { "$ref": "#/$defs/id" },
+              "position": { "$ref": "#/$defs/position" },
+              "count": { "type": "integer", "minimum": 1 },
+              "radius": { "type": "number", "minimum": 0 },
+              "level": { "type": "integer", "minimum": 1 },
+              "respawn": { "$ref": "#/$defs/seconds", "description": "Tempo até renascer (padrão 30 s)." }
+            }
+          }
+        }
       }
     },
     "encounter": {

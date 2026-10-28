@@ -18,6 +18,8 @@ services:
       MMO_GAME_SERVER_ID: ${MMO_GAME_SERVER_ID:-game.dev}
       # Login só com nome (cliente atual e bots) até o cliente entrar com token (T-220). false = só com token.
       MMO_DEV_LOGIN: ${GAME_DEV_LOGIN:-true}
+      # Mundo aberto (T-214): Cidade + Campos em vez da sala de encontro (--encounter, --bots e --restart-after não valem).
+      MMO_WORLD: ${GAME_WORLD:-false}
     depends_on:
       migrate:
         condition: service_completed_successfully

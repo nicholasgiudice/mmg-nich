@@ -55,6 +55,9 @@ public sealed class ContentCatalog
     /// <summary>Itens base (T-204). As regras de afixos e queda estão em <see cref="RulesDefinition.Items"/>.</summary>
     public IReadOnlyDictionary<string, ItemBaseDefinition> Items { get; }
 
+    /// <summary>Zonas do mundo aberto (T-214, <c>data/zones.json</c>). Vazio = só encontros.</summary>
+    public IReadOnlyDictionary<string, ZoneDefinition> Zones { get; init; } = new Dictionary<string, ZoneDefinition>();
+
     /// <summary>Regras globais (data/rules.json). Seções ausentes = padrões neutros.</summary>
     public RulesDefinition Rules { get; init; } = new();
 

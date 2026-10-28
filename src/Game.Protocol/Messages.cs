@@ -21,6 +21,7 @@ namespace Game.Protocol;
 [MemoryPackUnion(8, typeof(IntentAck))]
 [MemoryPackUnion(9, typeof(SnapshotDelta))]
 [MemoryPackUnion(10, typeof(SnapshotAck))]
+[MemoryPackUnion(11, typeof(RespawnRequest))]
 public partial interface INetMessage;
 
 // ---------------- cliente → servidor ----------------
@@ -47,6 +48,13 @@ public sealed partial record IntentMessage(uint Sequence, long ClientTick, NetIn
 [MemoryPackable]
 public sealed partial record SnapshotAck(int Epoch, long Tick) : INetMessage;
 
+/// <summary>
+/// Mundo aberto (T-214): o personagem morto pede para renascer na Cidade (com vida cheia, sem perder nada). Ignorado se ele
+/// está vivo ou numa sala de encontro.
+/// </summary>
+[MemoryPackable]
+public sealed partial record RespawnRequest : INetMessage;
+
 /// <summary>Medição de latência: o servidor devolve o mesmo valor num <see cref="Pong"/>.</summary>
 [MemoryPackable]
 public sealed partial record Ping(long ClientTimeMs) : INetMessage;
@@ -56,6 +64,8 @@ public sealed partial record Ping(long ClientTimeMs) : INetMessage;
 /// <summary>
 /// Entrada aceita: entidade controlada, tick atual e onde o jogo acontece. <paramref name="Epoch"/> muda a cada reinício
 /// da sala (T-106): ids e ticks recomeçam, então o cliente descarta todo o estado da época anterior.
+/// No mundo aberto (T-214), <paramref name="EncounterId"/> é o id da zona (<c>zone.*</c>) e cada troca de zona (portão,
+/// renascer) chega como um <c>Welcome</c> novo, com a arena da zona e época nova.
 /// </summary>
 [MemoryPackable]
 public sealed partial record Welcome(EntityId ControlledEntity, long Tick, string EncounterId, string ArenaId, int Epoch) : INetMessage;
