@@ -54,6 +54,9 @@ public sealed record GateDefinition
 /// </summary>
 public sealed record MonsterSpawnDefinition
 {
+    /// <summary>Subárea da zona (nome para o jogador e para os testes de design, T-215); opcional.</summary>
+    public string? Area { get; init; }
+
     public required string Monster { get; init; }
     public required PositionDefinition Position { get; init; }
     public int Count { get; init; } = 1;
