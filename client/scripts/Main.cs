@@ -26,7 +26,7 @@ namespace MmoRpgClient;
 /// <c>--auto-move=x,y</c> (mantém as teclas de movimento pelo sinal de x e y), <c>--hold=attack,...</c> (mantém ações),
 /// <c>--demo-input=attack,ability_1,...</c> (aperta ações em sequência mirando o inimigo mais próximo e
 /// imprime as respostas da autoridade; também <c>spend:str</c>, <c>raise:habilidade</c> e <c>reset_points</c>, os botões das
-/// telas de personagem e de habilidades, T-221) e <c>--capture=caminho.png</c> (salva a tela e fecha; após 2 s, ou
+/// telas de personagem e de habilidades, T-221; <c>equip:n</c>, <c>unequip:weapon</c>, <c>drop:n</c> e <c>pickup</c>, T-222) e <c>--capture=caminho.png</c> (salva a tela e fecha; após 2 s, ou
 /// <c>--capture-after=segundos</c>, ou ao fim do demo).
 /// </summary>
 public partial class Main : Node2D
@@ -156,7 +156,16 @@ public partial class Main : Node2D
                 // Online o mundo não pausa: a rede continua (só a entrada para).
                 if (running)
                 {
-                    _input.Update(_authority, aim, hovered, _hud.IsPointerOverUi());
+                    // T-222: clique num item no chão pega (e não ataca); F pega o mais próximo ao alcance.
+                    var itemUnderMouse = _worldView.PickGroundItemAt(mousePx);
+                    _input.Update(_authority, aim, hovered, _hud.IsPointerOverUi() || itemUnderMouse is not null);
+                    var pick = itemUnderMouse is not null && !_hud.IsPointerOverUi() && Godot.Input.IsActionJustPressed(InputActions.Attack)
+                        ? itemUnderMouse
+                        : Godot.Input.IsActionJustPressed(InputActions.PickUp) ? _worldView.NearestPickableItem(_authority.ControlledEntity) : null;
+                    if (pick is { } item && _authority.ControlledEntity is { } me)
+                    {
+                        _authority.Send(new Game.Core.Intents.PickUpItemIntent(me, item));
+                    }
                 }
 
                 _authority.Advance(delta);
@@ -193,7 +202,7 @@ public partial class Main : Node2D
                     + (n.Simulation.Length > 0 ? $" · {n.Simulation}" : "")
                 : "";
             _info.Text = $"Core {CoreInfo.Version} · {Engine.GetFramesPerSecond()} FPS · tick {_authority.CurrentTick}{netLine}\n"
-                + "WASD mover · Tab/clique seleciona e ataca sozinho · 1-5 habilidades · Q poção · C personagem · K habilidades · R reiniciar · Esc pausa";
+                + "WASD mover · Tab/clique seleciona e ataca sozinho · 1-5 habilidades · Q poção · F pegar · I inventário · C personagem · K habilidades · Esc pausa";
         }
 
         CaptureIfRequested();
@@ -521,11 +530,21 @@ public partial class Main : Node2D
         }
 
         var (verb, arg) = command.IndexOf(':', StringComparison.Ordinal) is var i and >= 0 ? (command[..i], command[(i + 1)..]) : (command, "");
+        if (verb == "tooltip" && int.TryParse(arg, out var tipSlot))
+        {
+            PrintTooltip(me, tipSlot);
+            return;
+        }
+
         Game.Core.Intents.Intent? intent = verb switch
         {
             "spend" when Enum.TryParse<AttributeKind>(arg, ignoreCase: true, out var attr) => new Game.Core.Intents.SpendAttributePointIntent(me, attr),
             "raise" => new Game.Core.Intents.RaiseSkillRankIntent(me, arg),
             "reset_points" => new Game.Core.Intents.ResetPointsIntent(me),
+            "equip" when int.TryParse(arg, out var slot) => new Game.Core.Intents.EquipItemIntent(me, slot),
+            "unequip" when Enum.TryParse<EquipSlot>(arg, ignoreCase: true, out var eq) => new Game.Core.Intents.UnequipItemIntent(me, eq),
+            "drop" when int.TryParse(arg, out var dropSlot) => new Game.Core.Intents.DropItemIntent(me, dropSlot),
+            "pickup" => _worldView.NearestPickableItem(me) is { } near ? new Game.Core.Intents.PickUpItemIntent(me, near) : null,
             _ => null,
         };
         if (intent is null)
@@ -535,6 +554,20 @@ public partial class Main : Node2D
         }
 
         _authority.Send(intent);
+    }
+
+    /// <summary><c>tooltip:n</c> (T-222): imprime o tooltip do espaço n do inventário, o mesmo texto da janela.</summary>
+    private void PrintTooltip(EntityId me, int slot)
+    {
+        var self = _authority?.Latest?.Entities.FirstOrDefault(e => e.Id == me);
+        if (self?.TryGet<Game.Core.Combat.Items.Inventory>() is not { } inv || slot < 0 || slot >= inv.Capacity || inv[slot] is not { } item)
+        {
+            GD.Print($"[tooltip {slot}] vazio");
+            return;
+        }
+
+        var equipped = _content.Items.TryGetValue(item.BaseId, out var def) ? self.TryGet<Game.Core.Combat.Items.Equipment>()?[def.Slot] : null;
+        GD.Print($"[tooltip {slot}] " + ItemText.Tooltip(_content, item, self.TryGet<UnitInfo>()?.DefinitionId, equipped, isEquipped: false));
     }
 
     private static void LogAbilityEvents(IGameAuthority authority, IReadOnlyList<GameEvent> events)
@@ -552,6 +585,11 @@ public partial class Main : Node2D
                 Game.Core.Combat.Progression.SkillRankRaised sr when sr.Entity == authority.ControlledEntity => $"rank {sr.AbilityId} = {sr.Rank}",
                 Game.Core.Combat.Progression.PointsReset pr when pr.Entity == authority.ControlledEntity => $"reset ({pr.AttributePoints}/{pr.SkillPoints})",
                 Game.Core.Combat.Progression.ProgressionRejected pj when pj.Entity == authority.ControlledEntity => $"progression rejected {pj.Id}: {pj.Reason}",
+                Game.Core.Combat.Items.ItemDropped d => $"dropped {d.BaseId} ({d.Rarity}) as {d.Item}",
+                Game.Core.Combat.Items.ItemPickedUp pu when pu.Entity == authority.ControlledEntity => $"picked {pu.BaseId} -> slot {pu.InventorySlot}",
+                Game.Core.Combat.Items.ItemEquipped ie when ie.Entity == authority.ControlledEntity => $"equipped {ie.BaseId} in {ie.Slot} (was '{ie.PreviousId}')",
+                Game.Core.Combat.Items.ItemUnequipped iu when iu.Entity == authority.ControlledEntity => $"unequipped {iu.BaseId} -> slot {iu.InventorySlot}",
+                Game.Core.Combat.Items.ItemRejected ir when ir.Entity == authority.ControlledEntity => $"item rejected {ir.Action}: {ir.Reason}",
                 _ => null,
             };
             if (line is not null)

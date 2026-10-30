@@ -59,6 +59,7 @@ public static class HudTheme
         LogCategory.Fase => new Color(1.00f, 0.50f, 1.00f),
         LogCategory.Morte => new Color(1.00f, 0.35f, 0.35f),
         LogCategory.Progressao => Xp,
+        LogCategory.Itens => new Color(0.55f, 0.85f, 1f),
         _ => new Color(0.85f, 0.85f, 0.85f),
     };
 
