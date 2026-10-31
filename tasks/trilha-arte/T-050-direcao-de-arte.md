@@ -25,7 +25,7 @@ Decisão do designer (2026-10-19): arte vinda de **pacotes de assets**, estilo *
 
 ## Resultado
 
-**Parcial — aguardando aprovação do designer** (Windows, 2026-10-31). Só documentação; nenhum arquivo de arte baixado.
+**Feito — direção de arte aprovada pelo designer** (Windows, 2026-10-31). No repositório entra só documentação. Os arquivos de arte ficam em `..\mmg-art-src\`, fora do Git.
 
 **Feito**
 - `design/art-direction-v0.1.md`: estilo (família LPC, três quartos, 32 px), paleta (Liberated Palette + cores reservadas para gameplay, tiradas do cliente atual), escala (pivô nos pés, raio de colisão × sprite por monstro, só escala inteira), 4 direções, animações mínimas mapeadas para as folhas LPC, regras de legibilidade e ordem de desenho, pacotes, lacunas e organização no repositório.
@@ -48,9 +48,11 @@ Decisão do designer (2026-10-19): arte vinda de **pacotes de assets**, estilo *
 - Personagens: Guerreiro musculoso, sem capacete e com cabelo. Cabelo no Arqueiro, Mago e Clérigo. Mago vestido (o *Robe* do gerador só existe para corpo feminino).
 - Rato trocado pelo rato gigante do pacote [LPC] bears, deer, lions and more (CC-BY 4.0, baixado com confirmação).
 - Lobo recolorido em cinza claro.
-- Matriarca: três opções de cor em escala ×2 na cena de teste, a escolher.
+- Matriarca: três opções de cor em escala ×2. O designer escolheu a A (`spider04`, vermelha com marcas amarelas).
 
-**Pendências**
-- Aprovação do designer (critério de aceite) e escolha da Matriarca (A, B ou C).
+**Pendências (para as próximas tarefas da trilha)**
+- T-053: exportar as folhas completas do gerador com o CSV de créditos (as configurações estão no §7 do documento). Decidir a escala da aranha pequena em relação ao raio de colisão.
+- T-052/T-053/T-054: completar `CREDITS.md` quando cada asset entrar no repositório.
+- Antes de qualquer distribuição pública: tela de créditos no jogo (exigida pelas licenças).
 - Completar as entradas de `CREDITS.md` quando cada asset entrar no repositório (T-052/T-053/T-054).
 - Lacunas registradas no §7: ícones de habilidades, tema de interface, tela de créditos no jogo (exigida pelas licenças), monstros da fase 3.

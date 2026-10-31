@@ -18,7 +18,7 @@ Licenças:
 
 ## Assets incluídos
 
-_Nenhum ainda._ Os pacotes abaixo foram escolhidos na T-050 (aguardando aprovação do designer). Cada um recebe sua entrada completa quando o primeiro arquivo dele entrar no repositório (T-052, T-053, T-054).
+_Nenhum ainda._ Os pacotes abaixo foram escolhidos na T-050 e aprovados pelo designer. Cada um recebe sua entrada completa quando o primeiro arquivo dele entrar no repositório (T-052, T-053, T-054).
 
 | Pacote | Autor(es) | Licença adotada | Origem |
 |---|---|---|---|

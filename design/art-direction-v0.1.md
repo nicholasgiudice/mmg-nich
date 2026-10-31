@@ -2,7 +2,7 @@
 
 Decisão do designer (2026-10-19): arte vinda de **pacotes de assets**, estilo **simples como o Tibia, mas não idêntico**. Este documento fixa o estilo, as regras de escala e legibilidade e os pacotes escolhidos. Ele é a base das tarefas T-052 (mapas no cliente), T-053 (sprites), T-054 (efeitos) e T-055 (Cidade e Campos).
 
-Estado: **proposta, aguardando aprovação do designer** (T-050). Nenhum arquivo foi baixado ainda (ver §8).
+Estado: **aprovado pelo designer em 2026-10-31** (T-050). Pacotes baixados fora do repositório (ver §8).
 
 ---
 
@@ -44,7 +44,7 @@ Estado: **proposta, aguardando aprovação do designer** (T-050). Nenhum arquivo
 | Salteador | 0,40 | ~26 px | personagem do gerador |
 | Guarda Esquelético | 0,50 | 32 px | corpo de esqueleto do gerador |
 | Aranha grande | 0,60 | ~38 px | aranha LPC (`spider05`, cinza e vermelha) |
-| Matriarca da Floresta | 0,90 | ~58 px | aranha LPC em escala ×2; três opções de cor na cena de teste (A vermelha, B preta e amarela, C vinho), a escolher |
+| Matriarca da Floresta | 0,90 | ~58 px | aranha LPC vermelha com marcas amarelas (`spider04`) em escala ×2 (opção A, escolhida pelo designer) |
 
 As aranhas LPC têm uns 42 px de largura em ×1. Isso serve para a aranha grande, mas fica grande para o raio da pequena. Na T-053, decidir entre aceitar a diferença e reduzir o raio de colisão (decisão de dados, não de arte).
 
@@ -110,7 +110,7 @@ Licenças conferidas nas páginas dos pacotes em 2026-10-31. Quando um pacote of
 
 | Lacuna | Proposta |
 |---|---|
-| Sprite próprio da Matriarca | aranha do item 6 recolorida (tons de musgo e casca) em escala ×2; arte própria fica para depois |
+| Sprite próprio da Matriarca | aranha vermelha do item 6 (`spider04`) em escala ×2; arte própria fica para depois |
 | Fadas da Névoa, Cavaleiro Espectral, Vigia Sem Rosto (fase 3) | procurar quando a fase 3 for detalhada |
 | Ícones das habilidades | sem pacote coerente; ícones simples próprios ou procurar na T-053/T-054 |
 | Tema de interface (fonte, painéis, botões) | elementos do item 8 são candidatos; hoje a interface segue procedural (`HudTheme`). Fora do escopo desta tarefa |
