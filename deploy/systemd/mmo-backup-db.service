@@ -1,0 +1,16 @@
+# Backup diário do banco (T-213). Disparado por mmo-backup-db.timer.
+# Instalação (como root, na raiz do repositório em /root/mmo-rpg; ajuste os caminhos se for outro):
+#   cp deploy/systemd/mmo-backup-db.service deploy/systemd/mmo-backup-db.timer /etc/systemd/system/
+#   systemctl daemon-reload && systemctl enable --now mmo-backup-db.timer
+# Rodar agora: systemctl start mmo-backup-db.service · Logs: journalctl -u mmo-backup-db
+
+[Unit]
+Description=MMO RPG - backup do PostgreSQL (pg_dump)
+Requires=docker.service
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/root/mmo-rpg
+ExecStart=/root/mmo-rpg/scripts/backup-db.sh
