@@ -22,6 +22,8 @@ public partial class CombatLogPanel : PanelContainer
         (LogCategory.Recurso, "Rec."),
         (LogCategory.Fase, "Fase"),
         (LogCategory.Morte, "Morte"),
+        (LogCategory.Progressao, "Prog."),
+        (LogCategory.Itens, "Itens"),
     ];
 
     private readonly HashSet<LogCategory> _enabled = Filters.Select(f => f.Category).ToHashSet();

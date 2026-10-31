@@ -1,6 +1,7 @@
 using Game.Core.Authority;
 using Game.Core.Combat;
 using Game.Core.Combat.Areas;
+using Game.Core.Combat.Items;
 using Game.Core.Combat.Status;
 using Game.Core.Combat.Telegraphs;
 using Game.Core.Definitions;
@@ -14,7 +15,7 @@ namespace MmoRpgClient.Presentation;
 /// <summary>
 /// Mantém um <see cref="EntityView"/> por unidade da autoridade e desenha cada uma na posição
 /// interpolada entre os dois últimos ticks; telegráfos e áreas (também entidades) viram
-/// <see cref="TelegraphView"/>/<see cref="AreaView"/>. Conhece só <see cref="IGameAuthority"/>: funciona igual
+/// <see cref="TelegraphView"/>/<see cref="AreaView"/>, e itens no chão viram <see cref="GroundItemView"/> (T-222). Conhece só <see cref="IGameAuthority"/>: funciona igual
 /// com a simulação local, com o servidor (fase 1) ou com uma autoridade falsa.
 /// </summary>
 public partial class WorldView : Node2D
@@ -23,6 +24,12 @@ public partial class WorldView : Node2D
     private readonly Dictionary<EntityId, EntitySnapshot> _previousById = new();
     private readonly HashSet<EntityId> _seen = new();
     private readonly Dictionary<EntityId, Node2D> _ground = new();
+
+    /// <summary>Itens no chão desenhados neste frame (T-222): posição na tela, se o jogador tem direito e se alcança.</summary>
+    private readonly Dictionary<EntityId, (Godot.Vector2 Pixels, bool Mine, bool InReach)> _items = new();
+
+    /// <summary>Distância (tiles) entre itens que caíram no mesmo ponto, espalhados em volta dele.</summary>
+    private const float ItemSpread = 0.55f;
     private ContentCatalog _content = ContentCatalog.Empty;
     private (string Text, ulong AtMs) _lastRejection;
 
@@ -98,6 +105,14 @@ public partial class WorldView : Node2D
                 case HealApplied heal when heal.Effective > 0:
                     ShowText(heal.Target, $"+{heal.Effective:0}", Hud.HudTheme.Heal);
                     break;
+                case ItemRejected itemRejected when itemRejected.Entity == authority.ControlledEntity:
+                    ShowText(itemRejected.Entity, Hud.ItemText.Rejection(itemRejected.Reason), RejectionColor);
+                    break;
+                case ItemPickedUp picked when picked.Entity == authority.ControlledEntity:
+                    var pickedName = _content.Items.TryGetValue(picked.BaseId, out var pickedDef) ? pickedDef.Name : picked.BaseId;
+                    var rarity = latest?.Entities.FirstOrDefault(s => s.Id == picked.Entity)?.TryGet<Inventory>()?[picked.InventorySlot]?.Rarity;
+                    ShowText(picked.Entity, "+ " + pickedName, rarity is { } r ? Hud.ItemText.RarityColor(r) : Colors.White);
+                    break;
                 case AbilityRejected rejected when rejected.Source == authority.ControlledEntity:
                     var pool = latest?.Entities.FirstOrDefault(s => s.Id == rejected.Source)?.TryGet<ResourcePool>();
                     var text = RejectionText.For(rejected.Reason, pool?.Type);
@@ -124,6 +139,7 @@ public partial class WorldView : Node2D
             ?? Faction.Player;
         var seen = _seen;
         seen.Clear();
+        RenderGroundItems(latest, authority.ControlledEntity, seen);
         foreach (var state in latest.Entities)
         {
             var transform = state.TryGet<Transform>();
@@ -150,7 +166,7 @@ public partial class WorldView : Node2D
                 continue;
             }
 
-            if (state.TryGet<Health>() is null)
+            if (state.TryGet<Health>() is null || state.TryGet<GroundItem>() is not null)
             {
                 continue;
             }
@@ -177,8 +193,79 @@ public partial class WorldView : Node2D
         foreach (var id in _ground.Keys.Where(id => !seen.Contains(id)).ToList())
         {
             _ground.Remove(id, out var node);
+            _items.Remove(id);
             node!.QueueFree();
         }
+    }
+
+    /// <summary>
+    /// Itens no chão (T-222). A queda deixa todos no ponto do monstro (T-204); aqui eles são espalhados em volta dele,
+    /// em ordem de id, só no desenho. Forte e com "[F]" quando o jogador tem direito e está ao alcance de pegar.
+    /// </summary>
+    private void RenderGroundItems(WorldSnapshot latest, EntityId? controlled, HashSet<EntityId> seen)
+    {
+        var me = controlled is { } c ? latest.Entities.FirstOrDefault(e => e.Id == c) : null;
+        var myPos = me?.TryGet<Transform>()?.Position;
+        var range = _content.Rules.Items.PickupRange;
+        var mouse = GetGlobalMousePosition();
+        var groups = latest.Entities
+            .Where(e => e.TryGet<GroundItem>() is not null && e.TryGet<Transform>() is not null)
+            .GroupBy(e => (MathF.Round(e.Get<Transform>().Position.X, 1), MathF.Round(e.Get<Transform>().Position.Y, 1)));
+        foreach (var group in groups)
+        {
+            var items = group.OrderBy(e => e.Id.Value).ToList();
+            for (var i = 0; i < items.Count; i++)
+            {
+                var state = items[i];
+                var item = state.Get<GroundItem>();
+                var at = state.Get<Transform>().Position;
+                var drawn = items.Count == 1 ? at
+                    : at + (ItemSpread * new System.Numerics.Vector2(MathF.Cos(i * MathF.Tau / items.Count), MathF.Sin(i * MathF.Tau / items.Count)));
+                var mine = controlled is { } id && item.IsOwner(id);
+                var inReach = myPos is { } p && System.Numerics.Vector2.Distance(p, at) <= range;
+                seen.Add(state.Id);
+                _items[state.Id] = (Units.ToPixels(drawn), mine, inReach);
+            }
+        }
+
+        // Nome só no item sob o mouse e no que o F pegaria (vários itens juntos não embaralham os nomes).
+        var next = myPos is { } at0
+            ? _items.Where(kv => seen.Contains(kv.Key) && kv.Value.Mine && kv.Value.InReach)
+                .OrderBy(kv => kv.Value.Pixels.DistanceTo(Units.ToPixels(at0)))
+                .Select(kv => (EntityId?)kv.Key)
+                .FirstOrDefault()
+            : null;
+        foreach (var state in latest.Entities)
+        {
+            if (state.TryGet<GroundItem>() is { } item && _items.TryGetValue(state.Id, out var drawnItem) && seen.Contains(state.Id))
+            {
+                GetOrCreateGround<GroundItemView>(state.Id).Apply(item, drawnItem.Pixels, _content, drawnItem.Mine, next == state.Id,
+                    drawnItem.Pixels.DistanceTo(mouse) <= GroundItemView.RadiusPx + PickMarginPx);
+            }
+        }
+    }
+
+    /// <summary>Item no chão sob o ponto (pixels), o mais próximo; null se nenhum (T-222).</summary>
+    public EntityId? PickGroundItemAt(Godot.Vector2 pixels) =>
+        _items
+            .Where(kv => kv.Value.Pixels.DistanceTo(pixels) <= GroundItemView.RadiusPx + PickMarginPx)
+            .OrderBy(kv => kv.Value.Pixels.DistanceTo(pixels))
+            .Select(kv => (EntityId?)kv.Key)
+            .FirstOrDefault();
+
+    /// <summary>Item no chão do jogador mais perto dele que está ao alcance (tecla F, T-222); null se nenhum.</summary>
+    public EntityId? NearestPickableItem(EntityId? controlled)
+    {
+        if (controlled is not { } me || !TryGetDrawnPosition(me, out var at))
+        {
+            return null;
+        }
+
+        return _items
+            .Where(kv => kv.Value.Mine && kv.Value.InReach)
+            .OrderBy(kv => kv.Value.Pixels.DistanceTo(at))
+            .Select(kv => (EntityId?)kv.Key)
+            .FirstOrDefault();
     }
 
     private T GetOrCreateGround<T>(EntityId id)

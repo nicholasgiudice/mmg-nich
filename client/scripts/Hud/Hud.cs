@@ -2,6 +2,8 @@ using System.Globalization;
 using Game.Core.Authority;
 using Game.Core.Combat;
 using Game.Core.Combat.Phases;
+using Game.Core.Combat.Progression;
+using Game.Core.Combat.Stats;
 using Game.Core.Combat.Status;
 using Game.Core.Definitions;
 using Game.Core.Events;
@@ -15,7 +17,8 @@ namespace MmoRpgClient.Hud;
 
 /// <summary>
 /// HUD do protótipo. Só lê estado (snapshots) e eventos da autoridade; nunca altera a simulação.
-/// Quadro do jogador, barra de habilidades, conjuração, quadro do alvo, quadros de grupo, log e resumo de morte.
+/// Quadro do jogador (com nível e XP, T-221), barra de habilidades, conjuração, quadro do alvo, quadros de grupo, log,
+/// resumo de morte e as telas de personagem (C) e de habilidades (K).
 /// </summary>
 public partial class Hud : Control
 {
@@ -40,6 +43,13 @@ public partial class Hud : Control
     private CombatLogPanel _log = null!;
     private DeathSummaryPanel _death = null!;
     private Label _banner = null!;
+    private HBoxContainer _panelButtons = null!;
+    private Button _characterButton = null!;
+    private Button _skillsButton = null!;
+    private CharacterPanel _character = null!;
+    private SkillPanel _skills = null!;
+    private Button _inventoryButton = null!;
+    private InventoryPanel _inventory = null!;
     private double _bannerLeft;
     private double _castFlashLeft;
     private string _castFlashText = "";
@@ -52,10 +62,21 @@ public partial class Hud : Control
         SetAnchorsPreset(LayoutPreset.FullRect);
         MouseFilter = MouseFilterEnum.Ignore;
 
-        _player = new UnitFrame(FrameWidth, showResource: true) { Position = new Vector2(8, 8) };
+        _player = new UnitFrame(FrameWidth, showResource: true, showXp: true) { Position = new Vector2(8, 8) };
         AddChild(_player);
 
-        _party = new VBoxContainer { Position = new Vector2(8, 104) };
+        // T-221: telas de personagem e de habilidades (também pelas teclas C e K).
+        _panelButtons = new HBoxContainer();
+        _panelButtons.AddThemeConstantOverride("separation", 4);
+        _characterButton = PanelButton("Personagem (C)", () => TogglePanel(_character));
+        _skillsButton = PanelButton("Habilidades (K)", () => TogglePanel(_skills));
+        _panelButtons.AddChild(_characterButton);
+        _panelButtons.AddChild(_skillsButton);
+        _inventoryButton = PanelButton("Inventário (I)", () => TogglePanel(_inventory));
+        _panelButtons.AddChild(_inventoryButton);
+        AddChild(_panelButtons);
+
+        _party = new VBoxContainer();
         _party.AddThemeConstantOverride("separation", 6);
         _party.MouseFilter = MouseFilterEnum.Ignore;
         AddChild(_party);
@@ -76,6 +97,13 @@ public partial class Hud : Control
         _death = new DeathSummaryPanel { Visible = false, SourceLabel = SourceLabel };
         AddChild(_death);
 
+        _character = new CharacterPanel();
+        AddChild(_character);
+        _skills = new SkillPanel();
+        AddChild(_skills);
+        _inventory = new InventoryPanel();
+        AddChild(_inventory);
+
         _banner = new Label
         {
             HorizontalAlignment = HorizontalAlignment.Center,
@@ -87,6 +115,30 @@ public partial class Hud : Control
         _banner.AddThemeColorOverride("font_outline_color", Colors.Black);
         _banner.AddThemeColorOverride("font_color", new Color(1f, 0.55f, 0.95f));
         AddChild(_banner);
+    }
+
+    /// <summary>Fecha as telas de personagem e de habilidades; true se alguma estava aberta (Esc fecha antes de pausar).</summary>
+    public bool ClosePanels()
+    {
+        var open = _character.Visible || _skills.Visible || _inventory.Visible;
+        _character.Visible = false;
+        _skills.Visible = false;
+        _inventory.Visible = false;
+        return open;
+    }
+
+    private static void TogglePanel(ProgressionPanel panel)
+    {
+        panel.Toggle();
+        panel.SetMessage("");
+    }
+
+    private static Button PanelButton(string text, Action pressed)
+    {
+        var button = new Button { Text = text, FocusMode = FocusModeEnum.None };
+        button.AddThemeFontSizeOverride("font_size", 11);
+        button.Pressed += pressed;
+        return button;
     }
 
     /// <summary>Aviso grande no topo da tela (ex.: mudança de fase do chefe), some sozinho.</summary>
@@ -124,6 +176,16 @@ public partial class Hud : Control
         _abilityBar.Position = new Vector2(x, screen.Y - bar.Y - 8);
         _playerCast.Position = new Vector2((screen.X - _playerCast.Size.X) / 2, _abilityBar.Position.Y - _playerCast.Size.Y - 6);
         _target.Position = new Vector2((screen.X - _target.Size.X) / 2, 8);
+        _panelButtons.Position = new Vector2(8, _player.Position.Y + _player.Size.Y + 4);
+        _party.Position = new Vector2(8, _panelButtons.Position.Y + _panelButtons.Size.Y + 6);
+        var panelX = Mathf.Max(_player.Position.X + _player.Size.X, _panelButtons.Visible ? _panelButtons.Position.X + _panelButtons.Size.X : 0) + 12;
+        _character.Position = new Vector2(panelX, 64);
+        // Habilidades: ao lado da tela de personagem; se não couber, encostada na direita (pode cobrir o log).
+        var skillsX = _character.Visible ? _character.Position.X + _character.Size.X + 8 : panelX;
+        _skills.Position = new Vector2(Mathf.Max(panelX, Mathf.Min(skillsX, screen.X - _skills.Size.X - 8)), _character.Visible && skillsX + _skills.Size.X > screen.X - 8 ? 8 : 64);
+
+        // Inventário: canto direito, acima do log; cabe ao lado da tela de personagem em 1280 px (equipar e ver os números).
+        _inventory.Position = new Vector2(screen.X - _inventory.Size.X - 8, Mathf.Max(8, _log.Position.Y - _inventory.Size.Y - 8));
         _log.Position = new Vector2(screen.X - _log.Size.X - 8, screen.Y - _log.Size.Y - 8);
         _death.Position = (screen - _death.Size) / 2;
         _banner.Position = new Vector2((screen.X - _banner.Size.X) / 2, screen.Y * 0.18f);
@@ -133,6 +195,9 @@ public partial class Hud : Control
     public void SetContent(ContentCatalog content)
     {
         _content = content;
+        _character.SetContent(content);
+        _skills.SetContent(content);
+        _inventory.SetContent(content);
         _removableTags.Clear();
         foreach (var cls in content.Classes.Values)
         {
@@ -174,6 +239,7 @@ public partial class Hud : Control
             Announce($"{boss} — Fase {phase.Index + 1}");
         }
 
+        HandleProgression(authority, events);
         if (latest is null)
         {
             return;
@@ -190,6 +256,7 @@ public partial class Hud : Control
             _player.Display(self, StatusText(self, now), now, _content);
             UpdateAbilityBar(self, byId, selected, aimPoint, now);
             UpdateCast(_playerCast, self, now, HudTheme.Cast);
+            UpdatePanels(self);
             if (!_playerCast.Visible && _castFlashLeft > 0)
             {
                 _playerCast.Visible = true;
@@ -200,6 +267,7 @@ public partial class Hud : Control
         {
             _player.Visible = false;
             _playerCast.Visible = false;
+            _panelButtons.Visible = false;
         }
 
         if (selected is { } tid && byId.TryGetValue(tid, out var target))
@@ -224,6 +292,95 @@ public partial class Hud : Control
                     _death.ShowSummary(death);
                 }
             }
+        }
+    }
+
+    /// <summary>T-221: teclas C/K, aviso de nível, recusas e o destino das intenções das telas.</summary>
+    private void HandleProgression(IGameAuthority authority, IReadOnlyList<GameEvent> events)
+    {
+        _character.Send = authority.Send;
+        _skills.Send = authority.Send;
+        _inventory.Send = authority.Send;
+        if (Godot.Input.IsActionJustPressed(Input.InputActions.InventoryPanel))
+        {
+            TogglePanel(_inventory);
+        }
+
+        if (Godot.Input.IsActionJustPressed(Input.InputActions.CharacterPanel))
+        {
+            TogglePanel(_character);
+        }
+
+        if (Godot.Input.IsActionJustPressed(Input.InputActions.SkillsPanel))
+        {
+            TogglePanel(_skills);
+        }
+
+        var me = authority.ControlledEntity;
+        foreach (var e in events)
+        {
+            switch (e)
+            {
+                case LevelUp up when up.Entity == me:
+                    Announce($"Nível {up.Level}!  {up.AttributePoints} pontos de atributo (C) · {up.SkillPoints} de habilidade (K)", 4.0);
+                    break;
+                case ProgressionRejected r when r.Entity == me:
+                    var text = ProgressionText.Reason(r.Reason);
+                    _character.SetMessage(text);
+                    _skills.SetMessage(text);
+                    if (!_character.Visible && !_skills.Visible)
+                    {
+                        Announce(text, 2.5);
+                    }
+
+                    break;
+                case Game.Core.Combat.Items.ItemRejected ir when ir.Entity == me:
+                    _inventory.SetMessage(ItemText.Rejection(ir.Reason));
+                    break;
+                case Game.Core.Combat.Items.ItemEquipped or Game.Core.Combat.Items.ItemUnequipped or Game.Core.Combat.Items.ItemPickedUp
+                    when ItemEntity(e) == me:
+                    _inventory.SetMessage("");
+                    break;
+                case AttributeRaised or SkillRankRaised or PointsReset when PointsEntity(e) == me:
+                    _character.SetMessage("");
+                    _skills.SetMessage("");
+                    break;
+            }
+        }
+    }
+
+    private static EntityId? PointsEntity(GameEvent e) => e switch
+    {
+        AttributeRaised a => a.Entity,
+        SkillRankRaised s => s.Entity,
+        PointsReset p => p.Entity,
+        _ => null,
+    };
+
+    private static EntityId? ItemEntity(GameEvent e) => e switch
+    {
+        Game.Core.Combat.Items.ItemEquipped a => a.Entity,
+        Game.Core.Combat.Items.ItemUnequipped u => u.Entity,
+        Game.Core.Combat.Items.ItemPickedUp p => p.Entity,
+        _ => null,
+    };
+
+    private void UpdatePanels(EntitySnapshot self)
+    {
+        var progress = self.TryGet<CharacterProgress>();
+        _panelButtons.Visible = self.TryGet<CharacterStats>() is not null;
+        _characterButton.Text = progress is { AttributePoints: > 0 } p ? $"Personagem (C) ● {p.AttributePoints}" : "Personagem (C)";
+        _skillsButton.Text = progress is { SkillPoints: > 0 } q ? $"Habilidades (K) ● {q.SkillPoints}" : "Habilidades (K)";
+        _characterButton.Modulate = progress is { AttributePoints: > 0 } ? HudTheme.Removable : Colors.White;
+        _skillsButton.Modulate = progress is { SkillPoints: > 0 } ? HudTheme.Removable : Colors.White;
+        _character.Render(self);
+        _skills.Render(self);
+        _inventory.Render(self);
+        if (self.TryGet<Game.Core.Combat.Items.Inventory>() is { } inv)
+        {
+            var used = inv.Slots.Count(i => i is not null);
+            _inventoryButton.Text = $"Inventário (I) {used}/{inv.Capacity}";
+            _inventoryButton.Modulate = used >= inv.Capacity ? HudTheme.Warning : Colors.White;
         }
     }
 
@@ -341,18 +498,19 @@ public partial class Hud : Control
         var tooltip = name;
         if (def is not null)
         {
+            var stats = self.TryGet<CharacterStats>();
             if (isBasic)
             {
-                tooltip += "\n" + AbilityText.Describe(def, _content);
+                tooltip += "\n" + AbilityText.Describe(def, _content, stats);
             }
             else
             {
                 var baseDef = _content.Abilities.GetValueOrDefault(id);
                 var top = baseDef?.HighestRank ?? rank;
                 tooltip += $" — NH {Match.SkillPlan.Roman(rank)}{(baseDef?.Signature == true ? " (assinatura)" : "")}\n"
-                    + AbilityText.Describe(def, _content);
+                    + AbilityText.Describe(def, _content, stats);
                 tooltip += rank < top && _content.AbilityAt(id, rank + 1) is { } next
-                    ? $"\n\nPróximo NH ({Match.SkillPlan.Roman(rank + 1)}):\n{AbilityText.Describe(next, _content)}"
+                    ? $"\n\nPróximo NH ({Match.SkillPlan.Roman(rank + 1)}):\n{AbilityText.Describe(next, _content, stats)}"
                     : "\n\nNH máximo.";
             }
         }
@@ -444,9 +602,10 @@ public partial class Hud : Control
         private readonly HudBar _health = new();
         private readonly HudBar? _resource;
         private readonly HudBar? _cast;
+        private readonly HudBar? _xp;
         private readonly RichTextLabel _status = new();
 
-        public UnitFrame(float width, bool showResource, bool showCast = false, bool compact = false)
+        public UnitFrame(float width, bool showResource, bool showCast = false, bool compact = false, bool showXp = false)
         {
             MouseFilter = MouseFilterEnum.Ignore;
             AddThemeStyleboxOverride("panel", new StyleBoxFlat
@@ -473,6 +632,12 @@ public partial class Hud : Control
             {
                 _resource = new HudBar { CustomMinimumSize = new Vector2(width, compact ? 8 : 12), FontSize = compact ? 0 : 10, MouseFilter = MouseFilterEnum.Ignore };
                 box.AddChild(_resource);
+            }
+
+            if (showXp)
+            {
+                _xp = new HudBar { CustomMinimumSize = new Vector2(width, 11), FontSize = 9, MouseFilter = MouseFilterEnum.Ignore, Visible = false };
+                box.AddChild(_xp);
             }
 
             if (showCast)
@@ -526,6 +691,22 @@ public partial class Hud : Control
             else if (_resource is not null)
             {
                 _resource.Visible = false;
+            }
+
+            if (_xp is not null)
+            {
+                // T-221: nível e XP (só personagens com estatísticas; sem progressão, só o nível).
+                var level = unit.TryGet<CharacterStats>()?.Level;
+                var progress = unit.TryGet<CharacterProgress>();
+                _xp.Visible = level is not null;
+                if (level is not null)
+                {
+                    var toNext = progress?.ExperienceToNext ?? 0;
+                    _xp.Set(toNext > 0 ? progress!.Experience / (float)toNext : progress is null ? 0f : 1f, HudTheme.Xp,
+                        progress is null ? $"Nível {level}"
+                        : toNext > 0 ? $"Nível {level} · XP {progress.Experience} / {toNext}"
+                        : $"Nível {level} (máximo)");
+                }
             }
 
             if (_cast is not null)

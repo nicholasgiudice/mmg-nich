@@ -15,6 +15,9 @@ public static class HudTheme
     public static readonly Color Panel = new(0.06f, 0.06f, 0.08f, 0.82f);
     public static readonly Color BarBack = new(0.12f, 0.12f, 0.14f, 0.95f);
     public static readonly Color Removable = new(0.55f, 0.95f, 0.55f);
+    public static readonly Color Xp = new(0.70f, 0.45f, 0.95f);
+    public static readonly Color Suggested = new(1f, 0.85f, 0.45f);
+    public static readonly Color Warning = new(1f, 0.55f, 0.4f);
 
     public static Color Resource(string type) => Key(type) switch
     {
@@ -55,6 +58,8 @@ public static class HudTheme
         LogCategory.Recurso => new Color(0.95f, 0.85f, 0.50f),
         LogCategory.Fase => new Color(1.00f, 0.50f, 1.00f),
         LogCategory.Morte => new Color(1.00f, 0.35f, 0.35f),
+        LogCategory.Progressao => Xp,
+        LogCategory.Itens => new Color(0.55f, 0.85f, 1f),
         _ => new Color(0.85f, 0.85f, 0.85f),
     };
 
