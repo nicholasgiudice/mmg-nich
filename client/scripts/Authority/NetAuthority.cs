@@ -55,6 +55,7 @@ public sealed class NetAuthority : IGameAuthority, ICombatLogSource, IDisposable
     private readonly ContentCatalog _content;
     private readonly string _name;
     private readonly string? _classId;
+    private readonly string? _ticket;
     private readonly EventBasedNetListener _listener = new();
     private readonly NetManager _net;
     private readonly SnapshotReconstructor _state = new();
@@ -85,8 +86,10 @@ public sealed class NetAuthority : IGameAuthority, ICombatLogSource, IDisposable
 
     /// <param name="lagMs">Latência artificial de ida e volta (metade em cada sentido), só para depuração.</param>
     /// <param name="lossPercent">Perda artificial de snapshots (e das confirmações), só para depuração.</param>
-    public NetAuthority(string host, int port, string name, string? classId, ContentCatalog content, double lagMs = 0, double lossPercent = 0)
+    public NetAuthority(string host, int port, string name, string? classId, ContentCatalog content, double lagMs = 0, double lossPercent = 0,
+        string? ticket = null)
     {
+        _ticket = ticket;
         _lagMs = Math.Max(0, lagMs);
         _loss = Math.Clamp(lossPercent, 0, 100) / 100.0;
         _content = content;
@@ -251,7 +254,7 @@ public sealed class NetAuthority : IGameAuthority, ICombatLogSource, IDisposable
     {
         _peer = peer;
         Status = NetStatus.Joining;
-        var hello = new Hello(ProtocolVersion.Current, _content.Fingerprint, _name, _classId);
+        var hello = new Hello(ProtocolVersion.Current, _content.Fingerprint, _name, _classId, _ticket);
         SendRaw(ProtocolSerializer.Serialize(hello), ReliableChannel, DeliveryMethod.ReliableOrdered);
     }
 
@@ -273,6 +276,9 @@ public sealed class NetAuthority : IGameAuthority, ICombatLogSource, IDisposable
                     RejectReason.ProtocolVersion => "Versão do jogo diferente da do servidor. Atualize o cliente.",
                     RejectReason.Content => "Os dados do jogo (data/) são diferentes dos do servidor.",
                     RejectReason.Full => "A sala está cheia.",
+                    RejectReason.Unauthorized => "Entrada recusada: o token de jogo é inválido ou expirou. Tente jogar de novo.",
+                    RejectReason.AlreadyConnected => "Este personagem já está conectado.",
+                    RejectReason.Unavailable => "O servidor não conseguiu carregar o personagem. Tente de novo em instantes.",
                     _ => "O servidor recusou a entrada.",
                 } + $" ({r.Detail})");
                 break;
