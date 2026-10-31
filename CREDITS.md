@@ -23,6 +23,9 @@ Licenças:
 | Rato gigante | Sevarihk; adaptado por tapatilorenzo | [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/) | https://opengameart.org/content/lpc-bears-deer-lions-and-more | `client/assets/art/monsters/field_rat/` | não |
 | Lobo (`wolfsheet1`) | Stephen Challener (Redshrike), publicado por William.Thompsonj | OGA-BY 3.0 | https://opengameart.org/content/lpc-wolf-animation | `client/assets/art/monsters/grey_wolf/` | recolorido em cinza claro |
 | Aranhas (`spider01`, `spider04`, `spider05`) | Stephen Challener (Redshrike), publicado por William.Thompsonj | OGA-BY 3.0 | https://opengameart.org/content/lpc-spider | `client/assets/art/monsters/spiders/` | não |
+| Guerreiro, Arqueiro, Mago, Clérigo, Salteador, Guarda Esquelético | vários artistas do LPC, peça a peça em `<personagem>-credits.csv` | por peça: OGA-BY 3.0 quando oferecida; CC-BY-SA 3.0 em peças do Guerreiro (corpo musculoso, cabelo, escudo), do Arqueiro (cabelo, arco) e do Mago (cabelo, sobrecasaca) | https://github.com/LiberatedPixelCup/Universal-LPC-Spritesheet-Character-Generator | `client/assets/art/characters/` | não (folhas exportadas do gerador, combinações no §7 de `design/art-direction-v0.1.md`) |
+
+Sprites contributed as part of the Liberated Pixel Cup project from OpenGameArt.org: http://opengameart.org/content/lpc-collection. Detailed credits: `client/assets/art/characters/*-credits.csv`.
 
 ## Pacotes aprovados
 

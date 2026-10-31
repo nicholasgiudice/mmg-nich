@@ -1,0 +1,19 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://dteuxbcrh0dsk"
+
+[deps]
+
+files=["res://assets/art/characters/archer-credits.notes.translation", "res://assets/art/characters/archer-credits.authors.translation", "res://assets/art/characters/archer-credits.licenses.translation", "res://assets/art/characters/archer-credits.urls.translation"]
+
+source_file="res://assets/art/characters/archer-credits.csv"
+dest_files=["res://assets/art/characters/archer-credits.notes.translation", "res://assets/art/characters/archer-credits.authors.translation", "res://assets/art/characters/archer-credits.licenses.translation", "res://assets/art/characters/archer-credits.urls.translation"]
+
+[params]
+
+compress=1
+delimiter=0
+unescape_keys=false
+unescape_translations=true

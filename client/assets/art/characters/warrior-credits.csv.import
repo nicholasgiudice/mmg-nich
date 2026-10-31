@@ -1,0 +1,19 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://b8lkt3pjpcvu4"
+
+[deps]
+
+files=["res://assets/art/characters/warrior-credits.notes.translation", "res://assets/art/characters/warrior-credits.authors.translation", "res://assets/art/characters/warrior-credits.licenses.translation", "res://assets/art/characters/warrior-credits.urls.translation"]
+
+source_file="res://assets/art/characters/warrior-credits.csv"
+dest_files=["res://assets/art/characters/warrior-credits.notes.translation", "res://assets/art/characters/warrior-credits.authors.translation", "res://assets/art/characters/warrior-credits.licenses.translation", "res://assets/art/characters/warrior-credits.urls.translation"]
+
+[params]
+
+compress=1
+delimiter=0
+unescape_keys=false
+unescape_translations=true

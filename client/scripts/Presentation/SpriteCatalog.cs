@@ -119,6 +119,13 @@ public sealed class SpriteCatalog
 
     private static SpriteAnimation ParseAnimation(JsonNode node, Godot.Vector2 frame, Godot.Vector2 pivot, IReadOnlyList<SpriteDirection> order)
     {
+        // Animação com quadro maior que o do layout (armas grandes do gerador LPC: 128 ou 192 px).
+        if (node["frame"] is { } ownFrame)
+        {
+            frame = Pair(ownFrame, frame);
+            pivot = node["pivot"] is { } ownPivot ? Pair(ownPivot, frame / 2) : frame / 2;
+        }
+
         var strips = new Dictionary<SpriteDirection, SpriteStrip>();
         if (node["grid"] is { } grid)
         {
