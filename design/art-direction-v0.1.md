@@ -114,6 +114,21 @@ Licenças conferidas nas páginas dos pacotes em 2026-10-31. Quando um pacote of
 | Tela de créditos no jogo | exigida pelas licenças; entra numa tarefa de cliente antes de qualquer distribuição pública |
 | Sons | fora do escopo da trilha de arte |
 
+### Configuração dos personagens no gerador
+
+Combinações usadas na cena de teste (2026-10-31). Para reproduzir, cole o trecho depois de `#` no endereço do [gerador](https://liberatedpixelcup.github.io/Universal-LPC-Spritesheet-Character-Generator/). Na T-053, exporte a folha com o botão *Spritesheet (PNG)* e os créditos com *Credits (CSV)*.
+
+| Personagem | Configuração |
+|---|---|
+| Guerreiro | `sex=male&body=Body_Color_light&head=Human_Male_light&expression=Neutral_light&armour=Plate_steel&legs=Pants_charcoal&shoes=Basic_Boots_brown&hat=Nasal_helm_steel&weapon=Arming_Sword_steel&shield=Kite_kite_blue_gray` |
+| Arqueiro | `sex=male&body=Body_Color_light&head=Human_Male_light&expression=Neutral_light&armour=Leather_leather&legs=Pants_walnut&shoes=Basic_Boots_brown&hat=Hood_forest&weapon=Recurve_medium&ammo=Ammo_arrow` |
+| Mago | `sex=male&body=Body_Color_light&head=Human_Male_light&expression=Neutral_light&clothes=Robe_blue&shoes=Basic_Boots_brown&hat=Hood_navy&weapon=Wand_wand` |
+| Clérigo | `sex=male&body=Body_Color_light&head=Human_Male_light&expression=Neutral_light&clothes=Longsleeve_tan&jacket=Tabard_white&legs=Pants_tan&shoes=Basic_Boots_brown&weapon=Mace_mace` |
+| Salteador | `sex=male&body=Body_Color_light&head=Human_Male_light&expression=Neutral_light&armour=Leather_maroon&legs=Pants_brown&shoes=Basic_Boots_walnut&bandana=Bandana_red&weapon=Arming_Sword_iron` |
+| Guarda Esquelético | `sex=male&body=Skeleton_white&head=Skeleton_white&armour=Leather_walnut&weapon=Arming_Sword_iron` |
+
+Licenças mostradas pelo gerador para essas peças: quase todas têm OGA-BY 3.0 como opção. Exceções que ficam em **CC-BY-SA 3.0**: uma peça do Arqueiro (sem outra opção) e o escudo do Guerreiro (CC-BY-SA ou GPL). Os dois são aceitos pela regra do §7. A conferência peça a peça é feita pelo CSV de créditos na exportação.
+
 ### Risco a conferir
 
 Os personagens do gerador seguem o LPC original, e o terreno escolhido é do LPC Revised, com paleta revisada. As duas famílias são feitas para conviver, mas a mistura **precisa ser vista lado a lado** pelo designer antes de aprovar. Se destoar, o plano B é usar o terreno do LPC original (Tile Atlas, reserva).
@@ -135,7 +150,12 @@ client/assets/art/
 - **Sem Git LFS por enquanto.** Os pacotes completos (o LPC Revised inteiro tem cerca de 300 MB) e os arquivos-fonte ficam **fora do repositório**, numa pasta local ao lado do clone (sugestão: `..\mmg-art-src\`). Se `client/assets/` passar de ~100 MB, reavaliar LFS.
 - O caminho exato dos tilesets entre `data/maps/` (lido pelo Core) e `client/assets/art/tiles/` (desenhado pelo cliente) é decisão da T-051/T-052. Recomendação: o `.tsx` aponta para a imagem por caminho relativo.
 
-### Downloads propostos (aguardando confirmação)
+### Downloads (confirmados e feitos em 2026-10-31, em `..\mmg-art-src\`)
+
+Cada pacote fica numa pasta própria, com os zips extraídos em `extracted/`. As cenas de teste estão em `..\mmg-art-src\preview\`: `cena-personagens.png` (terreno + classes, Salteador, Esqueleto, Lobo, Rato) e `cena-monstros.png` (escala dos monstros com o círculo de colisão, incluindo a Matriarca recolorida). Observações:
+- O zip do item 2 traz só os `.png` e `.tsx`, sem arquivo de créditos. A atribuição vem da página (§7).
+- O zip do item 7 traz `credits.txt`. O do item 8 traz `readme.txt`.
+- As folhas do gerador (item 3) não foram baixadas. As cenas usam quadros capturados do próprio gerador. A exportação definitiva fica para a T-053.
 
 | Arquivo | Origem | Tamanho |
 |---|---|---|

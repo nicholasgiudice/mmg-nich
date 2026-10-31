@@ -38,7 +38,13 @@ Decisão do designer (2026-10-19): arte vinda de **pacotes de assets**, estilo *
 - Assets em `client/assets/art/<tipo>/`. No Git só entram as imagens usadas, sem LFS. Pacotes completos ficam fora do repositório (`..\mmg-art-src\`).
 - A "morte" usa a animação `hurt` do LPC (que é a queda). "Tomando dano" é o piscar branco que já existe.
 
+**Downloads e cena de teste** (2026-10-31, com confirmação do designer)
+- Pacotes dos itens 1 (só `palette.json`, `Scale Guide.png` e `Credits.txt`), 2 e 4 a 8 baixados em `..\mmg-art-src\`, fora do repositório (~6 MB).
+- Os 6 humanoides foram montados no gerador LPC. As combinações estão em §7 do documento.
+- Duas cenas em `..\mmg-art-src\preview\`: personagens sobre o terreno do LPC Revised, e escala dos monstros com o círculo de colisão (inclui a Matriarca recolorida ×2).
+- Na cena, a aranha grande foi ampliada ×1,5 só para comparar tamanho. No jogo, a regra de escala inteira (§3) continua valendo.
+
 **Pendências**
-- Aprovação do designer (critério de aceite), em especial ver lado a lado o terreno do LPC Revised com personagens do gerador (risco de paleta, §7 do documento).
-- Confirmar os downloads da tabela "Downloads propostos" (§8). Depois, completar as entradas de `CREDITS.md` com o `Credits.txt` de cada pacote.
+- Aprovação do designer (critério de aceite), olhando as duas cenas de teste.
+- Completar as entradas de `CREDITS.md` quando cada asset entrar no repositório (T-052/T-053/T-054).
 - Lacunas registradas no §7: ícones de habilidades, tema de interface, tela de créditos no jogo (exigida pelas licenças), monstros da fase 3.
