@@ -41,6 +41,48 @@ internal static partial class GameDataValidator
         {
             ValidateZone(e, monsters, c.Arenas.GroupBy(a => a.Value.Id).ToDictionary(g => g.Key, g => g.First().Value), zones, errors);
         }
+
+        var arenaDefs = c.Arenas.GroupBy(a => a.Value.Id).ToDictionary(g => g.Key, g => g.First().Value, StringComparer.Ordinal);
+        foreach (var e in c.Arenas.Where(a => a.Value.Source is not null))
+        {
+            ValidateMapReferences(e, monsters, zones, arenaDefs, errors);
+        }
+    }
+
+    /// <summary>
+    /// Referências de um mapa do Tiled (T-051): monstros dos pontos de surgimento existem; transições vão para zonas que
+    /// existem e, se a zona de destino usa um mapa do Tiled, a chegada é um <c>player_spawn</c> dele. O resto (camadas,
+    /// posições, formas) já foi conferido por <see cref="TiledMapReader"/>.
+    /// </summary>
+    private static void ValidateMapReferences(
+        Entry<ArenaDefinition> e,
+        HashSet<string> monsters,
+        Dictionary<string, ZoneDefinition> zones,
+        Dictionary<string, ArenaDefinition> arenas,
+        List<LoadError> errors)
+    {
+        var x = e.Value;
+        foreach (var s in x.Spawns.Where(s => s.Monster is not null))
+        {
+            if (!monsters.Contains(s.Monster!))
+            {
+                errors.Add(new LoadError(e.File, $"layers[spawns].objects[{s.Name}]", $"Monstro desconhecido: '{s.Monster}'."));
+            }
+        }
+
+        foreach (var t in x.Transitions)
+        {
+            var path = $"layers[transitions].objects[{t.Name}]";
+            if (!zones.TryGetValue(t.To, out var zone))
+            {
+                errors.Add(new LoadError(e.File, path, $"Zona desconhecida: '{t.To}'."));
+            }
+            else if (t.Arrival is { } arrival && arenas.GetValueOrDefault(zone.Arena) is { Source: not null } target
+                && !target.Spawns.Any(s => s.Kind == Game.Core.Spatial.MapSpawnKind.Player && s.Name == arrival))
+            {
+                errors.Add(new LoadError(e.File, path, $"Chegada '{arrival}' não é um player_spawn de '{target.Source}'."));
+            }
+        }
     }
 
     /// <summary>

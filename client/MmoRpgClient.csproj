@@ -21,7 +21,7 @@
   <!-- data/ da raiz é a fonte de verdade; client/data/ é cópia (ignorada no Git) lida como res://data. -->
   <Target Name="CopyGameData" BeforeTargets="BeforeBuild">
     <ItemGroup>
-      <GameDataFiles Include="$(MSBuildProjectDirectory)/../data/**/*.json" />
+      <GameDataFiles Include="$(MSBuildProjectDirectory)/../data/**/*.json;$(MSBuildProjectDirectory)/../data/**/*.tmj" />
     </ItemGroup>
     <RemoveDir Directories="$(MSBuildProjectDirectory)/data" />
     <Copy SourceFiles="@(GameDataFiles)" DestinationFiles="@(GameDataFiles->'$(MSBuildProjectDirectory)/data/%(RecursiveDir)%(Filename)%(Extension)')" />

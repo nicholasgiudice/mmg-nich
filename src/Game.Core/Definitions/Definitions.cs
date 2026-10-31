@@ -275,6 +275,18 @@ public sealed record ArenaDefinition
     /// <summary>'#' parede, '.' chão; outros caracteres reservados. Linha 0 = y 0.</summary>
     public required IReadOnlyList<string> Lines { get; init; }
     public double Scale { get; init; } = 1;
+
+    /// <summary>Arquivo do Tiled de onde a arena veio (T-051, ex.: <c>maps/fields.tmj</c>); null = arena ASCII.</summary>
+    public string? Source { get; init; }
+
+    /// <summary>Pontos de surgimento do mapa do Tiled (camada <c>spawns</c>).</summary>
+    public IReadOnlyList<Spatial.MapSpawn> Spawns { get; init; } = [];
+
+    /// <summary>Áreas de evento do mapa do Tiled (camada <c>areas</c>).</summary>
+    public IReadOnlyList<Spatial.MapArea> Areas { get; init; } = [];
+
+    /// <summary>Transições de zona do mapa do Tiled (camada <c>transitions</c>).</summary>
+    public IReadOnlyList<Spatial.MapTransition> Transitions { get; init; } = [];
 }
 
 public sealed record PlayerSpawnDefinition

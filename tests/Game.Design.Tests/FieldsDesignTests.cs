@@ -157,7 +157,7 @@ internal static class FieldGroups
         {
             Id = id,
             Name = group.Key,
-            Arena = "arena.fields",
+            Arena = "map.fields",
             Players = [new PlayerSpawnDefinition { Class = cls, Position = new PositionDefinition(5.5, 10.5) }],
             Enemies = enemies,
             Defeat = new DefeatDefinition { TimeLimitTicks = 120 * Core.Simulation.World.TickRate },
