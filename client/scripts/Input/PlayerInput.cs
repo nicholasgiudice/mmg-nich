@@ -27,7 +27,8 @@ public sealed class PlayerInput
     /// <summary>Intervalo mínimo entre dois envios da mesma habilidade mantida (o resultado leva um tick para voltar).</summary>
     public const int HeldMinGapTicks = 2;
 
-    private readonly IReadOnlyDictionary<string, AbilityDefinition> _abilities;
+    /// <summary>Definição de uma habilidade no NH que o estado do jogador tem (null = desconhecida).</summary>
+    private readonly Func<string, AbilityState?, AbilityDefinition?> _lookup;
     private readonly Func<string, bool> _justPressed;
     private readonly Func<string, bool> _pressed;
     private readonly Func<string, bool> _justReleased;
@@ -44,10 +45,20 @@ public sealed class PlayerInput
         Func<string, bool>? pressed = null,
         Func<string, bool>? justReleased = null)
     {
-        _abilities = abilities;
+        _lookup = (id, _) => abilities.TryGetValue(id, out var def) ? def : null;
         _justPressed = justPressed ?? (a => Godot.Input.IsActionJustPressed(a));
         _pressed = pressed ?? (a => Godot.Input.IsActionPressed(a));
         _justReleased = justReleased ?? (a => Godot.Input.IsActionJustReleased(a));
+    }
+
+    /// <summary>
+    /// T-221: definições resolvidas pelo NH atual de cada habilidade no estado do jogador (online, com progressão, os NH
+    /// mudam durante a partida).
+    /// </summary>
+    public PlayerInput(ContentCatalog content)
+        : this(new Dictionary<string, AbilityDefinition>())
+    {
+        _lookup = (id, state) => content.AbilityAt(id, state?.RankOf(id) ?? 1);
     }
 
     /// <summary>Habilidade de área cuja tecla está apertada (prévia no chão); null = nenhuma.</summary>
@@ -162,7 +173,7 @@ public sealed class PlayerInput
         for (var i = 0; i < InputActions.AbilitySlots.Length && i < slots.Count; i++)
         {
             var action = InputActions.AbilitySlots[i];
-            _abilities.TryGetValue(slots[i], out var def);
+            var def = _lookup(slots[i], abilities);
             if (IsAimedArea(def))
             {
                 // T-028: segurar mostra onde a área vai cair; soltar conjura.
@@ -198,7 +209,7 @@ public sealed class PlayerInput
     {
         var ready = abilities.ReadyAtTick.TryGetValue(abilityId, out var t) ? t : 0;
         // T-060/T-064: com cargas por recarga, a habilidade pode estar pronta mesmo com a recarga correndo.
-        var onCooldown = _abilities.TryGetValue(abilityId, out var def) ? abilities.IsOnCooldown(def, tick + 1) : ready > tick + 1;
+        var onCooldown = _lookup(abilityId, abilities) is { } def ? abilities.IsOnCooldown(def, tick + 1) : ready > tick + 1;
         if (onCooldown || abilities.IsCasting)
         {
             return false;
@@ -238,7 +249,7 @@ public sealed class PlayerInput
         _lastSent[abilityId] = (tick, abilities.ReadyAtTick.TryGetValue(abilityId, out var ready) ? ready : 0);
         var (first, second) = preferSelected ? (SelectedTarget, hovered) : (hovered, SelectedTarget);
         EntityId? target = first ?? second;
-        _abilities.TryGetValue(abilityId, out var ability);
+        var ability = _lookup(abilityId, abilities);
         if (ability?.Targeting is UnitTargeting unit)
         {
             bool Fits(EntityId? id) =>
@@ -266,7 +277,7 @@ public sealed class PlayerInput
     /// </summary>
     private bool InReach(string abilityId, EntitySnapshot self, EntitySnapshot target)
     {
-        if (!_abilities.TryGetValue(abilityId, out var def))
+        if (_lookup(abilityId, self.TryGet<AbilityState>()) is not { } def)
         {
             return true;
         }

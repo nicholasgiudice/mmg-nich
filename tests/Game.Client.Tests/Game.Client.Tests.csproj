@@ -14,11 +14,13 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Game.Core\Game.Core.csproj" />
+    <ProjectReference Include="..\..\src\Game.Data\Game.Data.csproj" />
   </ItemGroup>
 
   <!-- T-108: código do cliente sem Godot, compilado aqui por link (o projeto do cliente usa o SDK do Godot). -->
   <ItemGroup>
     <Compile Include="..\..\client\scripts\Authority\MovementPredictor.cs" Link="Client\MovementPredictor.cs" />
+    <Compile Include="..\..\client\scripts\Match\SkillPlan.cs" Link="Client\SkillPlan.cs" />
   </ItemGroup>
 
   <ItemGroup>

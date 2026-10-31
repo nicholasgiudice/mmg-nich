@@ -23,9 +23,15 @@ public static class InputActions
     /// <summary>Primeiro consumível da classe (poção), tecla Q.</summary>
     public const string Consumable = "consumable_1";
 
+    /// <summary>C: abre/fecha a tela de personagem (atributos, T-221).</summary>
+    public const string CharacterPanel = "character_panel";
+
+    /// <summary>K: abre/fecha a tela de habilidades (pontos e NH, T-221).</summary>
+    public const string SkillsPanel = "skills_panel";
+
     /// <summary>Ações das habilidades da classe, na ordem dos slots (1 a 5; a 5 é a assinatura, quando tem NH).</summary>
     public static readonly string[] AbilitySlots = ["ability_1", "ability_2", "ability_3", "ability_4", "ability_5"];
 
     public static IEnumerable<string> All =>
-        new[] { MoveUp, MoveDown, MoveLeft, MoveRight, Attack, AttackKey, TargetNext, TargetClear, Consumable, Pause, Restart }.Concat(AbilitySlots);
+        new[] { MoveUp, MoveDown, MoveLeft, MoveRight, Attack, AttackKey, TargetNext, TargetClear, Consumable, Pause, Restart, CharacterPanel, SkillsPanel }.Concat(AbilitySlots);
 }

@@ -1,4 +1,5 @@
 using Game.Core.Combat;
+using Game.Core.Combat.Progression;
 using Game.Core.Definitions;
 
 namespace MmoRpgClient.Match;
@@ -7,7 +8,7 @@ namespace MmoRpgClient.Match;
 /// Níveis de habilidade (NH) escolhidos para uma classe (T-064). No protótipo é o "modo de teste": o menu deixa escolher
 /// qualquer NH e só mostra a regra dos pontos. Na fase 2 a mesma estrutura vira a distribuição de pontos de habilidade
 /// (pontos = nível do personagem, requisito de nível por NH): basta trocar <see cref="PointBudget"/> e ligar
-/// <see cref="Enforce"/>.
+/// <see cref="Enforce"/>. T-221: <see cref="FromState"/> monta o plano do personagem online (pontos e NH do servidor).
 /// </summary>
 public sealed class SkillPlan
 {
@@ -46,8 +47,17 @@ public sealed class SkillPlan
     /// <summary>Pontos disponíveis (protótipo: os do nível 15). Na fase 2: o nível do personagem.</summary>
     public int PointBudget { get; init; } = MaxLevelPoints;
 
-    /// <summary>Respeitar <see cref="PointBudget"/> ao mudar um NH. Desligado no modo de teste (o protótipo só avisa).</summary>
+    /// <summary>
+    /// Respeitar <see cref="PointBudget"/> ao mudar um NH. Desligado no modo de teste (o protótipo só avisa). Ligado (T-221),
+    /// também vale o requisito de nível de <see cref="Rules"/> e as normais podem ficar no NH0 (fora da barra).
+    /// </summary>
     public bool Enforce { get; init; }
+
+    /// <summary>Nível do personagem (requisito de NH com <see cref="Enforce"/>).</summary>
+    public int Level { get; init; } = MaxLevelPoints;
+
+    /// <summary>Regras de pontos e requisitos de nível (data/rules.json, seção <c>progression</c>).</summary>
+    public ProgressionRules Rules { get; init; } = new();
 
     /// <summary>NH de cada habilidade da classe (0 = fora da barra; só a assinatura pode ficar em 0 no protótipo).</summary>
     public IReadOnlyDictionary<string, int> Ranks => _ranks;
@@ -69,6 +79,51 @@ public sealed class SkillPlan
     public static int MinRank(AbilityDefinition a) => a.Signature ? 0 : 1;
 
     public static int MaxRank(AbilityDefinition a) => a.HighestRank;
+
+    /// <summary>
+    /// Plano do personagem com progressão (T-221): NH do estado (0 = não aprendida), pontos do nível e requisitos ligados.
+    /// Só leitura do que o servidor mandou; mudar um NH de verdade é a intenção <c>RaiseSkillRankIntent</c>.
+    /// </summary>
+    public static SkillPlan FromState(ClassDefinition cls, ContentCatalog content, AbilityState state, int level)
+    {
+        var rules = content.Rules.Progression;
+        var plan = new SkillPlan(cls, content.Abilities) { Enforce = true, Level = level, Rules = rules, PointBudget = rules.SkillPointsAt(level) };
+        plan._ranks.Clear();
+        foreach (var a in plan.Abilities)
+        {
+            plan._ranks[a.Id] = state.Known.Contains(a.Id) ? state.RankOf(a.Id) : 0;
+        }
+
+        return plan;
+    }
+
+    /// <summary>Menor NH neste plano: com <see cref="Enforce"/> tudo pode ficar no NH0; no modo de teste, <see cref="MinRank"/>.</summary>
+    public int Floor(AbilityDefinition a) => Enforce ? 0 : MinRank(a);
+
+    /// <summary>Nível do personagem exigido para o NH <paramref name="rank"/> da habilidade.</summary>
+    public int RequiredLevel(AbilityDefinition a, int rank) => Rules.RequiredLevel(a.Signature, rank);
+
+    /// <summary>Por que não dá para subir o NH agora (mesma ordem de checagem do Core); null = dá.</summary>
+    public ProgressionRejectReason? RaiseBlocker(string abilityId)
+    {
+        if (Abilities.FirstOrDefault(a => a.Id == abilityId) is not { } ability)
+        {
+            return ProgressionRejectReason.NotLearnable;
+        }
+
+        var next = RankOf(abilityId) + 1;
+        if (next > MaxRank(ability))
+        {
+            return ProgressionRejectReason.MaxRank;
+        }
+
+        if (Enforce && PointsUsed >= PointBudget)
+        {
+            return ProgressionRejectReason.NoSkillPoints;
+        }
+
+        return Enforce && Level < RequiredLevel(ability, next) ? ProgressionRejectReason.LevelTooLow : null;
+    }
 
     /// <summary>Plano salvo da classe (ou um novo no NH1).</summary>
     public static SkillPlan For(ClassDefinition cls, ContentCatalog content)
@@ -96,8 +151,8 @@ public sealed class SkillPlan
             return false;
         }
 
-        var clamped = Math.Clamp(rank, MinRank(ability), MaxRank(ability));
-        if (Enforce && PointsUsed - RankOf(abilityId) + clamped > PointBudget)
+        var clamped = Math.Clamp(rank, Floor(ability), MaxRank(ability));
+        if (Enforce && (PointsUsed - RankOf(abilityId) + clamped > PointBudget || (clamped > 0 && Level < RequiredLevel(ability, clamped))))
         {
             return false;
         }

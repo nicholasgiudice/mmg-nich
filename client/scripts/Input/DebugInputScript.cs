@@ -4,7 +4,8 @@ namespace MmoRpgClient.Input;
 
 /// <summary>
 /// Roteiro de input para verificação sem teclado (<c>--demo-input=attack,ability_1,...</c>):
-/// aperta uma ação do Input Map a cada intervalo, pelo mesmo caminho do teclado/mouse.
+/// aperta uma ação do Input Map a cada intervalo, pelo mesmo caminho do teclado/mouse. Itens com <c>:</c> (ex.:
+/// <c>spend:str</c>) ou <c>reset_points</c> vão para <see cref="Command"/> em vez do Input Map (T-221).
 /// </summary>
 public sealed class DebugInputScript
 {
@@ -24,6 +25,9 @@ public sealed class DebugInputScript
         _actions = new Queue<string>(script.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
         _held = held.ToHashSet(StringComparer.Ordinal);
     }
+
+    /// <summary>Recebe os itens do roteiro que não são ações do Input Map (ex.: botões das telas, T-221).</summary>
+    public Action<string>? Command { get; init; }
 
     /// <summary>Todas as ações do roteiro já foram apertadas.</summary>
     public bool Finished => _actions.Count == 0;
@@ -47,6 +51,12 @@ public sealed class DebugInputScript
         {
             _next = _elapsed + Interval;
             GD.Print($"[demo] {action}");
+            if (!InputMap.HasAction(action) && Command is not null)
+            {
+                Command(action);
+                return;
+            }
+
             Godot.Input.ActionPress(action);
             _pressedLastFrame = action;
         }

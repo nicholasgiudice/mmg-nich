@@ -25,7 +25,8 @@ namespace MmoRpgClient;
 /// (latência de ida e volta e perda de snapshots artificiais no cliente, T-108),
 /// <c>--auto-move=x,y</c> (mantém as teclas de movimento pelo sinal de x e y), <c>--hold=attack,...</c> (mantém ações),
 /// <c>--demo-input=attack,ability_1,...</c> (aperta ações em sequência mirando o inimigo mais próximo e
-/// imprime as respostas da autoridade) e <c>--capture=caminho.png</c> (salva a tela e fecha; após 2 s, ou
+/// imprime as respostas da autoridade; também <c>spend:str</c>, <c>raise:habilidade</c> e <c>reset_points</c>, os botões das
+/// telas de personagem e de habilidades, T-221) e <c>--capture=caminho.png</c> (salva a tela e fecha; após 2 s, ou
 /// <c>--capture-after=segundos</c>, ou ao fim do demo).
 /// </summary>
 public partial class Main : Node2D
@@ -88,19 +89,9 @@ public partial class Main : Node2D
             var (authority, map, content) = CreateAuthority();
             _authority = authority;
             _content = content;
-            if (authority is NetAuthority)
-            {
-                _input = new PlayerInput(content.Abilities); // online: o servidor ainda não recebe NH (todas no NH1)
-            }
-            else
-            {
-                // T-064: a entrada usa as definições no NH do jogador (raio da prévia, alcance, cargas).
-                var plan = _settings?.ClassId is { } cls && content.Classes.TryGetValue(cls, out var classDef)
-                    ? Match.SkillPlan.For(classDef, content).Ranks
-                    : new Dictionary<string, int>();
-                _input = new PlayerInput(content.Abilities.ToDictionary(
-                    kv => kv.Key, kv => content.AbilityAt(kv.Key, plan.GetValueOrDefault(kv.Key, 1)) ?? kv.Value));
-            }
+            // T-064/T-221: a entrada usa as definições no NH que o estado do jogador tem (raio da prévia, alcance, cargas);
+            // online os NH mudam quando o jogador gasta pontos.
+            _input = new PlayerInput(content);
 
             _hud.SetContent(content);
             _worldView.SetContent(content);
@@ -126,7 +117,7 @@ public partial class Main : Node2D
         {
             var held = AutoMoveActions().Concat(
                 _args.GetValueOrDefault("hold", "").Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
-            _demo = new DebugInputScript(_args.GetValueOrDefault("demo-input", ""), held);
+            _demo = new DebugInputScript(_args.GetValueOrDefault("demo-input", ""), held) { Command = DemoCommand };
         }
     }
 
@@ -202,7 +193,7 @@ public partial class Main : Node2D
                     + (n.Simulation.Length > 0 ? $" · {n.Simulation}" : "")
                 : "";
             _info.Text = $"Core {CoreInfo.Version} · {Engine.GetFramesPerSecond()} FPS · tick {_authority.CurrentTick}{netLine}\n"
-                + "WASD mover · Tab/clique seleciona e ataca sozinho · 1-5 habilidades · Q poção · R reiniciar · Esc pausa";
+                + "WASD mover · Tab/clique seleciona e ataca sozinho · 1-5 habilidades · Q poção · C personagem · K habilidades · R reiniciar · Esc pausa";
         }
 
         CaptureIfRequested();
@@ -270,6 +261,10 @@ public partial class Main : Node2D
             if (_paused)
             {
                 Resume();
+            }
+            else if (_hud.ClosePanels())
+            {
+                // T-221: Esc fecha as telas de personagem/habilidades antes de pausar.
             }
             else if (!_overlay.IsOpen && _input?.SelectedTarget is null)
             {
@@ -353,7 +348,8 @@ public partial class Main : Node2D
             _camera.SetBounds(map);
             _content.Encounters.TryGetValue(welcome.EncounterId, out var encounter);
             _encounterName = encounter?.Name ?? welcome.EncounterId;
-            _tracker = new MatchTracker(welcome.ControlledEntity, encounter?.Defeat.TimeLimitTicks);
+            // Mundo aberto (T-214): EncounterId é a zona, que não tem vitória nem derrota (o resto da troca de zona é da T-223).
+            _tracker = encounter is null ? null : new MatchTracker(welcome.ControlledEntity, encounter.Defeat.TimeLimitTicks);
             _endedAt = -1;
             _overlay.Close();
             GD.Print($"[net] na sala {welcome.EncounterId} como {welcome.ControlledEntity} (época {welcome.Epoch})");
@@ -516,6 +512,31 @@ public partial class Main : Node2D
             .FirstOrDefault();
     }
 
+    /// <summary>Itens do <c>--demo-input</c> que fazem o mesmo que os botões + e "Redistribuir" das telas (T-221).</summary>
+    private void DemoCommand(string command)
+    {
+        if (_authority?.ControlledEntity is not { } me)
+        {
+            return;
+        }
+
+        var (verb, arg) = command.IndexOf(':', StringComparison.Ordinal) is var i and >= 0 ? (command[..i], command[(i + 1)..]) : (command, "");
+        Game.Core.Intents.Intent? intent = verb switch
+        {
+            "spend" when Enum.TryParse<AttributeKind>(arg, ignoreCase: true, out var attr) => new Game.Core.Intents.SpendAttributePointIntent(me, attr),
+            "raise" => new Game.Core.Intents.RaiseSkillRankIntent(me, arg),
+            "reset_points" => new Game.Core.Intents.ResetPointsIntent(me),
+            _ => null,
+        };
+        if (intent is null)
+        {
+            GD.PushWarning($"[demo] comando desconhecido: {command}");
+            return;
+        }
+
+        _authority.Send(intent);
+    }
+
     private static void LogAbilityEvents(IGameAuthority authority, IReadOnlyList<GameEvent> events)
     {
         foreach (var e in events)
@@ -525,6 +546,12 @@ public partial class Main : Node2D
                 AbilityStarted s when s.Source == authority.ControlledEntity => $"started {s.AbilityId} target={s.Target} aim={s.AimPoint}",
                 AbilityExecuted x when x.Source == authority.ControlledEntity => $"executed {x.AbilityId} targets={x.Targets.Count}",
                 AbilityRejected r when r.Source == authority.ControlledEntity => $"rejected {r.AbilityId}: {r.Reason}",
+                Game.Core.Combat.Progression.XpGained xp when xp.Entity == authority.ControlledEntity => $"xp +{xp.Amount}",
+                Game.Core.Combat.Progression.LevelUp up when up.Entity == authority.ControlledEntity => $"level {up.Level} (pontos {up.AttributePoints}/{up.SkillPoints})",
+                Game.Core.Combat.Progression.AttributeRaised ar when ar.Entity == authority.ControlledEntity => $"attribute {ar.Attribute} = {ar.Value}",
+                Game.Core.Combat.Progression.SkillRankRaised sr when sr.Entity == authority.ControlledEntity => $"rank {sr.AbilityId} = {sr.Rank}",
+                Game.Core.Combat.Progression.PointsReset pr when pr.Entity == authority.ControlledEntity => $"reset ({pr.AttributePoints}/{pr.SkillPoints})",
+                Game.Core.Combat.Progression.ProgressionRejected pj when pj.Entity == authority.ControlledEntity => $"progression rejected {pj.Id}: {pj.Reason}",
                 _ => null,
             };
             if (line is not null)
