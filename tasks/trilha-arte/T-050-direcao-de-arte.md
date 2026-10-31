@@ -25,4 +25,20 @@ Decisão do designer (2026-10-19): arte vinda de **pacotes de assets**, estilo *
 
 ## Resultado
 
-_(preencher ao concluir)_
+**Parcial — aguardando aprovação do designer** (Windows, 2026-10-31). Só documentação; nenhum arquivo de arte baixado.
+
+**Feito**
+- `design/art-direction-v0.1.md`: estilo (família LPC, três quartos, 32 px), paleta (Liberated Palette + cores reservadas para gameplay, tiradas do cliente atual), escala (pivô nos pés, raio de colisão × sprite por monstro, só escala inteira), 4 direções, animações mínimas mapeadas para as folhas LPC, regras de legibilidade e ordem de desenho, pacotes, lacunas e organização no repositório.
+- Licenças conferidas nas páginas dos 8 pacotes em 2026-10-31 (GitHub do LPC Revised e do gerador Universal LPC; OpenGameArt para os demais; Kenney para o descartado).
+- `CREDITS.md`: regra para adicionar créditos e a tabela dos pacotes escolhidos, ainda sem assets incluídos.
+
+**Decisões**
+- Terreno e estruturas do **LPC Revised** (OGA-BY 3.0, sem share-alike), incluindo a versão já configurada para o Tiled, que serve à T-051 e à T-055. Personagens do **gerador Universal LPC**, filtrando por licença e evitando GPL. Monstros de pacotes LPC avulsos (lobo, rato, aranha). A Matriarca é a aranha recolorida em escala ×2.
+- Em pacotes com várias licenças, adotar a mais permissiva. Nada de criptografia do `.pck` enquanto houver CC-BY/CC-BY-SA.
+- Assets em `client/assets/art/<tipo>/`. No Git só entram as imagens usadas, sem LFS. Pacotes completos ficam fora do repositório (`..\mmg-art-src\`).
+- A "morte" usa a animação `hurt` do LPC (que é a queda). "Tomando dano" é o piscar branco que já existe.
+
+**Pendências**
+- Aprovação do designer (critério de aceite), em especial ver lado a lado o terreno do LPC Revised com personagens do gerador (risco de paleta, §7 do documento).
+- Confirmar os downloads da tabela "Downloads propostos" (§8). Depois, completar as entradas de `CREDITS.md` com o `Credits.txt` de cada pacote.
+- Lacunas registradas no §7: ícones de habilidades, tema de interface, tela de créditos no jogo (exigida pelas licenças), monstros da fase 3.
