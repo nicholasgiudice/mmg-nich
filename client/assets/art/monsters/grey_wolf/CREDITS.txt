@@ -1,0 +1,5 @@
+Lobo (wolf_light_gray.png)
+Autor: Stephen Challener (Redshrike), trabalho encomendado e publicado por William.Thompsonj ("[LPC] Wolf Animation").
+Licença: OGA-BY 3.0 (https://static.opengameart.org/OGA-BY-3.0.txt)
+Origem: https://opengameart.org/content/lpc-wolf-animation (wolfsheet1.png)
+Modificações: recolorido em cinza claro (2026-10-31).

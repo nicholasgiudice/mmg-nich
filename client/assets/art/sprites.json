@@ -1,0 +1,93 @@
+{
+  "$comment": "Sprite de cada classe/monstro (T-053). Só apresentação: o Core não lê este arquivo. Coordenadas em pixels da folha; pivot = ponto entre os pés, que fica no centro do círculo de colisão. Direções: up, left, down, right. 'grid' usa a linha da primeira direção de 'dirOrder' e desce uma linha por direção; 'all' usa o mesmo trecho em todas as direções. Uma animação pode ter 'frame' e 'pivot' próprios: o gerador LPC exporta o golpe das armas grandes (espada, maça) em quadros de 128 ou 192 px abaixo da linha 54 (y = 3456), e a linha padrão sai sem a arma. Créditos em CREDITS.md e em design/art-direction-v0.1.md.",
+  "layouts": {
+    "ulpc": {
+      "frame": [64, 64],
+      "pivot": [32, 60],
+      "headPx": 46,
+      "dirOrder": ["up", "left", "down", "right"],
+      "animations": {
+        "idle": { "grid": { "row": 8, "col": 0, "count": 1 } },
+        "walk": { "grid": { "row": 8, "col": 1, "count": 8 }, "fps": 12, "loop": true },
+        "slash": { "grid": { "row": 12, "col": 0, "count": 6 }, "fps": 16 },
+        "thrust": { "grid": { "row": 4, "col": 0, "count": 8 }, "fps": 18 },
+        "shoot": { "grid": { "row": 16, "col": 0, "count": 13 }, "fps": 24 },
+        "spellcast": { "grid": { "row": 0, "col": 0, "count": 7 }, "fps": 12 },
+        "death": { "all": { "x": 0, "y": 1280, "count": 6 }, "fps": 10 },
+        "slash_128": { "frame": [128, 128], "pivot": [64, 92], "grid": { "row": 27, "col": 0, "count": 6 }, "fps": 16 },
+        "slash_192": { "frame": [192, 192], "pivot": [96, 124], "grid": { "row": 18, "col": 0, "count": 6 }, "fps": 16 }
+      }
+    },
+    "lpc_spider": {
+      "frame": [64, 64],
+      "pivot": [32, 44],
+      "headPx": 30,
+      "dirOrder": ["up", "left", "down", "right"],
+      "animations": {
+        "idle": { "grid": { "row": 0, "col": 0, "count": 1 } },
+        "walk": { "grid": { "row": 0, "col": 4, "count": 6 }, "fps": 12, "loop": true },
+        "attack": { "grid": { "row": 0, "col": 0, "count": 4 }, "fps": 10 },
+        "death": { "all": { "x": 0, "y": 256, "count": 4 }, "fps": 8 }
+      }
+    },
+    "lpc_giant_rat": {
+      "frame": [80, 64],
+      "pivot": [40, 50],
+      "headPx": 28,
+      "dirOrder": ["down", "left", "right", "up"],
+      "animations": {
+        "idle": { "grid": { "row": 0, "col": 0, "count": 1 } },
+        "walk": { "grid": { "row": 0, "col": 0, "count": 4 }, "fps": 8, "loop": true },
+        "attack": { "grid": { "row": 0, "col": 4, "count": 4 }, "fps": 10 },
+        "death": { "grid": { "row": 0, "col": 8, "count": 3 }, "fps": 8 }
+      }
+    },
+    "lpc_wolf": {
+      "frame": [64, 32],
+      "pivot": [32, 28],
+      "headPx": 30,
+      "animations": {
+        "idle": {
+          "down": { "x": 0, "y": 192, "w": 32, "h": 64, "count": 1, "pivot": [16, 52] },
+          "up": { "x": 160, "y": 192, "w": 32, "h": 64, "count": 1, "pivot": [16, 52] },
+          "right": { "x": 320, "y": 96, "count": 1 },
+          "left": { "x": 320, "y": 288, "count": 1 }
+        },
+        "walk": {
+          "fps": 10, "loop": true,
+          "down": { "x": 0, "y": 192, "w": 32, "h": 64, "count": 5, "pivot": [16, 52] },
+          "up": { "x": 160, "y": 192, "w": 32, "h": 64, "count": 5, "pivot": [16, 52] },
+          "right": { "x": 320, "y": 96, "count": 5 },
+          "left": { "x": 320, "y": 288, "count": 5 }
+        },
+        "attack": {
+          "fps": 12,
+          "down": { "x": 0, "y": 256, "w": 32, "h": 64, "count": 5, "pivot": [16, 52] },
+          "up": { "x": 160, "y": 256, "w": 32, "h": 64, "count": 5, "pivot": [16, 52] },
+          "right": { "x": 320, "y": 160, "count": 5 },
+          "left": { "x": 320, "y": 352, "count": 5 }
+        },
+        "death": {
+          "fps": 8,
+          "down": { "x": 320, "y": 0, "count": 4 },
+          "up": { "x": 320, "y": 0, "count": 4 },
+          "right": { "x": 320, "y": 0, "count": 4 },
+          "left": { "x": 320, "y": 192, "count": 4 }
+        }
+      }
+    }
+  },
+  "sprites": {
+    "class.warrior": { "layout": "ulpc", "texture": "characters/warrior.png", "use": { "attack": "slash_128", "cast": "spellcast" } },
+    "class.archer": { "layout": "ulpc", "texture": "characters/archer.png", "use": { "attack": "shoot", "cast": "shoot" } },
+    "class.mage": { "layout": "ulpc", "texture": "characters/mage.png", "use": { "attack": "spellcast", "cast": "spellcast" } },
+    "class.cleric": { "layout": "ulpc", "texture": "characters/cleric.png", "use": { "attack": "slash_192", "cast": "spellcast" } },
+    "monster.road_bandit": { "layout": "ulpc", "texture": "characters/bandit.png", "use": { "attack": "slash_128", "cast": "spellcast" } },
+    "monster.skeleton_guard": { "layout": "ulpc", "texture": "characters/skeleton.png", "use": { "attack": "slash_128", "cast": "spellcast" } },
+    "monster.field_rat": { "layout": "lpc_giant_rat", "texture": "monsters/field_rat/giant_rat.png" },
+    "monster.grey_wolf": { "layout": "lpc_wolf", "texture": "monsters/grey_wolf/wolf_light_gray.png" },
+    "monster.spider_small": { "layout": "lpc_spider", "texture": "monsters/spiders/spider01.png" },
+    "monster.spider_big": { "layout": "lpc_spider", "texture": "monsters/spiders/spider05.png" },
+    "monster.forest_matriarch": { "layout": "lpc_spider", "texture": "monsters/spiders/spider04.png", "scale": 2 }
+  }
+}
