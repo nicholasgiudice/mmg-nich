@@ -1,0 +1,5 @@
+Tileset de terreno de verão (terrain_summer.png)
+Autores: Eliza Wyatt (ElizaWy), Lanea Zimmerman (Sharm), Stephen Challener (Redshrike) e outros do LPC Revised (https://github.com/ElizaWy/LPC); configurado para o Tiled por JaidynReiman.
+Licença: OGA-BY 3.0 (https://static.opengameart.org/OGA-BY-3.0.txt), também oferecido em CC-BY 3.0.
+Origem: https://opengameart.org/content/lpc-revised-fully-configured-4-seasons-tilesets-for-tiled-map-editor (lpc-tileset-terrain-summer.png)
+Modificações: nenhuma na imagem; o .tsx foi renomeado para data/maps/tilesets/terrain_summer.tsx com o caminho da imagem ajustado.

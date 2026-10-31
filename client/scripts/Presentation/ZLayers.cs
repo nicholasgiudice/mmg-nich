@@ -8,4 +8,7 @@ public static class ZLayers
     public const int Trails = 3;
     public const int DeadUnits = 4;
     public const int Units = 5;
+
+    /// <summary>Camada <c>above</c> do mapa do Tiled (copas, telhados): por cima das unidades (T-052).</summary>
+    public const int Above = 6;
 }

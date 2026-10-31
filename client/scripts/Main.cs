@@ -96,9 +96,14 @@ public partial class Main : Node2D
             _hud.SetContent(content);
             _worldView.SetContent(content);
             _worldView.SetSprites(_args.ContainsKey("circles") ? SpriteCatalog.Empty : SpriteCatalog.Load());
+            var arenaView = GetNode<ArenaView>("Arena");
+            arenaView.DebugGrid = _args.ContainsKey("debug-grid");
             if (map is not null)
             {
-                GetNode<ArenaView>("Arena").Map = map;
+                var encounterId = MatchSettings.Current?.EncounterId;
+                var arena = encounterId is not null && content.Encounters.TryGetValue(encounterId, out var enc)
+                    && content.Arenas.TryGetValue(enc.Arena, out var def) ? def : null;
+                arenaView.Show(map, arena);
                 _camera.SetBounds(map);
             }
         }
@@ -192,7 +197,9 @@ public partial class Main : Node2D
                 NetStats(statsNet);
             }
 
-            if (_authority.ControlledEntity is { } player && _worldView.TryGetDrawnPosition(player, out var playerPx))
+            Godot.Vector2? focus = _authority.ControlledEntity is { } player && _worldView.TryGetDrawnPosition(player, out var drawn) ? drawn : null;
+            GetNode<ArenaView>("Arena").SetFocus(focus);
+            if (focus is { } playerPx)
             {
                 _camera.Follow(playerPx, Units.ToPixels(aim), delta);
                 _aimPreview.Show(_input.PreviewAbility, playerPx, Units.ToPixels(_input.PreviewPoint));
@@ -354,7 +361,7 @@ public partial class Main : Node2D
             // Entrada ou reinício da sala: arena, câmera e resultado recomeçam.
             _welcomesSeen = net.WelcomeCount;
             var map = EntityFactory.BuildMap(_content.Arenas[welcome.ArenaId]);
-            GetNode<ArenaView>("Arena").Map = map;
+            GetNode<ArenaView>("Arena").Show(map, _content.Arenas[welcome.ArenaId]);
             _camera.SetBounds(map);
             _content.Encounters.TryGetValue(welcome.EncounterId, out var encounter);
             _encounterName = encounter?.Name ?? welcome.EncounterId;

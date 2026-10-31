@@ -120,4 +120,6 @@ Para conferir um mapa editado, rode `./scripts/check.sh --fast` (os testes carre
 | `broken_gate.tmj` | `map.broken_gate` | `arena.broken_gate` | `encounter.skeleton_guard` |
 | `matriarch_nest.tmj` | `map.matriarch_nest` | `arena.matriarch_nest` | `encounter.forest_matriarch` |
 
-Convertidos na T-051 com a mesma grade célula a célula; as ASCII originais ficam em `tests/Game.Sim.Tests/MapFixtures/ascii-arenas.json` para o teste de equivalência. Por enquanto só têm a camada `collision` preenchida. `ground`, `decoration` e `walls` estão vazias, esperando a arte (T-052/T-055).
+Convertidos na T-051 com a mesma grade célula a célula; as ASCII originais ficam em `tests/Game.Sim.Tests/MapFixtures/ascii-arenas.json` para o teste de equivalência. Na T-052, as camadas visuais foram preenchidas automaticamente a partir da colisão, com o tileset `tilesets/terrain_summer.tsx` (LPC Revised): grama variada em `ground`, tufos em `decoration`, arbustos na borda e em blocos grandes, rochas nos obstáculos pequenos em `walls`, e pinheiros na borda de baixo (copa em `above`). É um ponto de partida para retocar no Tiled; a colisão não mudou.
+
+No cliente (T-052): as camadas de tiles são desenhadas na ordem do arquivo, menos `collision`. `above` vai por cima das unidades e fica transparente num raio de 2 tiles em volta do jogador. O cliente acha a imagem do `.tsx` pelo nome do arquivo em `client/assets/art/tiles/`. Espelhamento horizontal e vertical são desenhados; a rotação de 90° (bit diagonal) não.
