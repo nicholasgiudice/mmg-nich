@@ -235,7 +235,7 @@ public partial class Main : Node2D
             _info.Text = $"Conectando a {online.Host}:{online.Port}...";
             var lag = double.TryParse(_args.GetValueOrDefault("net-lag"), System.Globalization.CultureInfo.InvariantCulture, out var l) ? l : 0;
             var loss = double.TryParse(_args.GetValueOrDefault("net-loss"), System.Globalization.CultureInfo.InvariantCulture, out var p) ? p : 0;
-            return (new NetAuthority(online.Host, online.Port, online.Name, cls, content, lag, loss), null, content);
+            return (new NetAuthority(online.Host, online.Port, online.Name, cls, content, lag, loss, online.Ticket), null, content);
         }
 
         var settings = MatchSettings.Current ?? new MatchSettings(
@@ -435,7 +435,9 @@ public partial class Main : Node2D
 
     private void Restart() => GetTree().ReloadCurrentScene();
 
-    private void BackToMenu() => GetTree().ChangeSceneToFile(MenuScreen.ScenePath);
+    /// <summary>Quem entrou com conta (T-220) volta à lista de personagens; o resto, ao menu de encontros.</summary>
+    private void BackToMenu() => GetTree().ChangeSceneToFile(
+        MatchSettings.Current?.Online?.Ticket is not null ? Account.AccountScreen.ScenePath : MenuScreen.ScenePath);
 
     /// <summary>Próximo encontro da lista, com a classe sugerida dele e uma seed nova.</summary>
     private void NextEncounter()

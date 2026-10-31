@@ -1,7 +1,10 @@
 namespace MmoRpgClient.Match;
 
-/// <summary>Servidor para jogar online (T-107): endereço e nome de desenvolvimento.</summary>
-public sealed record OnlineSettings(string Host, int Port, string Name)
+/// <summary>
+/// Servidor para jogar online (T-107): endereço e nome. Com <c>Ticket</c> (token de jogo da API, T-220) o servidor
+/// carrega o personagem da conta; sem ele, entra só com o nome (login de desenvolvimento).
+/// </summary>
+public sealed record OnlineSettings(string Host, int Port, string Name, string? Ticket = null)
 {
     /// <summary>Lê <c>host:porta</c> (porta padrão 7777). Null se o texto não serve.</summary>
     public static OnlineSettings? Parse(string address, string name)

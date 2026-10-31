@@ -8,7 +8,7 @@ using MmoRpgClient.Data;
 namespace MmoRpgClient.Match;
 
 /// <summary>
-/// Tela inicial: lista os encontros de <c>data/</c>, escolhe a classe do jogador e a seed (vazia = aleatória).
+/// Modo de teste (aberto pela tela de conta, T-220): lista os encontros de <c>data/</c>, escolhe a classe do jogador e a seed (vazia = aleatória).
 /// Com argumentos de depuração na linha de comando (<c>--encounter</c>, <c>--fake-authority</c>...), pula direto para o jogo.
 /// </summary>
 public partial class MenuScreen : Control
@@ -119,6 +119,9 @@ public partial class MenuScreen : Control
         var play = new Button { Text = "Jogar", CustomMinimumSize = new Vector2(160, 40) };
         play.Pressed += StartGame;
         buttons.AddChild(play);
+        var account = new Button { Text = "Entrar com conta", CustomMinimumSize = new Vector2(160, 40) };
+        account.Pressed += () => GetTree().ChangeSceneToFile(Account.AccountScreen.ScenePath);
+        buttons.AddChild(account);
         root.AddChild(buttons);
 
         // T-107: jogar no servidor. A sala do servidor decide o encontro; a classe escolhida acima vai junto.

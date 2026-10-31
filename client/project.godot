@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="MmoRpgClient"
-run/main_scene="res://scenes/Menu.tscn"
+run/main_scene="res://scenes/Account.tscn"
 config/features=PackedStringArray("4.7", "C#", "GL Compatibility")
 
 [display]
