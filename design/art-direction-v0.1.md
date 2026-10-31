@@ -38,13 +38,15 @@ Estado: **proposta, aguardando aprovação do designer** (T-050). Nenhum arquivo
 
 | Monstro | Raio | Diâmetro | Sprite base |
 |---|---|---|---|
-| Rato de Campo | 0,30 | ~19 px | rato LPC |
-| Aranha pequena | 0,35 | ~22 px | aranha LPC |
-| Lobo Cinzento | 0,40 | ~26 px | lobo LPC |
+| Rato de Campo | 0,30 | ~19 px | rato gigante do pacote LPC Animals 2022 (quadros 80×64) |
+| Aranha pequena | 0,35 | ~22 px | aranha LPC (`spider01`, verde-escura) |
+| Lobo Cinzento | 0,40 | ~26 px | lobo LPC recolorido em cinza claro |
 | Salteador | 0,40 | ~26 px | personagem do gerador |
 | Guarda Esquelético | 0,50 | 32 px | corpo de esqueleto do gerador |
-| Aranha grande | 0,60 | ~38 px | aranha LPC, maior |
-| Matriarca da Floresta | 0,90 | ~58 px | aranha LPC recolorida em escala ×2 |
+| Aranha grande | 0,60 | ~38 px | aranha LPC (`spider05`, cinza e vermelha) |
+| Matriarca da Floresta | 0,90 | ~58 px | aranha LPC em escala ×2; três opções de cor na cena de teste (A vermelha, B preta e amarela, C vinho), a escolher |
+
+As aranhas LPC têm uns 42 px de largura em ×1. Isso serve para a aranha grande, mas fica grande para o raio da pequena. Na T-053, decidir entre aceitar a diferença e reduzir o raio de colisão (decisão de dados, não de arte).
 
 - Escala de sprite **somente inteira** (×1, ×2) com filtro *nearest*. Nada de escala fracionária nem rotação de sprite, que borram o pixel. A câmera também usa zoom inteiro.
 
@@ -83,8 +85,8 @@ Licenças conferidas nas páginas dos pacotes em 2026-10-31. Quando um pacote of
 | 1 | [LPC Revised](https://github.com/ElizaWy/LPC) | Eliza Wyatt (ElizaWy), Lanea Zimmerman (Sharm), Stephen Challener (Redshrike) e outros (`Credits.txt` de cada pasta) | CC-BY 3.0 ou OGA-BY 3.0 | **OGA-BY 3.0** | terreno nas 4 estações, árvores, plantas, penhascos, água, estruturas (muros, telhados, portas, cercas, pontes), móveis e objetos, paleta e guia de escala |
 | 2 | [[LPC Revised] Fully Configured 4-Seasons Tilesets for Tiled](https://opengameart.org/content/lpc-revised-fully-configured-4-seasons-tilesets-for-tiled-map-editor) | JaidynReiman, sobre o LPC Revised | CC-BY 3.0, OGA-BY 3.0 | **OGA-BY 3.0** | a arte do item 1 já configurada como tilesets do Tiled (terrenos e colisão), base para T-051 e T-055 |
 | 3 | [Universal LPC Spritesheet Character Generator](https://github.com/LiberatedPixelCup/Universal-LPC-Spritesheet-Character-Generator) ([site](https://liberatedpixelcup.github.io/Universal-LPC-Spritesheet-Character-Generator/)) | dezenas de artistas; créditos por peça no `CREDITS.csv` e no arquivo de créditos exportado pelo gerador | por peça: CC0, CC-BY, CC-BY-SA, OGA-BY ou GPL | a mais permissiva de cada peça; **nunca GPL sozinha** (usar o filtro de licença do gerador) | as 4 classes com equipamento visível, Salteador, Guarda Esquelético (corpo de esqueleto), armas, flechas |
-| 4 | [[LPC] Wolf Animation](https://opengameart.org/content/lpc-wolf-animation) | William.Thompsonj | CC-BY 4.0/3.0, GPL 3.0/2.0, OGA-BY 3.0 | **OGA-BY 3.0** | Lobo Cinzento |
-| 5 | [[LPC] Rat, Cat and Dog](https://opengameart.org/content/lpc-rat-cat-and-dog) | Tuomo Untinen (Reemax) | CC-BY 3.0, CC-BY-SA 3.0, GPL 3.0/2.0 | **CC-BY 3.0** | Rato de Campo |
+| 4 | [[LPC] Wolf Animation](https://opengameart.org/content/lpc-wolf-animation) | William.Thompsonj | CC-BY 4.0/3.0, GPL 3.0/2.0, OGA-BY 3.0 | **OGA-BY 3.0** | Lobo Cinzento (recolorido em cinza claro) |
+| 5 | [[LPC] bears, deer, lions and more](https://opengameart.org/content/lpc-bears-deer-lions-and-more) | tapatilorenzo; rato gigante adaptado de Sevarihk | CC-BY 4.0 | **CC-BY 4.0** | Rato de Campo (rato gigante); ursos, cervos, raposas e camundongos para depois |
 | 6 | [[LPC] Spider](https://opengameart.org/content/lpc-spider) | William.Thompsonj | CC-BY 4.0/3.0, GPL 3.0/2.0, OGA-BY 3.0 | **OGA-BY 3.0** | aranhas pequena e grande; base da Matriarca |
 | 7 | [[LPC] Items and game effects](https://opengameart.org/content/lpc-items-and-game-effects) | Reemax e outros (`credits.txt`) | CC-BY-SA 3.0, GPL 3.0/2.0 | **CC-BY-SA 3.0** | ícones de itens (inventário e chão), alguns efeitos |
 | 8 | [[LPC] Farming tilesets, magic animations and UI elements](https://opengameart.org/content/lpc-farming-tilesets-magic-animations-and-ui-elements) | Daniel Eddeland (daneeklu) | CC-BY-SA 3.0, GPL 3.0 | **CC-BY-SA 3.0** | animações de magia (T-054), elementos de interface |
@@ -92,6 +94,8 @@ Licenças conferidas nas páginas dos pacotes em 2026-10-31. Quando um pacote of
 **Reserva**, se faltar algo no item 1: [LPC Tile Atlas](https://opengameart.org/content/lpc-tile-atlas) e [LPC Tile Atlas2](https://opengameart.org/content/lpc-tile-atlas2) (adrix89 e autores do LPC, CC-BY-SA 3.0 / GPL 3.0). São o LPC original, com paleta mais antiga.
 
 **Descartados:**
+- [LPC] Rat, Cat and Dog (Tuomo Untinen, CC-BY 3.0): o rato de 32 px ficou feio na cena de teste e foi trocado pelo rato gigante (decisão do designer, 2026-10-31).
+- Arachne (AntumDeluge, OGA-BY): mulher-aranha de 48×64 baseada nas aranhas LPC. É pequena e com traço diferente para ser a Matriarca.
 - Kenney *UI Pack (RPG Expansion)* (CC0, conferido): traço vetorial liso, destoa do pixel art.
 - Ninja Adventure: tiles de 16 px, escala diferente da nossa.
 
@@ -120,14 +124,19 @@ Combinações usadas na cena de teste (2026-10-31). Para reproduzir, cole o trec
 
 | Personagem | Configuração |
 |---|---|
-| Guerreiro | `sex=male&body=Body_Color_light&head=Human_Male_light&expression=Neutral_light&armour=Plate_steel&legs=Pants_charcoal&shoes=Basic_Boots_brown&hat=Nasal_helm_steel&weapon=Arming_Sword_steel&shield=Kite_kite_blue_gray` |
-| Arqueiro | `sex=male&body=Body_Color_light&head=Human_Male_light&expression=Neutral_light&armour=Leather_leather&legs=Pants_walnut&shoes=Basic_Boots_brown&hat=Hood_forest&weapon=Recurve_medium&ammo=Ammo_arrow` |
-| Mago | `sex=male&body=Body_Color_light&head=Human_Male_light&expression=Neutral_light&clothes=Robe_blue&shoes=Basic_Boots_brown&hat=Hood_navy&weapon=Wand_wand` |
-| Clérigo | `sex=male&body=Body_Color_light&head=Human_Male_light&expression=Neutral_light&clothes=Longsleeve_tan&jacket=Tabard_white&legs=Pants_tan&shoes=Basic_Boots_brown&weapon=Mace_mace` |
+| Guerreiro | `sex=muscular&body=Body_Color_light&head=Human_Male_light&expression=Neutral_light&hair=High_and_tight_dark_brown&shoulders=Pauldrons_gray&arms=Armour_steel&bracers=Bracers_steel&legs=Pants_charcoal&shoes=Armour_steel&shield=Kite_kite_blue_gray&weapon=Arming_Sword_steel` |
+| Arqueiro | `sex=male&body=Body_Color_light&head=Human_Male_light&expression=Neutral_light&hair=Ponytail_ginger&armour=Leather_leather&legs=Pants_walnut&shoes=Basic_Boots_brown&weapon=Recurve_medium&ammo=Ammo_arrow&quiver=Quiver_quiver` |
+| Mago | `sex=male&body=Body_Color_light&head=Human_Male_light&expression=Neutral_light&hair=Long_gray&beard=Medium_Beard_gray&clothes=Longsleeve_navy&jacket=Frock_coat_blue&legs=Formal_Pants_navy&shoes=Basic_Boots_brown&weapon=Gnarled_staff_medium` |
+| Clérigo | `sex=male&body=Body_Color_light&head=Human_Male_light&expression=Neutral_light&hair=Curly_short_light_brown&clothes=Longsleeve_tan&jacket=Tabard_white&legs=Pants_tan&shoes=Basic_Boots_brown&weapon=Mace_mace` |
 | Salteador | `sex=male&body=Body_Color_light&head=Human_Male_light&expression=Neutral_light&armour=Leather_maroon&legs=Pants_brown&shoes=Basic_Boots_walnut&bandana=Bandana_red&weapon=Arming_Sword_iron` |
 | Guarda Esquelético | `sex=male&body=Skeleton_white&head=Skeleton_white&armour=Leather_walnut&weapon=Arming_Sword_iron` |
 
-Licenças mostradas pelo gerador para essas peças: quase todas têm OGA-BY 3.0 como opção. Exceções que ficam em **CC-BY-SA 3.0**: uma peça do Arqueiro (sem outra opção) e o escudo do Guerreiro (CC-BY-SA ou GPL). Os dois são aceitos pela regra do §7. A conferência peça a peça é feita pelo CSV de créditos na exportação.
+Ajustes do designer (2026-10-31):
+- Guerreiro com corpo musculoso, sem capacete e com cabelo. O corpo musculoso não aceita armadura de tronco no gerador, então ele usa ombreiras, braçais e proteção de braços e pés.
+- Arqueiro, Mago e Clérigo com cabelo.
+- O Mago estava "sem roupa" porque o manto (*Robe*) do gerador só existe para corpo feminino. Agora usa camisa, sobrecasaca azul, calça e cajado.
+
+Licenças mostradas pelo gerador: quase todas as peças têm OGA-BY 3.0 como opção. Algumas peças do Guerreiro, do Arqueiro e do Mago só oferecem **CC-BY-SA 3.0** (ou CC-BY-SA/GPL). São aceitas pela regra do §7, e a conferência peça a peça é feita pelo CSV de créditos na exportação.
 
 ### Risco a conferir
 
@@ -152,7 +161,7 @@ client/assets/art/
 
 ### Downloads (confirmados e feitos em 2026-10-31, em `..\mmg-art-src\`)
 
-Cada pacote fica numa pasta própria, com os zips extraídos em `extracted/`. As cenas de teste estão em `..\mmg-art-src\preview\`: `cena-personagens.png` (terreno + classes, Salteador, Esqueleto, Lobo, Rato) e `cena-monstros.png` (escala dos monstros com o círculo de colisão, incluindo a Matriarca recolorida). Observações:
+Cada pacote fica numa pasta própria, com os zips extraídos em `extracted/`. As cenas de teste estão em `..\mmg-art-src\preview\`: `cena-personagens.png` (terreno + classes, Salteador, Esqueleto, Lobo, Rato) e `cena-monstros.png` (escala dos monstros com o círculo de colisão, com rato gigante, lobo cinza claro e três opções de Matriarca). O lobo recolorido está em `lpc-wolf\gray-light\`. Também foi baixado, com confirmação, `lpc_animals_2022_v1.1.zip` (421 KB, item 5). Observações:
 - O zip do item 2 traz só os `.png` e `.tsx`, sem arquivo de créditos. A atribuição vem da página (§7).
 - O zip do item 7 traz `credits.txt`. O do item 8 traz `readme.txt`.
 - As folhas do gerador (item 3) não foram baixadas. As cenas usam quadros capturados do próprio gerador. A exportação definitiva fica para a T-053.

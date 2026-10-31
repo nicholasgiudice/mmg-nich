@@ -26,7 +26,7 @@ _Nenhum ainda._ Os pacotes abaixo foram escolhidos na T-050 (aguardando aprovaç
 | [LPC Revised] Fully Configured 4-Seasons Tilesets for Tiled | JaidynReiman, sobre o LPC Revised | OGA-BY 3.0 | https://opengameart.org/content/lpc-revised-fully-configured-4-seasons-tilesets-for-tiled-map-editor |
 | Universal LPC Spritesheet Character Generator | por peça, conforme o arquivo de créditos exportado de cada folha | por peça | https://github.com/LiberatedPixelCup/Universal-LPC-Spritesheet-Character-Generator |
 | [LPC] Wolf Animation | William.Thompsonj | OGA-BY 3.0 | https://opengameart.org/content/lpc-wolf-animation |
-| [LPC] Rat, Cat and Dog | Tuomo Untinen (Reemax) | CC-BY 3.0 | https://opengameart.org/content/lpc-rat-cat-and-dog |
+| [LPC] bears, deer, lions and more | tapatilorenzo; rato gigante adaptado de Sevarihk | CC-BY 4.0 | https://opengameart.org/content/lpc-bears-deer-lions-and-more |
 | [LPC] Spider | William.Thompsonj | OGA-BY 3.0 | https://opengameart.org/content/lpc-spider |
 | [LPC] Items and game effects | Reemax e outros, conforme `credits.txt` | CC-BY-SA 3.0 | https://opengameart.org/content/lpc-items-and-game-effects |
 | [LPC] Farming tilesets, magic animations and UI elements | Daniel Eddeland (daneeklu) | CC-BY-SA 3.0 | https://opengameart.org/content/lpc-farming-tilesets-magic-animations-and-ui-elements |

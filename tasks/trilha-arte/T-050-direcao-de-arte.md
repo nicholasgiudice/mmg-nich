@@ -44,7 +44,13 @@ Decisão do designer (2026-10-19): arte vinda de **pacotes de assets**, estilo *
 - Duas cenas em `..\mmg-art-src\preview\`: personagens sobre o terreno do LPC Revised, e escala dos monstros com o círculo de colisão (inclui a Matriarca recolorida ×2).
 - Na cena, a aranha grande foi ampliada ×1,5 só para comparar tamanho. No jogo, a regra de escala inteira (§3) continua valendo.
 
+**Ajustes pedidos pelo designer** (2026-10-31)
+- Personagens: Guerreiro musculoso, sem capacete e com cabelo. Cabelo no Arqueiro, Mago e Clérigo. Mago vestido (o *Robe* do gerador só existe para corpo feminino).
+- Rato trocado pelo rato gigante do pacote [LPC] bears, deer, lions and more (CC-BY 4.0, baixado com confirmação).
+- Lobo recolorido em cinza claro.
+- Matriarca: três opções de cor em escala ×2 na cena de teste, a escolher.
+
 **Pendências**
-- Aprovação do designer (critério de aceite), olhando as duas cenas de teste.
+- Aprovação do designer (critério de aceite) e escolha da Matriarca (A, B ou C).
 - Completar as entradas de `CREDITS.md` quando cada asset entrar no repositório (T-052/T-053/T-054).
 - Lacunas registradas no §7: ícones de habilidades, tema de interface, tela de créditos no jogo (exigida pelas licenças), monstros da fase 3.
