@@ -100,7 +100,7 @@ public sealed class SpriteCatalog
     }
 
     /// <summary>Textura importada pelo Godot; sem importação (editor ainda não abriu), lê o PNG direto.</summary>
-    private static Texture2D? LoadTexture(string path)
+    internal static Texture2D? LoadTexture(string path)
     {
         if (ResourceLoader.Exists(path))
         {
