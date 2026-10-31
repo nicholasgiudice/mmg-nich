@@ -29,9 +29,15 @@ public static class InputActions
     /// <summary>K: abre/fecha a tela de habilidades (pontos e NH, T-221).</summary>
     public const string SkillsPanel = "skills_panel";
 
+    /// <summary>I: abre/fecha o inventário e o equipamento (T-222).</summary>
+    public const string InventoryPanel = "inventory_panel";
+
+    /// <summary>F: pega o item no chão mais próximo ao alcance (T-222).</summary>
+    public const string PickUp = "pickup";
+
     /// <summary>Ações das habilidades da classe, na ordem dos slots (1 a 5; a 5 é a assinatura, quando tem NH).</summary>
     public static readonly string[] AbilitySlots = ["ability_1", "ability_2", "ability_3", "ability_4", "ability_5"];
 
     public static IEnumerable<string> All =>
-        new[] { MoveUp, MoveDown, MoveLeft, MoveRight, Attack, AttackKey, TargetNext, TargetClear, Consumable, Pause, Restart, CharacterPanel, SkillsPanel }.Concat(AbilitySlots);
+        new[] { MoveUp, MoveDown, MoveLeft, MoveRight, Attack, AttackKey, TargetNext, TargetClear, Consumable, Pause, Restart, CharacterPanel, SkillsPanel, InventoryPanel, PickUp }.Concat(AbilitySlots);
 }

@@ -48,6 +48,8 @@ public partial class Hud : Control
     private Button _skillsButton = null!;
     private CharacterPanel _character = null!;
     private SkillPanel _skills = null!;
+    private Button _inventoryButton = null!;
+    private InventoryPanel _inventory = null!;
     private double _bannerLeft;
     private double _castFlashLeft;
     private string _castFlashText = "";
@@ -70,6 +72,8 @@ public partial class Hud : Control
         _skillsButton = PanelButton("Habilidades (K)", () => TogglePanel(_skills));
         _panelButtons.AddChild(_characterButton);
         _panelButtons.AddChild(_skillsButton);
+        _inventoryButton = PanelButton("Inventário (I)", () => TogglePanel(_inventory));
+        _panelButtons.AddChild(_inventoryButton);
         AddChild(_panelButtons);
 
         _party = new VBoxContainer();
@@ -97,6 +101,8 @@ public partial class Hud : Control
         AddChild(_character);
         _skills = new SkillPanel();
         AddChild(_skills);
+        _inventory = new InventoryPanel();
+        AddChild(_inventory);
 
         _banner = new Label
         {
@@ -114,9 +120,10 @@ public partial class Hud : Control
     /// <summary>Fecha as telas de personagem e de habilidades; true se alguma estava aberta (Esc fecha antes de pausar).</summary>
     public bool ClosePanels()
     {
-        var open = _character.Visible || _skills.Visible;
+        var open = _character.Visible || _skills.Visible || _inventory.Visible;
         _character.Visible = false;
         _skills.Visible = false;
+        _inventory.Visible = false;
         return open;
     }
 
@@ -171,11 +178,14 @@ public partial class Hud : Control
         _target.Position = new Vector2((screen.X - _target.Size.X) / 2, 8);
         _panelButtons.Position = new Vector2(8, _player.Position.Y + _player.Size.Y + 4);
         _party.Position = new Vector2(8, _panelButtons.Position.Y + _panelButtons.Size.Y + 6);
-        var panelX = _player.Position.X + _player.Size.X + 12;
+        var panelX = Mathf.Max(_player.Position.X + _player.Size.X, _panelButtons.Visible ? _panelButtons.Position.X + _panelButtons.Size.X : 0) + 12;
         _character.Position = new Vector2(panelX, 64);
         // Habilidades: ao lado da tela de personagem; se não couber, encostada na direita (pode cobrir o log).
         var skillsX = _character.Visible ? _character.Position.X + _character.Size.X + 8 : panelX;
         _skills.Position = new Vector2(Mathf.Max(panelX, Mathf.Min(skillsX, screen.X - _skills.Size.X - 8)), _character.Visible && skillsX + _skills.Size.X > screen.X - 8 ? 8 : 64);
+
+        // Inventário: canto direito, acima do log; cabe ao lado da tela de personagem em 1280 px (equipar e ver os números).
+        _inventory.Position = new Vector2(screen.X - _inventory.Size.X - 8, Mathf.Max(8, _log.Position.Y - _inventory.Size.Y - 8));
         _log.Position = new Vector2(screen.X - _log.Size.X - 8, screen.Y - _log.Size.Y - 8);
         _death.Position = (screen - _death.Size) / 2;
         _banner.Position = new Vector2((screen.X - _banner.Size.X) / 2, screen.Y * 0.18f);
@@ -187,6 +197,7 @@ public partial class Hud : Control
         _content = content;
         _character.SetContent(content);
         _skills.SetContent(content);
+        _inventory.SetContent(content);
         _removableTags.Clear();
         foreach (var cls in content.Classes.Values)
         {
@@ -289,6 +300,12 @@ public partial class Hud : Control
     {
         _character.Send = authority.Send;
         _skills.Send = authority.Send;
+        _inventory.Send = authority.Send;
+        if (Godot.Input.IsActionJustPressed(Input.InputActions.InventoryPanel))
+        {
+            TogglePanel(_inventory);
+        }
+
         if (Godot.Input.IsActionJustPressed(Input.InputActions.CharacterPanel))
         {
             TogglePanel(_character);
@@ -317,6 +334,13 @@ public partial class Hud : Control
                     }
 
                     break;
+                case Game.Core.Combat.Items.ItemRejected ir when ir.Entity == me:
+                    _inventory.SetMessage(ItemText.Rejection(ir.Reason));
+                    break;
+                case Game.Core.Combat.Items.ItemEquipped or Game.Core.Combat.Items.ItemUnequipped or Game.Core.Combat.Items.ItemPickedUp
+                    when ItemEntity(e) == me:
+                    _inventory.SetMessage("");
+                    break;
                 case AttributeRaised or SkillRankRaised or PointsReset when PointsEntity(e) == me:
                     _character.SetMessage("");
                     _skills.SetMessage("");
@@ -333,6 +357,14 @@ public partial class Hud : Control
         _ => null,
     };
 
+    private static EntityId? ItemEntity(GameEvent e) => e switch
+    {
+        Game.Core.Combat.Items.ItemEquipped a => a.Entity,
+        Game.Core.Combat.Items.ItemUnequipped u => u.Entity,
+        Game.Core.Combat.Items.ItemPickedUp p => p.Entity,
+        _ => null,
+    };
+
     private void UpdatePanels(EntitySnapshot self)
     {
         var progress = self.TryGet<CharacterProgress>();
@@ -343,6 +375,13 @@ public partial class Hud : Control
         _skillsButton.Modulate = progress is { SkillPoints: > 0 } ? HudTheme.Removable : Colors.White;
         _character.Render(self);
         _skills.Render(self);
+        _inventory.Render(self);
+        if (self.TryGet<Game.Core.Combat.Items.Inventory>() is { } inv)
+        {
+            var used = inv.Slots.Count(i => i is not null);
+            _inventoryButton.Text = $"Inventário (I) {used}/{inv.Capacity}";
+            _inventoryButton.Modulate = used >= inv.Capacity ? HudTheme.Warning : Colors.White;
+        }
     }
 
     /// <summary>True se o mouse está sobre um controle do HUD que recebe clique (o clique não deve virar ataque).</summary>
