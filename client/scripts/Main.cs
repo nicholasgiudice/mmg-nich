@@ -27,7 +27,7 @@ namespace MmoRpgClient;
 /// <c>--demo-input=attack,ability_1,...</c> (aperta ações em sequência mirando o inimigo mais próximo e
 /// imprime as respostas da autoridade; também <c>spend:str</c>, <c>raise:habilidade</c> e <c>reset_points</c>, os botões das
 /// telas de personagem e de habilidades, T-221; <c>equip:n</c>, <c>unequip:weapon</c>, <c>drop:n</c> e <c>pickup</c>, T-222) e <c>--capture=caminho.png</c> (salva a tela e fecha; após 2 s, ou
-/// <c>--capture-after=segundos</c>, ou ao fim do demo).
+/// <c>--capture-after=segundos</c>, ou ao fim do demo). <c>--circles</c> desenha as unidades como círculos, sem sprites (T-053).
 /// </summary>
 public partial class Main : Node2D
 {
@@ -95,6 +95,7 @@ public partial class Main : Node2D
 
             _hud.SetContent(content);
             _worldView.SetContent(content);
+            _worldView.SetSprites(_args.ContainsKey("circles") ? SpriteCatalog.Empty : SpriteCatalog.Load());
             if (map is not null)
             {
                 GetNode<ArenaView>("Arena").Map = map;

@@ -31,6 +31,7 @@ public partial class WorldView : Node2D
     /// <summary>Distância (tiles) entre itens que caíram no mesmo ponto, espalhados em volta dele.</summary>
     private const float ItemSpread = 0.55f;
     private ContentCatalog _content = ContentCatalog.Empty;
+    private SpriteCatalog _sprites = SpriteCatalog.Empty;
     private (string Text, ulong AtMs) _lastRejection;
 
     /// <summary>A mesma mensagem de rejeição não se repete antes disto (botão mantido fora de alcance).</summary>
@@ -48,6 +49,9 @@ public partial class WorldView : Node2D
 
     /// <summary>Definições (nomes e tags de status); vazio = só siglas cruas.</summary>
     public void SetContent(ContentCatalog content) => _content = content;
+
+    /// <summary>Sprites por definição (T-053); vazio = círculos.</summary>
+    public void SetSprites(SpriteCatalog sprites) => _sprites = sprites;
 
     /// <summary>Atualiza os nós a partir da autoridade. Chamar uma vez por frame, depois de <c>Advance</c>.</summary>
     public void Render(IGameAuthority authority, IReadOnlyList<GameEvent> events)
@@ -83,10 +87,19 @@ public partial class WorldView : Node2D
                         _ => "Interrompido",
                     }, InterruptColor);
                     break;
-                case AbilityExecuted used when MultiHit(latest, used.Source, used.AbilityId) is { } first:
-                    // T-064: habilidade com vários acertos — "×3" uma vez e o rastro de cada acerto em alvo único.
-                    ShowText(used.Source, $"{first.Name} ×{first.HitCount}", HitCountColor);
-                    ShotTrails(used.Source, used.Targets, first);
+                case AbilityExecuted used:
+                    if (_views.TryGetValue(used.Source, out var userView))
+                    {
+                        userView.PlayAttack();
+                    }
+
+                    if (MultiHit(latest, used.Source, used.AbilityId) is { } first)
+                    {
+                        // T-064: habilidade com vários acertos — "×3" uma vez e o rastro de cada acerto em alvo único.
+                        ShowText(used.Source, $"{first.Name} ×{first.HitCount}", HitCountColor);
+                        ShotTrails(used.Source, used.Targets, first);
+                    }
+
                     break;
                 case AbilityHit extra:
                     if (_content.Abilities.TryGetValue(extra.AbilityId, out var extraDef))
@@ -174,7 +187,7 @@ public partial class WorldView : Node2D
             seen.Add(state.Id);
             var view = GetOrCreateView(state.Id);
             var controlled = authority.ControlledEntity == state.Id;
-            view.ApplyState(state, controlled, SelectedEntity == state.Id);
+            view.ApplyState(state, controlled, SelectedEntity == state.Id, _sprites);
             var (chips, marks) = StatusVisuals.From(state.TryGet<StatusEffects>(), _content, now);
             view.ApplyStatus(chips, marks);
 
@@ -355,7 +368,7 @@ public partial class WorldView : Node2D
         var recent = view.GetChildren().OfType<FloatingText>().Count(t => t.Age < 0.4);
         var side = recent == 0 ? 0 : (recent % 2 == 1 ? 1 : -1) * ((recent + 1) / 2) * 26f;
         var label = FloatingText.Create(text, color);
-        label.Position = new Godot.Vector2(side, -view.RadiusPx - 18 - Math.Min(recent, 4) * 5f);
+        label.Position = new Godot.Vector2(side, -view.HeadPx - 18 - Math.Min(recent, 4) * 5f);
         view.AddChild(label);
     }
 
