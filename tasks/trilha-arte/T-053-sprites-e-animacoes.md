@@ -37,7 +37,7 @@ Hoje cada unidade é um círculo colorido (`EntityView`). A apresentação só l
   - Dano: piscar branco. Congelado: tom azulado.
   - Nome, barra de vida, status, marcas de controle, seleção e textos flutuantes continuam por cima. A altura vem de `HeadPx`, não mais do raio.
 - `WorldView` liga o ataque ao evento. `Main` carrega o catálogo. `--circles` volta ao desenho antigo.
-- Arte em `client/assets/art/` (~3 MB), com `CREDITS.txt` por pasta de monstro e `*-credits.csv` por personagem. As entradas também estão em `CREDITS.md`.
+- Arte em `client/assets/art/` (~3 MB), com `CREDITS.txt` por pasta de monstro e `*-credits.txt` (CSV do gerador) por personagem. As entradas também estão em `CREDITS.md`.
 
 **Decisões**
 - As folhas do gerador LPC foram exportadas à mão pelo designer. O navegador do agente não grava downloads, e a captura de tela altera os pixels.
