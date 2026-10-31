@@ -18,6 +18,7 @@
 
   <ItemGroup>
     <None Include="..\Game.Sim\Fixtures\**\*.json" Link="Fixtures\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="MapFixtures\**\*.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>

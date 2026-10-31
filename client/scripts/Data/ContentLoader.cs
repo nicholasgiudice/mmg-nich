@@ -19,9 +19,14 @@ public static class ContentLoader
             throw new InvalidOperationException($"Pasta de dados não encontrada: {directory} (rode o build do cliente).");
         }
 
-        // Só o primeiro nível: data/schemas/ (JSON Schema) não é conteúdo.
+        // JSON do primeiro nível (data/schemas/ é JSON Schema, não conteúdo) e mapas do Tiled em maps/ (T-051). Os nomes
+        // relativos são os mesmos do servidor, para a impressão digital do conteúdo bater.
+        var maps = $"{directory}/maps";
         var sources = DirAccess.GetFilesAt(directory)
             .Where(f => f.EndsWith(".json", StringComparison.Ordinal))
+            .Concat(DirAccess.DirExistsAbsolute(maps)
+                ? DirAccess.GetFilesAt(maps).Where(f => f.EndsWith(TiledMapReader.Extension, StringComparison.Ordinal)).Select(f => $"maps/{f}")
+                : [])
             .OrderBy(f => f, StringComparer.Ordinal)
             .Select(f => (Name: f, Json: Godot.FileAccess.GetFileAsString($"{directory}/{f}")))
             .ToList();

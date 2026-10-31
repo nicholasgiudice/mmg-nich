@@ -27,12 +27,7 @@ public static class ContentLoading
             throw new DirectoryNotFoundException($"Pasta de dados não encontrada: {directory}");
         }
 
-        // LoadDirectory também leria data/schemas/*.json (JSON Schema, não conteúdo); aqui esses arquivos são ignorados.
-        var sources = Directory
-            .EnumerateFiles(directory, "*.json", SearchOption.AllDirectories)
-            .Select(f => (Name: Path.GetRelativePath(directory, f), Path: f))
-            .Where(f => !f.Name.StartsWith("schemas" + Path.DirectorySeparatorChar, StringComparison.Ordinal))
-            .OrderBy(f => f.Name, StringComparer.Ordinal)
+        var sources = GameDataLoader.EnumerateContentFiles(directory)
             .Select(f => (f.Name, Json: File.ReadAllText(f.Path)));
         var result = GameDataLoader.LoadSources(sources);
         if (!result.Success)

@@ -45,13 +45,22 @@ public static class GameDataLoader
             return new LoadResult(null, [new LoadError(directory, "$", "Diretório não encontrado.")]);
         }
 
-        var sources = Directory
-            .EnumerateFiles(directory, "*.json", SearchOption.AllDirectories)
-            .Where(f => !IsSchemaFile(directory, f))
-            .OrderBy(f => f, StringComparer.Ordinal)
-            .Select(f => (Name: Path.GetRelativePath(directory, f), Json: File.ReadAllText(f)));
+        var sources = EnumerateContentFiles(directory)
+            .Select(f => (f.Name, Json: File.ReadAllText(f.Path)));
         return LoadSources(sources);
     }
+
+    /// <summary>
+    /// Arquivos de conteúdo de uma pasta, em ordem: <c>*.json</c> (menos <c>schemas/</c>) e mapas do Tiled <c>*.tmj</c>
+    /// (T-051). Name é o caminho relativo à pasta (é o que aparece nos erros e entra na impressão digital).
+    /// </summary>
+    public static IEnumerable<(string Name, string Path)> EnumerateContentFiles(string directory) =>
+        Directory
+            .EnumerateFiles(directory, "*", SearchOption.AllDirectories)
+            .Where(f => f.EndsWith(".json", StringComparison.Ordinal) || f.EndsWith(TiledMapReader.Extension, StringComparison.Ordinal))
+            .Where(f => !IsSchemaFile(directory, f))
+            .Select(f => (Name: Path.GetRelativePath(directory, f), Path: f))
+            .OrderBy(f => f.Name, StringComparer.Ordinal);
 
     // A subpasta "schemas" guarda apenas JSON Schema (autocomplete), nunca conteúdo.
     private static bool IsSchemaFile(string root, string file)
@@ -68,7 +77,17 @@ public static class GameDataLoader
 
         foreach (var (name, json) in materialized)
         {
-            ReadFile(name, json, content, errors);
+            if (name.EndsWith(TiledMapReader.Extension, StringComparison.Ordinal))
+            {
+                if (TiledMapReader.Read(name, json, errors) is { } map)
+                {
+                    content.Arenas.Add(new Entry<ArenaDefinition>(map, name, "$"));
+                }
+            }
+            else
+            {
+                ReadFile(name, json, content, errors);
+            }
         }
 
         content.Rules = BuildRules(content.RuleSections, errors);
