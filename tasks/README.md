@@ -267,6 +267,7 @@ Detalhadas pela T-120 a partir de `design/progression-v0.1.md` (§9: Core antes 
 | [T-211](fase-2/T-211-api-contas-e-personagens.md) | `Game.Api`: cadastro, login, token e personagens | VPS | **Forte** | 210 |
 | [T-212](fase-2/T-212-servidor-personagem-persistente.md) | Servidor: entra com token, carrega e salva o personagem | VPS | **Forte** | 203, 204, 210, 211 |
 | [T-213](fase-2/T-213-caddy-https-e-backup.md) | Caddy com HTTPS para a API e backup do banco fora da VPS | VPS | Humano + Leve | 211 |
+| [T-216](fase-2/T-216-backup-fora-da-vps.md) | Backup do banco fora da VPS (destino a escolher pelo humano) | VPS | Humano + Leve | 213 |
 | **Mundo** | | | | |
 | [T-214](fase-2/T-214-servidor-zonas-cidade-e-campos.md) | Servidor: zonas abertas, Cidade e Campos, troca pelo portão | VPS | **Forte** | 212 |
 | [T-215](fase-2/T-215-dados-campos-da-vigilia.md) | Dados: Campos da Vigília (surgimentos e níveis) | VPS | Médio | 205, 214 |
@@ -290,6 +291,8 @@ Detalhadas pela T-120 a partir de `design/progression-v0.1.md` (§9: Core antes 
 | 5 | T-215 | T-223 |
 | 6 | — | T-230 |
 | 7 | T-240 | — |
+
+A T-216 (destino do backup) fica fora das ondas: não bloqueia o playtest e roda quando o humano escolher o destino, de preferência antes de abrir o jogo a jogadores de fora.
 
 Cuidados de integração: T-203 e T-204 mexem no Core e no protocolo ao mesmo tempo (ambas sobem `ProtocolVersion` e criam tags de componente): integre a 203 antes da 204 e ajuste a versão e as tags na segunda. A T-207 toca o servidor e o log, sem conflito com a onda 1. A T-210 só adiciona projeto e serviço novos.
 
