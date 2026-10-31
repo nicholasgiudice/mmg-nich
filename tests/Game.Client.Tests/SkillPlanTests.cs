@@ -86,9 +86,8 @@ public class SkillPlanTests
         }
 
         var dataDir = Path.Combine(dir ?? throw new DirectoryNotFoundException("data/ não encontrada"), "data");
-        var sources = Directory.EnumerateFiles(dataDir, "*.json")
-            .OrderBy(f => f, StringComparer.Ordinal)
-            .Select(f => (Path.GetFileName(f), File.ReadAllText(f)));
+        var sources = GameDataLoader.EnumerateContentFiles(dataDir)
+            .Select(f => (f.Name, File.ReadAllText(f.Path)));
         var db = GameDataLoader.LoadSources(sources).GetDatabaseOrThrow();
         return new ContentCatalog(db.Classes.Values, db.Abilities.Values, db.Statuses.Values, db.Areas.Values,
             db.Monsters.Values, db.Arenas.Values, db.Encounters.Values, db.Items.Values)
