@@ -74,3 +74,5 @@ Hoje o servidor aceita um nome (`Hello.DevName`) e cria um personagem nível 1 a
 - **T-214:** gravar zona e posição (`Character.ZoneId`/`PositionX/Y`; o `SaveCharacterAsync` já grava se a entidade tiver os valores) e tirar os personagens com conta das vagas do encontro.
 - **T-220/T-223:** mandar `Hello.Ticket` e mostrar as recusas novas; depois, `GAME_DEV_LOGIN=false` na VPS.
 - Uso único vale por processo. Com mais de um processo de servidor, ou depois de um reinício dentro dos 60 s do token, o mesmo token poderia entrar de novo. Hoje não importa: o personagem continua entrando uma vez só.
+
+**Atualização 2026-11-01 (pendência T-220 resolvida):** `GAME_DEV_LOGIN=false` no `deploy/.env` da VPS e `game-server` refeito (contêiner com `MMO_DEV_LOGIN=false`). O servidor público agora só aceita entrada com token de jogo da API (`https://api.nich.click`). Para testes com bots sem conta, use um servidor local com `--dev-login` ou volte a variável temporariamente.

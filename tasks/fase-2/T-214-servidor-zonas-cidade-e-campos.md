@@ -89,3 +89,5 @@ Objetivo da fase 2: **Cidade + Campos online** (`design/first-map-v0.1.md` §1�
 - **T-055:** trocar os mapas provisórios pelos do Tiled (os ids de arena podem ficar).
 - Monstros voltarem ao ponto quando perdem o alvo (leash), se o playtest pedir.
 - O primeiro snapshot de uma zona cheia é fragmentado (completo); normal, mas dá para medir na T-230.
+
+**Atualização 2026-11-01 (pendência T-223 resolvida):** `GAME_WORLD=true` no `deploy/.env` da VPS e `game-server` refeito a partir da `main` (`470060f`). Log: "Mundo aberto: zone.city, zone.vigil_fields; nascimento em zone.city", conteúdo `26cdbd09f23a42d3` (o mesmo da `main`). O servidor público deixou de ser a sala de encontro.
