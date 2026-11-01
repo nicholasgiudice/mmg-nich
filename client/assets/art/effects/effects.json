@@ -1,0 +1,37 @@
+{
+  "_comment": "Efeitos visuais (T-054). Quadros por [coluna, linha] na grade da folha. impacts: por escola de dano, ou pelo id da fonte (prefixo). projectiles: por id de habilidade. areas: por id de área (prefixo); mode fill = um quadro do tamanho da área, scatter = vários espalhados. Créditos em CREDITS.md.",
+  "sheets": {
+    "fx": { "texture": "effects/effects.png", "cell": [32, 32] },
+    "shield": { "texture": "effects/magic_iceshield.png", "cell": [128, 128] }
+  },
+  "animations": {
+    "hit": { "sheet": "fx", "frames": [[0, 2], [1, 2], [0, 2]], "fps": 14 },
+    "arcane": { "sheet": "fx", "frames": [[8, 0], [9, 0], [10, 0], [11, 0], [10, 0]], "fps": 16 },
+    "arcane_bolt": { "sheet": "fx", "frames": [[9, 0], [10, 0]], "fps": 12, "loop": true },
+    "fire": { "sheet": "fx", "frames": [[17, 0], [18, 0], [19, 0], [17, 1], [18, 1], [19, 1], [17, 2], [18, 2]], "fps": 14 },
+    "frost": { "sheet": "fx", "frames": [[13, 2], [14, 2], [15, 2], [16, 2], [13, 3], [14, 3], [15, 3], [16, 3], [17, 3], [13, 4], [14, 4], [15, 4], [16, 4], [17, 4]], "fps": 24 },
+    "holy": { "sheet": "fx", "frames": [[4, 4], [5, 4], [6, 4], [7, 4], [8, 4], [9, 4]], "fps": 16 },
+    "poison": { "sheet": "fx", "frames": [[12, 0], [13, 0], [14, 0], [15, 0], [16, 0]], "fps": 10 },
+    "lightning": { "sheet": "fx", "frames": [[0, 3], [1, 3], [2, 3], [3, 3], [4, 3], [5, 3]], "fps": 14 },
+    "arrow": { "sheet": "fx", "frames": [[1, 6]], "fps": 1, "loop": true, "rotate": true },
+    "shield": { "sheet": "shield", "frames": [[1, 2], [2, 2], [3, 2], [2, 2]], "fps": 6, "loop": true }
+  },
+  "impacts": {
+    "schools": { "physical": "hit", "arcane": "arcane", "fire": "fire", "frost": "frost", "holy": "holy", "nature": "poison" },
+    "sources": { "area.lightning_field": "lightning", "area.venom_pool": "poison", "area.cataclysm_fire": "fire" }
+  },
+  "projectiles": {
+    "archer.shot": "arrow",
+    "archer.power_shot": "arrow",
+    "archer.devastating_arrow": "arrow",
+    "road_bandit.shot": "arrow",
+    "mage.arcane_missile": "arcane_bolt"
+  },
+  "areas": {
+    "area.venom_pool": { "animation": "poison", "mode": "scatter" },
+    "area.lightning_field": { "animation": "lightning", "mode": "scatter" },
+    "area.rain_slow": { "animation": "arrow", "mode": "scatter" },
+    "area.cataclysm_fire": { "animation": "fire", "mode": "scatter" }
+  },
+  "shield": "shield"
+}

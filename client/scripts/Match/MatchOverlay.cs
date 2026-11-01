@@ -14,6 +14,7 @@ public partial class MatchOverlay : Control
     private readonly Button _continue = new() { Text = "Continuar" };
     private readonly Button _next = new() { Text = "Próximo encontro" };
     private readonly Button _restart = new() { Text = "Reiniciar (R)" };
+    private readonly Button _effects = new() { FocusMode = FocusModeEnum.None };
 
     public event Action? ContinueRequested;
     public event Action? RestartRequested;
@@ -66,6 +67,18 @@ public partial class MatchOverlay : Control
             b.CustomMinimumSize = new Vector2(110, 34);
             buttons.AddChild(b);
         }
+
+        // T-054: intensidade dos efeitos (fica gravada para as próximas partidas).
+        _effects.Text = Presentation.EffectSettings.Label;
+        _effects.TooltipText = "Reduzidos: só os impactos e projéteis que envolvem você, e áreas e escudos mais transparentes. Telegráfos não mudam.";
+        _effects.Pressed += () =>
+        {
+            Presentation.EffectSettings.Reduced = !Presentation.EffectSettings.Reduced;
+            _effects.Text = Presentation.EffectSettings.Label;
+        };
+        var options = new HBoxContainer { Alignment = BoxContainer.AlignmentMode.Center };
+        options.AddChild(_effects);
+        box.AddChild(options);
     }
 
     /// <summary>Pausa (Esc). <paramref name="canRestart"/> false no mundo aberto (T-223): não há encontro para reiniciar nem seed.</summary>
@@ -109,6 +122,8 @@ public partial class MatchOverlay : Control
     private void Open(string title, Color color, string body, bool canContinue, bool canAdvance, bool canRestart)
     {
         _restart.Visible = canRestart;
+        _effects.Visible = canContinue; // só na pausa
+        _effects.Text = Presentation.EffectSettings.Label;
         _title.Text = title;
         _title.AddThemeColorOverride("font_color", color);
         _body.Text = body;

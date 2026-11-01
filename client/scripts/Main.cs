@@ -30,6 +30,7 @@ namespace MmoRpgClient;
 /// telas de personagem e de habilidades, T-221; <c>equip:n</c>, <c>unequip:weapon</c>, <c>drop:n</c> e <c>pickup</c>, T-222) e <c>--capture=caminho.png</c> (salva a tela e fecha; após 2 s, ou
 /// <c>--capture-after=segundos</c>, ou ao fim do demo). <c>--circles</c> desenha as unidades como círculos, sem sprites (T-053).
 /// Mundo aberto (T-223): <c>--auto-respawn=segundos</c> aperta "Renascer na Cidade" sozinho depois de morrer.
+/// Efeitos (T-054): <c>--effects=reduced|normal</c> troca a intensidade só nesta execução; <c>--circles</c> também tira os efeitos.
 /// </summary>
 public partial class Main : Node2D
 {
@@ -108,6 +109,8 @@ public partial class Main : Node2D
             _hud.SetContent(content);
             _worldView.SetContent(content);
             _worldView.SetSprites(_args.ContainsKey("circles") ? SpriteCatalog.Empty : SpriteCatalog.Load());
+            _worldView.SetEffects(_args.ContainsKey("circles") ? EffectCatalog.Empty : EffectCatalog.Load());
+            EffectSettings.Override(_args.GetValueOrDefault("effects"));
             var arenaView = GetNode<ArenaView>("Arena");
             arenaView.DebugGrid = _args.ContainsKey("debug-grid");
             if (map is not null)
