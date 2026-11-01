@@ -4,6 +4,7 @@ using Game.Core.Combat;
 using Game.Core.Definitions;
 using Game.Core.Events;
 using Game.Core.Simulation;
+using Game.Core.Simulation.Components;
 using Godot;
 using MmoRpgClient.Authority;
 using MmoRpgClient.Data;
@@ -28,6 +29,7 @@ namespace MmoRpgClient;
 /// imprime as respostas da autoridade; também <c>spend:str</c>, <c>raise:habilidade</c> e <c>reset_points</c>, os botões das
 /// telas de personagem e de habilidades, T-221; <c>equip:n</c>, <c>unequip:weapon</c>, <c>drop:n</c> e <c>pickup</c>, T-222) e <c>--capture=caminho.png</c> (salva a tela e fecha; após 2 s, ou
 /// <c>--capture-after=segundos</c>, ou ao fim do demo). <c>--circles</c> desenha as unidades como círculos, sem sprites (T-053).
+/// Mundo aberto (T-223): <c>--auto-respawn=segundos</c> aperta "Renascer na Cidade" sozinho depois de morrer.
 /// </summary>
 public partial class Main : Node2D
 {
@@ -58,6 +60,12 @@ public partial class Main : Node2D
     private bool _paused;
     private double _endedAt = -1;
     private int _welcomesSeen;
+
+    /// <summary>Zona atual do mundo aberto (T-223); null = sala de encontro ou partida local.</summary>
+    private ZoneDefinition? _zone;
+    private ZoneScreen _zoneScreen = null!;
+    private double _diedAt = -1;
+    private bool _respawnSent;
     private double _leaveAt = -1;
     private Label? _netMessage;
     private Godot.Vector2? _statsLast;
@@ -78,6 +86,10 @@ public partial class Main : Node2D
         _overlay.RestartRequested += Restart;
         _overlay.NextRequested += NextEncounter;
         _overlay.MenuRequested += BackToMenu;
+        _zoneScreen = new ZoneScreen { Name = "ZoneScreen", Visible = false };
+        _info.GetParent().AddChild(_zoneScreen);
+        _info.GetParent().MoveChild(_zoneScreen, _overlay.GetIndex()); // abaixo da pausa
+        _zoneScreen.RespawnRequested += Respawn;
 
         foreach (var action in InputActions.All.Where(a => !InputMap.HasAction(a)))
         {
@@ -177,6 +189,7 @@ public partial class Main : Node2D
                 _authority.Advance(delta);
                 events = _authority.TakeEvents();
                 UpdateOutcome(events);
+                UpdateDeath();
             }
 
             if (_demo is not null)
@@ -267,7 +280,8 @@ public partial class Main : Node2D
             return;
         }
 
-        if (Godot.Input.IsActionJustPressed(InputActions.Restart))
+        // No mundo aberto não há reinício: a zona continua sem o jogador (T-223).
+        if (Godot.Input.IsActionJustPressed(InputActions.Restart) && _zone is null)
         {
             Restart();
             return;
@@ -286,7 +300,7 @@ public partial class Main : Node2D
             else if (!_overlay.IsOpen && _input?.SelectedTarget is null)
             {
                 _paused = true;
-                _overlay.ShowPause(_settings, _encounterName);
+                _overlay.ShowPause(_settings, _encounterName, canRestart: _zone is null);
             }
         }
     }
@@ -358,21 +372,75 @@ public partial class Main : Node2D
 
         if (net.WelcomeCount != _welcomesSeen)
         {
-            // Entrada ou reinício da sala: arena, câmera e resultado recomeçam.
+            // Entrada, reinício da sala ou troca de zona: arena, câmera, unidades e resultado recomeçam.
             _welcomesSeen = net.WelcomeCount;
-            var map = EntityFactory.BuildMap(_content.Arenas[welcome.ArenaId]);
-            GetNode<ArenaView>("Arena").Show(map, _content.Arenas[welcome.ArenaId]);
+            var arenaDef = _content.Arenas[welcome.ArenaId];
+            var map = EntityFactory.BuildMap(arenaDef);
+            var arenaView = GetNode<ArenaView>("Arena");
+            arenaView.Show(map, arenaDef);
             _camera.SetBounds(map);
+            _worldView.Clear();
+            _input?.ClearTarget();
             _content.Encounters.TryGetValue(welcome.EncounterId, out var encounter);
-            _encounterName = encounter?.Name ?? welcome.EncounterId;
-            // Mundo aberto (T-214): EncounterId é a zona, que não tem vitória nem derrota (o resto da troca de zona é da T-223).
+            // Mundo aberto (T-214): EncounterId é a zona, que não tem vitória nem derrota.
+            _zone = _content.Zones.GetValueOrDefault(welcome.EncounterId);
+            _encounterName = _zone?.Name ?? encounter?.Name ?? welcome.EncounterId;
             _tracker = encounter is null ? null : new MatchTracker(welcome.ControlledEntity, encounter.Defeat.TimeLimitTicks);
             _endedAt = -1;
+            _diedAt = -1;
+            _respawnSent = false;
+            _paused = false;
             _overlay.Close();
+            if (_zone is not null)
+            {
+                arenaView.ShowGates(_zone.Gates
+                    .Select(g => (g.Area, $"Portão: {_content.Zones.GetValueOrDefault(g.To)?.Name ?? g.To}"))
+                    .ToList());
+                _zoneScreen.Enter(_zone, _content);
+            }
+            else
+            {
+                _zoneScreen.Leave();
+            }
+
             GD.Print($"[net] na sala {welcome.EncounterId} como {welcome.ControlledEntity} (época {welcome.Epoch})");
         }
 
         return true;
+    }
+
+    /// <summary>Mundo aberto (T-223): morto, mostra o aviso com "Renascer na Cidade"; o servidor espera o pedido.</summary>
+    private void UpdateDeath()
+    {
+        if (_zone is null || _authority?.ControlledEntity is not { } me)
+        {
+            return;
+        }
+
+        var dead = _authority.Latest?.Entities.FirstOrDefault(e => e.Id == me)?.TryGet<Health>() is { IsAlive: false };
+        if (dead && _diedAt < 0)
+        {
+            _diedAt = _elapsed;
+            GD.Print($"[zone] morto em {_zone.Id}");
+        }
+
+        _zoneScreen.SetDeath(dead && !_respawnSent, _zone.Name);
+        if (dead && !_respawnSent && _args.TryGetValue("auto-respawn", out var wait)
+            && double.TryParse(wait, System.Globalization.CultureInfo.InvariantCulture, out var seconds) && _elapsed - _diedAt >= seconds)
+        {
+            Respawn();
+        }
+    }
+
+    private void Respawn()
+    {
+        if (_authority is NetAuthority net && !_respawnSent)
+        {
+            _respawnSent = true;
+            _zoneScreen.SetDeath(false);
+            net.RequestRespawn();
+            GD.Print("[zone] pedido para renascer");
+        }
     }
 
     /// <summary>

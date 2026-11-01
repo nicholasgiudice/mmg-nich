@@ -9,6 +9,7 @@ namespace MmoRpgClient.Presentation;
 /// baixo de áreas, telegráfos e unidades; a camada <c>above</c> num filho por cima das unidades, transparente perto do
 /// jogador. Sem mapa do Tiled (arenas ASCII) ou com <c>--debug-grid</c>, a grade de quadrados de antes.
 /// A colisão continua vindo do Core (<see cref="GridMap"/>); a camada <c>collision</c> não é desenhada.
+/// No mundo aberto (T-223) os portões da zona aparecem por cima do chão, com o nome da zona de destino.
 /// </summary>
 public partial class ArenaView : Node2D
 {
@@ -16,10 +17,13 @@ public partial class ArenaView : Node2D
     private static readonly Color FloorB = new(0.25f, 0.32f, 0.22f);
     private static readonly Color Wall = new(0.32f, 0.29f, 0.27f);
     private static readonly Color WallEdge = new(0.18f, 0.16f, 0.15f);
+    private static readonly Color GateFill = new(0.95f, 0.80f, 0.35f, 0.22f);
+    private static readonly Color GateEdge = new(0.95f, 0.80f, 0.35f, 0.85f);
 
     private GridMap? _map;
     private TiledVisual? _visual;
     private readonly AboveLayerView _above = new() { Name = "Above", ZIndex = ZLayers.Above };
+    private IReadOnlyList<(RectDefinition Area, string Label)> _gates = [];
 
     /// <summary>Força a grade de quadrados mesmo com mapa do Tiled (depuração).</summary>
     public bool DebugGrid { get; set; }
@@ -50,6 +54,14 @@ public partial class ArenaView : Node2D
         }
 
         _above.Visual = _visual;
+        _gates = [];
+        QueueRedraw();
+    }
+
+    /// <summary>Portões da zona (T-223): retângulo em tiles e texto (zona de destino). Chamar depois de <see cref="Show"/>.</summary>
+    public void ShowGates(IReadOnlyList<(RectDefinition Area, string Label)> gates)
+    {
+        _gates = gates;
         QueueRedraw();
     }
 
@@ -70,6 +82,7 @@ public partial class ArenaView : Node2D
                 _visual.DrawLayer(this, layer, _ => 1f);
             }
 
+            DrawGates();
             return;
         }
 
@@ -89,6 +102,29 @@ public partial class ArenaView : Node2D
                     DrawRect(rect, (x + y) % 2 == 0 ? FloorA : FloorB);
                 }
             }
+        }
+
+        DrawGates();
+    }
+
+    private void DrawGates()
+    {
+        const float s = Units.PixelsPerUnit;
+        const int fontSize = 14;
+        var font = ThemeDB.FallbackFont;
+        foreach (var (area, label) in _gates)
+        {
+            var rect = new Rect2((float)area.X * s, (float)area.Y * s, (float)area.Width * s, (float)area.Height * s);
+            DrawRect(rect, GateFill);
+            DrawRect(rect, GateEdge, filled: false, width: 2f);
+
+            // Texto acima do portão, centrado e dentro do mapa (portões ficam na borda).
+            var size = font.GetStringSize(label, HorizontalAlignment.Left, -1, fontSize);
+            var maxX = (_map?.Width ?? 0) * s - size.X - 4;
+            var x = Math.Clamp(rect.GetCenter().X - size.X / 2, 4, Math.Max(4, maxX));
+            var at = new Godot.Vector2(x, rect.Position.Y - 6);
+            DrawString(font, at + new Godot.Vector2(1, 1), label, HorizontalAlignment.Left, -1, fontSize, new Color(0, 0, 0, 0.8f));
+            DrawString(font, at, label, HorizontalAlignment.Left, -1, fontSize, GateEdge with { A = 1 });
         }
     }
 
