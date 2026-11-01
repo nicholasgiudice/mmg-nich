@@ -21,9 +21,12 @@ public partial class CameraRig : Camera2D
     private Rect2? _bounds;
     private bool _snapped;
 
-    /// <summary>Define as bordas (em pixels) a partir do mapa da arena.</summary>
-    public void SetBounds(GridMap map) =>
+    /// <summary>Define as bordas (em pixels) a partir do mapa da arena; a câmera vai direto ao jogador no próximo <see cref="Follow"/>.</summary>
+    public void SetBounds(GridMap map)
+    {
         _bounds = new Rect2(0, 0, map.Width * Units.PixelsPerUnit, map.Height * Units.PixelsPerUnit);
+        _snapped = false;
+    }
 
     /// <summary>Chamar uma vez por frame com a posição desenhada do jogador e o ponto de mira (pixels).</summary>
     public void Follow(Vector2 playerPx, Vector2 aimPx, double delta)

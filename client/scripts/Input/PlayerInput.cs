@@ -73,6 +73,9 @@ public sealed class PlayerInput
     /// <summary>Alvo selecionado (clique ou Tab); limpo quando morre ou some.</summary>
     public EntityId? SelectedTarget { get; private set; }
 
+    /// <summary>Esquece o alvo (troca de zona, T-223).</summary>
+    public void ClearTarget() => SelectedTarget = null;
+
     /// <summary>
     /// Ataque básico automático no alvo selecionado (T-033). Ligado por padrão; Esc/limpar o alvo para de atacar.
     /// </summary>

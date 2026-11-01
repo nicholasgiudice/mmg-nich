@@ -404,6 +404,27 @@ public partial class WorldView : Node2D
         return view;
     }
 
+    /// <summary>Apaga todas as unidades e o chão (troca de zona, T-223: os ids da zona nova não têm relação com os da antiga).</summary>
+    public void Clear()
+    {
+        foreach (var view in _views.Values)
+        {
+            view.QueueFree();
+        }
+
+        foreach (var node in _ground.Values)
+        {
+            node.QueueFree();
+        }
+
+        _views.Clear();
+        _ground.Clear();
+        _items.Clear();
+        _previousById.Clear();
+        _indexedPrevious = null;
+        SelectedEntity = null;
+    }
+
     private void RemoveView(EntityId id)
     {
         if (_views.Remove(id, out var view))

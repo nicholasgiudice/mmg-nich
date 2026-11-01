@@ -218,6 +218,15 @@ public sealed class NetAuthority : IGameAuthority, ICombatLogSource, IDisposable
         SendRaw(ProtocolSerializer.Serialize(message), ReliableChannel, DeliveryMethod.ReliableOrdered);
     }
 
+    /// <summary>Mundo aberto (T-214/T-223): morto, pede para renascer na Cidade. O servidor responde com um <see cref="Welcome"/> novo.</summary>
+    public void RequestRespawn()
+    {
+        if (_peer is not null && Status == NetStatus.Playing)
+        {
+            SendRaw(ProtocolSerializer.Serialize(new RespawnRequest()), ReliableChannel, DeliveryMethod.ReliableOrdered);
+        }
+    }
+
     public IReadOnlyList<GameEvent> TakeEvents()
     {
         if (_ready.Count == 0)
