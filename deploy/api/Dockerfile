@@ -8,6 +8,10 @@ COPY src/ src/
 RUN dotnet publish src/Game.Api -c Release -o /out
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0
+# libgssapi-krb5-2: o Npgsql tenta carregar o GSSAPI ao conectar; sem ele, o log mostra "Cannot load library libgssapi_krb5.so.2".
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends libgssapi-krb5-2 \
+    && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY --from=build /out ./
 COPY data/ /app/data/
