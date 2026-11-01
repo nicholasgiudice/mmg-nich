@@ -24,7 +24,7 @@ Com a `Game.Api` (T-211), o cliente deixa o "Jogar online com nome" (T-107) e pa
 
 ## Resultado
 
-**Feito, menos o teste de ponta a ponta contra a VPS** (Windows, 2026-10-31). `dotnet build client/` sem avisos, `./scripts/check.sh` completo passa. O critério "entrar, criar personagem e jogar contra a VPS" **não foi verificado**. A API da VPS só é alcançável dentro da rede do Compose (a T-213, Caddy, não foi feita), e o acesso do agente à VPS por SSH foi negado. Veja "Pendências".
+**Feito** (Windows, 2026-10-31). `dotnet build client/` sem avisos, `./scripts/check.sh` completo passa. O teste de ponta a ponta contra a VPS foi feito depois da T-213 (veja "Teste contra a VPS").
 
 **Telas** (`client/scripts/Account/AccountScreen.cs`, cena `scenes/Account.tscn`, agora a cena inicial do projeto)
 - **Entrar:** servidor de contas (URL da API), servidor do jogo (`host:porta`; padrão = host da API e porta 7777), e-mail e senha (campo oculto). Botões "Entrar" e "Criar conta" (cadastra e já entra). Enter na senha entra.
@@ -51,10 +51,11 @@ Com a `Game.Api` (T-211), o cliente deixa o "Jogar online com nome" (T-107) e pa
 Argumentos de depuração novos (depois de `--`): `--api=url`, `--game-server=host:porta`, `--login=email:senha`, `--register`, `--create=Nome:class.id`, `--play=Nome`, `--account-view=create` e `--capture=arquivo.png`.
 
 **Decisões**
-- O endereço da API não fica gravado: o padrão é `http://127.0.0.1:8080` ou `--api=`. Quando a T-213 publicar a API com HTTPS, troque o padrão `DefaultApi` em `AccountScreen` para o endereço público.
+- O endereço da API não fica gravado: o padrão `DefaultApi` em `AccountScreen` é `https://api.nich.click` (publicada pela T-213); para a API local use `--api=http://127.0.0.1:8080`.
 - O encontro em `MatchSettings` é irrelevante online (a sala do servidor decide); fica o primeiro da lista.
 
+**Teste contra a VPS** (2026-10-31, depois da T-213): com a API em `https://api.nich.click` (certificado válido) e `MMO_GAME_SERVER_ADDRESS` definido, o humano fez pelo cliente: criar conta, entrar, criar personagem, Jogar (entrou no servidor da VPS com o token de jogo) e Apagar. Tudo funcionou.
+- Na primeira tentativa o servidor recusou com "os dados do jogo (data/) são diferentes dos do servidor": a imagem do servidor na VPS era de antes da T-052 (os mapas `.tmj` entram na impressão digital). Resolvido refazendo o deploy a partir da `main` atual (conteúdo `26cdbd09f23a42d3`). Lembrete: toda mudança em `data/` exige novo deploy do servidor.
+
 **Pendências**
-- **Teste de ponta a ponta contra a VPS** (critério de aceite). Precisa da API acessível de fora: a T-213 (Caddy), ou um túnel SSH até o contêiner `api`, ou publicar a porta 8080 temporariamente. Também precisa de `MMO_GAME_SERVER_ADDRESS=31.97.162.124:7777` no `deploy/.env`, para a API mandar o endereço.
-- Depois que o login com conta estiver validado: `GAME_DEV_LOGIN=false` na VPS (pendência da T-212).
-- O botão Apagar não foi testado pela tela, só a chamada à API falsa.
+- `GAME_DEV_LOGIN=false` na VPS (pendência da T-212), agora que o login com conta foi validado.
