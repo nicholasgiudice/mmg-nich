@@ -3,3 +3,9 @@ Autores: Eliza Wyatt (ElizaWy), Lanea Zimmerman (Sharm), Stephen Challener (Reds
 Licença: OGA-BY 3.0 (https://static.opengameart.org/OGA-BY-3.0.txt), também oferecido em CC-BY 3.0.
 Origem: https://opengameart.org/content/lpc-revised-fully-configured-4-seasons-tilesets-for-tiled-map-editor (lpc-tileset-terrain-summer.png)
 Modificações: nenhuma na imagem; o .tsx foi renomeado para data/maps/tilesets/terrain_summer.tsx com o caminho da imagem ajustado.
+
+Tileset de construções (buildings.png)
+Autores: os mesmos do LPC Revised acima; configurado para o Tiled por JaidynReiman.
+Licença: OGA-BY 3.0 (https://static.opengameart.org/OGA-BY-3.0.txt), também oferecido em CC-BY 3.0.
+Origem: https://opengameart.org/content/lpc-revised-fully-configured-4-seasons-tilesets-for-tiled-map-editor (lpc-tileset-buildings.png)
+Modificações: nenhuma na imagem; o .tsx foi renomeado para data/maps/tilesets/buildings.tsx com o caminho da imagem ajustado.

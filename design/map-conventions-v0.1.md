@@ -119,7 +119,15 @@ Para conferir um mapa editado, rode `./scripts/check.sh --fast` (os testes carre
 | `farm.tmj` | `map.farm` | `arena.farm` | `encounter.four_rats` |
 | `broken_gate.tmj` | `map.broken_gate` | `arena.broken_gate` | `encounter.skeleton_guard` |
 | `matriarch_nest.tmj` | `map.matriarch_nest` | `arena.matriarch_nest` | `encounter.forest_matriarch` |
+| `city.tmj` | `map.city` | `arena.city` (T-214) | `zone.city` (T-055) |
+| `vigil_fields.tmj` | `map.vigil_fields` | `arena.vigil_fields` (T-214) | `zone.vigil_fields` (T-055) |
 
 Convertidos na T-051 com a mesma grade célula a célula; as ASCII originais ficam em `tests/Game.Sim.Tests/MapFixtures/ascii-arenas.json` para o teste de equivalência. Na T-052, as camadas visuais foram preenchidas automaticamente a partir da colisão, com o tileset `tilesets/terrain_summer.tsx` (LPC Revised): grama variada em `ground`, tufos em `decoration`, arbustos na borda e em blocos grandes, rochas nos obstáculos pequenos em `walls`, e pinheiros na borda de baixo (copa em `above`). É um ponto de partida para retocar no Tiled; a colisão não mudou.
+
+**Cidade e Campos (T-055).** Mesma colisão das arenas ASCII da T-214, célula a célula (estão no mesmo arquivo de fixtures), para não mexer nos pontos de `zones.json` nem nos testes de design dos Campos. O visual foi montado com os wangsets do LPC Revised, como o pincel de terreno do Tiled: Summer Terrain (grama, terra, areia), Fences (cercas), Brick Walls e Flat Roofs do tileset novo `tilesets/buildings.tsx` (muros, fachadas e telhados). Camadas extras: `paths` (canteiro arado, por cima do chão) e `walls_detail` (portas, janelas, placas e telhados, por cima de `walls`).
+- Cidade: muralha de tijolo cinza aberta no portão leste, ruas de terra, praça de areia com canteiros, seis prédios (Templo, Salão de Treinamento, Ferreiro, Estalagem, Armazém, Mercado) com porta, janelas e placa.
+- Campos: Estrada Leste do portão oeste para o leste, ramais à Fazenda, ao Acampamento e ao sul da Clareira; Fazenda com cerca, casa e canteiro arado; Acampamento com paliçada e chão batido; pedras, arbustos e árvores nos obstáculos.
+- **Objetos:** `player_spawn` de nascimento e de chegada (`start`, `from_fields`, `from_city`); `transitions` com os portões; em `areas`, marcadores de NPC (classe `npc`, propriedades `npc`, `name`, `building`; sem lógica ainda), a praça (`plaza`) e as subáreas dos Campos (`subarea`, o nome é o da subárea).
+- **`zones.json` continua sendo a fonte dos portões e dos surgimentos de monstros.** O servidor ainda lê os portões de lá (T-214); as `transitions` dos mapas repetem os mesmos retângulos e chegadas, e o teste `ZoneMapTests` garante que batem. Passar o servidor a ler os portões e surgimentos do mapa é mudança de código (`src/`), fica para uma tarefa própria.
 
 No cliente (T-052): as camadas de tiles são desenhadas na ordem do arquivo, menos `collision`. `above` vai por cima das unidades e fica transparente num raio de 2 tiles em volta do jogador. O cliente acha a imagem do `.tsx` pelo nome do arquivo em `client/assets/art/tiles/`. Espelhamento horizontal e vertical são desenhados; a rotação de 90° (bit diagonal) não.
