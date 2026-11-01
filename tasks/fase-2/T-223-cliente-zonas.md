@@ -24,7 +24,7 @@ O servidor da T-214 tem várias zonas e portões. O cliente precisa trocar de ma
 
 ## Resultado
 
-**Feito no servidor local; falta o teste online na VPS** (Windows, 2026-10-31). `dotnet build client/` sem avisos e `./scripts/check.sh` completo passa. O critério "ir da Cidade aos Campos e voltar online, morrer e renascer" foi verificado contra o `Game.Server` local com `--world --dev-login`. Na VPS o Compose ainda roda a sala de encontro (`GAME_WORLD=false`, veja "Pendências").
+**Feito** (Windows, 2026-10-31). `dotnet build client/` sem avisos e `./scripts/check.sh` completo passa. O critério "ir da Cidade aos Campos e voltar online, morrer e renascer" foi verificado primeiro contra o `Game.Server` local com `--world --dev-login`. Depois o humano testou online, contra a VPS com `GAME_WORLD=true` e `GAME_DEV_LOGIN=false`: entrou com conta, foi aos Campos, voltou, morreu e renasceu. Tudo funcionou.
 
 **Troca de zona** (`Main.UpdateOnline`, a cada `Welcome` novo):
 - arena da zona (mapa do Tiled se a arena tiver `source`; hoje `arena.city` e `arena.vigil_fields` são provisórios em ASCII e aparecem como grade, T-052);
@@ -51,5 +51,4 @@ O servidor da T-214 tem várias zonas e portões. O cliente precisa trocar de ma
 - Não verificado: clicar o botão com o mouse (o argumento chama o mesmo método) e voltar dos Campos à Cidade pelo portão oeste a pé (o servidor testa isso na T-214).
 
 **Pendências**
-- **VPS: `GAME_WORLD=true` no `deploy/.env`** e reiniciar o game-server, para o servidor da VPS rodar o mundo aberto em vez da sala de encontro. Depois, o teste online de ponta a ponta pelo humano: entrar com conta, ir aos Campos, voltar, morrer e renascer.
 - **T-055:** os mapas do Tiled da Cidade e dos Campos (o cliente já desenha quando a arena tiver `source`).
