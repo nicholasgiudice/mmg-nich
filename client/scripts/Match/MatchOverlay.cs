@@ -13,6 +13,7 @@ public partial class MatchOverlay : Control
     private readonly Label _body = new();
     private readonly Button _continue = new() { Text = "Continuar" };
     private readonly Button _next = new() { Text = "Próximo encontro" };
+    private readonly Button _restart = new() { Text = "Reiniciar (R)" };
 
     public event Action? ContinueRequested;
     public event Action? RestartRequested;
@@ -53,7 +54,7 @@ public partial class MatchOverlay : Control
         buttons.AddThemeConstantOverride("separation", 8);
         box.AddChild(buttons);
 
-        var restart = new Button { Text = "Reiniciar (R)" };
+        var restart = _restart;
         var menu = new Button { Text = "Menu" };
         _continue.Pressed += () => ContinueRequested?.Invoke();
         restart.Pressed += () => RestartRequested?.Invoke();
@@ -67,9 +68,11 @@ public partial class MatchOverlay : Control
         }
     }
 
-    public void ShowPause(MatchSettings settings, string encounterName)
+    /// <summary>Pausa (Esc). <paramref name="canRestart"/> false no mundo aberto (T-223): não há encontro para reiniciar nem seed.</summary>
+    public void ShowPause(MatchSettings settings, string encounterName, bool canRestart = true)
     {
-        Open("Pausado", new Color(0.9f, 0.9f, 0.9f), $"{encounterName}\nSeed: {settings.Seed}", canContinue: true, canAdvance: false);
+        Open("Pausado", new Color(0.9f, 0.9f, 0.9f), canRestart ? $"{encounterName}\nSeed: {settings.Seed}" : encounterName,
+            canContinue: true, canAdvance: false, canRestart);
     }
 
     public void ShowResult(MatchTracker t, MatchSettings settings, string encounterName, bool hasNext)
@@ -90,7 +93,7 @@ public partial class MatchOverlay : Control
             $"Cura feita: {N(t.Healing)}\n" +
             $"Mortes de jogadores: {t.PlayerDeaths}\n" +
             $"Inimigos derrotados: {t.EnemiesKilled}";
-        Open(title, color, body, canContinue: false, canAdvance: hasNext);
+        Open(title, color, body, canContinue: false, canAdvance: hasNext, canRestart: true);
     }
 
     public void Close() => Visible = false;
@@ -103,8 +106,9 @@ public partial class MatchOverlay : Control
         }
     }
 
-    private void Open(string title, Color color, string body, bool canContinue, bool canAdvance)
+    private void Open(string title, Color color, string body, bool canContinue, bool canAdvance, bool canRestart)
     {
+        _restart.Visible = canRestart;
         _title.Text = title;
         _title.AddThemeColorOverride("font_color", color);
         _body.Text = body;
