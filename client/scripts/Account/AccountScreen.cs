@@ -19,7 +19,7 @@ namespace MmoRpgClient.Account;
 public partial class AccountScreen : Control
 {
     public const string ScenePath = "res://scenes/Account.tscn";
-    public const string DefaultApi = "http://127.0.0.1:8080";
+    public const string DefaultApi = "https://api.nich.click";
 
     private static readonly string[] DirectArgs = ["encounter", "class", "fake-authority", "demo-input", "auto-move", "hold", "ranks", "rank", "server"];
     private static readonly Color ErrorColor = new(1f, 0.5f, 0.4f);
