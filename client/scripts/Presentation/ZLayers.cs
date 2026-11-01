@@ -10,5 +10,11 @@ public static class ZLayers
     public const int Units = 5;
 
     /// <summary>Camada <c>above</c> do mapa do Tiled (copas, telhados): por cima das unidades (T-052).</summary>
-    public const int Above = 6;
+    public const int Above = 7;
+
+    /// <summary>Impactos, projéteis e escudos (T-054): por cima das unidades e da decoração alta.</summary>
+    public const int Effects = 8;
+
+    /// <summary>Contorno dos telegráfos (T-054): por cima de qualquer efeito, para o aviso nunca sumir.</summary>
+    public const int TelegraphEdges = 9;
 }

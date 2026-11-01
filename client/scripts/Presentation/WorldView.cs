@@ -32,6 +32,16 @@ public partial class WorldView : Node2D
     private const float ItemSpread = 0.55f;
     private ContentCatalog _content = ContentCatalog.Empty;
     private SpriteCatalog _sprites = SpriteCatalog.Empty;
+    private EffectCatalog _effects = EffectCatalog.Empty;
+
+    /// <summary>Projéteis desenhados neste frame: o impacto no alvo espera a chegada (s).</summary>
+    private readonly Dictionary<(EntityId Source, EntityId Target), double> _flights = new();
+
+    /// <summary>Lado (pixels) do quadro de impacto.</summary>
+    private const float ImpactSizePx = 40f;
+
+    /// <summary>Lado (pixels) do quadro do projétil.</summary>
+    private const float ProjectileSizePx = 26f;
     private (string Text, ulong AtMs) _lastRejection;
 
     /// <summary>A mesma mensagem de rejeição não se repete antes disto (botão mantido fora de alcance).</summary>
@@ -53,10 +63,14 @@ public partial class WorldView : Node2D
     /// <summary>Sprites por definição (T-053); vazio = círculos.</summary>
     public void SetSprites(SpriteCatalog sprites) => _sprites = sprites;
 
+    /// <summary>Efeitos do pacote (T-054); vazio = só formas desenhadas.</summary>
+    public void SetEffects(EffectCatalog effects) => _effects = effects;
+
     /// <summary>Atualiza os nós a partir da autoridade. Chamar uma vez por frame, depois de <c>Advance</c>.</summary>
     public void Render(IGameAuthority authority, IReadOnlyList<GameEvent> events)
     {
         var latest = authority.Latest;
+        _flights.Clear();
         foreach (var e in events)
         {
             switch (e)
@@ -66,6 +80,7 @@ public partial class WorldView : Node2D
                     break;
                 case DamageDealt hit when hit.Amount > 0:
                     ShowText(hit.Target, DamageText(hit), Hud.HudTheme.School(hit.School));
+                    Impact(hit, authority.ControlledEntity);
                     if (hit.Applied > 0 && _views.TryGetValue(hit.Target, out var hitView))
                     {
                         hitView.Flash();
@@ -93,6 +108,8 @@ public partial class WorldView : Node2D
                         userView.PlayAttack();
                     }
 
+                    Projectiles(used.Source, used.Targets, used.AbilityId, authority.ControlledEntity);
+
                     if (MultiHit(latest, used.Source, used.AbilityId) is { } first)
                     {
                         // T-064: habilidade com vários acertos — "×3" uma vez e o rastro de cada acerto em alvo único.
@@ -106,6 +123,8 @@ public partial class WorldView : Node2D
                     {
                         ShotTrails(extra.Source, extra.Targets, extraDef);
                     }
+
+                    Projectiles(extra.Source, extra.Targets, extra.AbilityId, authority.ControlledEntity);
 
                     break;
                 case Game.Core.Combat.Effects.ChainJumped jump
@@ -174,8 +193,9 @@ public partial class WorldView : Node2D
             if (state.TryGet<AreaState>() is { } area)
             {
                 seen.Add(state.Id);
-                GetOrCreateGround<AreaView>(state.Id).Apply(area, Units.ToPixels(transform.Position), now,
-                    area.OwnerFaction != playerFaction);
+                var areaView = GetOrCreateGround<AreaView>(state.Id);
+                areaView.SetArt(_effects.Area(area.AreaId), (int)state.Id.Value);
+                areaView.Apply(area, Units.ToPixels(transform.Position), now, area.OwnerFaction != playerFaction);
                 continue;
             }
 
@@ -188,6 +208,7 @@ public partial class WorldView : Node2D
             var view = GetOrCreateView(state.Id);
             var controlled = authority.ControlledEntity == state.Id;
             view.ApplyState(state, controlled, SelectedEntity == state.Id, _sprites);
+            view.ApplyShield(_effects.Shield, state.TryGet<ShieldState>() is { Total: > 0 });
             var (chips, marks) = StatusVisuals.From(state.TryGet<StatusEffects>(), _content, now);
             view.ApplyStatus(chips, marks);
 
@@ -356,6 +377,47 @@ public partial class WorldView : Node2D
             }
         }
     }
+
+    /// <summary>
+    /// Projétil desenhado (T-054) de quem usou até cada alvo. Com efeitos reduzidos, só os que saem do jogador ou
+    /// vão para ele.
+    /// </summary>
+    private void Projectiles(EntityId source, IReadOnlyList<EntityId> targets, string abilityId, EntityId? me)
+    {
+        if (_effects.Projectile(abilityId) is not { } anim || !_views.TryGetValue(source, out var from))
+        {
+            return;
+        }
+
+        foreach (var t in targets)
+        {
+            if (t == source || !_views.TryGetValue(t, out var to) || (EffectSettings.Reduced && source != me && t != me))
+            {
+                continue;
+            }
+
+            var a = BodyCenter(from);
+            var b = BodyCenter(to);
+            AddChild(EffectView.Projectile(anim, a, b, ProjectileSizePx));
+            _flights[(source, t)] = EffectView.FlightSeconds(a, b);
+        }
+    }
+
+    /// <summary>Impacto no alvo (T-054), pela fonte ou escola do dano; espera o projétil chegar, se houver.</summary>
+    private void Impact(DamageDealt hit, EntityId? me)
+    {
+        if (_effects.Impact(hit.SourceId, hit.School) is not { } anim || !_views.TryGetValue(hit.Target, out var target)
+            || (EffectSettings.Reduced && hit.Source != me && hit.Target != me))
+        {
+            return;
+        }
+
+        var delay = _flights.GetValueOrDefault((hit.Source, hit.Target));
+        AddChild(EffectView.Impact(anim, BodyCenter(target), ImpactSizePx, delay, EffectSettings.Reduced ? 0.7f : 1f));
+    }
+
+    /// <summary>Meio do corpo desenhado (pixels): o pivô fica nos pés.</summary>
+    private static Godot.Vector2 BodyCenter(EntityView view) => view.Position + new Godot.Vector2(0, -view.HeadPx * 0.45f);
 
     public void ShowText(EntityId id, string text, Color color)
     {

@@ -64,6 +64,8 @@ public partial class EntityView : Node2D
 
     public static EntityView Create(EntityId id) => new() { Id = id, Name = $"Entity{id.Value}" };
 
+    private readonly ShieldView _shield = new() { ZAsRelative = false, ZIndex = ZLayers.Effects, Visible = false };
+
     public override void _Ready()
     {
         TextureFilter = TextureFilterEnum.Nearest;
@@ -73,6 +75,40 @@ public partial class EntityView : Node2D
         _nameLabel.AddThemeColorOverride("font_outline_color", Colors.Black);
         _nameLabel.Size = new Godot.Vector2(120, 16);
         AddChild(_nameLabel);
+        AddChild(_shield);
+    }
+
+    /// <summary>Bolha de escudo (T-054) enquanto a unidade tem escudo ativo; <paramref name="anim"/> null = nada.</summary>
+    public void ApplyShield(EffectAnimation? anim, bool active)
+    {
+        _shield.Animation = anim;
+        _shield.Visible = anim is not null && active && _alive;
+        // Centro no corpo, metade da altura até a cabeça. A bolha ocupa ~60% do quadro do pacote: o quadro é maior
+        // que a unidade para ela cobrir o corpo todo.
+        _shield.Position = new Godot.Vector2(0, -HeadPx * 0.45f);
+        _shield.SizePx = Math.Max(HeadPx * 1.9f, _radiusPx * 4f);
+    }
+
+    private sealed partial class ShieldView : Node2D
+    {
+        private double _time;
+
+        public EffectAnimation? Animation { get; set; }
+
+        public float SizePx { get; set; }
+
+        public override void _Ready() => TextureFilter = TextureFilterEnum.Nearest;
+
+        public override void _Process(double delta)
+        {
+            if (Visible)
+            {
+                _time += delta;
+                QueueRedraw();
+            }
+        }
+
+        public override void _Draw() => Animation?.Draw(this, Godot.Vector2.Zero, SizePx, _time, new Color(1, 1, 1, EffectSettings.ShieldAlpha));
     }
 
     /// <summary>Atualiza dados lentos (vida, nome, cor) a partir do snapshot mais recente.</summary>
