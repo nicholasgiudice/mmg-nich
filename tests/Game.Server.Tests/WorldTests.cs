@@ -107,7 +107,7 @@ public class WorldTests
         var c = w.Join("aria", "class.archer");
 
         Assert.Equal("zone.city", c.Welcome!.EncounterId);
-        Assert.Equal("arena.city", c.Welcome.ArenaId);
+        Assert.Equal("map.city", c.Welcome.ArenaId);
         var (zone, e) = w.Where(c);
         Assert.Same(w.City, zone);
         Assert.NotNull(e.TryGet<CharacterProgress>());
@@ -136,7 +136,7 @@ public class WorldTests
         }
 
         Assert.Equal("zone.vigil_fields", c.Welcome!.EncounterId);
-        Assert.Equal("arena.vigil_fields", c.Welcome.ArenaId);
+        Assert.Equal("map.vigil_fields", c.Welcome.ArenaId);
         Assert.Equal(2, c.Welcome.Epoch);
         Assert.True(hero.IsRemoved);
         var (zone, moved) = w.Where(c);

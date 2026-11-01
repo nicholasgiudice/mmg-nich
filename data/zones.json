@@ -4,7 +4,7 @@
     {
       "id": "zone.city",
       "name": "Cidade-Fortaleza",
-      "arena": "arena.city",
+      "arena": "map.city",
       "kind": "safe",
       "spawn": { "x": 20.5, "y": 15.5 },
       "restPerSecond": 0.05,
@@ -15,7 +15,7 @@
     {
       "id": "zone.vigil_fields",
       "name": "Campos da Vigília",
-      "arena": "arena.vigil_fields",
+      "arena": "map.vigil_fields",
       "kind": "field",
       "spawn": { "x": 3.5, "y": 31.5 },
       "corpse": 5,
