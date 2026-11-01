@@ -1,0 +1,22 @@
+# Caddy (T-213): HTTPS automático (Let's Encrypt) na frente dos serviços HTTP.
+# Um bloco por domínio. O domínio vem de deploy/.env (MMO_API_DOMAIN); o certificado fica no volume caddy_data.
+# Para acrescentar outro site (ex.: o site do jogo em nich.click), copie o padrão:
+#   {$MMO_SITE_DOMAIN} {
+#       import common
+#       root * /srv/site
+#       file_server
+#   }
+# e passe a variável e o volume/diretório no serviço caddy do deploy/compose.yml.
+
+(common) {
+	encode zstd gzip
+	log
+}
+
+# API de contas e personagens (Game.Api, só na rede interna do Compose).
+{$MMO_API_DOMAIN} {
+	import common
+	# Caddy substitui o X-Forwarded-For pelo IP real do cliente (não confia no que vem de fora);
+	# a API usa esse IP no limite de cadastros e logins.
+	reverse_proxy api:8080
+}

@@ -1,0 +1,13 @@
+# Agenda o backup diário do banco (T-213). Instalação em mmo-backup-db.service.
+
+[Unit]
+Description=MMO RPG - backup diário do PostgreSQL
+
+[Timer]
+# 06:30 UTC = 03:30 em Brasília, fora do horário de jogo.
+OnCalendar=*-*-* 06:30:00 UTC
+RandomizedDelaySec=10min
+Persistent=true
+
+[Install]
+WantedBy=timers.target

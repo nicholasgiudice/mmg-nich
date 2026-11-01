@@ -62,15 +62,16 @@ O desenvolvimento na VPS roda como `root`, então não foi preciso adicionar usu
 
 ### Portas abertas (ufw)
 
-Por padrão, toda entrada é negada e toda saída é permitida. Só três portas aceitam entrada, em IPv4 e IPv6:
+Por padrão, toda entrada é negada e toda saída é permitida. Só quatro portas aceitam entrada, em IPv4 e IPv6:
 
 | Porta | Uso |
 |---|---|
 | `22/tcp` | SSH |
+| `80/tcp` | HTTP (Caddy: desafio do Let's Encrypt e redirecionamento para HTTPS) |
 | `443/tcp` | HTTPS (Caddy → API) |
 | `7777/udp` | servidor de jogo |
 
-> **Atenção:** portas publicadas pelo Docker (`ports:` no Compose) **ignoram o ufw**, porque o Docker escreve as próprias regras de iptables antes das do ufw. Publique só `443` (Caddy) e `7777/udp` (servidor de jogo). Postgres e API ficam apenas na rede interna do Compose. Para expor algo só localmente, use `127.0.0.1:porta:porta`.
+> **Atenção:** portas publicadas pelo Docker (`ports:` no Compose) **ignoram o ufw**, porque o Docker escreve as próprias regras de iptables antes das do ufw. Publique só `80`/`443` (Caddy) e `7777/udp` (servidor de jogo). Postgres e API ficam apenas na rede interna do Compose. Para expor algo só localmente, use `127.0.0.1:porta:porta`.
 
 ### Como verificar
 
@@ -147,6 +148,7 @@ Configurado na T-210. O `deploy/compose.yml` sobe o serviço `postgres` (imagem 
 cp deploy/.env.example deploy/.env
 sed -i "s/troque-esta-senha/$(openssl rand -hex 24)/" deploy/.env
 sed -i "s|^MMO_SESSION_KEY=.*|MMO_SESSION_KEY=$(openssl rand -base64 32)|; s|^MMO_GAME_TICKET_KEY=.*|MMO_GAME_TICKET_KEY=$(openssl rand -base64 32)|" deploy/.env
+sed -i "s|^MMO_API_DOMAIN=.*|MMO_API_DOMAIN=api.nich.click|" deploy/.env   # domínio da API (Caddy, T-213)
 docker compose -f deploy/compose.yml up -d --build
 docker compose -f deploy/compose.yml logs migrate
 ```
@@ -193,7 +195,7 @@ Criada na T-211. ASP.NET Core minimal API no serviço `api` do Compose (porta 80
 - O token de jogo é assinado com `MMO_GAME_TICKET_KEY`. O servidor de jogo valida com a mesma chave, sem chamar a API (`src/Game.Auth`: `GameTicketReplayGuard` faz assinatura, servidor, expiração e uso único).
 - Variáveis em `deploy/.env` (modelo em `deploy/.env.example`): `MMO_SESSION_KEY` e `MMO_GAME_TICKET_KEY` (obrigatórias), `MMO_GAME_SERVER_ID`, `MMO_GAME_SERVER_ADDRESS`, `MMO_AUTH_RATE_LIMIT`.
 
-**Testar de dentro da rede do Compose** (enquanto não há Caddy):
+**Testar:** `curl https://api.nich.click/` → `{"service":"mmo-api","status":"ok"}`. De dentro da rede do Compose, sem passar pelo Caddy:
 
 ```bash
 docker run --rm --network mmo-rpg_default curlimages/curl:8.10.1 -s http://api:8080/
@@ -204,6 +206,52 @@ docker run --rm --network mmo-rpg_default curlimages/curl:8.10.1 -s http://api:8
 **Conectar do Windows:** no cliente, menu **Jogar online** com `31.97.162.124:7777`, ou abra o cliente com `--server=31.97.162.124:7777`. O conteúdo (`data/`) do cliente precisa ser o mesmo do servidor: o fingerprint é conferido na conexão.
 
 **Alternativa com systemd** (se o Docker atrapalhar o UDP ou o debug): `deploy/systemd/mmo-game-server.service` é uma unidade de exemplo (publica em `/opt/mmo-rpg/game-server`, usuário `mmo-game`, `Restart=always`). Os passos de instalação estão no comentário do arquivo. Ela **não está ativada**, e as duas formas não podem rodar juntas, porque usam a mesma porta.
+
+### HTTPS (Caddy)
+
+Configurado na T-213. O serviço `caddy` do `deploy/compose.yml` publica `80/tcp` e `443/tcp`, obtém e renova sozinho o certificado do Let's Encrypt e encaminha para a `api`. A configuração está em `deploy/caddy/Caddyfile`; os certificados ficam no volume `caddy_data` (não apague: reemitir muitas vezes esbarra no limite do Let's Encrypt).
+
+- O domínio vem de `MMO_API_DOMAIN` em `deploy/.env` (hoje `api.nich.click`, registro A para `31.97.162.124`). O DNS precisa apontar para a VPS **antes** de subir o Caddy, e a porta 80 precisa estar aberta para o desafio.
+- Outro site (ex.: o site do jogo em `nich.click`): acrescente um bloco de domínio no `Caddyfile` (há um modelo no comentário do arquivo), passe a variável do domínio no serviço `caddy` e rode `docker compose -f deploy/compose.yml up -d caddy`.
+- Depois de editar só o `Caddyfile`: `docker compose -f deploy/compose.yml exec caddy caddy reload --config /etc/caddy/Caddyfile`.
+- Logs: `docker compose -f deploy/compose.yml logs -f caddy`.
+
+### Backup do banco
+
+Configurado na T-213. `scripts/backup-db.sh` roda `pg_dump -Fc` (formato custom, compactado) no contêiner `postgres`, confere o arquivo com `pg_restore --list` e grava em `/var/backups/mmo-rpg/mmo-AAAAMMDD-HHMMSS.dump` (UTC), mantendo os últimos 14. Se `BACKUP_RSYNC_DEST` estiver definido, espelha a pasta para fora da VPS por `rsync` sobre SSH. Variáveis (em `deploy/.env` ou no ambiente): `BACKUP_DIR`, `BACKUP_KEEP`, `BACKUP_RSYNC_DEST` (ex.: `usuario@host:/srv/backups/mmo-rpg/`), `BACKUP_SSH_KEY`.
+
+> **Pendente:** o destino fora da VPS ainda não foi escolhido; por enquanto o backup é só local e o script avisa isso a cada execução. Para ativar: crie uma chave (`ssh-keygen -t ed25519 -N '' -f /root/.ssh/mmo-backup`), autorize-a no destino, aceite a chave do host uma vez (`ssh -i /root/.ssh/mmo-backup usuario@host true`) e defina `BACKUP_RSYNC_DEST` e `BACKUP_SSH_KEY` em `deploy/.env`.
+
+**Agendamento:** timer do systemd, todo dia às 06:30 UTC (03:30 em Brasília). Instalado na VPS com:
+
+```bash
+cp deploy/systemd/mmo-backup-db.service deploy/systemd/mmo-backup-db.timer /etc/systemd/system/
+systemctl daemon-reload && systemctl enable --now mmo-backup-db.timer
+systemctl list-timers mmo-backup-db.timer   # próxima execução
+systemctl start mmo-backup-db.service       # rodar agora
+journalctl -u mmo-backup-db                 # logs
+```
+
+**Teste de restauração** (num PostgreSQL descartável e vazio, sem tocar no banco do jogo):
+
+```bash
+docker run --rm -d --name mmo-restore-test -e POSTGRES_PASSWORD=test postgres:17-alpine
+until docker exec mmo-restore-test pg_isready -U postgres; do sleep 1; done
+docker exec mmo-restore-test createdb -U postgres mmo_restore
+docker exec -i mmo-restore-test pg_restore -U postgres -d mmo_restore --no-owner --exit-on-error \
+  < "$(ls -1t /var/backups/mmo-rpg/*.dump | head -1)"
+docker exec mmo-restore-test psql -U postgres -d mmo_restore -c 'select count(*) from accounts' -c 'select count(*) from characters'
+docker rm -f mmo-restore-test
+```
+
+**Restaurar de verdade** (perda do banco): pare quem escreve (`docker compose -f deploy/compose.yml stop api game-server`), recrie o banco e restaure o dump:
+
+```bash
+docker compose -f deploy/compose.yml exec -T postgres dropdb -U mmo --force mmo
+docker compose -f deploy/compose.yml exec -T postgres createdb -U mmo mmo
+docker compose -f deploy/compose.yml exec -T postgres pg_restore -U mmo -d mmo --exit-on-error < /var/backups/mmo-rpg/<arquivo>.dump
+docker compose -f deploy/compose.yml up -d
+```
 
 ## Documentação
 
