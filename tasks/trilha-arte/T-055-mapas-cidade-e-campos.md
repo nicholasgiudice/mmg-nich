@@ -56,7 +56,17 @@
   - `client/assets/art/tiles/` (imagem do tileset novo e créditos) e `CREDITS.md`;
   - `tests/` (fixtures, contagem de 5 para 7, ids das arenas em `WorldTests` e o teste novo).
 
+**Retoques do designer no Tiled** (2026-11-01). `./scripts/check.sh` completo passa, inclusive `Game.Design.Tests`.
+- Cidade, só visual:
+  - um trecho de rua refeito ao sul da praça (x 16–25, y 20–21);
+  - quatro enfeites nos cantos de dentro da muralha, na camada `walls`, sem colisão.
+- Campos, com mudança de colisão:
+  - árvore em (10–12, 6–11) trocada por uma menor, que bloqueia (11, 9) e (11, 10) em vez de (10–11, 10–11);
+  - as pedras em (14–15, 48–49) e (60–61, 58–59) foram reduzidas a um tile cada, (15, 49) e (61, 59);
+  - um objeto 3×3 novo em (4–6, 52–54), na camada `walls`, sem colisão (dá para atravessar).
+- A colisão nova dos Campos foi aceita pelo designer. A grade de referência de `arena.vigil_fields` em `tests/Game.Sim.Tests/MapFixtures/ascii-arenas.json` foi atualizada para ela. Com isso, a colisão dos Campos não é mais idêntica à da arena ASCII da T-214, mas os testes de percurso e de design continuam passando.
+
 **Pendências**
-- **Aprovação do designer** (critério de aceite). Pode ser no playtest de exploração ou pelas imagens, com retoques no Tiled se quiser.
+- **Aprovação final do designer** (critério de aceite). Os retoques acima já foram feitos; a aprovação pode sair no playtest de exploração.
 - Fazer o servidor ler portões e surgimentos do mapa (tarefa de código).
 - Portões norte (Floresta) e oeste (Ruínas) da Cidade: na fase 3, com as zonas novas.
