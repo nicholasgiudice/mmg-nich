@@ -116,6 +116,17 @@ public class WorldTests
     }
 
     [Fact]
+    public void Player_entity_carries_the_character_name_and_keeps_the_class()
+    {
+        using var w = new WorldRig();
+        var c = w.Join("aria", "class.archer");
+
+        var info = w.Where(c).Entity.Get<UnitInfo>();
+        Assert.Equal("aria", info.Name);
+        Assert.Equal("class.archer", info.DefinitionId);
+    }
+
+    [Fact]
     public void Walking_into_the_east_gate_moves_to_the_fields_with_the_same_state_and_back()
     {
         using var w = new WorldRig();

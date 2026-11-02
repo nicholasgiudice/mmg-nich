@@ -10,7 +10,8 @@ namespace MmoRpgClient.Account;
 /// Tela inicial (T-220): login/cadastro na <c>Game.Api</c>, lista de personagens, criação (nome + classe, com descrição
 /// e prévia do sprite) e exclusão com confirmação. "Jogar" pede o token de jogo e conecta no servidor com ele.
 /// O token de sessão fica só em memória (<see cref="ApiClient"/>); senha e tokens nunca vão para disco.
-/// "Modo de teste" abre o menu de encontros locais (T-024). Argumentos de depuração (depois de <c>--</c>):
+/// Os endereços da API e do servidor do jogo não aparecem na tela: vêm do padrão ou dos argumentos. O jogo é só online; o menu
+/// de encontros locais (T-024) só abre pelos argumentos de partida direta. Argumentos de depuração (depois de <c>--</c>):
 /// <c>--api=url</c>, <c>--game-server=host:porta</c>, <c>--login=email:senha</c> (entra sozinho), <c>--register</c>
 /// (cria a conta antes), <c>--create=Nome:class.id</c>, <c>--play=Nome</c>, <c>--account-view=create</c> e
 /// <c>--capture=caminho.png</c> (salva a tela após 2,5 s e fecha).
@@ -107,26 +108,25 @@ public partial class AccountScreen : Control
     private void ShowLogin()
     {
         Clear("Entrar");
-        var api = Field("Servidor de contas", s_api?.BaseUrl ?? _args.GetValueOrDefault("api", DefaultApi));
-        var game = Field("Servidor do jogo (host:porta, usado se a conta não informar)", s_gameServer ?? _args.GetValueOrDefault("game-server", GameServerFrom(api.Text)));
+        var api = s_api?.BaseUrl ?? _args.GetValueOrDefault("api", DefaultApi);
+        var game = s_gameServer ?? _args.GetValueOrDefault("game-server", GameServerFrom(api));
         var email = Field("E-mail", s_email ?? "");
         var password = Field("Senha", "");
         password.Secret = true;
-        api.TextChanged += text => game.Text = s_gameServer ?? _args.GetValueOrDefault("game-server", GameServerFrom(text));
-        password.TextSubmitted += _ => Forget(Login(api.Text, game.Text, email.Text, password.Text, register: false));
+        password.TextSubmitted += _ => Forget(Login(api, game, email.Text, password.Text, register: false));
 
         var buttons = Row();
-        buttons.AddChild(ButtonFor("Entrar", () => Forget(Login(api.Text, game.Text, email.Text, password.Text, register: false)), 140));
-        buttons.AddChild(ButtonFor("Criar conta", () => Forget(Login(api.Text, game.Text, email.Text, password.Text, register: true)), 140));
+        buttons.AddChild(ButtonFor("Entrar", () => Forget(Login(api, game, email.Text, password.Text, register: false)), 140));
+        buttons.AddChild(ButtonFor("Criar conta", () => Forget(Login(api, game, email.Text, password.Text, register: true)), 140));
         _root.AddChild(Hint("Criar conta usa o e-mail e a senha acima (senha de 8 a 128 caracteres) e já entra."));
         AddStatus();
-        AddLocalMode();
+        (s_email is null ? email : password).GrabFocus();
     }
 
     private async Task ShowCharacters()
     {
         Clear("Personagens");
-        _root.AddChild(Hint($"Conta: {s_api?.Email} · {s_api?.BaseUrl}"));
+        _root.AddChild(Hint($"Conta: {s_api?.Email}"));
         var list = new ItemList { CustomMinimumSize = new Godot.Vector2(700, 200) };
         _root.AddChild(list);
         var buttons = Row();
@@ -138,7 +138,6 @@ public partial class AccountScreen : Control
         buttons.AddChild(ButtonFor("Sair da conta", Logout, 140));
         list.ItemActivated += _ => Forget(Play(list));
         AddStatus();
-        AddLocalMode();
 
         await Run(async () =>
         {
@@ -228,13 +227,13 @@ public partial class AccountScreen : Control
     {
         if (!Uri.TryCreate(apiUrl.Trim(), UriKind.Absolute, out var uri) || uri.Scheme is not ("http" or "https"))
         {
-            SetStatus("Endereço do servidor de contas inválido (ex.: http://127.0.0.1:8080).", ErrorColor);
+            SetStatus("Servidor de contas mal configurado. Avise quem mantém o jogo.", ErrorColor);
             return;
         }
 
         if (OnlineSettings.Parse(gameServer, "") is null)
         {
-            SetStatus("Endereço do servidor do jogo inválido (ex.: 127.0.0.1:7777).", ErrorColor);
+            SetStatus("Servidor do jogo mal configurado. Avise quem mantém o jogo.", ErrorColor);
             return;
         }
 
@@ -311,7 +310,8 @@ public partial class AccountScreen : Control
         var address = string.IsNullOrWhiteSpace(ticket!.Address) ? s_gameServer ?? "" : ticket.Address;
         if (OnlineSettings.Parse(address, character.Name) is not { } online)
         {
-            SetStatus($"Endereço do servidor do jogo inválido: '{address}'.", ErrorColor);
+            GD.PushError($"Endereço do servidor do jogo inválido: '{address}'.");
+            SetStatus("Servidor do jogo mal configurado. Avise quem mantém o jogo.", ErrorColor);
             return;
         }
 
@@ -407,12 +407,6 @@ public partial class AccountScreen : Control
     {
         _status.GetParent()?.RemoveChild(_status);
         _root.AddChild(_status);
-    }
-
-    private void AddLocalMode()
-    {
-        _root.AddChild(new HSeparator());
-        _root.AddChild(ButtonFor("Modo de teste (encontros locais)", OpenLocalMenu, 280));
     }
 
     private void SetStatus(string text, Color color)

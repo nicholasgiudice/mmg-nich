@@ -21,7 +21,7 @@ public class ZoneMapTests
         return GameDataLoader.LoadDirectory(Path.Combine(dir.FullName, "data")).GetDatabaseOrThrow();
     });
 
-    public static TheoryData<string> Zones() => new() { "zone.city", "zone.vigil_fields" };
+    public static TheoryData<string> Zones() => new() { "zone.city", "zone.vigil_fields", "zone.matriarch_lair" };
 
     [Theory]
     [MemberData(nameof(Zones))]

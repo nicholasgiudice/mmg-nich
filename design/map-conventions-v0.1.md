@@ -121,6 +121,7 @@ Para conferir um mapa editado, rode `./scripts/check.sh --fast` (os testes carre
 | `matriarch_nest.tmj` | `map.matriarch_nest` | `arena.matriarch_nest` | `encounter.forest_matriarch` |
 | `city.tmj` | `map.city` | `arena.city` (T-214) | `zone.city` (T-055) |
 | `vigil_fields.tmj` | `map.vigil_fields` | `arena.vigil_fields` (T-214) | `zone.vigil_fields` (T-055) |
+| `matriarch_lair.tmj` | `map.matriarch_lair` | novo (sem ASCII) | `zone.matriarch_lair` |
 
 Convertidos na T-051 com a mesma grade célula a célula; as ASCII originais ficam em `tests/Game.Sim.Tests/MapFixtures/ascii-arenas.json` para o teste de equivalência. Na T-052, as camadas visuais foram preenchidas automaticamente a partir da colisão, com o tileset `tilesets/terrain_summer.tsx` (LPC Revised): grama variada em `ground`, tufos em `decoration`, arbustos na borda e em blocos grandes, rochas nos obstáculos pequenos em `walls`, e pinheiros na borda de baixo (copa em `above`). É um ponto de partida para retocar no Tiled; a colisão não mudou.
 
@@ -129,5 +130,7 @@ Convertidos na T-051 com a mesma grade célula a célula; as ASCII originais fic
 - Campos: Estrada Leste do portão oeste para o leste, ramais à Fazenda, ao Acampamento e ao sul da Clareira; Fazenda com cerca, casa e canteiro arado; Acampamento com paliçada e chão batido; pedras, arbustos e árvores nos obstáculos.
 - **Objetos:** `player_spawn` de nascimento e de chegada (`start`, `from_fields`, `from_city`); `transitions` com os portões; em `areas`, marcadores de NPC (classe `npc`, propriedades `npc`, `name`, `building`; sem lógica ainda), a praça (`plaza`) e as subáreas dos Campos (`subarea`, o nome é o da subárea).
 - **`zones.json` continua sendo a fonte dos portões e dos surgimentos de monstros.** O servidor ainda lê os portões de lá (T-214); as `transitions` dos mapas repetem os mesmos retângulos e chegadas, e o teste `ZoneMapTests` garante que batem. Passar o servidor a ler os portões e surgimentos do mapa é mudança de código (`src/`), fica para uma tarefa própria.
+
+**Covil da Matriarca.** Zona aberta para testar a Matriarca online, sem instância: portão leste dos Campos (borda aberta em x=95, y=44–47; chegada `from_lair`) leva a uma antessala estreita e, por uma passagem, ao covil (40 × 32 tiles livres, seis afloramentos de rocha para se esconder da investida). A Matriarca (nível 8) nasce no fundo do covil (50,5; 16,5), a 46 tiles da chegada — fora do alcance de agressão dela (40) —, e renasce 5 min depois de morrer. O grupo se reúne na antessala; quem avança além de x≈10 já entra na linha de visão dela pela passagem. Mesmos tiles do ninho (`matriarch_nest.tmj`); o arquivo foi gerado por script, como as arenas da T-052, e pode ser retocado no Tiled.
 
 No cliente (T-052): as camadas de tiles são desenhadas na ordem do arquivo, menos `collision`. `above` vai por cima das unidades e fica transparente num raio de 2 tiles em volta do jogador. O cliente acha a imagem do `.tsx` pelo nome do arquivo em `client/assets/art/tiles/`. Espelhamento horizontal e vertical são desenhados; a rotação de 90° (bit diagonal) não.

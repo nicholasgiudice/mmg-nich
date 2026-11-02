@@ -266,6 +266,7 @@ public sealed class WorldServer : ITransportHandler, IGameHost
         var dropped = new List<string>();
         p.Zone = zone;
         p.Entity = zone.AddPlayer(state, _content.Classes[p.ClassId], position, vitals, dropped);
+        p.Entity.Add(p.Entity.Get<UnitInfo>().WithName(p.Name)); // o cliente mostra o nome do personagem abaixo dele
         p.Saved = state;
         p.Epoch++;
         p.View.Reset(p.Epoch);
