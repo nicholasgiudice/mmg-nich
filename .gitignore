@@ -1,7 +1,7 @@
 # Godot
 .godot/
 export.cfg
-export_presets.cfg
+# client/export_presets.cfg é versionado: não guarda senhas nem chaves de assinatura.
 # Cópia de data/ gerada pelo build do cliente
 client/data/
 
