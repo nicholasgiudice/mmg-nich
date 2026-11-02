@@ -6,7 +6,7 @@ using Game.Data;
 namespace Game.Sim.Tests;
 
 /// <summary>
-/// T-051: as 5 arenas ASCII dos encontros viraram mapas do Tiled (T-055: mais a Cidade e os Campos, 7 ao todo) (<c>data/maps/*.tmj</c>). As originais ficam em
+/// T-051: as 5 arenas ASCII dos encontros viraram mapas do Tiled (T-055: mais a Cidade e os Campos, 7 ao todo; os Campos depois ganharam o portão leste para o Covil da Matriarca) (<c>data/maps/*.tmj</c>). As originais ficam em
 /// <c>MapFixtures/ascii-arenas.json</c>; a grade tem de ser a mesma célula a célula e o simulador, o mesmo resultado.
 /// </summary>
 public class MapConversionTests

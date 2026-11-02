@@ -20,7 +20,8 @@
       "spawn": { "x": 3.5, "y": 31.5 },
       "corpse": 5,
       "gates": [
-        { "area": { "x": 0, "y": 30, "width": 2, "height": 4 }, "to": "zone.city", "arrival": { "x": 36.5, "y": 15.5 } }
+        { "area": { "x": 0, "y": 30, "width": 2, "height": 4 }, "to": "zone.city", "arrival": { "x": 36.5, "y": 15.5 } },
+        { "area": { "x": 94, "y": 44, "width": 2, "height": 4 }, "to": "zone.matriarch_lair", "arrival": { "x": 4.5, "y": 16.5 } }
       ],
       "monsterSpawns": [
         { "area": "Estrada Leste", "monster": "monster.field_rat", "position": { "x": 16.5, "y": 36.5 }, "count": 2, "radius": 1.5, "level": 1, "respawn": 40 },
@@ -34,6 +35,20 @@
         { "area": "Acampamento dos Salteadores", "monster": "monster.road_bandit", "position": { "x": 82.5, "y": 12.5 }, "count": 1, "level": 4, "respawn": 60 },
         { "area": "Acampamento dos Salteadores", "monster": "monster.grey_wolf", "position": { "x": 80.5, "y": 30.5 }, "count": 1, "level": 4, "respawn": 60 },
         { "area": "Acampamento dos Salteadores", "monster": "monster.road_bandit", "position": { "x": 83.5, "y": 28.5 }, "count": 1, "level": 4, "respawn": 60 }
+      ]
+    },
+    {
+      "id": "zone.matriarch_lair",
+      "name": "Covil da Matriarca",
+      "arena": "map.matriarch_lair",
+      "kind": "field",
+      "spawn": { "x": 4.5, "y": 16.5 },
+      "corpse": 30,
+      "gates": [
+        { "area": { "x": 0, "y": 15, "width": 2, "height": 4 }, "to": "zone.vigil_fields", "arrival": { "x": 92.5, "y": 45.5 } }
+      ],
+      "monsterSpawns": [
+        { "area": "Covil", "monster": "monster.forest_matriarch", "position": { "x": 50.5, "y": 16.5 }, "count": 1, "level": 8, "respawn": 300 }
       ]
     }
   ]

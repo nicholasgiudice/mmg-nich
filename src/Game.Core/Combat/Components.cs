@@ -25,6 +25,19 @@ public sealed class UnitInfo : IComponent, IReplicated
 
     public bool HasTag(string tag) => Tags.Contains(tag);
 
+    /// <summary>Cópia com outro nome exibido (personagem online: o nome do personagem no lugar do nome da classe).</summary>
+    public UnitInfo WithName(string name) => new()
+    {
+        DefinitionId = DefinitionId,
+        Name = name,
+        Tags = Tags,
+        Rank = Rank,
+        Level = Level,
+        Resistances = Resistances,
+        Armor = Armor,
+        Resistance = Resistance,
+    };
+
     public double ResistanceTo(DamageSchool school) =>
         Resistances.TryGetValue(SchoolName(school), out var r) ? r : 0;
 
