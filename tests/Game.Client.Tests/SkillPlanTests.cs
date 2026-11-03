@@ -77,7 +77,7 @@ public class SkillPlanTests
         Assert.Equal(ProgressionRejectReason.NotLearnable, plan.RaiseBlocker(cls.BasicAttack));
     }
 
-    private static ContentCatalog LoadContent()
+    internal static ContentCatalog LoadContent()
     {
         var dir = AppContext.BaseDirectory;
         while (dir is not null && !File.Exists(Path.Combine(dir, "data", "classes.json")))

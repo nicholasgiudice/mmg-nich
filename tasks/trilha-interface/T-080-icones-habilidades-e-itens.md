@@ -36,4 +36,44 @@ Quem precisa de ícone (ids de `data/`; a lista completa está em `design/habili
 
 ## Resultado
 
-_(preencher ao concluir)_
+Concluída em 2026-11-02 no Windows. O designer escolheu o pacote; nenhuma tela usa os ícones ainda (isso fica para as T-081, T-083 e T-084).
+
+**Escolha do pacote**
+
+Opções mostradas ao designer numa prancha (6 ícones de cada, ao lado do Guerreiro), com a licença conferida na página de cada pacote em 2026-11-02:
+
+| Opção | Pacote | Licença | Avaliação |
+|---|---|---|---|
+| **A (escolhida)** | [496 pixel art icons for medieval/fantasy RPG](https://opengameart.org/content/496-pixel-art-icons-for-medievalfantasy-rpg), Henrique Lazarini | CC0 | pixel art no traço dos sprites LPC; tem magias, armas, armaduras, acessórios, poções e baús |
+| B | [LPC] Items and game effects (item 7 do §7) | CC-BY-SA 3.0 | só itens; os desenhos ficam pequenos no quadrado de 32 px |
+| C | [Painterly Spell Icons](https://opengameart.org/content/painterly-spell-icons-part-1), J. W. Bjerk | CC-BY 3.0 (entre outras) | pintado e brilhante, destoa do pixel art; quase sem armas e flechas |
+| D | [game-icons.net](https://game-icons.net) | CC-BY 3.0 | silhuetas vetoriais de duas cores; serviria só para tapar falta |
+
+Decisão do designer: **A para tudo** (habilidades, itens, atributos e item no chão). O pacote (`496_RPG_icons.zip`, 1,5 MB, 496 PNGs com nome) foi baixado para `..\mmg-art-src\lazarini-496\`, fora do repositório.
+
+**O que foi feito**
+
+- `client/assets/art/icons/icons.png`: folha de 8 colunas com os 54 ícones usados, sem modificação. `icons.json`: id → `x`/`y` na folha, `size` 34, `fallback` `ui.unknown` e o arquivo de origem de cada ícone (`source`), para refazer a folha. `icons-credits.txt` ao lado.
+- Cobertura: as 24 habilidades das classes (ataque básico e 5 por classe), a Armadilha de Contenção (fora da lista do Arqueiro, mas nos dados), a Poção de Cura Menor, os 21 itens base, os 5 atributos (`attribute.str` ... `attribute.vit`), `ui.ground_item` (baú, para a T-084) e `ui.unknown` (pergaminho, ícone padrão).
+- `client/scripts/Presentation/IconIndex.cs`: leitura do `icons.json` sem Godot, a lista de ids que as telas mostram (`RequiredIds`: habilidades e consumíveis de cada classe, itens, atributos, item no chão) e `Missing`. `IconCatalog.cs`: `For(id)` devolve um `AtlasTexture` da folha (com cache), ou o ícone padrão para id sem entrada; `Load()` no estilo do `SpriteCatalog`.
+- `client/scenes/tests/IconSheet.tscn` + `IconSheet.cs`: prancha de conferência com todos os ícones ampliados 2× e o id embaixo. Fora do jogo.
+- Teste `tests/Game.Client.Tests/IconIndexTests.cs`: todo id exigido tem ícone próprio, o padrão existe, e as regiões cabem na folha, na grade e sem repetição. O `IconIndex.cs` entra no projeto de teste por link, como o `SkillPlan.cs`. O `LoadContent` do `SkillPlanTests` virou `internal` para ser reaproveitado.
+- `CREDITS.md`: entrada do pacote (CC0 não exige crédito; registrado por cortesia). `design/art-direction-v0.1.md`: item 9 no §7, a lacuna "Ícones das habilidades" resolvida, o item 7 deixa de cobrir ícones de itens e a pasta `icons/` no §8.
+
+**Desvios**
+
+- **34×34 em vez de 32×32.** Os ícones do pacote são 34×34, e 22 dos 54 escolhidos têm contorno encostando na borda: cortar 1 px de cada lado comeria o contorno. Ficaram no tamanho original (`size` 34 no `icons.json`); o HUD escala ou usa espaços de 34–36 px.
+- **Luvas** não existem no pacote: usei os ícones de arma de punho (`W_Fist001/003/004`), que são luvas e manoplas.
+- **Nenhum ícone próprio foi desenhado**; todos vêm do pacote.
+
+**Escolhas que o designer pode trocar** (basta mudar o `source` e a região no `icons.json` e refazer a folha):
+
+- Guarda Firme: uma figura cinza parada (`S_Buff12`). É a mais fraca da lista; o pacote não tem um escudo simples.
+- Muralha Viva: pilar de pedra (`S_Earth03`).
+- Corrente Sagrada: brilho dourado (`S_Light01`); o pacote não tem corrente.
+- Cota de Malha: armadura de couro marrom (`A_Armour01`). A prateada parecia demais com o Peitoral de Placas.
+
+**Verificação**
+
+- `./scripts/check.sh` completo: OK.
+- A cena `IconSheet.tscn` rodou no Godot 4.7.2 e mostrou os 54 ícones nítidos, com o id certo embaixo de cada um.

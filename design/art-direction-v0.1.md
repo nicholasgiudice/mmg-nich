@@ -88,8 +88,9 @@ Licenças conferidas nas páginas dos pacotes em 2026-10-31. Quando um pacote of
 | 4 | [[LPC] Wolf Animation](https://opengameart.org/content/lpc-wolf-animation) | William.Thompsonj | CC-BY 4.0/3.0, GPL 3.0/2.0, OGA-BY 3.0 | **OGA-BY 3.0** | Lobo Cinzento (recolorido em cinza claro) |
 | 5 | [[LPC] bears, deer, lions and more](https://opengameart.org/content/lpc-bears-deer-lions-and-more) | tapatilorenzo; rato gigante adaptado de Sevarihk | CC-BY 4.0 | **CC-BY 4.0** | Rato de Campo (rato gigante); ursos, cervos, raposas e camundongos para depois |
 | 6 | [[LPC] Spider](https://opengameart.org/content/lpc-spider) | William.Thompsonj | CC-BY 4.0/3.0, GPL 3.0/2.0, OGA-BY 3.0 | **OGA-BY 3.0** | aranhas pequena e grande; base da Matriarca |
-| 7 | [[LPC] Items and game effects](https://opengameart.org/content/lpc-items-and-game-effects) | Reemax e outros (`credits.txt`) | CC-BY-SA 3.0, GPL 3.0/2.0 | **CC-BY-SA 3.0** | ícones de itens (inventário e chão), alguns efeitos |
+| 7 | [[LPC] Items and game effects](https://opengameart.org/content/lpc-items-and-game-effects) | Reemax e outros (`credits.txt`) | CC-BY-SA 3.0, GPL 3.0/2.0 | **CC-BY-SA 3.0** | alguns efeitos; os ícones de itens passaram para o item 9 (T-080) |
 | 8 | [[LPC] Farming tilesets, magic animations and UI elements](https://opengameart.org/content/lpc-farming-tilesets-magic-animations-and-ui-elements) | Daniel Eddeland (daneeklu) | CC-BY-SA 3.0, GPL 3.0 | **CC-BY-SA 3.0** | animações de magia (T-054), elementos de interface |
+| 9 | [496 pixel art icons for medieval/fantasy RPG](https://opengameart.org/content/496-pixel-art-icons-for-medievalfantasy-rpg) | Henrique Lazarini (7Soul1) | CC0 | **CC0** | ícones de habilidades, itens, atributos e item no chão (T-080, escolha do designer em 2026-11-02); pixel art de 34×34 |
 
 **Reserva**, se faltar algo no item 1: [LPC Tile Atlas](https://opengameart.org/content/lpc-tile-atlas) e [LPC Tile Atlas2](https://opengameart.org/content/lpc-tile-atlas2) (adrix89 e autores do LPC, CC-BY-SA 3.0 / GPL 3.0). São o LPC original, com paleta mais antiga.
 
@@ -112,7 +113,7 @@ Licenças conferidas nas páginas dos pacotes em 2026-10-31. Quando um pacote of
 |---|---|
 | Sprite próprio da Matriarca | aranha vermelha do item 6 (`spider04`) em escala ×2; arte própria fica para depois |
 | Fadas da Névoa, Cavaleiro Espectral, Vigia Sem Rosto (fase 3) | procurar quando a fase 3 for detalhada |
-| Ícones das habilidades | sem pacote coerente; ícones simples próprios ou procurar na T-053/T-054 |
+| Ícones das habilidades | **resolvida na T-080** pelo item 9 (também usado para itens e atributos) |
 | Tema de interface (fonte, painéis, botões) | elementos do item 8 são candidatos; hoje a interface segue procedural (`HudTheme`). Fora do escopo desta tarefa |
 | Ícones de status | continuam procedurais (`StatusVisuals`) |
 | Tela de créditos no jogo | exigida pelas licenças; entra numa tarefa de cliente antes de qualquer distribuição pública |
@@ -150,7 +151,7 @@ client/assets/art/
 ├── characters/   # folhas geradas por classe, cada uma com o .json exportado do gerador
 ├── monsters/     # uma pasta por monstro (monster.grey_wolf → grey_wolf/)
 ├── effects/      # T-054
-├── items/        # ícones de itens
+├── icons/        # ícones de habilidades, itens e atributos (T-080): icons.png + icons.json
 └── ui/           # se o tema de interface vier a usar arte
 ```
 
