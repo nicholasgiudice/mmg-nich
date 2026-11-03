@@ -61,7 +61,7 @@ O export de C# exige uma solução: `client/sln/MmoRpgClient.sln` (apontada por 
 
 ## Site do jogo
 
-O site público do jogo (monstros, itens, classes e habilidades) vai ficar em `valdran.nich.click` (publicação na T-072). Ele é HTML estático **gerado** a partir de `data/*.json` por `src/Game.Site`. O gerador carrega os dados pelo `Game.Data`, com a mesma validação e a mesma herança de NH do jogo, e por isso nenhum número é copiado à mão.
+O site público do jogo (monstros, itens, classes e habilidades) está em **https://valdran.nich.click**. Ele é HTML estático **gerado** a partir de `data/*.json` por `src/Game.Site`. O gerador carrega os dados pelo `Game.Data`, com a mesma validação e a mesma herança de NH do jogo, e por isso nenhum número é copiado à mão.
 
 ```bash
 ./scripts/build-site.sh                   # gera em site/dist/
@@ -73,6 +73,21 @@ python3 -m http.server -d site/dist 8000  # abre em http://localhost:8000
 - **Imagens**: o primeiro quadro de cada personagem e monstro sai das folhas em `client/assets/art/` (layout em `sprites.json`). A página de créditos é gerada de `CREDITS.md`, e as licenças das imagens exigem essa página.
 - **Pontos em aberto**: o que está nos dados mas nenhuma classe nem monstro usa (ex.: Armadilha de Contenção) só aparece na página "Em aberto". O gerador avisa no console.
 - `site/dist/` não é versionado. Os testes ficam em `tests/Game.Site.Tests`.
+
+### Publicação na VPS (T-072)
+
+- **DNS**: registro `A` de `valdran.nich.click` para o IP da VPS (`31.97.162.124`, o mesmo de `api.nich.click`). Confira com `dig +short valdran.nich.click`. O Caddy emite o certificado do Let's Encrypt sozinho na primeira subida.
+- **Variáveis** em `deploy/.env`: `MMO_SITE_DOMAIN=valdran.nich.click` (obrigatória) e `MMO_SITE_DIR` (opcional, padrão `/srv/valdran-site`). O Caddy monta essa pasta só para leitura em `/srv/site` e serve `current/`.
+- **Publicar** (o `scripts/deploy-dev.sh` também faz isso):
+
+  ```bash
+  ./scripts/build-site.sh --publish
+  ```
+
+  O script gera uma versão nova em `/srv/valdran-site/releases/<id>/` e troca o link `current` de uma vez, sem reiniciar o Caddy e sem meia página no ar. O `<id>` é o hash do conteúdo, então publicar de novo com os mesmos dados não muda nada. Ficam as 5 versões mais recentes (`MMO_SITE_KEEP`).
+- **Voltar à versão anterior**: `./scripts/build-site.sh --rollback`. Repetir volta mais uma. `--list` mostra as versões guardadas, com `*` na publicada. Uma publicação nova (`--publish`) volta a pôr no ar o que os dados atuais geram.
+- **Cache**: as páginas HTML saem com `no-cache`, então a versão nova aparece na hora; CSS e JS ficam 1 h no cache e as imagens 1 dia.
+- Depois de mudar o `Caddyfile` ou o `compose.yml`, recrie só o Caddy: `docker compose -f deploy/compose.yml up -d --no-deps caddy`.
 
 ## Infraestrutura (VPS)
 

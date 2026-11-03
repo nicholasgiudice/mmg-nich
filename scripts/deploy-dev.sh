@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Atualiza a main, roda os testes rápidos e reconstrói/reinicia o servidor de jogo no Docker (T-110).
+# Atualiza a main, roda os testes rápidos, reconstrói/reinicia o servidor de jogo no Docker (T-110)
+# e publica o site do jogo (T-072; sem mudança nos dados, nada muda no ar).
 # Uso (na VPS, na raiz do repositório ou de qualquer lugar): ./scripts/deploy-dev.sh
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -18,6 +19,9 @@ echo "==> docker compose build"
 
 echo "==> docker compose up -d"
 "${compose[@]}" up -d
+
+echo "==> site do jogo"
+./scripts/build-site.sh --publish
 
 sleep 3
 echo "==> últimas linhas do log"
