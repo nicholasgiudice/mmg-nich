@@ -1,12 +1,5 @@
 # Caddy (T-213): HTTPS automático (Let's Encrypt) na frente dos serviços HTTP.
-# Um bloco por domínio. O domínio vem de deploy/.env (MMO_API_DOMAIN); o certificado fica no volume caddy_data.
-# Para acrescentar outro site (ex.: o site do jogo em nich.click), copie o padrão:
-#   {$MMO_SITE_DOMAIN} {
-#       import common
-#       root * /srv/site
-#       file_server
-#   }
-# e passe a variável e o volume/diretório no serviço caddy do deploy/compose.yml.
+# Um bloco por domínio. Os domínios vêm de deploy/.env (MMO_API_DOMAIN, MMO_SITE_DOMAIN); os certificados ficam no volume caddy_data.
 
 (common) {
 	encode zstd gzip
@@ -19,4 +12,22 @@
 	# Caddy substitui o X-Forwarded-For pelo IP real do cliente (não confia no que vem de fora);
 	# a API usa esse IP no limite de cadastros e logins.
 	reverse_proxy api:8080
+}
+
+# Site do jogo (T-072): HTML estático gerado por scripts/build-site.sh --publish.
+# /srv/site é a pasta MMO_SITE_DIR da VPS (só leitura); "current" é um link simbólico para a versão publicada,
+# trocado de uma vez pelo script, sem reiniciar o Caddy.
+{$MMO_SITE_DOMAIN} {
+	import common
+	root * /srv/site/current
+	file_server
+
+	# Páginas: sempre revalidar, para uma publicação nova aparecer na hora.
+	@html path / *.html */
+	header @html Cache-Control "no-cache"
+	# CSS e JS não têm hash no nome: cache curto. Folhas de sprite mudam pouco.
+	@assets path *.css *.js
+	header @assets Cache-Control "public, max-age=3600"
+	@images path *.png *.jpg *.svg *.webp *.ico
+	header @images Cache-Control "public, max-age=86400"
 }

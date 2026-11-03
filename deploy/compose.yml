@@ -1,7 +1,7 @@
 # Deploy de desenvolvimento (T-110, T-210, T-211). Na raiz do repositório:
 #   docker compose -f deploy/compose.yml up -d --build
 # Precisa de deploy/.env com POSTGRES_PASSWORD, MMO_SESSION_KEY e MMO_GAME_TICKET_KEY (modelo em deploy/.env.example).
-# Precisa também de MMO_API_DOMAIN (domínio da API com DNS apontando para a VPS; T-213).
+# Precisa também de MMO_API_DOMAIN (domínio da API com DNS apontando para a VPS; T-213) e de MMO_SITE_DOMAIN (site do jogo; T-072).
 # Portas publicadas aqui ignoram o ufw: publique só 80/443 (Caddy) e 7777/udp. O PostgreSQL e a API ficam só na rede interna.
 name: mmo-rpg
 
@@ -79,12 +79,16 @@ services:
     # sem "ports:": de fora, só pelo Caddy (T-213)
 
   caddy:
-    # HTTPS automático na frente da API (T-213). A 80 serve o desafio do Let's Encrypt e redireciona para a 443.
+    # HTTPS automático na frente da API (T-213) e do site do jogo (T-072). A 80 serve o desafio do Let's Encrypt e redireciona para a 443.
     image: caddy:2.10-alpine
     environment:
       MMO_API_DOMAIN: "${MMO_API_DOMAIN:?defina MMO_API_DOMAIN em deploy/.env (domínio da API, ex. api.exemplo.com)}"
+      MMO_SITE_DOMAIN: "${MMO_SITE_DOMAIN:?defina MMO_SITE_DOMAIN em deploy/.env (domínio do site do jogo, ex. valdran.exemplo.com)}"
     volumes:
       - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      # Site do jogo (T-072): pasta da VPS fora do repositório, publicada por scripts/build-site.sh --publish.
+      # A pasta inteira é montada (não o link "current"), para a troca do link valer sem reiniciar o Caddy.
+      - ${MMO_SITE_DIR:-/srv/valdran-site}:/srv/site:ro
       - caddy_data:/data # certificados e chaves: não apague, ou o Let's Encrypt pode limitar novas emissões
       - caddy_config:/config
     ports:
