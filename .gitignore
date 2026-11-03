@@ -5,6 +5,9 @@ export.cfg
 # Cópia de data/ gerada pelo build do cliente
 client/data/
 
+# Site gerado (T-071: scripts/build-site.sh)
+site/dist/
+
 # Build/export artifacts
 build/
 builds/
