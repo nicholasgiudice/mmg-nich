@@ -244,6 +244,21 @@ Arte/mapas:   T-050 ─┬─► T-053 ─► T-054 ─┐
               T-051 ─┴─► T-052 ──────────┴─► T-055
 ```
 
+### Trilha Valdran: nome e site (`tasks/trilha-valdran/`)
+
+O jogo passa a se chamar **Valdran** (decisão de 2026-11-02) e ganha um site público com monstros, itens, classes e habilidades, gerado a partir de `data/*.json`, em `valdran.nich.click`. Não depende da fase 2; a T-072 precisa do DNS criado pelo humano.
+
+| ID | Tarefa | Ambiente | Modelo | Depende de |
+|---|---|---|---|---|
+| [T-070](trilha-valdran/T-070-renomear-para-valdran.md) | Renomear o jogo para Valdran (nome exibido e documentação; identificadores internos ficam) | Windows | Leve | — |
+| [T-071](trilha-valdran/T-071-site-gerador.md) | Site: gerador estático com monstros, itens, classes e habilidades | VPS | Médio | — |
+| [T-072](trilha-valdran/T-072-site-publicacao.md) | Publicar o site em `valdran.nich.click` (Caddy) | VPS | Humano + Leve | 071, DNS |
+
+```text
+Valdran:      T-070 (independente)
+              T-071 ─► T-072 ◄── DNS valdran.nich.click (humano)
+```
+
 ---
 
 ## 6d. Tarefas da fase 2 (persistência e progressão)
