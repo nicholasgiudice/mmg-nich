@@ -42,6 +42,38 @@ dotnet build client/
 
 O `client/` não faz parte de `MmoRpg.sln`, então `./scripts/check.sh` não depende do Godot.
 
+## Como gerar o executável para jogadores
+
+O preset `Windows Desktop` está em `client/export_presets.cfg`. O executável sai num arquivo único, que já aponta para `https://api.nich.click`.
+
+1. Uma vez só, no editor do Godot: **Editor → Gerenciar Modelos de Exportação → Baixar e Instalar** (a versão precisa ser a mesma do editor).
+2. No Windows:
+
+   ```powershell
+   .\scripts\export-client.ps1
+   ```
+
+3. Envie `build\MmoRpg-windows.zip`. Quem recebe não precisa de Godot nem de .NET. Como o executável não é assinado, o SmartScreen pede **Mais informações → Executar assim mesmo**.
+
+O preset inclui `*.json, *.tmj, *.tsx` como arquivos que não são recursos. Sem isso o Godot deixa de fora `data/` e os mapas, e o jogo abre vazio.
+
+O export de C# exige uma solução: `client/sln/MmoRpgClient.sln` (apontada por `dotnet/project/solution_directory` em `project.godot`). Ela fica numa subpasta para `dotnet build client/` continuar achando um único projeto. O script usa o `Godot_*_console.exe`, porque o executável normal não espera o export terminar.
+
+## Site do jogo
+
+O site público do jogo (monstros, itens, classes e habilidades) vai ficar em `valdran.nich.click` (publicação na T-072). Ele é HTML estático **gerado** a partir de `data/*.json` por `src/Game.Site`. O gerador carrega os dados pelo `Game.Data`, com a mesma validação e a mesma herança de NH do jogo, e por isso nenhum número é copiado à mão.
+
+```bash
+./scripts/build-site.sh                   # gera em site/dist/
+python3 -m http.server -d site/dist 8000  # abre em http://localhost:8000
+```
+
+- **Números, nomes e ids** vêm só de `data/`. Para mudar o site, mude o dado e gere de novo.
+- **Textos que não são regra** (apresentação do jogo, descrição curta de classes e monstros, nomes das fases dos chefes) ficam em `site/content/site.json`.
+- **Imagens**: o primeiro quadro de cada personagem e monstro sai das folhas em `client/assets/art/` (layout em `sprites.json`). A página de créditos é gerada de `CREDITS.md`, e as licenças das imagens exigem essa página.
+- **Pontos em aberto**: o que está nos dados mas nenhuma classe nem monstro usa (ex.: Armadilha de Contenção) só aparece na página "Em aberto". O gerador avisa no console.
+- `site/dist/` não é versionado. Os testes ficam em `tests/Game.Site.Tests`.
+
 ## Infraestrutura (VPS)
 
 VPS Ubuntu 24.04 LTS (`31.97.162.124`). Configurada na T-104.

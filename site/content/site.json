@@ -1,0 +1,58 @@
+{
+  "$comment": "Textos do site que não são regra de jogo (T-071). Números, nomes exibidos e ids vêm só de data/*.json; aqui ficam apresentação, descrições curtas e nomes que os dados não têm (fases de chefe). Chaves por id dos dados.",
+  "title": "Valdran",
+  "tagline": "MMO RPG 2D medieval, visto de cima, com combate PvE em tempo real.",
+  "intro": [
+    "Valdran começa atrás dos muros de uma cidade-fortaleza antiga. Além dos portões ficam campos, florestas e ruínas cada vez mais perigosos, e a vida do aventureiro é sair, enfrentar o que encontrar, voltar mais forte e ir um pouco mais longe da próxima vez.",
+    "O combate é em tempo real e com movimentação livre: posicionamento importa, avisos no chão mostram onde um golpe vai cair e os chefes têm mecânicas, não só mais vida. Dá para jogar sozinho, mas o grupo ideal é de quatro jogadores.",
+    "Este site é gerado a partir dos dados do jogo. Todo número que aparece aqui é o mesmo que o servidor usa."
+  ],
+  "classes": {
+    "class.warrior": {
+      "summary": "Linha de frente: aguenta o golpe, segura os monstros e protege o grupo.",
+      "role": "Combate corpo a corpo, resistência, ameaça e proteção.",
+      "strengths": "Resistência, controle de grupos e proteção.",
+      "weaknesses": "Pouco alcance, mobilidade limitada e depende de chegar perto."
+    },
+    "class.archer": {
+      "summary": "Dano constante à distância, sempre um passo à frente do perigo.",
+      "role": "Dano à distância, posicionamento e prioridade de alvo.",
+      "strengths": "Dano consistente, mobilidade e eliminação de alvos prioritários.",
+      "weaknesses": "Pouca resistência; vulnerável quando cercado e em espaços apertados."
+    },
+    "class.mage": {
+      "summary": "Fogo, gelo e relâmpago contra grupos inteiros de inimigos.",
+      "role": "Dano mágico, área, controle e exploração de fraquezas.",
+      "strengths": "Impacto em grupos, controle de área e adaptação elemental.",
+      "weaknesses": "Baixa resistência, vulnerabilidade sob pressão e dependência de Mana."
+    },
+    "class.cleric": {
+      "summary": "Mantém o grupo de pé e castiga os mortos-vivos.",
+      "role": "Cura, proteção, purificação, suporte e dano sagrado.",
+      "strengths": "Sustenta grupos, remove condições e é eficiente contra mortos-vivos e corrupção.",
+      "weaknesses": "Menor dano geral, vulnerável quando isolado e precisa escolher entre atacar e apoiar."
+    }
+  },
+  "monsters": {
+    "monster.field_rat": "Praga das estradas e fazendas. Sozinho é inofensivo, mas raramente anda sozinho: o bando cerca a vítima por todos os lados.",
+    "monster.grey_wolf": "Caça em matilha e escolhe uma presa de cada vez. Quando um lobo cai, os outros ficam mais furiosos.",
+    "monster.road_bandit": "Assalta quem passa pela estrada com uma besta e nunca deixa o alvo chegar perto: recua enquanto atira.",
+    "monster.spider_small": "Cria da Matriarca, sai do covil em enxames. A picada é venenosa.",
+    "monster.spider_big": "Guarda-costas da Matriarca, grande e resistente, com veneno mais forte.",
+    "monster.forest_matriarch": "Senhora do covil das aranhas. Investe, cobre o chão de veneno e teia, chama as crias e, ferida, entra em frenesi.",
+    "monster.skeleton_guard": "Sentinela morto-vivo que ainda guarda o seu portão. Ergue o escudo contra quem ataca de frente e responde com um golpe esmagador."
+  },
+  "phases": {
+    "phase.hunt": "Caçada",
+    "phase.suffocating_web": "Teia Sufocante",
+    "phase.frenzy": "Frenesi"
+  },
+  "ai": {
+    "ai.swarm": "Os que miram o mesmo alvo se espalham em volta dele e atacam; de vez em quando um troca de alvo.",
+    "ai.pack": "A matilha foca o mesmo alvo; quando um morre, os outros usam a habilidade de reforço.",
+    "ai.ranged_kiter": "Mantém distância e recua quando o alvo se aproxima; encurralado, para e atira.",
+    "ai.melee_chaser": "Persegue o alvo e ataca corpo a corpo.",
+    "ai.guardian": "Alterna perseguir, guardar atrás do escudo, golpe pesado e recuperação. Na guarda só se vira de tempos em tempos: é a hora de atacar pelo flanco.",
+    "ai.boss": "Persegue o alvo; antes de atacar, tenta invocar e criar áreas. Cada fase muda as habilidades disponíveis."
+  }
+}
