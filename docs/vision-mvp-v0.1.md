@@ -2,7 +2,7 @@
 
 ## Conceito
 
-Um MMO RPG 2D medieval em que o jogador começa em uma cidade-fortaleza antiga, explora regiões perigosas, enfrenta monstros e bosses, obtém equipamentos e desenvolve uma entre quatro classes base.
+**Valdran** é um MMO RPG 2D medieval em que o jogador começa em uma cidade-fortaleza antiga, explora regiões perigosas, enfrenta monstros e bosses, obtém equipamentos e desenvolve uma entre quatro classes base.
 
 A fantasia é sair de uma cidade segura, avançar gradualmente para além dos muros e retornar mais forte após cada expedição.
 

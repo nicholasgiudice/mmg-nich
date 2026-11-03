@@ -4,7 +4,7 @@ Este arquivo vale para qualquer agente (qualquer modelo/ferramenta) que trabalhe
 
 ## O projeto
 
-MMO RPG 2D medieval, visão de cima, combate PvE em tempo real. Documentos de referência:
+**Valdran**, MMO RPG 2D medieval, visão de cima, combate PvE em tempo real. Documentos de referência:
 
 - `docs/vision-mvp-v0.1.md` — visão e escopo;
 - `design/*.md` — classes, mapa, encontros;

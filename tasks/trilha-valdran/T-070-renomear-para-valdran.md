@@ -39,4 +39,40 @@ O jogo passa a se chamar **Valdran** (decisão do designer, 2026-11-02). Hoje o 
 
 ## Resultado
 
-_(preencher ao concluir)_
+Concluída em 2026-11-02 no Windows, com uma pendência: o teste de conexão ao servidor com o executável novo precisa de login e fica com o humano.
+
+**O que foi feito**
+
+- `client/project.godot`: `config/name="Valdran"` (título da janela). O `project/assembly_name` continua `MmoRpgClient`.
+- `client/export_presets.cfg`: `product_name` e `file_description` = "Valdran"; `export_path` = `../build/windows/Valdran.exe`.
+- `scripts/export-client.ps1`: gera `build\windows\Valdran.exe` e `build\Valdran-windows.zip`.
+- Login (`client/scripts/Account/AccountScreen.cs`): "Valdran" pequeno acima do título de cada tela (Entrar, Personagens, Criar personagem).
+- Menu de cenários (`client/scripts/Match/MenuScreen.cs`): o título passa a ser "Valdran", e "Protótipo de combate" vai para a linha de baixo, junto com a versão do Core.
+- Documentação: `README.md` (título e zip), `AGENTS.md`, `docs/vision-mvp-v0.1.md` e `tasks/README.md` chamam o jogo de Valdran. Os `## Resultado` antigos e `tasks/reports/` não foram mexidos.
+- `deploy/systemd/*.service` e `*.timer`: `Description=Valdran - ...`. Os nomes dos arquivos não mudaram. Na VPS, as descrições novas só valem depois de copiar as unidades e rodar `systemctl daemon-reload`; até lá, as instaladas continuam com o texto antigo, o que é inofensivo.
+
+**Base da branch**
+
+A branch saiu de `origin/main` e recebeu, por merge, `docs/tarefas-valdran`. Esse merge trouxe o arquivo desta tarefa e o commit `9441db8` (preset de export e `export-client.ps1`), que estava em `feat/ux-online-covil-matriarca` e ainda não tinha entrado em `main`.
+
+**Decisões**
+
+- **`user://`**: aceitar a perda. Com o nome novo, o Godot passa a usar a pasta `Godot/app_userdata/Valdran`. A pasta antiga (`MmoRpgClient`) só guardava o `settings.cfg` com a intensidade dos efeitos (T-054), que volta ao padrão uma vez. Não vale fixar o diretório antigo com `use_custom_user_dir` e manter o nome velho no disco para sempre.
+- **Identificadores internos que ficaram** (requisito 4):
+  - namespace e assembly `MmoRpgClient`, `client/MmoRpgClient.csproj`, `client/sln/MmoRpgClient.sln`, `MmoRpg.sln`;
+  - variáveis `MMO_*` (API, servidor, auth, persistência), projeto `mmo-rpg` no Compose, imagens `mmo-rpg/*`, usuário e banco `mmo`;
+  - `/root/mmo-rpg`, `/opt/mmo-rpg`, `/var/backups/mmo-rpg`; unidades `mmo-backup-db.*` e `mmo-game-server.service`;
+  - `"service": "mmo-api"` no `/` da API; repositório `mmg-nich` no GitHub; o prompt "repositório mmo-rpg" em `tasks/README.md`.
+
+  **Recomendação:** não renomear agora. Nenhum deles aparece para o jogador, e trocar os do deploy (Compose, banco, pastas, systemd, variáveis) exige migração cuidadosa na VPS: volume do Postgres, backups e unidades instaladas. Se o designer quiser, faça isso numa tarefa de operação na fase 4. Só o namespace do cliente poderia mudar sem risco, mas mexe em todos os arquivos de `client/scripts/` e conflitaria com qualquer tarefa de cliente em andamento.
+
+**Verificação**
+
+- `./scripts/check.sh` completo: OK (format, build sem avisos e todos os testes; os 6 testes da API ignorados já eram ignorados antes).
+- `scripts/export-client.ps1` (Godot 4.7.2 .NET): gerou `build\windows\Valdran.exe` (190 MB) e `build\Valdran-windows.zip` (73 MB). Nas propriedades do arquivo, `ProductName` e `FileDescription` = "Valdran".
+- O `Valdran.exe` abriu com a janela "Valdran" e foi fechado depois de alguns segundos.
+- `git grep -i "mmo rpg medieval"` só encontra o texto desta tarefa, que descreve o estado anterior.
+
+**Pendências**
+
+- Humano: entrar com uma conta no `Valdran.exe` e confirmar que conecta ao servidor como antes. Nenhum código de rede ou endereço mudou.

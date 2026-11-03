@@ -11,7 +11,7 @@
 # Sem console (stdin): para reiniciar o encontro, systemctl restart mmo-game-server.
 
 [Unit]
-Description=MMO RPG - servidor de zona (UDP 7777)
+Description=Valdran - servidor de zona (UDP 7777)
 After=network-online.target
 Wants=network-online.target
 

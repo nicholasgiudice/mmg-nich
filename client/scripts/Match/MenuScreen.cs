@@ -72,10 +72,10 @@ public partial class MenuScreen : Control
         root.AddThemeConstantOverride("separation", 10);
         AddChild(root);
 
-        var title = new Label { Text = "Protótipo de combate" };
+        var title = new Label { Text = "Valdran" };
         title.AddThemeFontSizeOverride("font_size", 30);
         root.AddChild(title);
-        root.AddChild(new Label { Text = $"Core {CoreInfo.Version} · escolha um encontro e uma classe", Modulate = new Color(1, 1, 1, 0.7f) });
+        root.AddChild(new Label { Text = $"Protótipo de combate · Core {CoreInfo.Version} · escolha um encontro e uma classe", Modulate = new Color(1, 1, 1, 0.7f) });
 
         root.AddChild(Caption("Encontro"));
         _encounters.CustomMinimumSize = new Vector2(620, 170);
