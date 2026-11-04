@@ -12,6 +12,17 @@ Hoje a arte vem de pacotes LPC (`design/art-direction-v0.1.md`, trilha `tasks/tr
 
 Pelo FAQ do PixelLab, as imagens podem ser usadas comercialmente. A única restrição é não usá-las para treinar modelos.
 
+**Planos** (https://www.pixellab.ai/#checkout, consultado em 2026-11-04):
+
+| Plano | Preço | Gerações por mês | Observação |
+|---|---|---|---|
+| Free | — | 40 rápidas, depois 5 por dia | inclui API e MCP; **sem ferramentas de mapa** (sem tileset) |
+| Tier 1 | US$ 12 | 2.000 | ferramentas de animação e de mapa; imagens até 320×320 |
+| Tier 2 | US$ 24 | 5.000 | fila prioritária, 10 tarefas em paralelo, imagens até 512×512 |
+| Tier 3 | US$ 50 | 10.000 | 20 tarefas em paralelo |
+
+Licença em todos os planos: "o usuário detém os direitos das gerações", exceto para treinar modelos. Algumas ferramentas gastam mais de uma geração por imagem. Para o piloto, o **Tier 1** basta; o Free não gera tileset.
+
 **Antes de refazer tudo, este piloto responde:** a qualidade e a consistência servem? O formato encaixa no cliente (`sprites.json`, T-053) e no Tiled (wangsets, T-051/T-052)? Quanto custa em gerações?
 
 **Configuração (humano, uma vez):** o token fica só na máquina, nunca no repositório.
