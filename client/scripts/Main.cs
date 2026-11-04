@@ -112,7 +112,13 @@ public partial class Main : Node2D
             _worldView.SetEffects(_args.ContainsKey("circles") ? EffectCatalog.Empty : EffectCatalog.Load());
             EffectSettings.Override(_args.GetValueOrDefault("effects"));
             var arenaView = GetNode<ArenaView>("Arena");
-            arenaView.DebugGrid = _args.ContainsKey("debug-grid");
+            if (_args.ContainsKey("debug-grid"))
+            {
+                DebugView.ForceVisible();
+            }
+
+            arenaView.DebugGrid = _args.ContainsKey("debug-grid") && DebugView.Visible;
+            _hud.ShowDebug(DebugView.Visible);
             if (map is not null)
             {
                 var encounterId = MatchSettings.Current?.EncounterId;
@@ -151,6 +157,7 @@ public partial class Main : Node2D
         }
 
         HandleMatchKeys();
+        HandleDebugToggle();
         var running = !_paused && !_overlay.IsOpen;
         if (_authority is NetAuthority net && !UpdateOnline(net, delta))
         {
@@ -182,7 +189,7 @@ public partial class Main : Node2D
                     _input.Update(_authority, aim, hovered, _hud.IsPointerOverUi() || itemUnderMouse is not null);
                     var pick = itemUnderMouse is not null && !_hud.IsPointerOverUi() && Godot.Input.IsActionJustPressed(InputActions.Attack)
                         ? itemUnderMouse
-                        : Godot.Input.IsActionJustPressed(InputActions.PickUp) ? _worldView.NearestPickableItem(_authority.ControlledEntity) : null;
+                        : Godot.Input.IsActionJustPressed(InputActions.PickUp, exactMatch: true) ? _worldView.NearestPickableItem(_authority.ControlledEntity) : null;
                     if (pick is { } item && _authority.ControlledEntity is { } me)
                     {
                         _authority.Send(new Game.Core.Intents.PickUpItemIntent(me, item));
@@ -227,6 +234,7 @@ public partial class Main : Node2D
                 : "";
             _info.Text = $"Core {CoreInfo.Version} · {Engine.GetFramesPerSecond()} FPS · tick {_authority.CurrentTick}{netLine}\n"
                 + "WASD mover · Tab/clique seleciona e ataca sozinho · 1-5 habilidades · Q poção · F pegar · I inventário · C personagem · K habilidades · Esc pausa";
+            _info.Visible = DebugView.Visible; // antes do jogo (conectando, erro) o texto fica sempre visível
         }
 
         CaptureIfRequested();
@@ -305,6 +313,25 @@ public partial class Main : Node2D
                 _paused = true;
                 _overlay.ShowPause(_settings, _encounterName, canRestart: _zone is null);
             }
+        }
+    }
+
+    /// <summary>
+    /// Ctrl+F (T-085): mostra/esconde o texto do canto, a ajuda, o log de combate e a grade de <c>--debug-grid</c>.
+    /// Correspondência exata: F sozinho não alterna (e o F de pegar item também é exato, para Ctrl+F não pegar).
+    /// </summary>
+    private void HandleDebugToggle()
+    {
+        if (!Godot.Input.IsActionJustPressed(InputActions.ToggleDebug, exactMatch: true))
+        {
+            return;
+        }
+
+        DebugView.Visible = !DebugView.Visible;
+        _hud.ShowDebug(DebugView.Visible);
+        if (_args.ContainsKey("debug-grid"))
+        {
+            GetNode<ArenaView>("Arena").DebugGrid = DebugView.Visible;
         }
     }
 

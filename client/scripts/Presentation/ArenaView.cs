@@ -21,12 +21,32 @@ public partial class ArenaView : Node2D
     private static readonly Color GateEdge = new(0.95f, 0.80f, 0.35f, 0.85f);
 
     private GridMap? _map;
+    private ArenaDefinition? _arena;
     private TiledVisual? _visual;
+    private bool _debugGrid;
     private readonly AboveLayerView _above = new() { Name = "Above", ZIndex = ZLayers.Above };
     private IReadOnlyList<(RectDefinition Area, string Label)> _gates = [];
 
-    /// <summary>Força a grade de quadrados mesmo com mapa do Tiled (depuração).</summary>
-    public bool DebugGrid { get; set; }
+    /// <summary>Força a grade de quadrados mesmo com mapa do Tiled (depuração). Trocar com a arena já mostrada redesenha (T-085).</summary>
+    public bool DebugGrid
+    {
+        get => _debugGrid;
+        set
+        {
+            if (_debugGrid == value)
+            {
+                return;
+            }
+
+            _debugGrid = value;
+            if (_map is not null)
+            {
+                var gates = _gates;
+                Show(_map, _arena);
+                _gates = gates;
+            }
+        }
+    }
 
     public GridMap? Map => _map;
 
@@ -40,6 +60,7 @@ public partial class ArenaView : Node2D
     public void Show(GridMap map, ArenaDefinition? arena)
     {
         _map = map;
+        _arena = arena;
         _visual = null;
         if (!DebugGrid && arena?.Source is { } source)
         {

@@ -45,4 +45,20 @@ O designer quer **tudo isso escondido**, aparecendo só com **Ctrl+F**.
 
 ## Resultado
 
-_(preencher ao concluir)_
+**Feito** (Windows, 2026-11-03). `dotnet build client/` sem avisos e `./scripts/check.sh` completo passa.
+
+- **`toggle_debug`** no Input Map: Ctrl+F (`physical_keycode` F com `ctrl_pressed`). `InputActions.ToggleDebug`.
+- **`Hud/DebugView.cs`**: estado visível/escondido, começa escondido, gravado em `user://settings.cfg` (seção `debug`, chave `visible`), no mesmo arquivo da intensidade dos efeitos.
+- **O que alterna:** o `InfoLabel` do canto (versão, FPS, tick, rede **e** a linha de ajuda, que são o mesmo rótulo), o log de combate (`Hud.ShowDebug`) e, com `--debug-grid`, a grade no lugar do mapa do Tiled. Com `--debug-grid` o debug começa visível só naquela execução (não grava).
+- **F × Ctrl+F:** o Godot casa ações de tecla sem olhar modificadores a mais, então Ctrl+F também disparava `pickup`. Conferido num script contra o Input Map do projeto (`InputMap.event_is_action`): F→pickup exato `true`; Ctrl+F→pickup exato `false` (inexato `true`); F→toggle_debug `false`; Ctrl+F→toggle_debug `true`. Por isso `pickup` e `toggle_debug` são lidos com `exactMatch: true` em `Main.cs`.
+- **Antes do jogo** (conectando, erro ao iniciar) o texto do canto continua visível: ele é a única mensagem nesses estados.
+- Pausa: "Ctrl+F: informações de debug" no corpo do quadro.
+- `GD.Print` de diagnóstico e `--demo-input`/`--debug-grid` sem mudança.
+
+**Capturas:** `tasks/reports/interface/t085-hidden.png` (padrão, nada de debug) e `t085-shown.png` (depois de Ctrl+F: canto, ajuda e log).
+
+**Fora das áreas da tarefa (mínimo):**
+- `client/scripts/Match/MatchOverlay.cs`: uma linha, a dica na pausa.
+- `client/scripts/Presentation/ArenaView.cs`: `DebugGrid` virou propriedade que redesenha a arena já mostrada (guarda a arena e os portões), para a grade alternar com Ctrl+F.
+
+**Pendência:** a linha de ajuda (quando visível) passa por trás da barra de habilidades em 1280×720; era assim antes. A T-081 muda a barra e a ajuda (teclas 1–6).
