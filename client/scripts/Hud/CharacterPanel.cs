@@ -6,16 +6,27 @@ using Game.Core.Intents;
 using Game.Core.Simulation;
 using Game.Core.Simulation.Components;
 using Godot;
+using MmoRpgClient.Presentation;
 
 namespace MmoRpgClient.Hud;
 
 /// <summary>
-/// Tela de personagem (T-221, tecla C; <c>design/progression-v0.1.md</c> §3–§4): atributos com o botão + e a prévia do
-/// efeito do próximo ponto, atributo sugerido em destaque e as estatísticas derivadas. Tudo vem do snapshot
-/// (<see cref="CharacterStats"/>, <see cref="CharacterProgress"/>); as contas da prévia são as do Core.
+/// Tela de personagem (T-221, tecla C; refeita na T-082; <c>design/progression-v0.1.md</c> §3–§4): pontos livres em
+/// destaque, uma linha larga por atributo (ícone, valor com a divisão classe / pontos / equipamento, +1 e +5 e a prévia
+/// do próximo ponto), o atributo sugerido marcado e as estatísticas derivadas agrupadas, com a mudança em verde enquanto
+/// um + está sob o mouse. Tudo vem do snapshot (<see cref="CharacterStats"/>, <see cref="CharacterProgress"/>); as contas
+/// da prévia são as do Core.
 /// </summary>
 public partial class CharacterPanel : ProgressionPanel
 {
+    /// <summary>Pontos que o botão +5 gasta (um <see cref="SpendAttributePointIntent"/> por ponto).</summary>
+    private const int ManyPoints = 5;
+
+    private const float RowWidth = 560f;
+
+    /// <summary>Linhas das derivadas: valor de agora e, ao lado, o valor depois do + em foco.</summary>
+    private readonly List<(Func<CharacterStats, string> Value, Label Delta)> _derived = new();
+
     protected override string StateKey(EntitySnapshot self)
     {
         var s = self.TryGet<CharacterStats>();
@@ -29,6 +40,7 @@ public partial class CharacterPanel : ProgressionPanel
 
     protected override void Build(VBoxContainer box, EntitySnapshot self)
     {
+        _derived.Clear();
         var info = self.TryGet<UnitInfo>();
         Content.Classes.TryGetValue(info?.DefinitionId ?? "", out var cls);
         var stats = self.TryGet<CharacterStats>();
@@ -41,92 +53,208 @@ public partial class CharacterPanel : ProgressionPanel
             return;
         }
 
+        var free = progress?.AttributePoints ?? 0;
         if (progress is null)
         {
-            box.AddChild(Small("Encontro de teste: personagem sem progressão (os pontos não podem ser gastos).", 12, width: 420));
+            box.AddChild(Small("Encontro de teste: personagem sem progressão (os pontos não podem ser gastos).", 12, width: RowWidth));
+        }
+        else if (free > 0)
+        {
+            var points = Small(free == 1 ? "1 ponto para distribuir" : $"{free} pontos para distribuir", 17, 1f);
+            points.AddThemeColorOverride("font_color", HudTheme.Removable);
+            box.AddChild(points);
         }
         else
         {
-            var points = Small(progress.AttributePoints > 0
-                ? $"Pontos de atributo livres: {progress.AttributePoints}"
-                : "Sem pontos de atributo livres (5 a cada nível).", 13, progress.AttributePoints > 0 ? 1f : 0.7f);
-            if (progress.AttributePoints > 0)
-            {
-                points.AddThemeColorOverride("font_color", HudTheme.Removable);
-            }
-
-            box.AddChild(points);
+            box.AddChild(Small("Nenhum ponto para distribuir (5 a cada nível).", 13, 0.7f));
         }
 
         var suggested = ProgressionText.Suggested(cls, Content);
-        var grid = new GridContainer { Columns = 4 };
-        grid.AddThemeConstantOverride("h_separation", 10);
-        grid.AddThemeConstantOverride("v_separation", 4);
-        box.AddChild(grid);
         foreach (var a in ProgressionText.Attributes)
         {
-            var isSuggested = a == suggested;
-            var name = new Label { Text = (isSuggested ? "★ " : "") + $"{ProgressionText.Name(a)} ({ProgressionText.Short(a)})", CustomMinimumSize = new Vector2(132, 0) };
-            if (isSuggested)
-            {
-                name.AddThemeColorOverride("font_color", HudTheme.Suggested);
-                name.TooltipText = "Atributo sugerido para a classe (o que mais escala as habilidades dela).";
-                name.MouseFilter = MouseFilterEnum.Pass;
-            }
-
-            grid.AddChild(name);
-            var allocated = progress?.Allocated(a) ?? 0;
-            grid.AddChild(new Label
-            {
-                Text = ProgressionText.Get(stats, a) + (allocated > 0 ? $"  (+{allocated})" : ""),
-                CustomMinimumSize = new Vector2(58, 0),
-            });
-            var preview = Preview(self, cls, stats, a);
-            var canSpend = progress is { AttributePoints: > 0 };
-            var attribute = a;
-            grid.AddChild(PlusButton(canSpend, canSpend ? $"Gastar 1 ponto em {ProgressionText.Name(a)}\n{preview}" : "Sem pontos livres",
-                () => Send?.Invoke(new SpendAttributePointIntent(self.Id, attribute))));
-            grid.AddChild(Small("+1: " + preview, 11, 0.7f, 220));
+            box.AddChild(AttributeRow(self, cls, stats, progress, a, a == suggested, free));
         }
 
-        box.AddChild(new HSeparator());
         box.AddChild(Small("Estatísticas", 13, 1f));
-        var derived = new GridContainer { Columns = 2 };
-        derived.AddThemeConstantOverride("h_separation", 16);
-        box.AddChild(derived);
-        foreach (var (label, value) in Derived(self, cls, stats))
+        var groups = new HBoxContainer();
+        groups.AddThemeConstantOverride("separation", 18);
+        box.AddChild(groups);
+        foreach (var (title, lines) in Derived(self, cls, stats))
         {
-            derived.AddChild(Small(label, 12, 0.8f));
-            derived.AddChild(Small(value, 12, 1f));
+            var group = new VBoxContainer();
+            group.AddThemeConstantOverride("separation", 2);
+            var heading = Small(title, 12, 1f);
+            heading.AddThemeColorOverride("font_color", HudTheme.Suggested);
+            group.AddChild(heading);
+            foreach (var (label, value) in lines)
+            {
+                group.AddChild(Small(label, 11, 0.7f));
+                var row = new HBoxContainer();
+                row.AddThemeConstantOverride("separation", 6);
+                row.AddChild(Small(value(stats), 13, 1f));
+                var delta = Small("", 13, 1f);
+                delta.AddThemeColorOverride("font_color", HudTheme.Removable);
+                row.AddChild(delta);
+                group.AddChild(row);
+                _derived.Add((value, delta));
+            }
+
+            groups.AddChild(group);
         }
 
         if (progress is not null)
         {
+            // Longe dos +: no rodapé, à direita, e com confirmação no segundo clique.
             box.AddChild(new HSeparator());
-            box.AddChild(ResetButton(self, AnySpent(progress, stats, Content)));
+            var footer = new HBoxContainer();
+            footer.AddChild(new Control { SizeFlagsHorizontal = SizeFlags.ExpandFill });
+            footer.AddChild(ResetButton(self, AnySpent(progress, stats, Content)));
+            box.AddChild(footer);
         }
     }
 
-    /// <summary>Linhas "nome / valor" das estatísticas derivadas.</summary>
-    private IEnumerable<(string, string)> Derived(EntitySnapshot self, ClassDefinition cls, CharacterStats s)
+    /// <summary>Linha larga do atributo: ícone, nome, valor (classe / pontos / equipamento), +1, +5 e a prévia do próximo ponto.</summary>
+    private Control AttributeRow(EntitySnapshot self, ClassDefinition cls, CharacterStats stats, CharacterProgress? progress,
+        AttributeKind a, bool isSuggested, int free)
+    {
+        var panel = new PanelContainer { CustomMinimumSize = new Vector2(RowWidth, 0) };
+        panel.AddThemeStyleboxOverride("panel", new StyleBoxFlat
+        {
+            BgColor = isSuggested ? new Color(HudTheme.Suggested, 0.10f) : new Color(1, 1, 1, 0.04f),
+            BorderColor = isSuggested ? HudTheme.Suggested : new Color(1, 1, 1, 0.08f),
+            BorderWidthLeft = isSuggested ? 3 : 1,
+            BorderWidthTop = 1,
+            BorderWidthRight = 1,
+            BorderWidthBottom = 1,
+            ContentMarginLeft = 6,
+            ContentMarginRight = 6,
+            ContentMarginTop = 3,
+            ContentMarginBottom = 3,
+        });
+        var row = new HBoxContainer();
+        row.AddThemeConstantOverride("separation", 8);
+        panel.AddChild(row);
+
+        row.AddChild(new TextureRect
+        {
+            Texture = IconCatalog.Shared.For("attribute." + ProgressionText.ScalingKey(a)),
+            CustomMinimumSize = new Vector2(34, 34),
+            StretchMode = TextureRect.StretchModeEnum.KeepCentered,
+            TextureFilter = TextureFilterEnum.Nearest,
+            MouseFilter = MouseFilterEnum.Ignore,
+        });
+
+        var names = new VBoxContainer { CustomMinimumSize = new Vector2(150, 0) };
+        names.AddThemeConstantOverride("separation", 0);
+        var name = Small($"{ProgressionText.Name(a)} ({ProgressionText.Short(a)})", 14, 1f);
+        if (isSuggested)
+        {
+            name.Text = "★ " + name.Text;
+            name.AddThemeColorOverride("font_color", HudTheme.Suggested);
+        }
+
+        names.AddChild(name);
+        if (isSuggested)
+        {
+            var tag = Small("sugerido para a classe", 10, 0.9f);
+            tag.AddThemeColorOverride("font_color", HudTheme.Suggested);
+            names.AddChild(tag);
+        }
+
+        var total = ProgressionText.Get(stats, a);
+        var fromClass = cls.Attributes is { } baseSet ? ProgressionText.Get(baseSet, a) : total;
+        var allocated = progress?.Allocated(a) ?? 0;
+        var fromItems = total - fromClass - allocated;
+        if (allocated > 0 || fromItems != 0)
+        {
+            names.AddChild(Small(ProgressionText.Breakdown(fromClass, allocated, fromItems), 10, 0.6f));
+        }
+
+        row.AddChild(names);
+
+        var value = Small(total.ToString(System.Globalization.CultureInfo.InvariantCulture), 20, 1f);
+        value.CustomMinimumSize = new Vector2(34, 0);
+        value.HorizontalAlignment = HorizontalAlignment.Right;
+        row.AddChild(value);
+
+        var buttons = new HBoxContainer { CustomMinimumSize = new Vector2(78, 0) };
+        buttons.AddThemeConstantOverride("separation", 4);
+        if (free > 0)
+        {
+            var many = Math.Min(ManyPoints, free);
+            buttons.AddChild(SpendButton(self, cls, stats, a, 1, "+1"));
+            buttons.AddChild(SpendButton(self, cls, stats, a, many, $"+{many}"));
+        }
+
+        row.AddChild(buttons);
+        row.AddChild(Small("+1: " + Preview(self, cls, stats, a), 11, 0.75f, 230));
+        return panel;
+    }
+
+    /// <summary>Botão que gasta <paramref name="amount"/> pontos; com o mouse em cima, as derivadas mostram a mudança.</summary>
+    private Button SpendButton(EntitySnapshot self, ClassDefinition cls, CharacterStats stats, AttributeKind a, int amount, string text)
+    {
+        var button = PlusButton(true, $"Gastar {amount} {(amount == 1 ? "ponto" : "pontos")} em {ProgressionText.Name(a)}", () =>
+        {
+            for (var i = 0; i < amount; i++)
+            {
+                Send?.Invoke(new SpendAttributePointIntent(self.Id, a));
+            }
+        });
+        button.Text = text;
+        button.CustomMinimumSize = new Vector2(36, 26);
+        var after = ProgressionText.With(stats, a, amount);
+        button.MouseEntered += () => ShowDeltas(stats, after);
+        button.MouseExited += () => ShowDeltas(stats, null);
+        return button;
+    }
+
+    private void ShowDeltas(CharacterStats before, CharacterStats? after)
+    {
+        foreach (var (value, delta) in _derived)
+        {
+            var next = after is null ? "" : value(after);
+            delta.Text = next.Length > 0 && next != value(before) ? "→ " + next : "";
+        }
+    }
+
+    /// <summary>
+    /// Estatísticas derivadas agrupadas. Cada linha é uma função das estatísticas, para a mesma conta mostrar o valor de agora e
+    /// o de depois do + em foco. Vida e Mana partem do máximo do snapshot (que inclui o equipamento) mais a diferença do Core.
+    /// </summary>
+    private IEnumerable<(string Title, List<(string Label, Func<CharacterStats, string> Value)> Lines)> Derived(
+        EntitySnapshot self, ClassDefinition cls, CharacterStats now)
     {
         var r = Content.Rules.Stats;
         var health = self.TryGet<Health>();
         var pool = self.TryGet<ResourcePool>();
-        yield return ("Vida máxima", ProgressionText.Number(health?.Max ?? StatMath.MaxHealth(cls, s, r), "0"));
+        var vital = new List<(string, Func<CharacterStats, string>)>
+        {
+            ("Vida máxima", s => ProgressionText.Number((health?.Max ?? StatMath.MaxHealth(cls, now, r)) + StatMath.MaxHealth(cls, s, r) - StatMath.MaxHealth(cls, now, r), "0")),
+        };
         if (pool is not null)
         {
-            var regen = cls.Resource.RegenPerSecond + StatMath.ManaRegenBonus(s, r);
-            yield return ($"{HudTheme.ResourceName(pool.Type)} máxima", $"{ProgressionText.Number(pool.Max, "0")}  ({ProgressionText.Number(regen, "0.##")}/s)");
+            var mana = pool.Type == EntityFactory.ManaResource;
+            vital.Add(($"{HudTheme.ResourceName(pool.Type)} máxima", s => ProgressionText.Number(
+                pool.Max + (mana ? StatMath.MaxMana(s, r) - StatMath.MaxMana(now, r) : 0), "0")));
+            vital.Add(("Recuperação", s => ProgressionText.Number(cls.Resource.RegenPerSecond + StatMath.ManaRegenBonus(s, r), "0.##") + "/s"));
         }
 
-        yield return ("Crítico", $"{ProgressionText.Percent(StatMath.CritChance(s, r), "0.##")}  (×{ProgressionText.Number(r.CritMultiplier)})");
+        yield return ("Vida e Mana", vital);
+
         var basic = Content.AbilityAt(cls.BasicAttack, 1);
-        yield return ("Velocidade de ataque", $"+{ProgressionText.Percent(StatMath.AttackSpeedFactor(s, r) - 1)}  "
-            + $"({basic?.Name ?? "ataque básico"} a cada {ProgressionText.Number(ProgressionText.BasicAttackSeconds(basic, s, r))} s)");
-        yield return ("Dano da arma", ProgressionText.Number(s.WeaponDamage, "0.#"));
-        yield return ("Armadura", $"{ProgressionText.Number(s.Armor, "0")}  (−{ProgressionText.Percent(ProgressionText.Reduction(s.Armor, s.Level, r), "0")} dano físico)");
-        yield return ("Resistência", $"{ProgressionText.Number(s.Resistance, "0")}  (−{ProgressionText.Percent(ProgressionText.Reduction(s.Resistance, s.Level, r), "0")} dano mágico)");
+        yield return ("Ataque",
+        [
+            ("Dano da arma", s => ProgressionText.Number(s.WeaponDamage, "0.#")),
+            ($"Crítico (×{ProgressionText.Number(r.CritMultiplier)})", s => ProgressionText.Percent(StatMath.CritChance(s, r), "0.##")),
+            ("Velocidade de ataque", s => "+" + ProgressionText.Percent(StatMath.AttackSpeedFactor(s, r) - 1, "0.#")),
+            ($"{basic?.Name ?? "Ataque básico"} a cada", s => ProgressionText.Number(ProgressionText.BasicAttackSeconds(basic, s, r)) + " s"),
+        ]);
+        yield return ("Defesa",
+        [
+            ("Armadura", s => $"{ProgressionText.Number(s.Armor, "0")} (−{ProgressionText.Percent(ProgressionText.Reduction(s.Armor, s.Level, r), "0")} físico)"),
+            ("Resistência", s => $"{ProgressionText.Number(s.Resistance, "0")} (−{ProgressionText.Percent(ProgressionText.Reduction(s.Resistance, s.Level, r), "0")} mágico)"),
+        ]);
     }
 
     /// <summary>
