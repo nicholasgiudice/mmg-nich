@@ -4,17 +4,11 @@ using GridMap = Game.Core.Spatial.GridMap;
 namespace MmoRpgClient.Presentation;
 
 /// <summary>
-/// Câmera que segue o jogador com suavização leve, deslocada um pouco na direção da mira e
-/// limitada às bordas da arena (arena menor que a tela fica centralizada).
+/// Câmera que segue o jogador com suavização leve, limitada às bordas da arena. Arena menor que a tela é ampliada até
+/// cobrir a tela inteira, sem faixa vazia em volta. O mouse não move a câmera: ela fica parada enquanto o jogador está parado.
 /// </summary>
 public partial class CameraRig : Camera2D
 {
-    /// <summary>Quanto da distância jogador→mira a câmera anda (0..1).</summary>
-    private const float AimLead = 0.2f;
-
-    /// <summary>Deslocamento máximo pela mira, em pixels.</summary>
-    private const float MaxAimOffset = 80f;
-
     /// <summary>Rapidez da suavização (1/s); maior = mais rígida.</summary>
     private const float FollowSharpness = 10f;
 
@@ -28,16 +22,11 @@ public partial class CameraRig : Camera2D
         _snapped = false;
     }
 
-    /// <summary>Chamar uma vez por frame com a posição desenhada do jogador e o ponto de mira (pixels).</summary>
-    public void Follow(Vector2 playerPx, Vector2 aimPx, double delta)
+    /// <summary>Chamar uma vez por frame com a posição desenhada do jogador (pixels).</summary>
+    public void Follow(Vector2 playerPx, double delta)
     {
-        var lead = (aimPx - playerPx) * AimLead;
-        if (lead.Length() > MaxAimOffset)
-        {
-            lead = lead.Normalized() * MaxAimOffset;
-        }
-
-        var target = Clamp(playerPx + lead);
+        Zoom = Vector2.One * CoverZoom();
+        var target = Clamp(playerPx);
         if (!_snapped)
         {
             Position = target;
@@ -47,6 +36,18 @@ public partial class CameraRig : Camera2D
 
         var t = 1f - Mathf.Exp(-FollowSharpness * (float)delta);
         Position = Clamp(Position.Lerp(target, t));
+    }
+
+    /// <summary>Aproximação mínima para a arena cobrir a tela (1 quando ela já é maior que a tela).</summary>
+    private float CoverZoom()
+    {
+        if (_bounds is not { } b || b.Size.X <= 0 || b.Size.Y <= 0)
+        {
+            return 1f;
+        }
+
+        var screen = GetViewportRect().Size;
+        return Mathf.Max(1f, Mathf.Max(screen.X / b.Size.X, screen.Y / b.Size.Y));
     }
 
     private Vector2 Clamp(Vector2 p)
