@@ -281,6 +281,28 @@ Interface:    T-080 ─┬─► T-081
 
 Cuidados de integração: T-081, T-082, T-083 e T-085 mexem no `Hud.cs`; T-081 e T-085 mexem no Input Map (`project.godot`) e em `InputActions`. Integre uma de cada vez e rebase as outras. Ordem sugerida: T-085, T-082, T-080, T-081, T-083, T-084.
 
+### Trilha de arte PixelLab (`tasks/trilha-arte-pixellab/`)
+
+Refaz toda a arte com o [PixelLab](https://www.pixellab.ai/docs) (decisão de 2026-11-04): personagens e monstros com direções e animação, tilesets Wang de 32 px e objetos de mapa, gerados pelo MCP do PixelLab no Claude Code (o token fica só na máquina do humano). O FAQ permite uso comercial, com uma restrição: não usar as imagens para treinar modelos. Começa por um piloto. Se o designer não aprovar, a trilha para e o LPC (trilha de arte) continua. A troca é por categoria inteira, para não misturar estilos; até lá, `--art=pixellab` liga a arte nova no cliente.
+
+| ID | Tarefa | Ambiente | Modelo | Depende de |
+|---|---|---|---|---|
+| [T-090](trilha-arte-pixellab/T-090-piloto-pixellab.md) | Piloto: Guerreiro, Lobo, um tileset e um objeto no jogo, com custo e decisão | Windows | Humano + Médio | conta e MCP do PixelLab |
+| [T-091](trilha-arte-pixellab/T-091-direcao-de-arte-v0.2.md) | Direção de arte v0.2: estilo, referência, quadros, direções, equipamento, licença | Windows | Humano + Leve | 090 |
+| [T-092](trilha-arte-pixellab/T-092-terreno-e-tilesets.md) | Terreno e tilesets (wangsets no Tiled) | Windows | Humano + Médio | 091 |
+| [T-093](trilha-arte-pixellab/T-093-predios-e-objetos.md) | Prédios e objetos de mapa | Windows | Humano + Médio | 092 |
+| [T-094](trilha-arte-pixellab/T-094-classes-e-npcs.md) | As 4 classes e os NPCs da Cidade | Windows | Humano + Médio | 091 |
+| [T-095](trilha-arte-pixellab/T-095-monstros.md) | Monstros atuais e da fase 3 (Matriarca com sprite próprio) | Windows | Humano + Médio | 091 |
+| [T-096](trilha-arte-pixellab/T-096-efeitos-icones-e-limpeza.md) | Efeitos e ícones (se trocar) e limpeza do LPC | Windows | Humano + Leve | 092, 093, 094, 095 |
+
+```text
+PixelLab:     T-090 ─► T-091 ─┬─► T-092 ─► T-093 ─┐
+                              ├─► T-094 ──────────┼─► T-096
+                              └─► T-095 ──────────┘
+```
+
+Relação com a fase 3: a trilha só mexe em arte e nas camadas visuais dos mapas, nunca na `collision`. Os mapas novos (T-330, T-342, T-343, T-352) passam a usar os tilesets da T-092 quando eles existirem. A T-345 e a T-095 se coordenam: quem vier depois usa ou troca os sprites da outra. A T-094, a T-095 e a T-345 mexem no `sprites.json`: integre uma de cada vez.
+
 ---
 
 ## 6d. Tarefas da fase 2 (persistência e progressão)
