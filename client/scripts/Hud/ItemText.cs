@@ -156,12 +156,12 @@ public static class ItemText
                 }
             }
 
-            lines.Add("[color=#aaaaaa]Clique: equipar · botão direito: largar no chão[/color]");
+            lines.Add("[color=#aaaaaa]Arraste para o boneco ou duplo clique: equipar · botão direito ou arraste para fora: largar no chão[/color]");
         }
         else if (isEquipped)
         {
             lines.Add("");
-            lines.Add("[color=#aaaaaa]Clique: desequipar (vai para o inventário)[/color]");
+            lines.Add("[color=#aaaaaa]Arraste para a mochila ou duplo clique: desequipar[/color]");
         }
 
         return string.Join("\n", lines);
