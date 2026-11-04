@@ -61,6 +61,9 @@ public sealed class PlayerInput
         _lookup = (id, state) => content.AbilityAt(id, state?.RankOf(id) ?? 1);
     }
 
+    /// <summary>Barra de atalhos 1–6 (T-081); null = as habilidades aprendidas na ordem do estado, como antes.</summary>
+    public HotbarLayout? Hotbar { get; set; }
+
     /// <summary>Habilidade de área cuja tecla está apertada (prévia no chão); null = nenhuma.</summary>
     public AbilityDefinition? PreviewAbility { get; private set; }
 
@@ -172,11 +175,27 @@ public sealed class PlayerInput
             UseAbility(authority, self, units, autoBasic, hovered, abilities, tick, preferSelected: true);
         }
 
-        var slots = abilities.Known.Where(a => a != abilities.BasicAttackId).ToList();
+        var slots = SlotAbilities(abilities);
         for (var i = 0; i < InputActions.AbilitySlots.Length && i < slots.Count; i++)
         {
+            if (slots[i] is not { } id)
+            {
+                continue;
+            }
+
             var action = InputActions.AbilitySlots[i];
-            var def = _lookup(slots[i], abilities);
+            if (abilities.Consumables.Contains(id))
+            {
+                // Poção só no aperto: segurar não deve gastar todas.
+                if (_justPressed(action))
+                {
+                    UseAbility(authority, self, units, id, hovered, abilities, tick);
+                }
+
+                continue;
+            }
+
+            var def = _lookup(id, abilities);
             if (IsAimedArea(def))
             {
                 // T-028: segurar mostra onde a área vai cair; soltar conjura.
@@ -187,12 +206,12 @@ public sealed class PlayerInput
                 }
                 else if (_justReleased(action))
                 {
-                    UseAbility(authority, self, units, slots[i], hovered, abilities, tick);
+                    UseAbility(authority, self, units, id, hovered, abilities, tick);
                 }
             }
-            else if (_justPressed(action) || (_pressed(action) && CanRepeat(slots[i], abilities, tick)))
+            else if (_justPressed(action) || (_pressed(action) && CanRepeat(id, abilities, tick)))
             {
-                UseAbility(authority, self, units, slots[i], hovered, abilities, tick);
+                UseAbility(authority, self, units, id, hovered, abilities, tick);
             }
         }
 
@@ -201,6 +220,22 @@ public sealed class PlayerInput
         {
             UseAbility(authority, self, units, abilities.Consumables[0], hovered, abilities, tick);
         }
+    }
+
+    /// <summary>
+    /// O que cada tecla 1–6 usa: a barra do jogador (<see cref="Hotbar"/>, T-081) ou, sem ela, as habilidades aprendidas na
+    /// ordem do estado. Habilidade não aprendida (NH 0) fica de fora: a tecla não manda nada (o espaço mostra "não aprendida").
+    /// </summary>
+    private IReadOnlyList<string?> SlotAbilities(AbilityState abilities)
+    {
+        if (Hotbar is not { Loaded: true } bar)
+        {
+            return abilities.Known.Where(a => a != abilities.BasicAttackId).ToList();
+        }
+
+        return bar.Slots
+            .Select(id => id is not null && (id == abilities.BasicAttackId || abilities.Consumables.Contains(id) || abilities.Knows(id)) ? id : null)
+            .ToList();
     }
 
     /// <summary>

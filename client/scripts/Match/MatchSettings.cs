@@ -6,6 +6,9 @@ namespace MmoRpgClient.Match;
 /// </summary>
 public sealed record OnlineSettings(string Host, int Port, string Name, string? Ticket = null)
 {
+    /// <summary>Id do personagem na conta (T-081: chave da barra de atalhos); null no login de desenvolvimento.</summary>
+    public string? CharacterId { get; init; }
+
     /// <summary>Lê <c>host:porta</c> (porta padrão 7777). Null se o texto não serve.</summary>
     public static OnlineSettings? Parse(string address, string name)
     {
