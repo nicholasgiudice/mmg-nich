@@ -44,17 +44,18 @@ public static class SiteGenerator
         var warnings = new List<string>();
         var content = SiteContent.Load(options.ContentDir);
         var sprites = Sprites.Load(options.ArtDir, warnings);
+        var icons = Icons.Load(options.ArtDir, warnings);
         string? credits = null;
         if (options.CreditsFile is { } cf && File.Exists(cf))
         {
             credits = File.ReadAllText(cf);
         }
-        else if (sprites.Count > 0)
+        else if (sprites.Count > 0 || icons.Count > 0)
         {
-            return new SiteResult([], warnings, ["o site usa sprites e precisa de CREDITS.md (atribuição das licenças CC-BY, CC-BY-SA e OGA-BY)"]);
+            return new SiteResult([], warnings, ["o site usa sprites e ícones e precisa de CREDITS.md (atribuição das licenças CC-BY, CC-BY-SA, OGA-BY e CC0)"]);
         }
 
-        var builder = new SiteBuilder(load.Database!, content, sprites, credits, warnings);
+        var builder = new SiteBuilder(load.Database!, content, sprites, icons, credits, warnings);
         builder.Build();
 
         if (Directory.Exists(options.OutDir))
@@ -83,6 +84,7 @@ public static class SiteGenerator
         if (options.ArtDir is { } art)
         {
             Sprites.Copy(art, options.OutDir, sprites.Values);
+            Icons.Copy(art, options.OutDir, icons.Values);
         }
 
         return new SiteResult(builder.Pages.Select(p => p.Path).ToList(), warnings, []);
@@ -96,6 +98,7 @@ internal sealed partial class SiteBuilder
     private readonly ContentCatalog _catalog;
     private readonly SiteContent _content;
     private readonly IReadOnlyDictionary<string, SpriteFrame> _sprites;
+    private readonly IReadOnlyDictionary<string, SpriteFrame> _icons;
     private readonly string? _credits;
     private readonly List<string> _warnings;
     private readonly Usage _usage;
@@ -103,11 +106,13 @@ internal sealed partial class SiteBuilder
 
     public List<Page> Pages { get; } = [];
 
-    public SiteBuilder(GameDatabase db, SiteContent content, IReadOnlyDictionary<string, SpriteFrame> sprites, string? credits, List<string> warnings)
+    public SiteBuilder(GameDatabase db, SiteContent content, IReadOnlyDictionary<string, SpriteFrame> sprites,
+        IReadOnlyDictionary<string, SpriteFrame> icons, string? credits, List<string> warnings)
     {
         _db = db;
         _content = content;
         _sprites = sprites;
+        _icons = icons;
         _credits = credits;
         _warnings = warnings;
         _usage = new Usage(db);
@@ -169,6 +174,18 @@ internal sealed partial class SiteBuilder
 
     private string Sprite(Page p, string id, string alt, int scale = 2) =>
         _sprites.TryGetValue(id, out var f) ? Sprites.Html(p, f, alt, scale) : "";
+
+    /// <summary>Ícone decorativo (T-080) de uma habilidade, item, atributo ou <c>ui.*</c>; vazio se o id não tem ícone.</summary>
+    private string Icon(Page p, string id, int scale = 1) =>
+        _icons.TryGetValue(id, out var f) ? Sprites.Html(p, f, null, scale, "icon") : "";
+
+    /// <summary>Ícones e siglas dos cinco atributos, na ordem do jogo.</summary>
+    private string Attributes(Page p, Core.Definitions.AttributeSet? a = null) =>
+        string.Join(" · ", new (string Id, string Label, int? Value)[]
+        {
+            ("attribute.str", "FOR", a?.Str), ("attribute.dex", "DES", a?.Dex), ("attribute.agi", "AGI", a?.Agi),
+            ("attribute.int", "INT", a?.Int), ("attribute.vit", "VIT", a?.Vit),
+        }.Select(x => $"<span class=\"attr\">{Icon(p, x.Id)}{x.Label}{(x.Value is { } v ? $" {v}" : "")}</span>"));
 
     private IEnumerable<Core.Definitions.ClassDefinition> ClassesInOrder => _db.Classes.Values;
 
@@ -236,7 +253,7 @@ internal sealed partial class SiteBuilder
             return;
         }
 
-        p.Add("<p>As imagens deste site são quadros das folhas de sprites do jogo. A atribuição abaixo vem de <code>CREDITS.md</code>.</p>");
+        p.Add("<p>As imagens deste site são quadros das folhas de sprites e ícones do jogo. A atribuição abaixo vem de <code>CREDITS.md</code>.</p>");
         // O título do arquivo ("# Créditos") já é o h1 da página.
         var body = string.Join('\n', _credits.Replace("\r\n", "\n").Split('\n').SkipWhile(l => !l.StartsWith("# ", StringComparison.Ordinal)).Skip(1));
         p.Add(Markdown.ToHtml(body));
@@ -259,7 +276,7 @@ internal sealed partial class SiteBuilder
         p.Add("<ul id=\"results\" class=\"search\">");
         foreach (var e in entries.OrderBy(e => e.Name, StringComparer.CurrentCulture))
         {
-            p.Add($"<li data-s=\"{Esc((e.Name + " " + e.Id).ToLowerInvariant())}\"><a href=\"{Esc(p.Href(e.Url))}\">{Esc(e.Name)}</a> <span class=\"muted\">{e.Kind}</span> {Code(e.Id)}</li>");
+            p.Add($"<li data-s=\"{Esc((e.Name + " " + e.Id).ToLowerInvariant())}\">{Icon(p, e.Id)}<a href=\"{Esc(p.Href(e.Url))}\">{Esc(e.Name)}</a> <span class=\"muted\">{e.Kind}</span> {Code(e.Id)}</li>");
         }
 
         p.Add("</ul>");

@@ -45,6 +45,7 @@ internal sealed partial class SiteBuilder
             ("Velocidade do ataque básico", $"recarga ÷ (1 + {Num(stats.AttackSpeedPerAgi)} × AGI), bônus até {Pct(stats.AttackSpeedMax)}"),
             ("Defesa", $"redução = D ÷ (D + {Num(stats.DefenseBase)} + {Num(stats.DefensePerAttackerLevel)} × nível do atacante), até {Pct(stats.DefenseMax)}"),
         };
+        rows.Insert(0, ("Atributos", Attributes(p)));
         return "<h2>Regras de todas as classes</h2>" + Dl(rows)
             + "<p class=\"muted\">FOR, DES, AGI, INT e VIT são os atributos; ARMA é o dano da arma equipada. D é a armadura (dano físico) ou a resistência (outras escolas).</p>";
     }
@@ -67,7 +68,7 @@ internal sealed partial class SiteBuilder
         if (s is not null)
         {
             var a = c.Attributes!;
-            rows.Add(("Atributos iniciais", $"FOR {a.Str} · DES {a.Dex} · AGI {a.Agi} · INT {a.Int} · VIT {a.Vit}"));
+            rows.Add(("Atributos iniciais", Attributes(p, a)));
             rows.Add(("Vida base", Num(c.BaseHealth)));
             rows.Add(("Crescimento da vida", $"+{Num(c.HealthGrowth)} por nível"));
             rows.Add(("Vida no nível 1", $"<span data-k=\"health\">{Num(StatMath.MaxHealth(c, s, rules.Stats))}</span> <span class=\"muted\">(base + VIT × {Num(rules.Stats.HealthPerVit)} + (nível − 1) × {Num(c.HealthGrowth)})</span>"));
@@ -97,18 +98,18 @@ internal sealed partial class SiteBuilder
         foreach (var item in c.StartingEquipment)
         {
             var name = _db.Items.TryGetValue(item.Item, out var def) ? def.Name : item.Item;
-            equip.Add(("Equipamento inicial", $"{p.A(Url.Item(item.Item), name)} nível {item.Level}, comum: {ItemStatsAt(item.Item, item.Level)}"));
+            equip.Add(("Equipamento inicial", $"{Icon(p, item.Item)}{p.A(Url.Item(item.Item), name)} nível {item.Level}, comum: {ItemStatsAt(item.Item, item.Level)}"));
         }
 
         var weapons = _db.Items.Values.Where(i => i.Slot == EquipSlot.Weapon && ItemMath.CanUse(rules.Items, i, c.Id)).ToList();
-        equip.Add(("Armas que pode usar", weapons.Count == 0 ? "—" : string.Join(", ", weapons.Select(w => p.A(Url.Item(w.Id), w.Name)))));
+        equip.Add(("Armas que pode usar", weapons.Count == 0 ? "—" : string.Join(", ", weapons.Select(w => Icon(p, w.Id) + p.A(Url.Item(w.Id), w.Name)))));
         var types = Enum.GetValues<ArmorType>()
             .Where(t => rules.Items.ArmorTypes.For(t).Classes is var cl && (cl.Count == 0 || cl.Contains(c.Id)))
             .Select(t => p.A($"{Url.Items}#armor-types", ArmorType(t)));
         equip.Add(("Armaduras que pode usar", string.Join(", ", types)));
         if (c.Consumables.Count > 0)
         {
-            equip.Add(("Consumíveis", string.Join(", ", c.Consumables.Select(id => _d.AbilityLink(p, id)))));
+            equip.Add(("Consumíveis", string.Join(", ", c.Consumables.Select(id => Icon(p, id) + _d.AbilityLink(p, id)))));
         }
 
         p.Add(Dl(equip));
@@ -140,7 +141,7 @@ internal sealed partial class SiteBuilder
 
             var badge = a.Signature ? " <span class=\"badge\">assinatura</span>" : "";
             var ranks = a.HighestRank > 1 ? $" · {a.HighestRank} NH" : "";
-            sb.Append($"<article class=\"ability\"><h3>{p.A(Url.Ability(a.Id), a.Name)}{badge}</h3>")
+            sb.Append($"<article class=\"ability\"><h3>{Icon(p, a.Id)}{p.A(Url.Ability(a.Id), a.Name)}{badge}</h3>")
                 .Append($"<p class=\"muted\">Custo {Describe.Cost(a)} · recarga {Describe.Cooldown(a)} · {Describe.Targeting(a.Targeting)}{ranks}</p>")
                 .Append(_d.Effects(p, a.Effects))
                 .Append("</article>");

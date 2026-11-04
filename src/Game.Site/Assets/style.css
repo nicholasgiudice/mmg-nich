@@ -65,6 +65,12 @@ h3 { font-size: 1.1rem; margin-top: 1.5rem; }
 .card:hover { border-color: var(--accent); }
 .card strong { color: var(--accent); font-size: 1.1rem; }
 .sprite { display: inline-block; background-repeat: no-repeat; image-rendering: pixelated; flex: none; }
+.icon { display: inline-block; background-repeat: no-repeat; image-rendering: pixelated; flex: none; vertical-align: middle; margin-right: 0.35rem; }
+.head > .icon { margin-right: 0; }
+.named { display: flex; align-items: center; gap: 0.1rem; }
+.named > span:not(.icon) { flex: 1 0 auto; }
+table.items td:first-child { min-width: 12rem; }
+.attr { white-space: nowrap; }
 .mini { display: inline-block; vertical-align: middle; margin-right: 0.4rem; max-width: 3rem; overflow: hidden; }
 .mini .sprite { transform-origin: 0 0; }
 .stats { display: grid; grid-template-columns: minmax(8rem, max-content) 1fr; gap: 0.3rem 1rem; margin: 0.75rem 0; }

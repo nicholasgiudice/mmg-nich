@@ -55,7 +55,7 @@ internal sealed partial class SiteBuilder
         p.Add(Table(["Item", "Efeito", "Recarga", "Cargas", "Como se obtém"],
             consumables.Select(a => new[]
             {
-                $"<span id=\"{Esc(a.Id)}\">{p.A(Url.Ability(a.Id), a.Name)}</span>",
+                $"<span id=\"{Esc(a.Id)}\">{Icon(p, a.Id)}{p.A(Url.Ability(a.Id), a.Name)}</span>",
                 _d.Effects(p, a.Effects),
                 Describe.Cooldown(a),
                 a.Charges is { } ch ? Num(ch) : "—",
@@ -81,12 +81,12 @@ internal sealed partial class SiteBuilder
             _db.Classes.Values.SelectMany(c => c.StartingEquipment.Select(s => new[]
             {
                 _d.ClassLink(p, c.Id),
-                _db.Items.TryGetValue(s.Item, out var def) ? p.A(Url.Item(s.Item), def.Name) : Code(s.Item),
+                _db.Items.TryGetValue(s.Item, out var def) ? Icon(p, s.Item) + p.A(Url.Item(s.Item), def.Name) : Code(s.Item),
                 Num(s.Level),
                 ItemStatsAt(s.Item, s.Level),
             }))));
 
-        p.Add("<h3 id=\"drops\">Quedas de monstros</h3>");
+        p.Add($"<h3 id=\"drops\">{Icon(p, "ui.ground_item")}Quedas de monstros</h3>");
         p.Add("<p>A tabela de queda é escolhida pela categoria do monstro. Cada item sorteia a raridade pelos pesos e a base entre os itens da tabela, com o mesmo peso. Os itens caem para quem participou da morte.</p>");
         p.Add(Table(["Categoria", "Monstros", "Chance", "Itens", "Peso de raridade (comum / incomum / raro / épico)", "Garantia", "Itens base"],
             Enum.GetValues<MonsterRank>().Select(r =>
@@ -121,7 +121,7 @@ internal sealed partial class SiteBuilder
         foreach (var i in items)
         {
             var classes = ItemMath.ClassesOf(rules, i);
-            sb.Append($"<tr id=\"{Esc(i.Id)}\" data-item=\"{Esc(i.Id)}\"><td>{Esc(i.Name)}<br>{Code(i.Id)}</td><td>{Slot(i.Slot)}</td>");
+            sb.Append($"<tr id=\"{Esc(i.Id)}\" data-item=\"{Esc(i.Id)}\"><td><span class=\"named\">{Icon(p, i.Id)}<span>{Esc(i.Name)}<br>{Code(i.Id)}</span></span></td><td>{Slot(i.Slot)}</td>");
             if (showType)
             {
                 sb.Append($"<td>{(i.ArmorType is { } t ? p.A($"{Url.Items}#armor-types", ArmorType(t)) : "—")}</td>");

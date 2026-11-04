@@ -140,7 +140,7 @@ internal sealed partial class SiteBuilder
         p.Add(Table(["Habilidade", "Recarga", "Alvo", "Efeitos"],
             abilityIds.Where(_db.Abilities.ContainsKey).Select(id => _db.Abilities[id]).Select(a => new[]
             {
-                p.A(Url.Ability(a.Id), a.Name),
+                Icon(p, a.Id) + p.A(Url.Ability(a.Id), a.Name),
                 Describe.Cooldown(a),
                 Esc(Describe.Targeting(a.Targeting)) + (a.Telegraph is null ? "" : "; " + Esc(Describe.Telegraph(a.Telegraph))),
                 _d.Effects(p, a.Effects),

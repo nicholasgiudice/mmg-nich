@@ -70,7 +70,7 @@ python3 -m http.server -d site/dist 8000  # abre em http://localhost:8000
 
 - **Números, nomes e ids** vêm só de `data/`. Para mudar o site, mude o dado e gere de novo.
 - **Textos que não são regra** (apresentação do jogo, descrição curta de classes e monstros, nomes das fases dos chefes) ficam em `site/content/site.json`.
-- **Imagens**: o primeiro quadro de cada personagem e monstro sai das folhas em `client/assets/art/` (layout em `sprites.json`). A página de créditos é gerada de `CREDITS.md`, e as licenças das imagens exigem essa página.
+- **Imagens**: o primeiro quadro de cada personagem e monstro sai das folhas em `client/assets/art/` (layout em `sprites.json`), e os ícones de habilidades, itens e atributos saem de `client/assets/art/icons/` (`icons.json`, T-080). Id sem ícone próprio fica sem ícone no site. A página de créditos é gerada de `CREDITS.md`, e as licenças das imagens exigem essa página.
 - **Pontos em aberto**: o que está nos dados mas nenhuma classe nem monstro usa (ex.: Armadilha de Contenção) só aparece na página "Em aberto". O gerador avisa no console.
 - `site/dist/` não é versionado. Os testes ficam em `tests/Game.Site.Tests`.
 
