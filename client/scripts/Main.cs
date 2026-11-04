@@ -225,7 +225,7 @@ public partial class Main : Node2D
             GetNode<ArenaView>("Arena").SetFocus(focus);
             if (focus is { } playerPx)
             {
-                _camera.Follow(playerPx, Units.ToPixels(aim), delta);
+                _camera.Follow(playerPx, delta);
                 _aimPreview.Show(_input.PreviewAbility, playerPx, Units.ToPixels(_input.PreviewPoint));
             }
 
