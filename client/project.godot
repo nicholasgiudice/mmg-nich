@@ -10,7 +10,7 @@ config_version=5
 
 [application]
 
-config/name="MmoRpgClient"
+config/name="Valdran"
 run/main_scene="res://scenes/Account.tscn"
 config/features=PackedStringArray("4.7", "C#", "GL Compatibility")
 

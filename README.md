@@ -1,6 +1,6 @@
-# MMO RPG Medieval
+# Valdran
 
-Projeto de um MMO RPG 2D medieval com foco inicial em mapa, PvE, quatro classes e habilidades.
+**Valdran** é um MMO RPG 2D medieval com foco inicial em mapa, PvE, quatro classes e habilidades.
 
 ## Estado atual
 
@@ -53,7 +53,7 @@ O preset `Windows Desktop` está em `client/export_presets.cfg`. O executável s
    .\scripts\export-client.ps1
    ```
 
-3. Envie `build\MmoRpg-windows.zip`. Quem recebe não precisa de Godot nem de .NET. Como o executável não é assinado, o SmartScreen pede **Mais informações → Executar assim mesmo**.
+3. Envie `build\Valdran-windows.zip`. Quem recebe não precisa de Godot nem de .NET. Como o executável não é assinado, o SmartScreen pede **Mais informações → Executar assim mesmo**.
 
 O preset inclui `*.json, *.tmj, *.tsx` como arquivos que não são recursos. Sem isso o Godot deixa de fora `data/` e os mapas, e o jogo abre vazio.
 

@@ -5,7 +5,7 @@
 # Rodar agora: systemctl start mmo-backup-db.service · Logs: journalctl -u mmo-backup-db
 
 [Unit]
-Description=MMO RPG - backup do PostgreSQL (pg_dump)
+Description=Valdran - backup do PostgreSQL (pg_dump)
 Requires=docker.service
 After=docker.service network-online.target
 Wants=network-online.target

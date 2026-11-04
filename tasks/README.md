@@ -1,6 +1,6 @@
 # Plano de Execução — v0.1
 
-Plano para executar `tech/stack-proposal-v0.1.md`, dividido em tarefas que podem ser entregues a agentes diferentes (modelos diferentes), em paralelo quando as dependências permitirem.
+Plano para executar `tech/stack-proposal-v0.1.md` (jogo **Valdran**), dividido em tarefas que podem ser entregues a agentes diferentes (modelos diferentes), em paralelo quando as dependências permitirem.
 
 Regras gerais para agentes: `AGENTS.md` na raiz.
 
