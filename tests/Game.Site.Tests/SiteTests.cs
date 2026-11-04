@@ -194,6 +194,38 @@ public sealed partial class SiteTests : IClassFixture<SiteFixture>
     }
 
     [Fact]
+    public void Icons_from_the_game_appear_on_ability_and_item_pages()
+    {
+        var sheet = Path.Combine(_site.Out, "assets", "icons", "icons.png");
+        Assert.True(File.Exists(sheet), "icons.png não foi copiado");
+        var icons = JsonDocument.Parse(File.ReadAllText(Path.Combine(_site.Root, "client", "assets", "art", "icons", "icons.json")))
+            .RootElement.GetProperty("icons");
+
+        // Toda habilidade das classes tem ícone no icons.json e o mostra, na posição dele, na própria página.
+        foreach (var cls in _site.Json("classes.json").GetProperty("classes").EnumerateArray())
+        {
+            var basic = cls.GetProperty("basicAttack").GetString()!;
+            foreach (var id in cls.GetProperty("abilities").EnumerateArray().Select(x => x.GetString()!).Append(basic))
+            {
+                Assert.True(icons.TryGetProperty(id, out var icon), $"{id} sem ícone em icons.json");
+                var html = _site.Html[$"habilidades/{id}.html"];
+                // No topo da página o ícone aparece ampliado 2×, então a posição na folha também dobra.
+                Assert.Contains($"background-position:-{icon.GetProperty("x").GetInt32() * 2}px -{icon.GetProperty("y").GetInt32() * 2}px", html, StringComparison.Ordinal);
+                Assert.Contains("assets/icons/icons.png", html, StringComparison.Ordinal);
+            }
+        }
+
+        // Toda linha de item da página de itens tem ícone.
+        var items = _site.Html["itens/index.html"];
+        foreach (Match row in Regex.Matches(items, "<tr id=\"[^\"]+\" data-item=\"(?<id>[^\"]+)\"><td>(?<cell>.*?)</td>"))
+        {
+            Assert.Contains("class=\"icon\"", row.Groups["cell"].Value, StringComparison.Ordinal);
+        }
+
+        Assert.Contains("class=\"icon\"", _site.Html["classes/warrior.html"], StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Changing_a_number_in_data_changes_the_site()
     {
         var data = Path.Combine(Path.GetTempPath(), "valdran-data-" + Guid.NewGuid().ToString("N"));

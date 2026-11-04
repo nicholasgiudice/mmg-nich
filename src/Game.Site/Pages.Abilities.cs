@@ -45,7 +45,7 @@ internal sealed partial class SiteBuilder
     {
         var rows = ids.Where(_db.Abilities.ContainsKey).Select(id => _db.Abilities[id]).Select(a => new[]
         {
-            p.A(Url.Ability(a.Id), a.Name) + (a.Id == basic ? " <span class=\"badge\">ataque básico</span>" : "") + (a.Signature ? " <span class=\"badge\">assinatura</span>" : ""),
+            Icon(p, a.Id) + p.A(Url.Ability(a.Id), a.Name) + (a.Id == basic ? " <span class=\"badge\">ataque básico</span>" : "") + (a.Signature ? " <span class=\"badge\">assinatura</span>" : ""),
             Describe.Cost(a),
             Describe.Cooldown(a),
             Esc(Describe.Targeting(a.Targeting)),
@@ -61,7 +61,7 @@ internal sealed partial class SiteBuilder
     {
         var used = _usage.IsUsed(a.Id);
         var p = NewPage(Url.Ability(a.Id), a.Name, $"{a.Name}: custo, recarga, alvo e efeitos por nível de habilidade.");
-        p.Add($"<h1>{Esc(a.Name)}</h1><p>{Code(a.Id)}{(a.Signature ? " <span class=\"badge\">assinatura</span>" : "")}</p>");
+        p.Add($"<div class=\"head\">{Icon(p, a.Id, 2)}<div><h1>{Esc(a.Name)}</h1><p>{Code(a.Id)}{(a.Signature ? " <span class=\"badge\">assinatura</span>" : "")}</p></div></div>");
         if (!used)
         {
             p.Add($"<p class=\"note\">Esta habilidade existe nos dados, mas <strong>nenhuma classe nem monstro a usa hoje</strong>. Não faz parte do jogo atual ({p.A(Url.Open, "em aberto")}).</p>");

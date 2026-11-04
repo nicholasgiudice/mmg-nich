@@ -117,10 +117,11 @@ public static class Sprites
     }
 
     /// <summary>
-    /// Elemento que mostra só o quadro, ampliado <paramref name="scale"/> vezes, com pixels nítidos.
+    /// Elemento que mostra só o quadro, ampliado <paramref name="scale"/> vezes, com pixels nítidos. Sem
+    /// <paramref name="alt"/>, a imagem é decorativa (ao lado de um nome que já diz o que é) e fica oculta para leitores de tela.
     /// </summary>
-    public static string Html(Page page, SpriteFrame f, string alt, int scale = 2) =>
-        $"<span class=\"sprite\" role=\"img\" aria-label=\"{Fmt.Esc(alt)}\" style=\"width:{f.W * scale}px;height:{f.H * scale}px;"
+    public static string Html(Page page, SpriteFrame f, string? alt, int scale = 2, string cls = "sprite") =>
+        $"<span class=\"{cls}\" {(alt is null ? "aria-hidden=\"true\"" : $"role=\"img\" aria-label=\"{Fmt.Esc(alt)}\"")} style=\"width:{f.W * scale}px;height:{f.H * scale}px;"
         + $"background-image:url('{Fmt.Esc(page.Href(f.Texture))}');background-size:{f.SheetW * scale}px {f.SheetH * scale}px;"
         + $"background-position:-{f.X * scale}px -{f.Y * scale}px\"></span>";
 }
