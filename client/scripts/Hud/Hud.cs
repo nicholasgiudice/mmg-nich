@@ -118,6 +118,9 @@ public partial class Hud : Control
         AddChild(_banner);
     }
 
+    /// <summary>Mostra/esconde o log de combate, que é informação de debug (T-085). O resumo de morte continua sempre.</summary>
+    public void ShowDebug(bool visible) => _log.Visible = visible;
+
     /// <summary>Fecha as telas de personagem e de habilidades; true se alguma estava aberta (Esc fecha antes de pausar).</summary>
     public bool ClosePanels()
     {

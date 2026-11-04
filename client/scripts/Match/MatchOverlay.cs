@@ -84,7 +84,8 @@ public partial class MatchOverlay : Control
     /// <summary>Pausa (Esc). <paramref name="canRestart"/> false no mundo aberto (T-223): não há encontro para reiniciar nem seed.</summary>
     public void ShowPause(MatchSettings settings, string encounterName, bool canRestart = true)
     {
-        Open("Pausado", new Color(0.9f, 0.9f, 0.9f), canRestart ? $"{encounterName}\nSeed: {settings.Seed}" : encounterName,
+        var body = canRestart ? $"{encounterName}\nSeed: {settings.Seed}" : encounterName;
+        Open("Pausado", new Color(0.9f, 0.9f, 0.9f), body + "\n\nCtrl+F: informações de debug",
             canContinue: true, canAdvance: false, canRestart);
     }
 

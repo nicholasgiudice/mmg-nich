@@ -35,9 +35,12 @@ public static class InputActions
     /// <summary>F: pega o item no chão mais próximo ao alcance (T-222).</summary>
     public const string PickUp = "pickup";
 
+    /// <summary>Ctrl+F: mostra/esconde as informações de debug (T-085). Ler com correspondência exata, como o <see cref="PickUp"/>.</summary>
+    public const string ToggleDebug = "toggle_debug";
+
     /// <summary>Ações das habilidades da classe, na ordem dos slots (1 a 5; a 5 é a assinatura, quando tem NH).</summary>
     public static readonly string[] AbilitySlots = ["ability_1", "ability_2", "ability_3", "ability_4", "ability_5"];
 
     public static IEnumerable<string> All =>
-        new[] { MoveUp, MoveDown, MoveLeft, MoveRight, Attack, AttackKey, TargetNext, TargetClear, Consumable, Pause, Restart, CharacterPanel, SkillsPanel, InventoryPanel, PickUp }.Concat(AbilitySlots);
+        new[] { MoveUp, MoveDown, MoveLeft, MoveRight, Attack, AttackKey, TargetNext, TargetClear, Consumable, Pause, Restart, CharacterPanel, SkillsPanel, InventoryPanel, PickUp, ToggleDebug }.Concat(AbilitySlots);
 }
