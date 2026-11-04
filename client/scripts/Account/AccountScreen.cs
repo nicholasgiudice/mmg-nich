@@ -398,6 +398,10 @@ public partial class AccountScreen : Control
             }
         }
 
+        var game = new Label { Text = "Valdran", Modulate = new Color(1, 1, 1, 0.7f) };
+        game.AddThemeFontSizeOverride("font_size", 18);
+        _root.AddChild(game);
+
         var label = new Label { Text = title };
         label.AddThemeFontSizeOverride("font_size", 30);
         _root.AddChild(label);

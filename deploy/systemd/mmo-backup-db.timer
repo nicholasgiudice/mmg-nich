@@ -1,7 +1,7 @@
 # Agenda o backup diário do banco (T-213). Instalação em mmo-backup-db.service.
 
 [Unit]
-Description=MMO RPG - backup diário do PostgreSQL
+Description=Valdran - backup diário do PostgreSQL
 
 [Timer]
 # 06:30 UTC = 03:30 em Brasília, fora do horário de jogo.

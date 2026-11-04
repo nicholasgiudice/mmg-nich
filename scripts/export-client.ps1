@@ -5,7 +5,7 @@
 #   .\scripts\export-client.ps1
 #   .\scripts\export-client.ps1 -Godot C:\caminho\Godot_v4.7.2-stable_mono_win64_console.exe
 #
-# Saída: build\windows\MmoRpg.exe (arquivo único) e build\MmoRpg-windows.zip.
+# Saída: build\windows\Valdran.exe (arquivo único) e build\Valdran-windows.zip.
 
 param(
     [string]$Godot,
@@ -18,8 +18,8 @@ $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
 $client = Join-Path $root 'client'
 $outDir = Join-Path $root 'build\windows'
-$exe = Join-Path $outDir 'MmoRpg.exe'
-$zip = Join-Path $root 'build\MmoRpg-windows.zip'
+$exe = Join-Path $outDir 'Valdran.exe'
+$zip = Join-Path $root 'build\Valdran-windows.zip'
 
 if (-not $Godot) {
     # A versão _console espera o export terminar e mostra a saída no terminal.
