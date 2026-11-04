@@ -104,7 +104,8 @@ public partial class Main : Node2D
             _content = content;
             // T-064/T-221: a entrada usa as definições no NH que o estado do jogador tem (raio da prévia, alcance, cargas);
             // online os NH mudam quando o jogador gasta pontos.
-            _input = new PlayerInput(content);
+            _input = new PlayerInput(content) { Hotbar = _hud.Hotbar };
+            _hud.HotbarKey = HotbarKey();
 
             _hud.SetContent(content);
             _worldView.SetContent(content);
@@ -233,7 +234,7 @@ public partial class Main : Node2D
                     + (n.Simulation.Length > 0 ? $" · {n.Simulation}" : "")
                 : "";
             _info.Text = $"Core {CoreInfo.Version} · {Engine.GetFramesPerSecond()} FPS · tick {_authority.CurrentTick}{netLine}\n"
-                + "WASD mover · Tab/clique seleciona e ataca sozinho · 1-5 habilidades · Q poção · F pegar · I inventário · C personagem · K habilidades · Esc pausa";
+                + "WASD mover · Tab/clique seleciona e ataca sozinho · 1-6 atalhos (arraste da tela K) · Q poção · F pegar · I inventário · C personagem · K habilidades · Esc pausa";
             _info.Visible = DebugView.Visible; // antes do jogo (conectando, erro) o texto fica sempre visível
         }
 
@@ -314,6 +315,20 @@ public partial class Main : Node2D
                 _overlay.ShowPause(_settings, _encounterName, canRestart: _zone is null);
             }
         }
+    }
+
+    /// <summary>
+    /// Personagem da barra de atalhos (T-081): o id da conta; no login de desenvolvimento, servidor e nome; no jogo local, a
+    /// classe (o menu de cenários escolhe a classe, não um personagem).
+    /// </summary>
+    private string HotbarKey()
+    {
+        if (_settings?.Online is { } online)
+        {
+            return online.CharacterId is { } id ? $"char-{id}" : $"dev-{online.Host}-{online.Port}-{online.Name}";
+        }
+
+        return $"local-{_settings?.ClassId ?? _args.GetValueOrDefault("class", "default")}";
     }
 
     /// <summary>
@@ -685,8 +700,14 @@ public partial class Main : Node2D
         }
 
         var from = new Godot.Vector2(n[0], n[1]);
-        void Move(Godot.Vector2 to, MouseButtonMask mask) =>
-            Godot.Input.ParseInputEvent(new InputEventMouseMotion { Position = to, GlobalPosition = to, ButtonMask = mask });
+        var last = GetViewport().GetMousePosition();
+        void Move(Godot.Vector2 to, MouseButtonMask mask)
+        {
+            // O arrastar da interface começa pela soma de Relative, não pela posição.
+            Godot.Input.ParseInputEvent(new InputEventMouseMotion { Position = to, GlobalPosition = to, Relative = to - last, ButtonMask = mask });
+            last = to;
+        }
+
         void Button(Godot.Vector2 at, MouseButton button, bool pressed, bool doubleClick = false) =>
             Godot.Input.ParseInputEvent(new InputEventMouseButton { Position = at, GlobalPosition = at, ButtonIndex = button, Pressed = pressed, DoubleClick = doubleClick });
 

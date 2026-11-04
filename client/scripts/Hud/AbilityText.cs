@@ -54,6 +54,17 @@ public static class AbilityText
         return string.Join("\n", lines);
     }
 
+    /// <summary>Alcance e área em tiles, para a dica da tela de habilidades (T-081): "alcance 6 · raio 2,5"; vazio se em si mesmo.</summary>
+    public static string Reach(AbilityDefinition a) => a.Targeting switch
+    {
+        UnitTargeting u => $"alcance {u.Range.ToString("0.#", Pt)}",
+        MeleeArcTargeting m => $"corpo a corpo ({m.Range.ToString("0.#", Pt)}, arco de {m.Angle.ToString("0", Pt)}°)",
+        LineTargeting l => $"linha de {l.Length.ToString("0.#", Pt)} × {l.Width.ToString("0.#", Pt)}",
+        CircleAtPointTargeting c => $"alcance {c.Range.ToString("0.#", Pt)} · raio {c.Radius.ToString("0.#", Pt)}",
+        CircleSelfTargeting c => $"em volta de si · raio {c.Radius.ToString("0.#", Pt)}",
+        _ => "",
+    };
+
     /// <summary>
     /// Valor principal da habilidade com as estatísticas (o primeiro dano, cura ou escudo, inclusive dentro de saltos e
     /// alvos extras), arredondado como no Core; null se ela não tem nenhum. Usado na prévia "+1 FOR: Golpe Pesado 51 → 53".

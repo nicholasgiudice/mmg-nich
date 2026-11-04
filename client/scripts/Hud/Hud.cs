@@ -11,6 +11,7 @@ using Game.Core.Simulation;
 using Game.Core.Simulation.Components;
 using Godot;
 using MmoRpgClient.Authority;
+using MmoRpgClient.Input;
 using MmoRpgClient.Presentation;
 using Vec2 = System.Numerics.Vector2;
 
@@ -41,6 +42,12 @@ public partial class Hud : Control
     private HBoxContainer _abilityBar = null!;
     private readonly List<AbilitySlot> _slots = new();
     private HudBar _playerCast = null!;
+
+    /// <summary>Barra de atalhos 1–6 do jogador (T-081); a mesma instância vai para o <c>PlayerInput</c>.</summary>
+    public HotbarLayout Hotbar { get; } = new();
+
+    /// <summary>Personagem cuja barra é carregada e guardada (<see cref="HotbarStore"/>); defina antes da primeira renderização.</summary>
+    public string? HotbarKey { get; set; }
     private CombatLogPanel _log = null!;
     private DeathSummaryPanel _death = null!;
     private Label _banner = null!;
@@ -60,6 +67,13 @@ public partial class Hud : Control
 
     public override void _Ready()
     {
+        Hotbar.Changed += () =>
+        {
+            if (HotbarKey is { } key)
+            {
+                HotbarStore.Save(key, Hotbar);
+            }
+        };
         SetAnchorsPreset(LayoutPreset.FullRect);
         MouseFilter = MouseFilterEnum.Ignore;
 
@@ -429,21 +443,22 @@ public partial class Hud : Control
             return;
         }
 
-        var entries = new List<(string Id, string Key)>();
+        LoadHotbar(self, abilities);
+        // M1 fixo, 1–6 da barra do jogador (T-081) e Q (poção) só se ela não estiver na barra.
+        var entries = new List<(string? Id, string Key, int Index)>();
         if (abilities.BasicAttackId is { } basic)
         {
-            entries.Add((basic, "M1"));
+            entries.Add((basic, "M1", -1));
         }
 
-        var known = abilities.Known.Where(a => a != abilities.BasicAttackId).ToList();
-        for (var i = 0; i < known.Count && i < Input.InputActions.AbilitySlots.Length; i++)
+        for (var i = 0; i < HotbarLayout.Size; i++)
         {
-            entries.Add((known[i], (i + 1).ToString(CultureInfo.InvariantCulture)));
+            entries.Add((Hotbar[i], (i + 1).ToString(CultureInfo.InvariantCulture), i));
         }
 
-        if (abilities.Consumables.Count > 0)
+        if (abilities.Consumables.Count > 0 && Hotbar.IndexOf(abilities.Consumables[0]) < 0)
         {
-            entries.Add((abilities.Consumables[0], "Q"));
+            entries.Add((abilities.Consumables[0], "Q", -1));
         }
 
         while (_slots.Count < entries.Count)
@@ -455,16 +470,55 @@ public partial class Hud : Control
 
         for (var i = 0; i < _slots.Count; i++)
         {
-            _slots[i].Visible = i < entries.Count;
-            if (i < entries.Count)
+            var slot = _slots[i];
+            slot.Visible = i < entries.Count;
+            if (i >= entries.Count)
             {
-                var (id, key) = entries[i];
-                var (state, tooltip) = SlotState(self, abilities, byId, selected, aimPoint, now, id, key);
-                _slots[i].SetState(state, tooltip);
-                _slots[i].SetIcon(IconCatalog.Shared.For(id));
+                continue;
             }
+
+            var (id, key, index) = entries[i];
+            slot.Hotbar = index >= 0 ? Hotbar : null;
+            slot.Index = index;
+            slot.AbilityId = id;
+            if (id is null)
+            {
+                slot.SetState(new AbilitySlotState("", key, "", 0, 0, false, false, false, null, Empty: true),
+                    "Espaço vazio: arraste uma habilidade da tela de habilidades (K).");
+                slot.SetIcon(null);
+                continue;
+            }
+
+            var (state, tooltip) = SlotState(self, abilities, byId, selected, aimPoint, now, id, key);
+            if (state.NotLearned)
+            {
+                tooltip = $"{_content.Abilities.GetValueOrDefault(id)?.Name ?? id}\nNão aprendida: gaste um ponto na tela de habilidades (K).";
+            }
+
+            if (index >= 0)
+            {
+                tooltip += "\n\nArraste para trocar de tecla; botão direito tira da barra.";
+            }
+
+            slot.SetState(state, tooltip);
+            slot.SetIcon(IconCatalog.Shared.For(id));
+        }
+    }
+
+    /// <summary>
+    /// Carrega a barra do personagem na primeira vez que a classe é conhecida (<see cref="HotbarKey"/>): a guardada em
+    /// <c>user://hotbar.cfg</c> ou o padrão da classe. Id que sumiu dos dados vira espaço vazio.
+    /// </summary>
+    private void LoadHotbar(EntitySnapshot self, AbilityState abilities)
+    {
+        if (Hotbar.Loaded || !_content.Classes.TryGetValue(self.TryGet<UnitInfo>()?.DefinitionId ?? "", out var cls))
+        {
+            return;
         }
 
+        var saved = HotbarKey is { } key ? HotbarStore.Load(key) : null;
+        var consumables = abilities.Consumables.Count > 0 ? abilities.Consumables : cls.Consumables;
+        Hotbar.Load(saved, HotbarLayout.Defaults(cls.Abilities, consumables), id => _content.Abilities.ContainsKey(id));
     }
 
     private (AbilitySlotState, string) SlotState(EntitySnapshot self, AbilityState abilities,
@@ -498,7 +552,8 @@ public partial class Hud : Control
             IsOutOfRange(def, self, byId, selected, aimPoint),
             abilities.Cast?.AbilityId == id,
             charges,
-            isBasic ? "" : Match.SkillPlan.Roman(rank));
+            isBasic || !abilities.Knows(id) ? "" : Match.SkillPlan.Roman(rank),
+            NotLearned: !isBasic && !abilities.Knows(id));
 
         var tooltip = name;
         if (def is not null)

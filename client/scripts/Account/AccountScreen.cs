@@ -317,7 +317,7 @@ public partial class AccountScreen : Control
 
         var encounter = MenuScreen.OrderedEncounterIds(_content).FirstOrDefault() ?? "";
         MatchSettings.Current = new MatchSettings(encounter, character.ClassId, MatchSettings.RandomSeed(),
-            online with { Ticket = ticket.Ticket });
+            online with { Ticket = ticket.Ticket, CharacterId = character.Id.ToString() });
         GetTree().ChangeSceneToFile(Main.ScenePath);
     }
 

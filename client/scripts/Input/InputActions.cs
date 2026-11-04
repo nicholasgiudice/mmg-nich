@@ -38,8 +38,8 @@ public static class InputActions
     /// <summary>Ctrl+F: mostra/esconde as informações de debug (T-085). Ler com correspondência exata, como o <see cref="PickUp"/>.</summary>
     public const string ToggleDebug = "toggle_debug";
 
-    /// <summary>Ações das habilidades da classe, na ordem dos slots (1 a 5; a 5 é a assinatura, quando tem NH).</summary>
-    public static readonly string[] AbilitySlots = ["ability_1", "ability_2", "ability_3", "ability_4", "ability_5"];
+    /// <summary>Teclas 1 a 6 da barra de atalhos (T-081): o que cada uma usa é o jogador quem escolhe (<see cref="HotbarLayout"/>).</summary>
+    public static readonly string[] AbilitySlots = ["ability_1", "ability_2", "ability_3", "ability_4", "ability_5", "ability_6"];
 
     public static IEnumerable<string> All =>
         new[] { MoveUp, MoveDown, MoveLeft, MoveRight, Attack, AttackKey, TargetNext, TargetClear, Consumable, Pause, Restart, CharacterPanel, SkillsPanel, InventoryPanel, PickUp, ToggleDebug }.Concat(AbilitySlots);
