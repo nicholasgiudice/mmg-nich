@@ -50,6 +50,32 @@ public static class ProgressionText
         _ => s.Vit,
     };
 
+    public static int Get(AttributeSet s, AttributeKind a) => a switch
+    {
+        AttributeKind.Str => s.Str,
+        AttributeKind.Dex => s.Dex,
+        AttributeKind.Agi => s.Agi,
+        AttributeKind.Int => s.Int,
+        _ => s.Vit,
+    };
+
+    /// <summary>Divisão do valor do atributo (T-082): "classe 12 · pontos +3 · equip. +1" (sem as partes zeradas, menos a classe).</summary>
+    public static string Breakdown(int fromClass, int points, int fromItems)
+    {
+        var parts = new List<string> { $"classe {fromClass}" };
+        if (points != 0)
+        {
+            parts.Add($"pontos +{points}");
+        }
+
+        if (fromItems != 0)
+        {
+            parts.Add($"equip. {(fromItems > 0 ? "+" : "")}{fromItems}");
+        }
+
+        return string.Join(" · ", parts);
+    }
+
     /// <summary>Cópia das estatísticas com <paramref name="amount"/> pontos a mais no atributo (prévia).</summary>
     public static CharacterStats With(CharacterStats s, AttributeKind a, int amount)
     {

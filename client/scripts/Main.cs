@@ -27,7 +27,7 @@ namespace MmoRpgClient;
 /// <c>--auto-move=x,y</c> (mantém as teclas de movimento pelo sinal de x e y), <c>--hold=attack,...</c> (mantém ações),
 /// <c>--demo-input=attack,ability_1,...</c> (aperta ações em sequência mirando o inimigo mais próximo e
 /// imprime as respostas da autoridade; também <c>spend:str</c>, <c>raise:habilidade</c> e <c>reset_points</c>, os botões das
-/// telas de personagem e de habilidades, T-221; <c>equip:n</c>, <c>unequip:weapon</c>, <c>drop:n</c> e <c>pickup</c>, T-222) e <c>--capture=caminho.png</c> (salva a tela e fecha; após 2 s, ou
+/// telas de personagem e de habilidades, T-221; <c>equip:n</c>, <c>unequip:weapon</c>, <c>drop:n</c> e <c>pickup</c>, T-222; mouse na interface: <c>click:x;y</c>, <c>hover:x;y</c>, <c>drag:x1;y1;x2;y2</c>..., T-082) e <c>--capture=caminho.png</c> (salva a tela e fecha; após 2 s, ou
 /// <c>--capture-after=segundos</c>, ou ao fim do demo). <c>--circles</c> desenha as unidades como círculos, sem sprites (T-053).
 /// Mundo aberto (T-223): <c>--auto-respawn=segundos</c> aperta "Renascer na Cidade" sozinho depois de morrer.
 /// Efeitos (T-054): <c>--effects=reduced|normal</c> troca a intensidade só nesta execução; <c>--circles</c> também tira os efeitos.
@@ -644,6 +644,12 @@ public partial class Main : Node2D
             return;
         }
 
+        if (verb is "click" or "rclick" or "dclick" or "hover" or "drag")
+        {
+            DemoMouse(verb, arg);
+            return;
+        }
+
         Game.Core.Intents.Intent? intent = verb switch
         {
             "spend" when Enum.TryParse<AttributeKind>(arg, ignoreCase: true, out var attr) => new Game.Core.Intents.SpendAttributePointIntent(me, attr),
@@ -662,6 +668,55 @@ public partial class Main : Node2D
         }
 
         _authority.Send(intent);
+    }
+
+    /// <summary>
+    /// Mouse do roteiro (T-082): <c>click:x;y</c>, <c>rclick:x;y</c>, <c>dclick:x;y</c>, <c>hover:x;y</c> e
+    /// <c>drag:x1;y1;x2;y2</c>, em pixels da tela (<c>;</c> porque a vírgula separa os itens do roteiro). Entram como eventos de mouse da janela (<c>Input.ParseInputEvent</c>, sem mexer no cursor do sistema),
+    /// pelo mesmo caminho dos botões e do arrastar da interface.
+    /// </summary>
+    private void DemoMouse(string verb, string arg)
+    {
+        var n = arg.Split(';').Select(p => float.TryParse(p, System.Globalization.CultureInfo.InvariantCulture, out var v) ? v : float.NaN).ToArray();
+        if (n.Length < 2 || n.Any(float.IsNaN) || (verb == "drag" && n.Length < 4))
+        {
+            GD.PushWarning($"[demo] coordenadas inválidas: {verb}:{arg}");
+            return;
+        }
+
+        var from = new Godot.Vector2(n[0], n[1]);
+        void Move(Godot.Vector2 to, MouseButtonMask mask) =>
+            Godot.Input.ParseInputEvent(new InputEventMouseMotion { Position = to, GlobalPosition = to, ButtonMask = mask });
+        void Button(Godot.Vector2 at, MouseButton button, bool pressed, bool doubleClick = false) =>
+            Godot.Input.ParseInputEvent(new InputEventMouseButton { Position = at, GlobalPosition = at, ButtonIndex = button, Pressed = pressed, DoubleClick = doubleClick });
+
+        Move(from, 0);
+        switch (verb)
+        {
+            case "hover":
+                break;
+            case "drag":
+                var to = new Godot.Vector2(n[2], n[3]);
+                Button(from, MouseButton.Left, true);
+                for (var step = 1; step <= 8; step++)
+                {
+                    Move(from.Lerp(to, step / 8f), MouseButtonMask.Left);
+                }
+
+                Button(to, MouseButton.Left, false);
+                break;
+            default:
+                var button = verb == "rclick" ? MouseButton.Right : MouseButton.Left;
+                Button(from, button, true);
+                Button(from, button, false);
+                if (verb == "dclick")
+                {
+                    Button(from, button, true, doubleClick: true);
+                    Button(from, button, false);
+                }
+
+                break;
+        }
     }
 
     /// <summary><c>tooltip:n</c> (T-222): imprime o tooltip do espaço n do inventário, o mesmo texto da janela.</summary>
