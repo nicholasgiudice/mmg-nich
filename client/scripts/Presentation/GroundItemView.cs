@@ -23,6 +23,7 @@ public partial class GroundItemView : Node2D
     public override void _Ready()
     {
         ZIndex = ZLayers.Areas;
+        TextureFilter = TextureFilterEnum.Nearest;
         _name.HorizontalAlignment = HorizontalAlignment.Center;
         _name.Position = new Vector2(-80, -RadiusPx - 22);
         _name.Size = new Vector2(160, 16);
@@ -74,6 +75,20 @@ public partial class GroundItemView : Node2D
         {
             var pulse = 0.5f + (0.5f * Mathf.Sin((float)_time * 4f));
             DrawCircle(Vector2.Zero, r * (1.6f + (0.3f * pulse)), new Color(color, 0.18f * alpha));
+        }
+
+        // T-080: ícone do item sobre um brilho na cor da raridade; sem ícone, o losango.
+        if (IconCatalog.Shared.For(_item.Item.BaseId) is { } icon)
+        {
+            var size = _hovered ? 30f : 26f;
+            DrawCircle(Vector2.Zero, size * 0.55f, new Color(color, 0.35f * alpha));
+            DrawTextureRect(icon, new Rect2(-size / 2, -size / 2, size, size), tile: false, new Color(1, 1, 1, alpha));
+            if (_next)
+            {
+                DrawArc(Vector2.Zero, size * 0.62f, 0, Mathf.Tau, 32, Colors.White, 1.5f);
+            }
+
+            return;
         }
 
         var diamond = new[] { new Vector2(0, -r), new Vector2(r, 0), new Vector2(0, r), new Vector2(-r, 0) };

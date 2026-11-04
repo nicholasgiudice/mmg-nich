@@ -13,6 +13,11 @@ public sealed class IconCatalog
 
     public static readonly IconCatalog Empty = new(null, null);
 
+    private static IconCatalog? _shared;
+
+    /// <summary>Catálogo carregado uma vez e usado por todas as telas.</summary>
+    public static IconCatalog Shared => _shared ??= Load();
+
     private readonly IconIndex? _index;
     private readonly Texture2D? _sheet;
     private readonly Dictionary<string, AtlasTexture> _cache = new(StringComparer.Ordinal);

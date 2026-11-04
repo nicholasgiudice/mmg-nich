@@ -15,7 +15,7 @@ public readonly record struct AbilitySlotState(
     string? Charges,
     string Rank = "");
 
-/// <summary>Um slot: sigla, tecla, custo, NH (T-064), cargas, varredura de recarga e estado indisponível.</summary>
+/// <summary>Um slot: ícone (T-080; sem ícone, a sigla), tecla, custo, NH (T-064), cargas, varredura de recarga e estado indisponível.</summary>
 public partial class AbilitySlot : Control
 {
     public const float SlotSize = 52f;
@@ -27,11 +27,24 @@ public partial class AbilitySlot : Control
     private static readonly Color CastingBorder = new(1f, 0.85f, 0.3f);
 
     private AbilitySlotState _state;
+    private Texture2D? _icon;
 
     public AbilitySlot()
     {
         CustomMinimumSize = new Vector2(SlotSize, SlotSize);
         TooltipText = "";
+        TextureFilter = TextureFilterEnum.Nearest;
+    }
+
+    public void SetIcon(Texture2D? icon)
+    {
+        if (icon == _icon)
+        {
+            return;
+        }
+
+        _icon = icon;
+        QueueRedraw();
     }
 
     public void SetState(AbilitySlotState state, string tooltip)
@@ -51,7 +64,14 @@ public partial class AbilitySlot : Control
         var rect = new Rect2(Vector2.Zero, Size);
         var font = ThemeDB.FallbackFont;
         DrawRect(rect, Background);
-        DrawString(font, new Vector2(0, Size.Y / 2 + 6), _state.Abbreviation, HorizontalAlignment.Center, Size.X, 16, Colors.White);
+        if (_icon is not null)
+        {
+            DrawTextureRect(_icon, rect.Grow(-3), tile: false);
+        }
+        else
+        {
+            DrawString(font, new Vector2(0, Size.Y / 2 + 6), _state.Abbreviation, HorizontalAlignment.Center, Size.X, 16, Colors.White);
+        }
 
         if (_state.NoResource)
         {
