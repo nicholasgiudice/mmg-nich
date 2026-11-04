@@ -244,6 +244,43 @@ Arte/mapas:   T-050 ─┬─► T-053 ─► T-054 ─┐
               T-051 ─┴─► T-052 ──────────┴─► T-055
 ```
 
+### Trilha Valdran: nome e site (`tasks/trilha-valdran/`)
+
+O jogo passa a se chamar **Valdran** (decisão de 2026-11-02) e ganha um site público com monstros, itens, classes e habilidades, gerado a partir de `data/*.json`, em `valdran.nich.click`. Não depende da fase 2; a T-072 precisa do DNS criado pelo humano.
+
+| ID | Tarefa | Ambiente | Modelo | Depende de |
+|---|---|---|---|---|
+| [T-070](trilha-valdran/T-070-renomear-para-valdran.md) | Renomear o jogo para Valdran (nome exibido e documentação; identificadores internos ficam) | Windows | Leve | — |
+| [T-071](trilha-valdran/T-071-site-gerador.md) | Site: gerador estático com monstros, itens, classes e habilidades | VPS | Médio | — |
+| [T-072](trilha-valdran/T-072-site-publicacao.md) | Publicar o site em `valdran.nich.click` (Caddy) | VPS | Humano + Leve | 071, DNS |
+
+```text
+Valdran:      T-070 (independente)
+              T-071 ─► T-072 ◄── DNS valdran.nich.click (humano)
+```
+
+### Trilha de interface (`tasks/trilha-interface/`)
+
+Refaz as telas do cliente com ícones (estilo dos RPGs clássicos, sem copiar arte de nenhum) e limpa a tela de jogo (decisão de 2026-11-02). Tudo no cliente: nenhuma mudança no Core, no protocolo ou no servidor.
+
+| ID | Tarefa | Ambiente | Modelo | Depende de |
+|---|---|---|---|---|
+| [T-080](trilha-interface/T-080-icones-habilidades-e-itens.md) | Ícones de habilidades, itens e item no chão (escolha do pacote pelo humano) | Windows | Humano + Leve | — |
+| [T-081](trilha-interface/T-081-habilidades-e-barra-de-atalhos.md) | Tela de habilidades com ícones e barra 1–6 configurável pelo jogador | Windows | Médio | 080 |
+| [T-082](trilha-interface/T-082-tela-de-atributos.md) | Tela de atributos (distribuir pontos) | Windows | Médio | — |
+| [T-083](trilha-interface/T-083-inventario-com-boneco.md) | Inventário com o boneco do personagem | Windows | Médio | 080 |
+| [T-084](trilha-interface/T-084-icone-do-item-no-chao.md) | Ícone do item no chão | Windows | Leve | 080 |
+| [T-085](trilha-interface/T-085-ocultar-debug-ctrl-f.md) | Esconder logs e debug; Ctrl+F mostra | Windows | Leve | — |
+
+```text
+Interface:    T-080 ─┬─► T-081
+                     ├─► T-083
+                     └─► T-084
+              T-082, T-085 (independentes)
+```
+
+Cuidados de integração: T-081, T-082, T-083 e T-085 mexem no `Hud.cs`; T-081 e T-085 mexem no Input Map (`project.godot`) e em `InputActions`. Integre uma de cada vez e rebase as outras. Ordem sugerida: T-085, T-082, T-080, T-081, T-083, T-084.
+
 ---
 
 ## 6d. Tarefas da fase 2 (persistência e progressão)

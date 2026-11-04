@@ -4,6 +4,7 @@ using Game.Core.Definitions;
 using Game.Core.Intents;
 using Game.Core.Simulation;
 using Godot;
+using MmoRpgClient.Presentation;
 
 namespace MmoRpgClient.Hud;
 
@@ -110,6 +111,7 @@ public partial class InventoryPanel : ProgressionPanel
             _right = right;
             CustomMinimumSize = new Vector2(size, size);
             FocusMode = FocusModeEnum.None;
+            TextureFilter = TextureFilterEnum.Nearest;
             TooltipText = tooltip.Length > 0 ? "item" : ""; // o texto de verdade vem de _MakeCustomTooltip
             Flat = true;
             if (left is not null)
@@ -157,9 +159,16 @@ public partial class InventoryPanel : ProgressionPanel
             var color = ItemText.RarityColor(_item.Rarity);
             DrawRect(rect, new Color(color, 0.18f));
             DrawRect(rect, color, filled: false, width: IsHovered() ? 3f : 2f);
-            var text = ItemText.Abbreviation(_content, _item);
-            DrawString(font, new Vector2(0, Size.Y / 2 + 5), text, HorizontalAlignment.Center, Size.X, 14,
-                Unusable ? new Color(1, 1, 1, 0.35f) : Colors.White);
+            if (IconCatalog.Shared.For(_item.BaseId) is { } icon)
+            {
+                DrawTextureRect(icon, rect.Grow(-3), tile: false, Unusable ? new Color(1, 1, 1, 0.35f) : Colors.White);
+            }
+            else
+            {
+                var text = ItemText.Abbreviation(_content, _item);
+                DrawString(font, new Vector2(0, Size.Y / 2 + 5), text, HorizontalAlignment.Center, Size.X, 14,
+                    Unusable ? new Color(1, 1, 1, 0.35f) : Colors.White);
+            }
             DrawString(font, new Vector2(3, Size.Y - 4), _item.Level.ToString(System.Globalization.CultureInfo.InvariantCulture),
                 HorizontalAlignment.Left, -1, 9, new Color(1, 1, 1, 0.6f));
             if (Unusable)

@@ -11,6 +11,7 @@ using Game.Core.Simulation;
 using Game.Core.Simulation.Components;
 using Godot;
 using MmoRpgClient.Authority;
+using MmoRpgClient.Presentation;
 using Vec2 = System.Numerics.Vector2;
 
 namespace MmoRpgClient.Hud;
@@ -457,6 +458,7 @@ public partial class Hud : Control
                 var (id, key) = entries[i];
                 var (state, tooltip) = SlotState(self, abilities, byId, selected, aimPoint, now, id, key);
                 _slots[i].SetState(state, tooltip);
+                _slots[i].SetIcon(IconCatalog.Shared.For(id));
             }
         }
 
