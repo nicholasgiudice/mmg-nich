@@ -21,6 +21,7 @@
   <ItemGroup>
     <Compile Include="..\..\client\scripts\Authority\MovementPredictor.cs" Link="Client\MovementPredictor.cs" />
     <Compile Include="..\..\client\scripts\Match\SkillPlan.cs" Link="Client\SkillPlan.cs" />
+    <Compile Include="..\..\client\scripts\Presentation\IconIndex.cs" Link="Client\IconIndex.cs" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,0 +1,278 @@
+{
+  "$comment": "Ícones de habilidades, itens e atributos (T-080). Só apresentação: o Core não lê este arquivo. Chave = id de data/ (habilidade, item), attribute.<str|dex|agi|int|vit> ou ui.<nome>. x/y = canto da região de size×size em 'sheet'; id sem entrada usa 'fallback'. 'source' = arquivo original do pacote 496 pixel art icons (Henrique Lazarini, CC0), para refazer a folha. Créditos em CREDITS.md.",
+  "sheet": "icons.png",
+  "size": 34,
+  "fallback": "ui.unknown",
+  "icons": {
+    "warrior.sword_strike": {
+      "x": 0,
+      "y": 0,
+      "source": "S_Sword10.png"
+    },
+    "warrior.heavy_strike": {
+      "x": 34,
+      "y": 0,
+      "source": "S_Dagger05.png"
+    },
+    "warrior.whirlwind": {
+      "x": 68,
+      "y": 0,
+      "source": "S_Sword06.png"
+    },
+    "warrior.firm_guard": {
+      "x": 102,
+      "y": 0,
+      "source": "S_Buff12.png"
+    },
+    "warrior.taunt": {
+      "x": 136,
+      "y": 0,
+      "source": "S_Buff14.png"
+    },
+    "warrior.living_wall": {
+      "x": 170,
+      "y": 0,
+      "source": "S_Earth03.png"
+    },
+    "archer.shot": {
+      "x": 204,
+      "y": 0,
+      "source": "S_Bow11.png"
+    },
+    "archer.power_shot": {
+      "x": 238,
+      "y": 0,
+      "source": "S_Bow06.png"
+    },
+    "archer.hunters_mark": {
+      "x": 0,
+      "y": 34,
+      "source": "S_Bow09.png"
+    },
+    "archer.quick_retreat": {
+      "x": 34,
+      "y": 34,
+      "source": "S_Wind07.png"
+    },
+    "archer.rain_of_arrows": {
+      "x": 68,
+      "y": 34,
+      "source": "S_Bow08.png"
+    },
+    "archer.devastating_arrow": {
+      "x": 102,
+      "y": 34,
+      "source": "S_Bow13.png"
+    },
+    "archer.containment_trap": {
+      "x": 136,
+      "y": 34,
+      "source": "S_Bow10.png"
+    },
+    "mage.arcane_missile": {
+      "x": 170,
+      "y": 34,
+      "source": "S_Axe06.png"
+    },
+    "mage.elemental_blast": {
+      "x": 204,
+      "y": 34,
+      "source": "S_Fire06.png"
+    },
+    "mage.ice_prison": {
+      "x": 238,
+      "y": 34,
+      "source": "S_Ice08.png"
+    },
+    "mage.arcane_barrier": {
+      "x": 0,
+      "y": 68,
+      "source": "S_Magic02.png"
+    },
+    "mage.lightning_field": {
+      "x": 34,
+      "y": 68,
+      "source": "S_Thunder02.png"
+    },
+    "mage.arcane_cataclysm": {
+      "x": 68,
+      "y": 68,
+      "source": "S_Fire05.png"
+    },
+    "cleric.holy_strike": {
+      "x": 102,
+      "y": 68,
+      "source": "S_Light04.png"
+    },
+    "cleric.direct_heal": {
+      "x": 136,
+      "y": 68,
+      "source": "S_Holy03.png"
+    },
+    "cleric.sacred_shield": {
+      "x": 170,
+      "y": 68,
+      "source": "S_Holy09.png"
+    },
+    "cleric.holy_chain": {
+      "x": 204,
+      "y": 68,
+      "source": "S_Light01.png"
+    },
+    "cleric.purify": {
+      "x": 238,
+      "y": 68,
+      "source": "S_Holy02.png"
+    },
+    "cleric.miracle": {
+      "x": 0,
+      "y": 102,
+      "source": "S_Holy04.png"
+    },
+    "item.minor_healing_potion": {
+      "x": 34,
+      "y": 102,
+      "source": "P_Red01.png"
+    },
+    "weapon.sword": {
+      "x": 68,
+      "y": 102,
+      "source": "W_Sword001.png"
+    },
+    "weapon.axe": {
+      "x": 102,
+      "y": 102,
+      "source": "W_Axe001.png"
+    },
+    "weapon.war_mace": {
+      "x": 136,
+      "y": 102,
+      "source": "W_Mace004.png"
+    },
+    "weapon.bow": {
+      "x": 170,
+      "y": 102,
+      "source": "W_Bow01.png"
+    },
+    "weapon.mace": {
+      "x": 204,
+      "y": 102,
+      "source": "W_Mace009.png"
+    },
+    "weapon.scepter": {
+      "x": 238,
+      "y": 102,
+      "source": "W_Mace007.png"
+    },
+    "weapon.staff": {
+      "x": 0,
+      "y": 136,
+      "source": "W_Staff04.png"
+    },
+    "armor.heavy_head": {
+      "x": 34,
+      "y": 136,
+      "source": "C_Elm03.png"
+    },
+    "armor.heavy_chest": {
+      "x": 68,
+      "y": 136,
+      "source": "A_Armour02.png"
+    },
+    "armor.heavy_hands": {
+      "x": 102,
+      "y": 136,
+      "source": "W_Fist004.png"
+    },
+    "armor.heavy_feet": {
+      "x": 136,
+      "y": 136,
+      "source": "A_Shoes05.png"
+    },
+    "armor.medium_head": {
+      "x": 170,
+      "y": 136,
+      "source": "C_Elm01.png"
+    },
+    "armor.medium_chest": {
+      "x": 204,
+      "y": 136,
+      "source": "A_Armour01.png"
+    },
+    "armor.medium_hands": {
+      "x": 238,
+      "y": 136,
+      "source": "W_Fist003.png"
+    },
+    "armor.medium_feet": {
+      "x": 0,
+      "y": 170,
+      "source": "A_Shoes06.png"
+    },
+    "armor.light_head": {
+      "x": 34,
+      "y": 170,
+      "source": "C_Hat01.png"
+    },
+    "armor.light_chest": {
+      "x": 68,
+      "y": 170,
+      "source": "A_Clothing01.png"
+    },
+    "armor.light_hands": {
+      "x": 102,
+      "y": 170,
+      "source": "W_Fist001.png"
+    },
+    "armor.light_feet": {
+      "x": 136,
+      "y": 170,
+      "source": "A_Shoes01.png"
+    },
+    "accessory.ring": {
+      "x": 170,
+      "y": 170,
+      "source": "Ac_Ring01.png"
+    },
+    "accessory.amulet": {
+      "x": 204,
+      "y": 170,
+      "source": "Ac_Necklace01.png"
+    },
+    "ui.ground_item": {
+      "x": 238,
+      "y": 170,
+      "source": "I_Chest01.png"
+    },
+    "ui.unknown": {
+      "x": 0,
+      "y": 204,
+      "source": "I_Scroll.png"
+    },
+    "attribute.str": {
+      "x": 34,
+      "y": 204,
+      "source": "S_Buff01.png"
+    },
+    "attribute.dex": {
+      "x": 68,
+      "y": 204,
+      "source": "S_Buff09.png"
+    },
+    "attribute.agi": {
+      "x": 102,
+      "y": 204,
+      "source": "S_Buff04.png"
+    },
+    "attribute.int": {
+      "x": 136,
+      "y": 204,
+      "source": "W_Book01.png"
+    },
+    "attribute.vit": {
+      "x": 170,
+      "y": 204,
+      "source": "S_Holy01.png"
+    }
+  }
+}
