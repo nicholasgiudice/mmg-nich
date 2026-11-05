@@ -13,13 +13,38 @@ Sem `--art=pixellab` o jogo continua com o LPC, sem nenhuma mudança. Quando uma
 
 ## Decisão do designer
 
-**Seguir com a trilha (T-091 em diante), com ajustes.** O designer decidiu em 2026-11-05: "vamos seguir com suas sugestões".
+**Situação final (2026-11-05): o PixelLab não atingiu a qualidade necessária.** A trilha T-091 em diante **não segue** como está, e o designer vai avaliar outras opções.
+
+O histórico da decisão:
+1. Com a v2 no relatório, o designer decidiu "seguir com suas sugestões".
+2. Ao ver a v2 no jogo: "o LPC parece ter mais detalhes ao caminhar, ao atacar. O personagem não ficou legal andando", e o Lobo "ao andar fica meio deformado, parece que nada ficou bom".
+3. Ele pediu uma última tentativa focada em qualidade de movimento, ataque e tamanho (rodada 3, abaixo). O veredito foi "ainda ruim".
+
+O que segue abaixo mostra como se chegou a isso. O código (`--art=pixellab`, scripts e folhas da v2) fica no repositório, desligado por padrão, como registro do piloto.
+
+### Rodada 3: última tentativa de qualidade (34 gerações, reprovada)
+
+Seguindo a recomendação da base de ajuda do PixelLab (animação por texto v3, uma direção por vez, descrição só do movimento, revisão quadro a quadro), testei de frente e de lado:
+
+| Teste | Resultado |
+|---|---|
+| Andar do Guerreiro: `skeleton-v3` com 8 quadros e passo maior, v3 por texto (3 descrições), pixminimax | `skeleton-v3` continua rígido; pixminimax **vira o personagem para a câmera** no meio do passo de lado; v3 por texto foi o melhor (pernas alternam, escudo fica), mas uma descrição trouxe "linhas de movimento" desenhadas |
+| Golpe do Guerreiro: 5 descrições v3, duas com a pose final fixada na rotação | de frente, um golpe aceitável; de lado, o personagem **gira para a câmera** em todas as tentativas; duas vieram com clarão ou arco amarelo desenhados no sprite, mesmo pedindo "no effects" |
+| Lobo novo (56 px, mais baixo e comprido) | proporção melhor que a v2 |
+| Andar do Lobo: v3 por texto e o modelo pronto de 8 quadros | v3 sem deformação; o modelo pronto deixa o lobo agachado |
+| Mordida do Lobo (v3 com a pose final fixada) | boa de lado, discreta de frente |
+
+Comparação em movimento: `arte-pixellab-piloto/v3-teste-animacoes.gif` (e `andar-teste.gif` para os testes de andar).
+
+**Por que não chega ao LPC:** cada animação é gerada a partir de uma figura parada, e o modelo não mantém pose, lado e equipamento sob controle ao longo dos quadros. O LPC tem animações desenhadas à mão sobre uma base comum: 9 quadros de andar, o golpe com arco de espada em quadro maior, e tudo encaixa entre personagens. No PixelLab, cada animação boa exigiu 2 ou 3 tentativas por direção, e o golpe de lado não saiu bom em nenhuma.
+
+### Antes (rodadas 1 e 2)
 
 O piloto passou por duas versões:
 - **v1:** Guerreiro com armadura completa (v3, 64 px). O designer rejeitou: "muitos detalhes, queria algo mais simples".
 - **v2 (em uso):** o designer escolheu, entre três amostras, a que usa **o próprio Guerreiro LPC como referência de estilo**. Ela tem contorno escuro grosso, formas simples, poucas cores e cabeça um pouco maior, como o LPC, com o traço mais limpo.
 
-Ajustes que valem para a trilha:
+Ajustes propostos na rodada 2 (não seguem mais, ficam como registro):
 1. **Estilo:** todo personagem é gerado com `create_character_pro_flash` e uma referência de estilo (`style_image`). A referência é o sprite LPC (para humanoides) ou a rotação de baixo do Guerreiro v2 (para o resto do elenco), e o prompt pede poucas cores e pouco detalhe ("bold black outline, simple flat colours, few details").
 2. **Escala:** quadro de 64 px com corpo de ~49 px, ou seja, 1,5 tile, igual ao LPC.
 3. **Animações de quem tem equipamento:** modo `skeleton-v3`, que mantém o escudo e a espada. Criaturas sem equipamento continuam com o modelo pronto e o v3 por texto, que são mais baratos.
@@ -48,7 +73,7 @@ Ajustes que valem para a trilha:
 | Guerreiro de 52 px animado em `skeleton-v3` | 48 | provou que o `skeleton-v3` mantém o equipamento; estilo rejeitado |
 | Amostras B (16 cores) e C (modo standard, pouco detalhe) | 7 | não escolhidas: a C ficou simples demais (corpo fino, escudo pequeno) |
 
-**Total gasto: 175 gerações.** Bate com o saldo da conta (1.825 restantes) e com o `manifest.json`, que registra cada chamada com ferramenta, prompt, seed, parâmetros, referência, custo e status.
+**Total gasto: 209 gerações** (175 nas rodadas 1 e 2 e 34 na rodada 3). Bate com o saldo da conta (1.791 restantes) e com o `manifest.json`, que registra cada chamada com ferramenta, prompt, seed, parâmetros, referência, custo e status.
 
 ## Capturas
 
@@ -121,7 +146,7 @@ Nos Campos (`encounter.three_wolves`). A tela cheia escala o jogo em 1,5×.
 
 ## Gerações gastas e estimativa para refazer o jogo
 
-Gasto no piloto: **175 gerações**. Dessas, 76 estão nos assets em uso e 99 foram para testes e amostras.
+Gasto no piloto: **209 gerações**. Dessas, 76 estão nos assets da v2 e 133 foram para testes e amostras. Com a reprovação, a estimativa abaixo fica só como registro. Sobram 1.791 gerações no mês, válidas até 2026-12-05; vale cancelar a assinatura antes da renovação se o PixelLab não for usado para outra coisa.
 
 Estimativa revisada com os custos reais da v2: personagem pro-flash com referência e animações em `skeleton-v3` para quem tem equipamento, com 30% de margem para refazer direções.
 

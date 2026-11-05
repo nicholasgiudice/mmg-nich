@@ -58,7 +58,12 @@ claude mcp add pixellab https://api.pixellab.ai/mcp -t http -H "Authorization: B
 
 Concluída em 2026-11-05. Relatório completo em `tasks/reports/arte-pixellab-piloto.md`.
 
-**Decisão do designer:** seguir com a trilha (T-091 em diante), com os ajustes do relatório. O estilo foi escolhido por amostras, e a versão em uso é a v2: o Guerreiro gerado com o próprio sprite LPC como referência de estilo. A v1, com armadura detalhada, foi rejeitada ("muitos detalhes").
+**Decisão do designer (final):** o PixelLab **não atingiu a qualidade necessária**, e a trilha T-091 em diante não segue como está; o designer vai avaliar outras opções. O caminho até isso:
+- a v1 (armadura detalhada) foi rejeitada por "muitos detalhes";
+- a v2 (Guerreiro com o sprite LPC como referência de estilo) foi aprovada parada, mas reprovada no jogo: o andar e o ataque ficaram piores que os do LPC, e o Lobo deformava ao andar;
+- uma rodada 3, focada em movimento, ataque e tamanho, melhorou o andar, mas o golpe de lado gira o personagem para a câmera em todas as tentativas. Veredito: "ainda ruim".
+
+Detalhes e comparações em movimento no relatório.
 
 **Feito**
 - **Guerreiro v2:** `create_character_pro_flash` com o sprite LPC como referência, 64 px. Parado, andar, atacar e morrer em `skeleton-v3`, que mantém escudo e espada. O ataque é o golpe `slash` com o escudo à frente.
@@ -74,7 +79,7 @@ Concluída em 2026-11-05. Relatório completo em `tasks/reports/arte-pixellab-pi
 
 **Tileset no Tiled:** o PixelLab não entrega `.tsx`, mas a conversão é automática. O próprio Tiled (`--export-tileset`) leu o wangset `corner` com as 16 combinações. Um mapa montado pelos cantos e renderizado pelo `tmxrasterizer` tem todas as emendas certas. Falta o humano pintar uma vez com o pincel de terreno na interface do Tiled.
 
-**Custo:** 175 gerações, conferidas no saldo da conta: 76 nos assets em uso e 99 em testes e amostras. A estimativa revisada para refazer o jogo é de ~2.200 gerações. Recomendo um mês do Tier 2 (US$ 24), em vez de dois meses do Tier 1.
+**Custo:** 209 gerações, conferidas no saldo da conta: 76 nos assets da v2 e 133 em testes e amostras. Sobram 1.791 até 2026-12-05.
 
 **Decisões e desvios**
 - Ficou um layout por personagem (`pixellab_<id>`), e não um único `pixellab`: a célula (64 a 96 px) e o número de quadros mudam com o que o PixelLab entrega.
@@ -83,7 +88,8 @@ Concluída em 2026-11-05. Relatório completo em `tasks/reports/arte-pixellab-pi
 - A branch saiu de `task/trilha-arte-pixellab`, que tem os documentos da trilha e ainda não está em `main`.
 
 **Pendências**
-- O teste do pincel de terreno na interface do Tiled.
+- Decidir o que fazer com a assinatura do PixelLab antes da renovação (2026-12-05).
+- O teste do pincel de terreno na interface do Tiled, se o tileset ainda interessar.
 - O parado do Guerreiro olhando para a esquerda tem a espada deformada nos quadros 2 a 4. Hoje não aparece no jogo; refazer custa 3 gerações.
 - O `idle` do cliente mostra só o primeiro quadro, então a respiração ainda não aparece (T-094).
 - O Lobo v2 ficou grande (56×54 px de lado). Se o designer quiser, dá para refazê-lo em 56 px.

@@ -547,6 +547,109 @@
       "styleReference": "personagem 43447e35",
       "cost": 4,
       "pixellabId": "79dafa46-f3d9-49c5-9133-d8981160ff0b"
+    },
+    {
+      "status": "teste reprovado pelo designer (rodada 3)",
+      "seed": null,
+      "asset": "class.warrior",
+      "animation": "walk (testes A, B, C)",
+      "tool": "animate_character",
+      "params": {
+        "modes": [
+          "skeleton-v3 move walk energy 1.35, 8 quadros",
+          "v3 8 quadros",
+          "pixminimax 8 quadros"
+        ],
+        "directions": [
+          "south",
+          "east"
+        ]
+      },
+      "prompt": "walking forward with clear alternating steps, head bobbing, sword arm swinging, shield kept on the left arm",
+      "styleReference": "personagem 577ea353-c2ff-4eed-a15a-db861f8c3c3b",
+      "cost": 10,
+      "pixellabId": "577ea353-c2ff-4eed-a15a-db861f8c3c3b",
+      "note": "skeleton-v3 rígido; pixminimax gira o personagem de lado; v3 o mais próximo"
+    },
+    {
+      "status": "teste reprovado pelo designer (rodada 3)",
+      "seed": null,
+      "asset": "class.warrior",
+      "animation": "walk (W1, W2)",
+      "tool": "animate_character",
+      "params": {
+        "mode": "v3",
+        "frame_count": 8,
+        "keep_first_frame": false,
+        "directions": [
+          "south",
+          "east"
+        ]
+      },
+      "prompt": "W1: walk cycle in place, always facing the same direction, legs alternate with clear big steps... | W2: steady marching walk in place, feet lift and step one after the other, arms swing gently, sword pointing down beside the right leg, shield on the left arm, keeps looking straight ahead",
+      "styleReference": "personagem 577ea353-c2ff-4eed-a15a-db861f8c3c3b",
+      "cost": 4,
+      "pixellabId": "577ea353-c2ff-4eed-a15a-db861f8c3c3b",
+      "note": "W1 com linhas de movimento desenhadas; W2 limpo"
+    },
+    {
+      "status": "teste reprovado pelo designer (rodada 3)",
+      "seed": null,
+      "asset": "class.warrior",
+      "animation": "attack (A1 a A5)",
+      "tool": "animate_character",
+      "params": {
+        "mode": "v3",
+        "frame_count": "6 a 8",
+        "end_frame": "rotação east em A4 e A5",
+        "directions": [
+          "south",
+          "east"
+        ]
+      },
+      "prompt": "A1 big sword slash | A2 lifts the sword behind the shoulder and chops down, no effects | A3 quick swing across the chest | A4/A5 side-view chop/thrust that never turns toward the camera",
+      "styleReference": "personagem 577ea353-c2ff-4eed-a15a-db861f8c3c3b",
+      "cost": 8,
+      "pixellabId": "577ea353-c2ff-4eed-a15a-db861f8c3c3b",
+      "note": "efeitos desenhados (A1, A3); de lado o personagem gira para a câmera em todas"
+    },
+    {
+      "status": "teste reprovado pelo designer (rodada 3)",
+      "seed": null,
+      "asset": "monster.grey_wolf",
+      "tool": "create_character_pro_flash",
+      "params": {
+        "template_id": "dog",
+        "width": 56,
+        "height": 56,
+        "view": "low top-down"
+      },
+      "prompt": "grey wolf, lean and low with a long body and long bushy tail, light grey fur with darker grey back, standing on all four legs, head held level, bold dark outline, simple shapes, few colours",
+      "styleReference": "recorte 56x56 da rotação south do Guerreiro v2",
+      "cost": 6,
+      "pixellabId": "782c10ca-1de5-4dd9-af10-107ac93d5828"
+    },
+    {
+      "status": "teste reprovado pelo designer (rodada 3)",
+      "seed": null,
+      "asset": "monster.grey_wolf",
+      "animation": "walk, attack",
+      "tool": "animate_character",
+      "params": {
+        "walk": [
+          "v3 8 quadros",
+          "template walk-8-frames"
+        ],
+        "attack": "v3 6 quadros com end_frame = rotação",
+        "directions": [
+          "south",
+          "east"
+        ]
+      },
+      "prompt": "wolf trotting in place, legs move in a clear four-beat gait... | wolf lunges forward and snaps its jaws in a quick bite, then steps back to the starting pose",
+      "styleReference": "personagem 782c10ca-1de5-4dd9-af10-107ac93d5828",
+      "cost": 6,
+      "pixellabId": "782c10ca-1de5-4dd9-af10-107ac93d5828"
     }
   ]
 }
