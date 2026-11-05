@@ -1,13 +1,13 @@
 {
   "frame": [
-    84,
-    84
+    96,
+    96
   ],
   "pivot": [
-    42,
-    70
+    48,
+    77
   ],
-  "headPx": 58,
+  "headPx": 53,
   "dirOrder": [
     "up",
     "left",
@@ -37,9 +37,9 @@
       "grid": {
         "row": 8,
         "col": 0,
-        "count": 7
+        "count": 8
       },
-      "fps": 14.0
+      "fps": 16.0
     },
     "death": {
       "grid": {

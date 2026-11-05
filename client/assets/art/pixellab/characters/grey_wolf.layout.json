@@ -1,13 +1,13 @@
 {
   "frame": [
-    80,
-    80
+    88,
+    88
   ],
   "pivot": [
-    40,
-    62
+    44,
+    72
   ],
-  "headPx": 50,
+  "headPx": 58,
   "dirOrder": [
     "up",
     "left",
