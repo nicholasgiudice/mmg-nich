@@ -67,7 +67,25 @@ public sealed class SpriteCatalog
         var root = JsonNode.Parse(Godot.FileAccess.GetFileAsString(path))!;
         var layouts = root["layouts"]!.AsObject();
         var sprites = new Dictionary<string, SpriteDefinition>(StringComparer.Ordinal);
-        foreach (var (id, node) in root["sprites"]!.AsObject())
+        var entries = root["sprites"]!.AsObject().ToDictionary(kv => kv.Key, kv => kv.Value!, StringComparer.Ordinal);
+
+        // --art=variante (T-090): as entradas de "variants.<variante>" substituem as do conjunto padrão.
+        if (ArtVariant() is { } variant)
+        {
+            if (root["variants"]?[variant]?.AsObject() is { } overrides)
+            {
+                foreach (var (id, node) in overrides)
+                {
+                    entries[id] = node!;
+                }
+            }
+            else
+            {
+                GD.PushWarning($"--art={variant}: variante não existe em {path}; usando a arte padrão.");
+            }
+        }
+
+        foreach (var (id, node) in entries)
         {
             var texturePath = $"{directory}/{(string)node!["texture"]!}";
             var texture = LoadTexture(texturePath);
@@ -98,6 +116,14 @@ public sealed class SpriteCatalog
 
         return new SpriteCatalog(sprites);
     }
+
+    /// <summary>Conjunto de arte alternativo pedido por <c>--art=nome</c> (ex.: <c>pixellab</c>, T-090); null = padrão (LPC).</summary>
+    private static string? ArtVariant() =>
+        OS.GetCmdlineUserArgs()
+            .Select(a => a.TrimStart('-'))
+            .Where(a => a.StartsWith("art=", StringComparison.Ordinal))
+            .Select(a => a["art=".Length..])
+            .LastOrDefault(a => a.Length > 0);
 
     /// <summary>Textura importada pelo Godot; sem importação (editor ainda não abriu), lê o PNG direto.</summary>
     internal static Texture2D? LoadTexture(string path)

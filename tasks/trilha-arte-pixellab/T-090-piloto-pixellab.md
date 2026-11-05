@@ -56,4 +56,30 @@ claude mcp add pixellab https://api.pixellab.ai/mcp -t http -H "Authorization: B
 
 ## Resultado
 
-_(preencher ao concluir)_
+Concluída em 2026-11-05, exceto a **decisão do designer**, que está pendente no relatório. Relatório completo em `tasks/reports/arte-pixellab-piloto.md`.
+
+**Feito**
+- Guerreiro (v3, 64 px) com parado, andar, atacar e morrer, e Lobo Cinzento (pro-flash, modelo `dog`, com o Guerreiro como referência de estilo) com parado, andar, atacar e morrer. Os dois têm 4 direções. A animação de morrer saiu bem nos dois: modelo `falling-back-death` no Guerreiro e texto v3 no Lobo.
+- Tileset grama × terra de 32 px (standard, 16 tiles) e um carvalho de 96×128 com fundo transparente.
+- `client/assets/art/pixellab/tools/build_sheet.py`: o ZIP do PixelLab vira uma folha em grade com o layout pronto (pivô = média dos pés nas 4 rotações; `headPx` medido).
+- `tools/tileset_to_tiled.py`: PNG + metadata do PixelLab viram `.tsx` com wangset de canto (`data/maps/tilesets/pixellab_grass_dirt.tsx`).
+- `tools/wang_test_map.py`: gera um mapa de teste escolhendo os tiles pelos cantos.
+- `sprites.json`: layouts `pixellab_warrior` e `pixellab_grey_wolf`, e um bloco `variants.pixellab`. `SpriteCatalog` aplica a variante com `--art=pixellab`; sem o argumento, nada muda.
+- `manifest.json` com as 12 chamadas pagas: ferramenta, prompt, seed, parâmetros, referência e custo. O teste de escala em 52 px está só no relatório.
+- Capturas lado a lado (início e combate), um quadro em 1× real e uma cena só com arte PixelLab, em `tasks/reports/arte-pixellab-piloto/`.
+
+**Tileset no Tiled:** o PixelLab não entrega `.tsx`, mas a conversão é automática. O próprio Tiled (`--export-tileset`) leu o wangset `corner` com as 16 combinações. Um mapa montado pelos cantos e renderizado pelo `tmxrasterizer` tem todas as emendas certas. Falta o humano pintar uma vez com o pincel de terreno na interface do Tiled.
+
+**Custo:** 44 gerações, conferidas no saldo da conta. A estimativa para refazer o jogo inteiro é de ~1.500 gerações, que cabem em um mês do Tier 1.
+
+**Decisões e desvios**
+- Ficou um layout por personagem (`pixellab_<id>`), e não um único `pixellab`: a célula (64 a 84 px) e o número de quadros mudam com o que o PixelLab entrega.
+- O Guerreiro em 64 px tem 58 px de altura (1,8 tile). Um teste em `size=52` deu 48 px (1,5 tile, como o LPC). Ele não foi animado: a recomendação para a trilha é `size=52`.
+- As animações por modelo pronto apagam o escudo do Guerreiro. Para a T-094, sugiro `skeleton-v3`.
+- O mapa de teste do wangset ficou em `tasks/reports/arte-pixellab-piloto/`, porque um `.tmj` dentro de `data/maps/` é carregado como mapa do jogo e quebra os testes.
+- A branch saiu de `task/trilha-arte-pixellab`, que tem os documentos da trilha e ainda não está em `main`.
+
+**Pendências**
+- A decisão do designer, no fim do relatório.
+- O teste do pincel de terreno na interface do Tiled.
+- O `idle` do cliente mostra só o primeiro quadro, então a respiração gerada ainda não aparece (T-094).

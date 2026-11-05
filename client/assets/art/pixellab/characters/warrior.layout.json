@@ -1,0 +1,53 @@
+{
+  "frame": [
+    84,
+    84
+  ],
+  "pivot": [
+    42,
+    70
+  ],
+  "headPx": 58,
+  "dirOrder": [
+    "up",
+    "left",
+    "down",
+    "right"
+  ],
+  "animations": {
+    "idle": {
+      "grid": {
+        "row": 0,
+        "col": 0,
+        "count": 4
+      },
+      "fps": 6.0,
+      "loop": true
+    },
+    "walk": {
+      "grid": {
+        "row": 4,
+        "col": 0,
+        "count": 6
+      },
+      "fps": 10.0,
+      "loop": true
+    },
+    "attack": {
+      "grid": {
+        "row": 8,
+        "col": 0,
+        "count": 7
+      },
+      "fps": 14.0
+    },
+    "death": {
+      "grid": {
+        "row": 12,
+        "col": 0,
+        "count": 7
+      },
+      "fps": 10.0
+    }
+  }
+}

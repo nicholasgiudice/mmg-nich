@@ -1,0 +1,98 @@
+{
+  "$comment": "Registro de cada geração do PixelLab (T-090). Uma entrada por chamada que gastou gerações: ferramenta, descrição (prompt), seed, tamanho, referência de estilo e custo. 'pixellabId' é o id do asset na conta do PixelLab (o download do ZIP não exige token: https://api.pixellab.ai/mcp/characters/<id>/download, /mcp/tilesets/<id>/image e /metadata, /mcp/map-objects/<id>/download). Ferramentas sem seed (create_character, animate_character) não são reprodutíveis: refazer = gerar de novo com o mesmo prompt. Licença: o usuário detém os direitos das gerações; proibido usá-las para treinar modelos.",
+  "account": { "plan": "Tier 1 (2.000 gerações/mês)", "date": "2026-11-05" },
+  "generations": [
+    {
+      "asset": "class.warrior",
+      "file": "characters/warrior.png",
+      "tool": "create_character",
+      "params": { "mode": "v3", "size": 64, "view": "low top-down", "outline": "single color black outline", "detail": "medium detail", "n_directions": 8 },
+      "prompt": "medieval warrior, chainmail armor over brown tunic, round steel helmet, longsword in right hand, small wooden round shield, leather boots, dark outline",
+      "seed": null,
+      "styleReference": null,
+      "cost": 2,
+      "pixellabId": "3d99a3d3-738a-4ae1-bfbb-ccc4b1778f2a"
+    },
+    {
+      "asset": "class.warrior", "animation": "idle", "tool": "animate_character",
+      "params": { "mode": "template", "template_animation_id": "breathing-idle", "directions": ["south", "east", "north", "west"], "frames": 4 },
+      "prompt": null, "seed": null, "styleReference": "personagem 3d99a3d3", "cost": 4,
+      "pixellabId": "1dc738af-067f-494d-93dc-bb1b9663f7ee"
+    },
+    {
+      "asset": "class.warrior", "animation": "walk", "tool": "animate_character",
+      "params": { "mode": "template", "template_animation_id": "walking-6-frames", "directions": ["south", "east", "north", "west"], "frames": 6 },
+      "prompt": null, "seed": null, "styleReference": "personagem 3d99a3d3", "cost": 4,
+      "pixellabId": "e5c09d04-e881-43b7-9971-5a0dba6b218e"
+    },
+    {
+      "asset": "class.warrior", "animation": "attack", "tool": "animate_character",
+      "params": { "mode": "v3", "frame_count": 6, "directions": ["south", "east", "north", "west"], "canvas": 84, "frames": 7 },
+      "prompt": "swinging the sword in a strong overhead slash, then returning to guard",
+      "seed": null, "styleReference": "personagem 3d99a3d3", "cost": 4,
+      "pixellabId": "aadc0e24-88e3-4f73-bd8c-b5ff9ee08f0f"
+    },
+    {
+      "asset": "class.warrior", "animation": "death", "tool": "animate_character",
+      "params": { "mode": "template", "template_animation_id": "falling-back-death", "directions": ["south", "east", "north", "west"], "frames": 7 },
+      "prompt": null, "seed": null, "styleReference": "personagem 3d99a3d3", "cost": 4,
+      "pixellabId": "74882173-09e3-4793-b6d1-42e77b99eedc"
+    },
+    {
+      "asset": "monster.grey_wolf",
+      "file": "characters/grey_wolf.png",
+      "tool": "create_character_pro_flash",
+      "params": { "template_id": "dog", "width": 64, "height": 64, "view": "low top-down", "n_directions": 8 },
+      "prompt": "grey wolf, light grey fur with darker grey back, standing on all four legs, lean wild predator, dark outline",
+      "seed": 90,
+      "styleReference": "rotação south do Guerreiro 3d99a3d3 (\"match outline, shading and colour treatment of this hero; draw a wolf, not a human\")",
+      "cost": 6,
+      "pixellabId": "668cf05b-5314-48dc-ab1c-04963aaee3df"
+    },
+    {
+      "asset": "monster.grey_wolf", "animation": "idle", "tool": "animate_character",
+      "params": { "mode": "template", "template_animation_id": "idle", "directions": ["south", "east", "north", "west"], "frames": 8 },
+      "prompt": null, "seed": null, "styleReference": "personagem 668cf05b", "cost": 4,
+      "pixellabId": "6aa2cc62-c1bf-49c2-bcc4-ce4632cafbd5"
+    },
+    {
+      "asset": "monster.grey_wolf", "animation": "walk", "tool": "animate_character",
+      "params": { "mode": "template", "template_animation_id": "walk-6-frames", "directions": ["south", "east", "north", "west"], "frames": 6 },
+      "prompt": null, "seed": null, "styleReference": "personagem 668cf05b", "cost": 4,
+      "pixellabId": "3a7c992d-f1ac-4a73-a958-35c4d8584bf7"
+    },
+    {
+      "asset": "monster.grey_wolf", "animation": "attack", "tool": "animate_character",
+      "params": { "mode": "v3", "frame_count": 6, "directions": ["south", "east", "north", "west"], "canvas": "76 a 80", "frames": 7 },
+      "prompt": "lunging forward and biting with open jaws, then stepping back",
+      "seed": null, "styleReference": "personagem 668cf05b", "cost": 4,
+      "pixellabId": "3176c02d-4abe-41fd-b05b-e4241f5c3316"
+    },
+    {
+      "asset": "monster.grey_wolf", "animation": "death", "tool": "animate_character",
+      "params": { "mode": "v3", "frame_count": 6, "directions": ["south", "east", "north", "west"], "canvas": "76 a 80", "frames": 7 },
+      "prompt": "collapsing and falling over onto its side, lying still",
+      "seed": null, "styleReference": "personagem 668cf05b", "cost": 4,
+      "pixellabId": "f2efde0b-9772-4715-9061-06fbc5d39517"
+    },
+    {
+      "asset": "tileset.grass_dirt",
+      "file": "tiles/grass_dirt.png",
+      "tool": "create_topdown_tileset",
+      "params": { "mode": "standard", "tile_size": 32, "detail": "medium detail", "shading": "basic shading", "transition_size": 0, "enhance": true, "tiles": 16 },
+      "prompt": "lower: brown dirt path, packed earth with small pebbles | upper: green meadow grass, slightly muted",
+      "seed": null, "styleReference": null, "cost": 1,
+      "pixellabId": "78de52ee-cb83-453a-9825-67eee8e0fce6",
+      "note": "o modo standard reescreve a descrição (enhance); o texto final está em tiles/grass_dirt.metadata.json"
+    },
+    {
+      "asset": "object.oak_tree",
+      "file": "objects/oak_tree.png",
+      "tool": "create_map_object",
+      "params": { "width": 96, "height": 128, "view": "low top-down", "detail": "medium detail", "shading": "basic shading", "outline": "selective outline" },
+      "prompt": "large round oak tree with dense green canopy and brown trunk, medieval countryside",
+      "seed": null, "styleReference": null, "cost": 1,
+      "pixellabId": "42ec689d-a92d-4ddc-9173-54cc0147919f"
+    }
+  ]
+}

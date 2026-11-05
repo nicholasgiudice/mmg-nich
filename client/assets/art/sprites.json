@@ -1,5 +1,5 @@
 {
-  "$comment": "Sprite de cada classe/monstro (T-053). Só apresentação: o Core não lê este arquivo. Coordenadas em pixels da folha; pivot = ponto entre os pés, que fica no centro do círculo de colisão. Direções: up, left, down, right. 'grid' usa a linha da primeira direção de 'dirOrder' e desce uma linha por direção; 'all' usa o mesmo trecho em todas as direções. Uma animação pode ter 'frame' e 'pivot' próprios: o gerador LPC exporta o golpe das armas grandes (espada, maça) em quadros de 128 ou 192 px abaixo da linha 54 (y = 3456), e a linha padrão sai sem a arma. Créditos em CREDITS.md e em design/art-direction-v0.1.md.",
+  "$comment": "Sprite de cada classe/monstro (T-053). Só apresentação: o Core não lê este arquivo. Coordenadas em pixels da folha; pivot = ponto entre os pés, que fica no centro do círculo de colisão. Direções: up, left, down, right. 'grid' usa a linha da primeira direção de 'dirOrder' e desce uma linha por direção; 'all' usa o mesmo trecho em todas as direções. Uma animação pode ter 'frame' e 'pivot' próprios: o gerador LPC exporta o golpe das armas grandes (espada, maça) em quadros de 128 ou 192 px abaixo da linha 54 (y = 3456), e a linha padrão sai sem a arma. Créditos em CREDITS.md e em design/art-direction-v0.1.md. 'variants.<nome>' troca sprites só quando o cliente roda com --art=<nome> (T-090: 'pixellab', folhas montadas por pixellab/tools/build_sheet.py, um layout por personagem porque a célula e o número de quadros mudam com o que o PixelLab entrega).",
   "layouts": {
     "ulpc": {
       "frame": [64, 64],
@@ -75,6 +75,30 @@
           "left": { "x": 320, "y": 192, "count": 4 }
         }
       }
+    },
+    "pixellab_warrior": {
+      "frame": [84, 84],
+      "pivot": [42, 70],
+      "headPx": 58,
+      "dirOrder": ["up", "left", "down", "right"],
+      "animations": {
+        "idle": {"grid": {"row": 0, "col": 0, "count": 4}, "fps": 6.0, "loop": true},
+        "walk": {"grid": {"row": 4, "col": 0, "count": 6}, "fps": 10.0, "loop": true},
+        "attack": {"grid": {"row": 8, "col": 0, "count": 7}, "fps": 14.0},
+        "death": {"grid": {"row": 12, "col": 0, "count": 7}, "fps": 10.0}
+      }
+    },
+    "pixellab_grey_wolf": {
+      "frame": [80, 80],
+      "pivot": [40, 62],
+      "headPx": 50,
+      "dirOrder": ["up", "left", "down", "right"],
+      "animations": {
+        "idle": {"grid": {"row": 0, "col": 0, "count": 8}, "fps": 6.0, "loop": true},
+        "walk": {"grid": {"row": 4, "col": 0, "count": 6}, "fps": 10.0, "loop": true},
+        "attack": {"grid": {"row": 8, "col": 0, "count": 7}, "fps": 14.0},
+        "death": {"grid": {"row": 12, "col": 0, "count": 7}, "fps": 10.0}
+      }
     }
   },
   "sprites": {
@@ -89,5 +113,11 @@
     "monster.spider_small": { "layout": "lpc_spider", "texture": "monsters/spiders/spider01.png" },
     "monster.spider_big": { "layout": "lpc_spider", "texture": "monsters/spiders/spider05.png" },
     "monster.forest_matriarch": { "layout": "lpc_spider", "texture": "monsters/spiders/spider04.png", "scale": 2 }
+  },
+  "variants": {
+    "pixellab": {
+      "class.warrior": { "layout": "pixellab_warrior", "texture": "pixellab/characters/warrior.png", "use": { "cast": "attack" } },
+      "monster.grey_wolf": { "layout": "pixellab_grey_wolf", "texture": "pixellab/characters/grey_wolf.png" }
+    }
   }
 }
