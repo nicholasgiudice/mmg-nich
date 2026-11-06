@@ -20,6 +20,9 @@ public partial class ZoneScreen : Control
     private readonly Label _title = new() { HorizontalAlignment = HorizontalAlignment.Center };
     private readonly Label _subtitle = new() { HorizontalAlignment = HorizontalAlignment.Center };
     private readonly Label _corner = new() { HorizontalAlignment = HorizontalAlignment.Right };
+
+    /// <summary>Onde termina o nome da zona no canto superior direito (px); 0 sem ele. A lista de batalha fica abaixo (T-312).</summary>
+    public float CornerBottom => Visible && _corner.Visible && _corner.Text.Length > 0 ? _corner.Position.Y + _corner.Size.Y : 0;
     private readonly PanelContainer _death = new() { Visible = false };
     private readonly Label _deathText = new() { HorizontalAlignment = HorizontalAlignment.Center };
     private double _transition = -1;

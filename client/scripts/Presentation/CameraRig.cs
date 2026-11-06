@@ -50,6 +50,14 @@ public partial class CameraRig : Camera2D
         return Mathf.Max(1f, Mathf.Max(screen.X / b.Size.X, screen.Y / b.Size.Y));
     }
 
+    /// <summary>Retângulo do mundo (tiles) que a câmera mostra agora (lista de batalha, T-312).</summary>
+    public Rect2 VisibleWorld()
+    {
+        var sizePx = GetViewportRect().Size / Zoom;
+        var originPx = GetScreenCenterPosition() - sizePx / 2;
+        return new Rect2(originPx / Units.PixelsPerUnit, sizePx / Units.PixelsPerUnit);
+    }
+
     private Vector2 Clamp(Vector2 p)
     {
         if (_bounds is not { } b)

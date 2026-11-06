@@ -29,6 +29,7 @@ public partial class EntityView : Node2D
     private static readonly Color BarBack = new(0.10f, 0.10f, 0.10f, 0.85f);
     private static readonly Color BarFill = new(0.35f, 0.85f, 0.35f);
     private static readonly Color SelectionColor = new(1f, 0.85f, 0.2f);
+    private static readonly Color HighlightColor = new(1f, 1f, 1f, 0.9f);
 
     private static readonly Color StunColor = new(1f, 0.9f, 0.3f);
     private static readonly Color RootColor = new(0.55f, 0.38f, 0.20f);
@@ -48,6 +49,7 @@ public partial class EntityView : Node2D
     private float _healthFraction = 1f;
     private bool _alive = true;
     private bool _selected;
+    private bool _highlighted;
     private IReadOnlyList<StatusChip> _chips = Array.Empty<StatusChip>();
     private ControlMarks _marks;
     private double _flash;
@@ -112,7 +114,7 @@ public partial class EntityView : Node2D
     }
 
     /// <summary>Atualiza dados lentos (vida, nome, cor) a partir do snapshot mais recente.</summary>
-    public void ApplyState(EntitySnapshot state, bool controlled, bool selected, SpriteCatalog sprites)
+    public void ApplyState(EntitySnapshot state, bool controlled, bool selected, SpriteCatalog sprites, bool highlighted = false)
     {
         if (!_spriteResolved)
         {
@@ -130,7 +132,7 @@ public partial class EntityView : Node2D
             : faction == Faction.Player ? (controlled ? ControlledColor : PlayerColor)
             : MonsterColor;
 
-        if (radius != _radiusPx || alive != _alive || fraction != _healthFraction || color != _color || selected != _selected)
+        if (radius != _radiusPx || alive != _alive || fraction != _healthFraction || color != _color || selected != _selected || highlighted != _highlighted)
         {
             if (alive != _alive)
             {
@@ -139,6 +141,7 @@ public partial class EntityView : Node2D
             }
 
             _selected = selected;
+            _highlighted = highlighted;
             _radiusPx = radius;
             _alive = alive;
             _healthFraction = fraction;
@@ -239,6 +242,12 @@ public partial class EntityView : Node2D
         if (_selected)
         {
             DrawArc(Godot.Vector2.Zero, _radiusPx + 5, 0, Mathf.Tau, 32, SelectionColor, 2.5f);
+        }
+
+        if (_highlighted)
+        {
+            // T-312: mouse sobre a linha na lista de batalha.
+            DrawArc(Godot.Vector2.Zero, _radiusPx + (_selected ? 9 : 5), 0, Mathf.Tau, 32, HighlightColor, 2f);
         }
 
         if ((_marks & ControlMarks.Rooted) != 0)

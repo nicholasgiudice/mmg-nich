@@ -79,6 +79,15 @@ public sealed class PlayerInput
     /// <summary>Esquece o alvo (troca de zona, T-223).</summary>
     public void ClearTarget() => SelectedTarget = null;
 
+    /// <summary>Escolhe o alvo como o clique no mapa (linha da lista de batalha, T-312).</summary>
+    public void Select(EntityId target) => SelectedTarget = target;
+
+    /// <summary>
+    /// T-312: Tab (true) e Shift+Tab (false) andam pela lista de batalha. Recebe o alvo atual e devolve o próximo;
+    /// null (lista vazia ou sem lista) = Tab volta ao inimigo mais perto num raio de <see cref="TabTargetRange"/>.
+    /// </summary>
+    public Func<EntityId?, bool, EntityId?>? TabCycle { get; set; }
+
     /// <summary>
     /// Ataque básico automático no alvo selecionado (T-033). Ligado por padrão; Esc/limpar o alvo para de atacar.
     /// </summary>
@@ -125,9 +134,14 @@ public sealed class PlayerInput
             SelectedTarget = null;
         }
 
-        if (_justPressed(InputActions.TargetNext))
+        // Shift+Tab também dispara a ação do Tab (o Input Map não exige modificador): olhar a de trás primeiro.
+        if (_justPressed(InputActions.TargetPrevious))
         {
-            SelectedTarget = NextEnemy(units.Values, self);
+            SelectedTarget = TabCycle?.Invoke(SelectedTarget, false) ?? SelectedTarget;
+        }
+        else if (_justPressed(InputActions.TargetNext))
+        {
+            SelectedTarget = TabCycle?.Invoke(SelectedTarget, true) ?? NextEnemy(units.Values, self);
         }
 
         var abilities = self.TryGet<AbilityState>();
