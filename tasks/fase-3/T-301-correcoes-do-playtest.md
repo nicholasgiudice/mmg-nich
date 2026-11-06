@@ -32,4 +32,23 @@ O playtest da fase 2 (`tasks/reports/playtest-v0.2.md`, bugs B1–B3) achou trê
 
 ## Resultado
 
-_(preencher ao concluir)_
+**Feito (branch `task/T-301-correcoes-do-playtest`):**
+
+- **B1, recargas na troca de zona.** Novo `AbilityTimers` (`src/Game.Server/Persistence/CharacterState.cs`) com os ticks **restantes** de cada recarga (`ReadyAtTick - tick`), as cargas por recarga em uso (`CooldownChargesSpent`, T-060) e as cargas gastas (`ChargesUsed`, poção). `CharacterState` ganhou `Timers` (init, opcional). O `WorldServer.Move` captura os timers no tick da zona de origem, e o `CharacterState.Spawn` os recria no tick da zona nova (`tick + restante`), ignorando habilidades que o personagem não conhece mais. Status e ameaça continuam sendo perdidos.
+- **Gravação:** `Timers` não entra no `CharacterDocument` nem vai para o banco. Login começa com tudo pronto. A poção acompanha a troca de zona até a T-320.
+- **B2, corpos de invocações.** O `OpenZone` guarda os ids dos monstros de ponto (`_slotEntities`). A cada tick, todo monstro morto (facção `Monster`) fora desse conjunto ganha um tick de morte e é removido depois de `CorpseTicks`, sem renascer.
+- **B3, grupo de aggro por ponto.** `OpenZone.GroupOf(i) = i + 1` (determinístico, nunca 0). Todo monstro que nasce do ponto `monsterSpawns[i]` (na criação e nos renascimentos) recebe esse `AiState.GroupId`. As invocações continuam herdando o grupo de quem invocou (`Summons.cs`, sem mudança).
+- **Testes** (`tests/Game.Server.Tests/WorldTests.cs`):
+  - `Cooldowns_and_spent_potion_charges_survive_a_zone_change`: poção usada nos Campos; na Cidade, a recarga restante é igual (tolerância de 1 tick) e a carga continua gasta;
+  - `Dead_summons_in_an_open_zone_leave_after_the_corpse_time_and_do_not_respawn`: aranha invocada morta no Covil some depois de `CorpseTicks` e não volta;
+  - `Pulling_a_monster_brings_only_its_spawn_point_group`: nos Campos reais, cada ponto tem um grupo distinto e nenhum monstro fica no grupo 0. Puxar um lobo da matilha de 3 em (54.5, 46.5) põe os 3 em combate, e a matilha de 3 em (68.5, 54.5) e o resto da zona ficam fora.
+
+**Decisões:**
+
+- Não existe recarga global (GCD) separada no `AbilityState`; tudo em `ReadyAtTick` é por habilidade (inclusive o ataque básico), então tudo acompanha. Nada foi descartado.
+- O renascimento depois da morte (que também é uma troca de zona, via `Move`) também leva as recargas, para morrer não virar atalho para recarregar.
+- O `src/Game.Core` não foi alterado.
+
+**Requisito 5 (`AiContext.GroupMembers`):** continua correto. Ele filtra por `GroupId` e por perfil de IA, então a coordenação de matilha (foco do líder, reagrupar) agora vale só entre monstros do mesmo ponto, que é o comportamento esperado. Antes, todos os lobos da zona formavam uma matilha só. Os encontros (grupo 0) não mudaram, e os testes de design passam com o mesmo resultado.
+
+**Pendências:** nenhuma.

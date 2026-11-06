@@ -20,7 +20,8 @@ namespace Game.Server.Zones;
 /// <list type="bullet">
 /// <item>Entrada: token de jogo (personagem salvo, na zona e posição gravadas) ou, com <c>--dev-login</c>, nome e classe
 /// (personagem nível 1 com progressão, não gravado). Quem não tem zona gravada nasce em <see cref="ServerOptions.StartZone"/>.</item>
-/// <item>Portão: personagem vivo dentro da área vai para a outra zona, com o mesmo estado (build, itens, vida e Mana); o
+/// <item>Portão: personagem vivo dentro da área vai para a outra zona, com o mesmo estado (build, itens, vida e Mana, recargas e
+/// cargas gastas — T-301; status e ameaça se perdem); o
 /// cliente recebe um <see cref="Welcome"/> novo com a arena da zona e época nova.</item>
 /// <item>Morte: o personagem fica caído até mandar <see cref="RespawnRequest"/>; renasce na zona inicial, cheio, sem perder nada.</item>
 /// <item>Só zonas com jogador avançam; zona vazia fica parada (monstros e renascimentos esperam).</item>
@@ -286,9 +287,14 @@ public sealed class WorldServer : ITransportHandler, IGameHost
     private void Move(Player p, OpenZone to, Vector2 position, bool keepVitals, string reason)
     {
         var e = p.Entity!;
-        var state = CharacterState.Capture(e) ?? CharacterState.New;
-        (float, float)? vitals = keepVitals ? (e.Get<Health>().Current, e.TryGet<ResourcePool>()?.Current ?? 0) : null;
         var from = p.Zone!;
+        var state = CharacterState.Capture(e) ?? CharacterState.New;
+        if (e.TryGet<AbilityState>() is { } abilities)
+        {
+            state = state with { Timers = AbilityTimers.Capture(abilities, from.World.Tick) }; // T-301: recargas acompanham
+        }
+
+        (float, float)? vitals = keepVitals ? (e.Get<Health>().Current, e.TryGet<ResourcePool>()?.Current ?? 0) : null;
         from.World.Remove(e.Id);
         Place(p, to, state, position, vitals);
         _log.Information("{Name}: {From} → {To} ({Reason})", p.Name, from.Id, to.Id, reason);
