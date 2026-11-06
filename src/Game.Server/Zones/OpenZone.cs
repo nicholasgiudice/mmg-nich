@@ -1,5 +1,6 @@
 using System.Numerics;
 using Game.Core.Combat;
+using Game.Core.Combat.Ai;
 using Game.Core.Combat.Rest;
 using Game.Core.Definitions;
 using Game.Core.Simulation;
@@ -13,11 +14,18 @@ namespace Game.Server.Zones;
 /// Uma zona do mundo aberto (T-214): <see cref="Core.Simulation.World"/> próprio com o mapa da arena, grade de interesse e os
 /// pontos de surgimento da <see cref="ZoneDefinition"/>. Nunca termina: monstro morto vira corpo, some depois de
 /// <see cref="ZoneDefinition.CorpseTicks"/> e renasce em volta do ponto depois de <see cref="MonsterSpawnDefinition.RespawnTicks"/>.
+/// Monstros sem ponto (invocações) também viram corpo e somem no mesmo prazo, mas não renascem (T-301). Cada ponto é um grupo
+/// de aggro próprio (<see cref="AiState.GroupId"/> = índice do ponto + 1; o 0 fica para os encontros): puxar um monstro puxa só
+/// os do mesmo ponto e as invocações deles.
 /// Roda na thread do loop do <see cref="WorldServer"/>.
 /// </summary>
 public sealed class OpenZone
 {
     private readonly List<SpawnSlot> _slots = [];
+    private readonly HashSet<EntityId> _slotEntities = [];
+
+    /// <summary>Tick da morte dos monstros sem ponto de surgimento (invocações), até o corpo sumir.</summary>
+    private readonly Dictionary<EntityId, long> _looseCorpses = [];
 
     public OpenZone(ContentCatalog content, ZoneDefinition definition, ulong seed, ServerOptions options)
     {
@@ -25,11 +33,12 @@ public sealed class OpenZone
         Arena = content.Arenas[definition.Arena];
         World = WorldBuilder.CreateDefault(seed, EntityFactory.BuildMap(Arena), content);
         Grid = new InterestGrid(options.InterestCellSize, options.InterestRadiusCells);
-        foreach (var point in definition.MonsterSpawns)
+        for (var p = 0; p < definition.MonsterSpawns.Count; p++)
         {
+            var point = definition.MonsterSpawns[p];
             for (var i = 0; i < point.Count; i++)
             {
-                var slot = new SpawnSlot(point, content.Monsters[point.Monster]);
+                var slot = new SpawnSlot(point, content.Monsters[point.Monster], GroupOf(p));
                 Spawn(slot);
                 _slots.Add(slot);
             }
@@ -45,6 +54,9 @@ public sealed class OpenZone
     public Core.Simulation.World World { get; }
 
     public InterestGrid Grid { get; }
+
+    /// <summary>Grupo de aggro do ponto <paramref name="spawnIndex"/> de <see cref="ZoneDefinition.MonsterSpawns"/> (T-301).</summary>
+    public static int GroupOf(int spawnIndex) => spawnIndex + 1;
 
     public Vector2 SpawnPosition => new((float)Definition.Spawn.X, (float)Definition.Spawn.Y);
 
@@ -87,6 +99,43 @@ public sealed class OpenZone
         {
             Update(slot);
         }
+
+        RemoveLooseCorpses();
+    }
+
+    /// <summary>Corpos de monstros que não vêm de ponto de surgimento (invocações): somem depois do prazo e não renascem.</summary>
+    private void RemoveLooseCorpses()
+    {
+        var tick = World.Tick;
+        List<EntityId>? expired = null;
+        foreach (var e in World.Entities)
+        {
+            if (e.IsAlive || _slotEntities.Contains(e.Id) || e.TryGet<FactionTag>()?.Faction != Faction.Monster)
+            {
+                continue;
+            }
+
+            if (!_looseCorpses.TryGetValue(e.Id, out var diedAt))
+            {
+                _looseCorpses[e.Id] = tick;
+            }
+            else if (tick - diedAt >= Definition.CorpseTicks)
+            {
+                (expired ??= []).Add(e.Id);
+            }
+        }
+
+        foreach (var id in expired ?? [])
+        {
+            World.Remove(id);
+            _looseCorpses.Remove(id);
+        }
+
+        // Corpo removido por outro caminho (ex.: invocação desfeita): esquece.
+        foreach (var id in _looseCorpses.Keys.Where(id => World.Find(id) is null).ToList())
+        {
+            _looseCorpses.Remove(id);
+        }
     }
 
     private void Update(SpawnSlot slot)
@@ -110,6 +159,7 @@ public sealed class OpenZone
                 World.Remove(e.Id);
             }
 
+            _slotEntities.Remove(e.Id);
             slot.Entity = null;
             slot.RespawnAt = slot.DiedAt + slot.Point.RespawnTicks;
             slot.DiedAt = null;
@@ -137,15 +187,23 @@ public sealed class OpenZone
             }
         }
 
-        slot.Entity = EntityFactory.SpawnMonster(World, slot.Monster, position, slot.Point.Level);
+        var monster = EntityFactory.SpawnMonster(World, slot.Monster, position, slot.Point.Level);
+        if (AiState.Ensure(World, monster) is { } ai)
+        {
+            ai.GroupId = slot.GroupId;
+        }
+
+        slot.Entity = monster;
+        _slotEntities.Add(monster.Id);
         slot.RespawnAt = null;
     }
 
     /// <summary>Posição dentro do mapa, fora de parede e diferente de (0, 0) (que quer dizer "sem posição").</summary>
     private bool IsFree(Vector2 p) => p != Vector2.Zero && World.Map is { } map && !map.IsBlocked(p);
 
-    private sealed class SpawnSlot(MonsterSpawnDefinition point, MonsterDefinition monster)
+    private sealed class SpawnSlot(MonsterSpawnDefinition point, MonsterDefinition monster, int groupId)
     {
+        public int GroupId { get; } = groupId;
         public MonsterSpawnDefinition Point { get; } = point;
         public MonsterDefinition Monster { get; } = monster;
         public Entity? Entity { get; set; }

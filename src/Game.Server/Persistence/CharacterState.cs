@@ -1,6 +1,7 @@
 using System.Numerics;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Game.Core.Combat;
 using Game.Core.Combat.Items;
 using Game.Core.Combat.Progression;
 using Game.Core.Definitions;
@@ -19,6 +20,12 @@ public sealed record CharacterState(CharacterBuild Build, IReadOnlyDictionary<Eq
 
     /// <summary>Zona e posição (T-214, colunas <c>zone_id</c>, <c>position_x/y</c>); null = não mudam ao gravar (sala de encontro).</summary>
     public CharacterLocation? Location { get; init; }
+
+    /// <summary>
+    /// Recargas e cargas levadas na troca de zona (T-301). Não vai para o banco: sair do jogo e voltar zera as recargas.
+    /// Null = tudo pronto.
+    /// </summary>
+    public AbilityTimers? Timers { get; init; }
 
     /// <summary>Lê o estado de uma entidade criada por <see cref="Spawn"/> (null se não tem progressão).</summary>
     public static CharacterState? Capture(Entity e)
@@ -86,7 +93,57 @@ public sealed record CharacterState(CharacterBuild Build, IReadOnlyDictionary<Eq
             pool.Current = pool.Max;
         }
 
+        if (Timers is not null && e.TryGet<AbilityState>() is { } abilities)
+        {
+            Timers.ApplyTo(abilities, world.Tick);
+        }
+
         return e;
+    }
+}
+
+/// <summary>
+/// Recargas de um personagem independentes do tick da zona (T-301): ticks <b>restantes</b> de cada recarga (cada zona tem o
+/// seu tick, então o tick absoluto não serve), cargas por recarga em uso (T-060) e cargas gastas (poção). Não há recarga
+/// global separada para descartar: tudo que está em <see cref="AbilityState.ReadyAtTick"/> é por habilidade.
+/// </summary>
+public sealed record AbilityTimers(
+    IReadOnlyDictionary<string, long> CooldownRemaining,
+    IReadOnlyDictionary<string, int> CooldownChargesSpent,
+    IReadOnlyDictionary<string, int> ChargesUsed)
+{
+    public static AbilityTimers Capture(AbilityState st, long tick) => new(
+        st.ReadyAtTick.Select(kv => (kv.Key, Remaining: kv.Value - tick)).Where(x => x.Remaining > 0)
+            .ToDictionary(x => x.Key, x => x.Remaining, StringComparer.Ordinal),
+        st.HasCooldownChargesSpent ? new Dictionary<string, int>(st.CooldownChargesSpent, StringComparer.Ordinal) : [],
+        new Dictionary<string, int>(st.ChargesUsed, StringComparer.Ordinal));
+
+    /// <summary>Recria o estado no tick da zona nova; habilidades que o personagem não conhece mais são ignoradas.</summary>
+    public void ApplyTo(AbilityState st, long tick)
+    {
+        foreach (var (id, remaining) in CooldownRemaining)
+        {
+            if (st.Knows(id))
+            {
+                st.ReadyAtTick[id] = tick + remaining;
+            }
+        }
+
+        foreach (var (id, spent) in CooldownChargesSpent)
+        {
+            if (st.Knows(id) && spent > 0)
+            {
+                st.CooldownChargesSpent[id] = spent;
+            }
+        }
+
+        foreach (var (id, used) in ChargesUsed)
+        {
+            if (st.Knows(id) && used > 0)
+            {
+                st.ChargesUsed[id] = used;
+            }
+        }
     }
 }
 

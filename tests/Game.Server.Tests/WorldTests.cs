@@ -198,6 +198,96 @@ public class WorldTests
     }
 
     [Fact]
+    public void Cooldowns_and_spent_potion_charges_survive_a_zone_change()
+    {
+        using var w = new WorldRig();
+        var c = w.Join("aria");
+        Teleport(w.Where(c).Entity, 38.5, 15.5);
+        w.Tick(1, c); // Cidade → Campos
+        w.Tick(30, c); // o tick dos Campos fica diferente do da Cidade
+        var (fields, hero) = w.Where(c);
+        Assert.Same(w.Fields, fields);
+        Assert.NotEqual(w.City.World.Tick, fields.World.Tick);
+
+        const string Potion = "item.minor_healing_potion";
+        c.Send(new IntentMessage(1, 0, NetIntent.From(new UseAbilityIntent(hero.Id, Potion))));
+        w.Tick(1, c);
+        var potion = w.Content.Abilities[Potion];
+        var st = hero.Get<AbilityState>();
+        Assert.Equal(potion.Charges - 1, st.ChargesRemaining(potion));
+        w.Tick(20, c);
+        var remaining = st.CooldownRemaining(Potion, fields.World.Tick);
+        Assert.True(remaining > 0);
+
+        Teleport(hero, 0.5, 31.5);
+        w.Tick(1, c); // Campos → Cidade
+        var (city, moved) = w.Where(c);
+        Assert.Same(w.City, city);
+        var after = moved.Get<AbilityState>();
+        Assert.InRange(after.CooldownRemaining(Potion, city.World.Tick), remaining - 1, remaining);
+        Assert.Equal(potion.Charges - 1, after.ChargesRemaining(potion));
+        Assert.True(after.IsOnCooldown(potion, city.World.Tick));
+    }
+
+    [Fact]
+    public void Dead_summons_in_an_open_zone_leave_after_the_corpse_time_and_do_not_respawn()
+    {
+        using var w = new WorldRig();
+        var lair = w.Server.Zones["zone.matriarch_lair"];
+        var matriarch = lair.World.Entities.Single(e => e.TryGet<UnitInfo>()?.DefinitionId == "monster.forest_matriarch");
+        var living = lair.LivingMonsters;
+        var spider = EntityFactory.SpawnMonster(lair.World, w.Content.Monsters["monster.spider_small"], new Vector2(48.5f, 16.5f), 8);
+        spider.Add(new Game.Core.Combat.Areas.SummonedBy { Owner = matriarch.Id, MonsterId = "monster.spider_small" });
+
+        lair.World.Kill(spider);
+        lair.Step();
+        Assert.False(spider.IsRemoved); // corpo
+        for (var i = 1; i < lair.Definition.CorpseTicks; i++)
+        {
+            lair.Step();
+        }
+
+        Assert.False(spider.IsRemoved);
+        lair.Step();
+        Assert.True(spider.IsRemoved);
+
+        for (var i = 0; i < 100; i++)
+        {
+            lair.Step();
+        }
+
+        Assert.Equal(living, lair.LivingMonsters);
+        Assert.DoesNotContain(lair.World.Entities, e => e.TryGet<UnitInfo>()?.DefinitionId == "monster.spider_small");
+    }
+
+    [Fact]
+    public void Pulling_a_monster_brings_only_its_spawn_point_group()
+    {
+        using var w = new WorldRig();
+        var fields = w.Fields;
+        var spawns = fields.Definition.MonsterSpawns;
+        var packs = Enumerable.Range(0, spawns.Count).Where(i => spawns[i].Count == 3 && spawns[i].Monster == "monster.grey_wolf").Take(2).ToArray();
+        Assert.Equal(2, packs.Length);
+        List<Entity> Pack(int point) =>
+            fields.World.Entities.Where(e => e.TryGet<Game.Core.Combat.Ai.AiState>()?.GroupId == OpenZone.GroupOf(point)).ToList();
+        var first = Pack(packs[0]);
+        var second = Pack(packs[1]);
+        Assert.Equal(3, first.Count);
+        Assert.Equal(3, second.Count);
+        Assert.Equal(spawns.Count, fields.World.Entities.Select(e => e.TryGet<Game.Core.Combat.Ai.AiState>()?.GroupId).OfType<int>().Distinct().Count());
+        Assert.DoesNotContain(fields.World.Entities, e => e.TryGet<Game.Core.Combat.Ai.AiState>() is { GroupId: 0 });
+
+        var hero = CharacterState.New.Spawn(fields.World, w.Content.Classes["class.warrior"], new Vector2(3.5f, 31.5f));
+        Game.Core.Combat.Threat.ThreatService.Add(fields.World, first[0], hero, 10, Game.Core.Combat.Threat.AggroReason.Damage);
+
+        Assert.All(first, e => Assert.True(e.Get<Game.Core.Combat.Threat.ThreatTable>().Entries.ContainsKey(hero.Id.Value)));
+        Assert.All(second, e => Assert.Empty(e.TryGet<Game.Core.Combat.Threat.ThreatTable>()?.Entries ?? []));
+        Assert.All(
+            fields.World.Entities.Where(e => e.TryGet<FactionTag>()?.Faction == Faction.Monster && !first.Contains(e)),
+            e => Assert.Empty(e.TryGet<Game.Core.Combat.Threat.ThreatTable>()?.Entries ?? []));
+    }
+
+    [Fact]
     public void Death_in_the_fields_waits_for_respawn_and_returns_to_the_city_with_everything()
     {
         using var w = new WorldRig();
