@@ -390,7 +390,7 @@ Detalhadas pela T-240 a partir do esboço da seção 7, de `design/first-map-v0.
 | [T-341](fase-3/T-341-monstros-das-ruinas.md) | Monstros das Ruínas: Sacerdote e Cavaleiro | VPS | **Forte** | — (após 340) |
 | [T-342](fase-3/T-342-floresta-baixa.md) | Mapa e zona: Floresta Baixa e Ninho da Matriarca | Windows | Humano + Médio | 330, 331, 340 |
 | [T-343](fase-3/T-343-ruinas-da-estrada-antiga.md) | Mapa e zona: Ruínas da Estrada Antiga | Windows | Humano + Médio | 330, 331, 341 |
-| [T-345](fase-3/T-345-cliente-monstros-novos-e-vigia.md) | Cliente: sprites e leitura dos monstros novos e do Vigia | Windows | Médio | 340, 341, 351 |
+| [T-345](fase-3/T-345-cliente-monstros-novos-e-vigia.md) | Cliente: sprites e leitura dos monstros novos e do Vigia | Windows | Médio | 340, 341, 351, 056 |
 | **Dungeon** | | | | |
 | [T-350](fase-3/T-350-instancias-de-dungeon.md) | Servidor: instâncias de dungeon sob demanda | VPS | **Forte** | 310, 331 |
 | [T-351](fase-3/T-351-vigia-sem-rosto.md) | Core e dados: o Vigia Sem Rosto | VPS | **Forte** | 341 |
@@ -420,6 +420,7 @@ A T-216 (destino do backup, da fase 2) continua fora das ondas. Convém concluí
 - A T-310, a T-320, a T-321 e a T-350 sobem `ProtocolVersion`. A 321 e a 350 rodam na mesma onda: integre a 321 primeiro e ajuste a versão na 350.
 - A T-311, a T-312 e a T-323 mexem no `Hud.cs` e no Input Map: integre uma de cada vez e rebase as outras.
 - A T-330, a T-342 e a T-343 mexem em `city.tmj`: a ordem das ondas já as separa.
+- **Arte dos monstros novos:** vem da T-056 (trilha de arte, LPC), que já ligou no `sprites.json` os ids `monster.mist_fairy`, `monster.dead_priest`, `monster.spectral_knight`, `monster.faceless_watcher` e `monster.shade`. A T-340, a T-341 e a T-351 usam esses ids; a T-345 só confere e ajusta. O Ent Corrompido ainda não tem arte (encomenda).
 
 ### Grafo de dependências
 

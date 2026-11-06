@@ -3,7 +3,7 @@
 - **Ambiente:** Windows
 - **Modelo:** Humano + Médio
 - **Depende de:** T-053; o mecanismo `--art=<variante>` do `SpriteCatalog` (T-090), que entra em `main` com a branch `docs/encerrar-trilha-pixellab`
-- **Libera:** a tarefa de cliente da fase 3 que liga os monstros no jogo (criada pela T-240)
+- **Libera:** T-345 (cliente dos monstros novos na fase 3)
 - **Áreas que pode alterar:** `client/assets/art/monsters/`, `client/assets/art/characters/`, `client/assets/art/sprites.json`, `client/scripts/Presentation/` (só para o efeito visual de fantasma/névoa), `design/art-direction-v0.1.md` (tabela de lacunas e de pacotes), `CREDITS.md`, `tasks/reports/`
 
 ## Contexto
@@ -64,4 +64,4 @@ Se algum caminho não funcionar no teste, procure outro dentro do LPC antes de d
 - Cliente: campo genérico `tint` no `sprites.json` (`SpriteDefinition.Tint`, multiplicado no `EntityView`).
 - O designer exportou as cinco folhas. Cavaleiro, Sacerdote, Vigia (×2) e Sombra estão ligados no `sprites.json` (ids provisórios `monster.spectral_knight`, `monster.dead_priest`, `monster.faceless_watcher`, `monster.shade`, `monster.mist_fairy`) e na variante `preview_fase3`, com capturas no relatório. A folha da Fada veio vazia e precisa ser reexportada.
 - Créditos em `<monstro>-credits.txt` (o CSV do gerador renomeado, porque o Godot importava `.csv` como tradução) e em `CREDITS.md`. O manto e o escudo *kite* são CC-BY-SA.
-- A branch saiu de `docs/encerrar-trilha-pixellab`, que traz o `--art=<variante>` e ainda não está em `main`.
+- A branch saiu de `docs/encerrar-trilha-pixellab`, que traz o `--art=<variante>` e ainda não está em `main`. Ela também recebeu, por merge, `task/T-240-planejar-fase-3` (com a T-230), para ligar as tarefas da fase 3 aos sprites: a T-340, a T-341 e a T-351 passam a usar os ids desta tarefa, e a T-345 depende dela. Integre a T-230 e a T-240 antes desta branch.

@@ -24,7 +24,7 @@ A Floresta deve ensinar **posicionamento, controle de área, veneno e emboscadas
    - solo, nas 4 classes, contra um grupo típico de cada monstro: vitória ≥ 85% em até 40 s;
    - o perfil fraco (3 níveis abaixo): ≤ 50%;
    - um grupo misto (aranhas + fada) mostra vantagem real de grupo de 2 sobre solo.
-5. **Arte:** a escolha do sprite fica para a T-345 (Windows). Aqui, só o id de definição.
+5. **Arte:** o sprite fica para a T-345 (Windows). Aqui, só o id de definição. **Use os ids `monster.mist_fairy` e `monster.corrupted_ent`**: a T-056 já ligou a Fada com esse id no `client/assets/art/sprites.json`. Se precisar de outro id, registre no Resultado, para a T-345 renomear a chave. A Fada usa um sprite humanoide LPC (pés no centro do quadro de 64 px), e um raio de 0,35 a 0,40 combina com ele. O Ent ainda não tem arte: os candidatos LPC foram reprovados e ele vai para encomenda (`tasks/reports/arte-monstros-fase-3.md`).
 
 ## Critérios de aceite
 

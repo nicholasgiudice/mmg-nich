@@ -23,6 +23,7 @@ O Clérigo é eficiente contra mortos-vivos (`design/classes-v0.1.md`): as habil
    - quem focar o Sacerdote primeiro termina mais rápido que quem não focar (estratégia nova no simulador, se precisar);
    - Cavaleiro: grupo de 3 nível 10–11 com incomuns 70–90% em 60–120 s.
 4. Relatório `tasks/reports/balance-v0.12.md`.
+5. **Arte:** o sprite fica para a T-345. **Use os ids `monster.dead_priest` e `monster.spectral_knight`**, já ligados no `client/assets/art/sprites.json` pela T-056 (folhas do gerador LPC). Se precisar de outro id, registre no Resultado. Os dois são humanoides LPC como o Guarda Esquelético: um raio de 0,45 a 0,50 combina com o sprite.
 
 ## Critérios de aceite
 

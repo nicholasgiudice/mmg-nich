@@ -23,7 +23,7 @@ As fases por vida (`phases` em `monsters.json`) já existem, desde a Matriarca. 
    - **medo**: o alvo foge do lugar de origem por N ticks, sem controle do jogador. Respeita a regra de imunidade a controles, se existir;
    - **selos**: entidades com vida, facção aliada aos jogadores, que não se movem e que o chefe ataca. Elas podem ser curadas ou receber escudo. Quando todas são destruídas, o encontro termina em falha (evento `EncounterFailed`, ou equivalente, para o log e o cliente);
    - **interrupção do Último Comando**: um cast longo que, se não for interrompido, destrói um selo.
-3. **Dados** do chefe, das sombras e da invocação de guardas (reaproveitando `monster.skeleton_guard`).
+3. **Dados** do chefe, das sombras e da invocação de guardas (reaproveitando `monster.skeleton_guard`). **Use os ids `monster.faceless_watcher` e `monster.shade`**, já ligados no `client/assets/art/sprites.json` pela T-056. O Vigia é desenhado em escala ×2, como a Matriarca, então um raio de ~0,9 combina com ele; a sombra é um humanoide LPC (raio ~0,40). Se precisar de outro id, registre no Resultado.
 4. **Encontro de teste** e testes de design, com o grupo de 4 nível 14 e 15 e itens raros:
    - vitória de 50–80% e duração de 4–6 min;
    - sem Clérigo, a vitória cai de forma clara, e sem Guerreiro também;
