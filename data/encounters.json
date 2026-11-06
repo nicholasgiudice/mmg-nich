@@ -67,6 +67,44 @@
       "enemies": [{ "monster": "monster.forest_matriarch", "position": { "x": 28.5, "y": 13.5 } }],
       "victory": "all_enemies_dead",
       "defeat": { "condition": "all_players_dead", "timeLimit": 420 }
+    },
+    {
+      "id": "encounter.mist_fairies",
+      "name": "Duas Fadas da Névoa",
+      "arena": "map.fields",
+      "players": [{ "class": "class.warrior", "position": { "x": 5.5, "y": 10.5 } }],
+      "enemies": [
+        { "monster": "monster.mist_fairy", "position": { "x": 20.5, "y": 9.5 }, "level": 6 },
+        { "monster": "monster.mist_fairy", "position": { "x": 20.5, "y": 11.5 }, "level": 6 }
+      ],
+      "victory": "all_enemies_dead",
+      "defeat": { "condition": "all_players_dead", "timeLimit": 120 }
+    },
+    {
+      "id": "encounter.corrupted_ent",
+      "name": "Ent Corrompido",
+      "arena": "map.fields",
+      "players": [{ "class": "class.warrior", "position": { "x": 5.5, "y": 10.5 } }],
+      "enemies": [{ "monster": "monster.corrupted_ent", "position": { "x": 17.5, "y": 10.5 }, "level": 7 }],
+      "victory": "all_enemies_dead",
+      "defeat": { "condition": "all_players_dead", "timeLimit": 120 }
+    },
+    {
+      "id": "encounter.mist_ambush",
+      "name": "Emboscada na Névoa",
+      "arena": "map.fields",
+      "players": [
+        { "class": "class.warrior", "position": { "x": 5.5, "y": 9.5 } },
+        { "class": "class.archer", "position": { "x": 4.5, "y": 11.5 } }
+      ],
+      "enemies": [
+        { "monster": "monster.spider_small", "position": { "x": 17.5, "y": 8.5 }, "level": 5 },
+        { "monster": "monster.spider_small", "position": { "x": 18.5, "y": 10.5 }, "level": 5 },
+        { "monster": "monster.spider_small", "position": { "x": 17.5, "y": 12.5 }, "level": 5 },
+        { "monster": "monster.mist_fairy", "position": { "x": 20.5, "y": 10.5 }, "level": 6 }
+      ],
+      "victory": "all_enemies_dead",
+      "defeat": { "condition": "all_players_dead", "timeLimit": 120 }
     }
   ]
 }

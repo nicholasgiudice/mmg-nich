@@ -164,6 +164,8 @@ public class ProgressionContentTests
     [InlineData("monster.road_bandit", 3, 4, MonsterRank.Normal)]
     [InlineData("monster.spider_small", 5, 5, MonsterRank.Normal)]
     [InlineData("monster.spider_big", 5, 8, MonsterRank.Elite)]
+    [InlineData("monster.mist_fairy", 6, 6, MonsterRank.Normal)] // T-340
+    [InlineData("monster.corrupted_ent", 7, 7, MonsterRank.Normal)] // T-340
     [InlineData("monster.forest_matriarch", 8, 8, MonsterRank.Boss)]
     [InlineData("monster.skeleton_guard", 9, 11, MonsterRank.Normal)]
     public void Monster_levels_and_ranks_follow_the_area_table(string id, int min, int max, MonsterRank rank)
@@ -176,6 +178,10 @@ public class ProgressionContentTests
     [Fact]
     public void Every_monster_is_covered_by_the_area_table() =>
         Assert.Equal(
-            new[] { "monster.field_rat", "monster.forest_matriarch", "monster.grey_wolf", "monster.road_bandit", "monster.skeleton_guard", "monster.spider_big", "monster.spider_small" },
+            new[]
+            {
+                "monster.corrupted_ent", "monster.field_rat", "monster.forest_matriarch", "monster.grey_wolf", "monster.mist_fairy",
+                "monster.road_bandit", "monster.skeleton_guard", "monster.spider_big", "monster.spider_small",
+            },
             Db.Monsters.Keys.Order(StringComparer.Ordinal));
 }

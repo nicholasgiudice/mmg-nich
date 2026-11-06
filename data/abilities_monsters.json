@@ -75,6 +75,60 @@
       ]
     },
     {
+      "id": "mist_fairy.mist_bolt",
+      "name": "Dardo de Névoa",
+      "cooldown": 2.0,
+      "targeting": { "type": "unit", "range": 9, "faction": "enemy" },
+      "effects": [
+        { "type": "damage", "school": "arcane", "base": 14 },
+        { "type": "apply_status", "status": "status.mist_chill", "duration": 2.5 }
+      ]
+    },
+    {
+      "id": "mist_fairy.mist_veil",
+      "name": "Véu de Névoa",
+      "tags": ["ai.vanish"],
+      "cooldown": 8,
+      "castTime": 0.6,
+      "targeting": { "type": "self" },
+      "effects": [{ "type": "apply_status", "status": "status.in_mist", "duration": 2 }]
+    },
+    {
+      "id": "corrupted_ent.trampling_slam",
+      "name": "Pisão Corrompido",
+      "cooldown": 7,
+      "targeting": { "type": "circle_self", "radius": 2.6 },
+      "telegraph": { "shape": "circle", "radius": 2.6, "delay": 1.2, "anchor": "source", "affects": "enemy" },
+      "effects": [{ "type": "damage", "school": "physical", "base": 44 }]
+    },
+    {
+      "id": "corrupted_ent.grasping_roots",
+      "name": "Raízes Famintas",
+      "tags": ["ai.area"],
+      "cooldown": 8,
+      "targeting": { "type": "circle_at_point", "range": 9, "radius": 1.6 },
+      "telegraph": { "shape": "circle", "radius": 1.6, "delay": 1.0, "anchor": "aim" },
+      "effects": [
+        { "type": "damage", "school": "nature", "base": 16 },
+        { "type": "apply_status", "status": "status.snared", "duration": 2 }
+      ]
+    },
+    {
+      "id": "corrupted_ent.branch_lash",
+      "name": "Açoite de Galhos",
+      "cooldown": 1.8,
+      "targeting": { "type": "melee_arc", "range": 1.8, "angle": 110 },
+      "effects": [{ "type": "damage", "school": "physical", "base": 19 }]
+    },
+    {
+      "id": "corrupted_ent.thorn_volley",
+      "name": "Rajada de Espinhos",
+      "tags": ["ai.ranged"],
+      "cooldown": 2.5,
+      "targeting": { "type": "unit", "range": 8, "faction": "enemy" },
+      "effects": [{ "type": "damage", "school": "nature", "base": 14 }]
+    },
+    {
       "id": "matriarch.bite",
       "name": "Mordida da Matriarca",
       "cooldown": 1.5,

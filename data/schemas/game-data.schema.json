@@ -535,7 +535,12 @@
         "flags": {
           "type": "object",
           "additionalProperties": false,
-          "properties": { "stunned": { "type": "boolean" }, "rooted": { "type": "boolean" }, "silenced": { "type": "boolean" } }
+          "properties": {
+            "stunned": { "type": "boolean" },
+            "rooted": { "type": "boolean" },
+            "silenced": { "type": "boolean" },
+            "untargetable": { "type": "boolean", "description": "T-340: não pode ser alvo de habilidades de outros (unidade, área, telegráfo)." }
+          }
         }
       }
     },

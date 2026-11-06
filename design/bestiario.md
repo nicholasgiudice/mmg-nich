@@ -1,6 +1,6 @@
 # Bestiário
 
-Status: **referência gerada a partir dos dados** (2026-11-02). Fonte: `data/monsters.json`, `data/abilities_monsters.json`, `data/statuses.json`, `data/areas.json`, `data/zones.json`, `data/encounters.json`, `data/rules.json` e `data/items.json` (tabelas de queda). Os números saem desses arquivos; quando os dados mudarem, este documento deve ser atualizado.
+Status: **referência gerada a partir dos dados** (2026-11-02; Fada da Névoa e Ent Corrompido em 2026-11-06, T-340). Fonte: `data/monsters.json`, `data/abilities_monsters.json`, `data/statuses.json`, `data/areas.json`, `data/zones.json`, `data/encounters.json`, `data/rules.json` e `data/items.json` (tabelas de queda). Os números saem desses arquivos; quando os dados mudarem, este documento deve ser atualizado.
 
 As habilidades dos monstros estão detalhadas em `design/habilidades.md` (§ Monstros) e os itens em `design/itens.md`.
 
@@ -14,7 +14,8 @@ As habilidades dos monstros estão detalhadas em `design/habilidades.md` (§ Mon
 - **Velocidade** em tiles por segundo; **raio** (tamanho do corpo) em tiles.
 - **Categoria** (`rank`): normal (sem o campo), elite ou chefe. Ela escolhe a tabela de queda e reduz a duração dos efeitos de controle recebidos (`rules.json` → `control.durationByRank`): normal **× 1,0**, elite **× 0,5**, chefe **× 0,25**.
 - **Armadura e resistência**: nenhum monstro define `armor` ou `resistance` em `monsters.json` (campos opcionais do esquema). Não há defesa extra por esses campos hoje.
-- **Escolas de dano**: físico (`physical`), natureza (`nature`).
+- **Resistências por escola** (`resistances`): fração do dano cortada; negativa = **fraqueza** (−0,3 = recebe 130%). Só o Ent Corrompido define (físico 0,25; fogo −0,3).
+- **Escolas de dano**: físico (`physical`), natureza (`nature`), arcano (`arcane`).
 
 ## Resumo
 
@@ -25,6 +26,8 @@ As habilidades dos monstros estão detalhadas em `design/habilidades.md` (§ Mon
 | Salteador da Estrada | `monster.road_bandit` | 3 | normal | 80 | 4,0 | 0,4 | humanoid | `ai.ranged_kiter` |
 | Aranha Menor | `monster.spider_small` | 5 | normal | 70 | 4,0 | 0,35 | beast, spider | `ai.melee_chaser` |
 | Aranha Grande | `monster.spider_big` | 6 | **elite** | 400 | 3,4 | 0,6 | beast, spider | `ai.melee_chaser` |
+| Fada da Névoa | `monster.mist_fairy` | 6 | normal | 110 | 3,4 | 0,38 | fey | `ai.mist_kiter` |
+| Ent Corrompido | `monster.corrupted_ent` | 7 | normal | 430 | 2,4 | 0,7 | plant, corrupted | `ai.brute` |
 | Matriarca da Floresta | `monster.forest_matriarch` | 8 | **chefe** | 8800 | 3,4 | 0,9 | beast, spider, boss | `ai.boss` |
 | Guarda Esquelético | `monster.skeleton_guard` | 9 | normal | 440 | 3,2 | 0,5 | undead | `ai.guardian` |
 
@@ -72,7 +75,7 @@ As aranhas não têm ponto de nascimento próprio: só aparecem invocadas pela M
 
 ### Encontros de teste (`data/encounters.json`)
 
-Arenas fechadas usadas no protótipo e nos testes. Todos usam `monsterLevel` 1.
+Arenas fechadas usadas no protótipo e nos testes. Os cinco do protótipo usam `monsterLevel` 1; os três da Floresta (T-340) definem o nível de cada monstro.
 
 | Encontro | Arena | Monstros | Jogadores | Limite |
 |---|---|---|---|---|
@@ -81,6 +84,9 @@ Arenas fechadas usadas no protótipo e nos testes. Todos usam `monsterLevel` 1.
 | Quatro Ratos de Campo (`encounter.four_rats`) | `map.farm` | 4 Ratos de Campo | Mago | 120 s |
 | Guarda Esquelético no Portão Partido (`encounter.skeleton_guard`) | `map.broken_gate` | 1 Guarda Esquelético | Clérigo | 180 s |
 | Matriarca da Floresta (`encounter.forest_matriarch`) | `map.matriarch_nest` | 1 Matriarca | Guerreiro, Arqueiro, Mago, Clérigo | 420 s |
+| Duas Fadas da Névoa (`encounter.mist_fairies`) | `map.fields` | 2 Fadas nv6 | Guerreiro (os testes trocam a classe) | 120 s |
+| Ent Corrompido (`encounter.corrupted_ent`) | `map.fields` | 1 Ent nv7 | Guerreiro (os testes trocam a classe) | 120 s |
+| Emboscada na Névoa (`encounter.mist_ambush`) | `map.fields` | 3 Aranhas Menores nv5 + 1 Fada nv6 | Guerreiro, Arqueiro | 120 s |
 
 ## Monstros
 
@@ -122,7 +128,7 @@ Nível 5, normal. Vida 70, velocidade 4,0, raio 0,35. Tags: beast, spider.
 - **Habilidades:** Picada da Aranha (`spider_small.bite`) — dano físico 9 e **Veneno** por 4 s; arco de 90°, alcance 1,1, recarga 1,2 s.
 - **IA:** `ai.melee_chaser` — persegue e ataca com a primeira habilidade disponível. `aggroRange` 30.
 - **Vida invocada pela Matriarca (nv. 8):** 266.
-- **Onde aparece:** só invocada pela Matriarca da Floresta (Chamar Aranhas: 2 por uso, no máximo 4 vivas).
+- **Onde aparece:** invocada pela Matriarca da Floresta (Chamar Aranhas: 2 por uso, no máximo 4 vivas) e no encontro de teste Emboscada na Névoa (nv. 5).
 - **Quedas:** tabela normal.
 
 ### Aranha Grande — `monster.spider_big`
@@ -135,6 +141,34 @@ Nível 6, **elite**. Vida 400, velocidade 3,4, raio 0,6. Tags: beast, spider.
 - **Controle:** efeitos de controle duram metade (× 0,5).
 - **Onde aparece:** só invocada pela Matriarca ao entrar na fase Teia Sufocante (1, no máximo 1 viva).
 - **Quedas:** tabela elite.
+
+### Fada da Névoa — `monster.mist_fairy`
+
+Nível 6, normal. Vida 110, velocidade 3,4, raio 0,38. Tag: fey. Design: `design/combat-encounters-v0.1.md` § Floresta Baixa.
+
+- **Habilidades:**
+  - Dardo de Névoa (`mist_fairy.mist_bolt`): dano arcano 14 e **Névoa Gelada** (`status.mist_chill`, −20% de velocidade) por 2,5 s; num alvo inimigo a até 9; recarga 2 s.
+  - Véu de Névoa (`mist_fairy.mist_veil`, tag `ai.vanish`): conjuração de 0,6 s, em si mesma, recarga 8 s. Aplica **Na Névoa** (`status.in_mist`) por 2 s: **não pode ser alvo** (`flags.untargetable`) e +20% de velocidade.
+- **IA:** `ai.mist_kiter`. Atira a `preferredDistance` 7 e usa o véu quando o alvo chega a `vanishDistance` 3,5 ou quando a vida cai a `vanishBelowHealth` 0,75. Na névoa não ataca e se afasta do alvo. Visível, não foge. `aggroRange` 14.
+- **Vida pelo nível de nascimento:** nv. 6 = 330.
+- **Onde aparece:** Clareira da Névoa (mapa da T-342). Encontros de teste Duas Fadas da Névoa e Emboscada na Névoa (nv. 6).
+- **Arte:** sprite humanoide LPC ligado pela T-056 (`client/assets/art/sprites.json`).
+- **Quedas:** tabela normal.
+
+### Ent Corrompido — `monster.corrupted_ent`
+
+Nível 7, normal. Vida 430, velocidade 2,4, raio 0,7. Tags: plant, **corrupted** (recebe +25% do dano sagrado do Clérigo). Resistências: **físico 25%**, **fogo −30%** (fraqueza). Design: `design/combat-encounters-v0.1.md` § Floresta Baixa.
+
+- **Habilidades:**
+  - Pisão Corrompido (`corrupted_ent.trampling_slam`): círculo de raio 2,6 em volta dele, com aviso de 1,2 s; dano físico 44; recarga 7 s.
+  - Raízes Famintas (`corrupted_ent.grasping_roots`, tag `ai.area`): círculo de raio 1,6 no alvo, alcance 9, aviso de 1 s; dano de natureza 16 e **Preso** (`status.snared`) por 2 s; recarga 8 s.
+  - Rajada de Espinhos (`corrupted_ent.thorn_volley`, tag `ai.ranged`): dano de natureza 14 num alvo inimigo a até 8; recarga 2,5 s.
+  - Açoite de Galhos (`corrupted_ent.branch_lash`): dano físico 19, arco de 110°, alcance 1,8, recarga 1,8 s.
+- **IA:** `ai.brute`. Só usa cada golpe com o alvo ao alcance (não golpeia o vazio). Raízes e espinhos só saem com o alvo a `farDistance` 3 ou mais. Fica parado até o próprio aviso resolver. Persegue até `approachRange` 1,8. `aggroRange` 14.
+- **Vida pelo nível de nascimento:** nv. 7 = 1462.
+- **Onde aparece:** Floresta Baixa (mapa da T-342). Encontro de teste Ent Corrompido (nv. 7).
+- **Arte:** ainda não tem (encomenda; `tasks/reports/arte-monstros-fase-3.md`).
+- **Quedas:** tabela normal.
 
 ### Matriarca da Floresta — `monster.forest_matriarch`
 

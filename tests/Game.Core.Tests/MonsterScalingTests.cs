@@ -162,7 +162,7 @@ public class MonsterScalingTests
     public void Real_prototype_encounters_spawn_level_1_monsters_with_the_prototype_numbers()
     {
         var content = RealContent.Value;
-        foreach (var encounter in content.Encounters.Values)
+        foreach (var encounter in content.Encounters.Values.Where(e => e.MonsterLevel == 1))
         {
             var setup = EncounterSetup.Create(1, content, encounter);
             Assert.All(setup.Enemies, e =>
@@ -173,5 +173,19 @@ public class MonsterScalingTests
         }
 
         Assert.True(content.Rules.Monsters.HealthPerLevel > 0);
+    }
+
+    /// <summary>T-340: os encontros de teste da Floresta definem o nível de cada monstro (o da área), não o do protótipo.</summary>
+    [Theory]
+    [InlineData("encounter.mist_fairies")]
+    [InlineData("encounter.corrupted_ent")]
+    [InlineData("encounter.mist_ambush")]
+    public void Forest_test_encounters_spawn_each_monster_at_its_own_level(string id)
+    {
+        var content = RealContent.Value;
+        var encounter = content.Encounters[id];
+        var setup = EncounterSetup.Create(1, content, encounter);
+        Assert.Equal(encounter.Enemies.Select(e => e.Level!.Value), setup.Enemies.Select(e => e.Get<UnitInfo>().Level));
+        Assert.All(setup.Enemies, e => Assert.True(e.Get<UnitInfo>().Level > 1));
     }
 }

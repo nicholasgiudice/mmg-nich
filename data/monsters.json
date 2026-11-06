@@ -69,6 +69,32 @@
       "ai": { "id": "ai.melee_chaser", "parameters": { "aggroRange": 30 } }
     },
     {
+      "id": "monster.mist_fairy",
+      "name": "Fada da Névoa",
+      "level": 6,
+      "health": 110,
+      "speed": 3.4,
+      "radius": 0.38,
+      "tags": ["fey"],
+      "abilities": ["mist_fairy.mist_bolt", "mist_fairy.mist_veil"],
+      "ai": {
+        "id": "ai.mist_kiter",
+        "parameters": { "aggroRange": 14, "preferredDistance": 7, "vanishDistance": 3.5, "vanishBelowHealth": 0.75 }
+      }
+    },
+    {
+      "id": "monster.corrupted_ent",
+      "name": "Ent Corrompido",
+      "level": 7,
+      "health": 430,
+      "speed": 2.4,
+      "radius": 0.7,
+      "tags": ["plant", "corrupted"],
+      "resistances": { "physical": 0.25, "fire": -0.3 },
+      "abilities": ["corrupted_ent.trampling_slam", "corrupted_ent.grasping_roots", "corrupted_ent.branch_lash", "corrupted_ent.thorn_volley"],
+      "ai": { "id": "ai.brute", "parameters": { "aggroRange": 14, "approachRange": 1.8, "farDistance": 3 } }
+    },
+    {
       "id": "monster.forest_matriarch",
       "name": "Matriarca da Floresta",
       "level": 8,

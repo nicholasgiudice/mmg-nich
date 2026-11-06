@@ -271,6 +271,93 @@ O grupo vence por coordenação e leitura de prioridade, não apenas por dano ac
 
 ---
 
+## Floresta Baixa — Fada da Névoa e Ent Corrompido (T-340)
+
+Monstros comuns da Floresta Baixa (`design/first-map-v0.1.md` §3, níveis 5–8 pelo `design/progression-v0.1.md` §2), ao lado das Aranhas do Bosque (5) e antes da Matriarca (8). A Floresta ensina **posicionamento, controle de área, veneno e emboscadas**: a Fada pune quem fica parado e perde o alvo, o Ent pune quem não lê o chão. Solo é possível; em grupo é mais rápido e mais seguro.
+
+Os números abaixo estão nos dados: `data/monsters.json`, `data/abilities_monsters.json`, `data/statuses.json`. Valem no **nível 1**. Entre parênteses, o valor no nível do monstro, pela escala da T-206 (vida × (1 + 0,4 × (nível − 1)), potência × (1 + 0,17 × (nível − 1))), antes da defesa do jogador.
+
+### Fada da Névoa (`monster.mist_fairy`, nível 6)
+
+**Papel:** atiradora frágil e difícil de prender. Na Clareira da Névoa aparece em pares, ou atrás de aranhas (emboscada).
+
+| | |
+|---|---|
+| Vida | 110 (330) |
+| Velocidade / raio | 3,4 (mais lenta que qualquer classe) / 0,38 (sprite humanoide LPC da T-056) |
+| Tags | `fey` |
+| IA | `ai.mist_kiter` (novo, `Combat/Ai/Profiles/MistKiterProfile.cs`) |
+
+Habilidades:
+
+- **Dardo de Névoa** (`mist_fairy.mist_bolt`): projétil instantâneo, alcance 9, a cada 2 s. Dano arcano 14 (26) e **Névoa Gelada** (`status.mist_chill`), lentidão de 20% por 2,5 s. Não é controle: não tem retorno decrescente.
+- **Véu de Névoa** (`mist_fairy.mist_veil`): **conjuração de 0,6 s**, que é o aviso visual. Ela para, e o cliente mostra a barra de conjuração; o efeito de névoa em volta dela fica com a T-345. Depois ela fica **Na Névoa** (`status.in_mist`) por 2 s: **não pode ser alvo**, anda 20% mais rápido e não ataca. Recarga de 8 s.
+
+Comportamento: fica a ~7 tiles e atira. Usa o véu quando alguém chega a 3,5 tiles, ou assim que puder depois de perder 25% da vida. Na névoa, afasta-se do alvo até a distância preferida e reaparece longe. **Visível, ela não corre**: foge só pela névoa. Com o véu em recarga, quem chegou perto tem cerca de 6 s para matá-la. Sem linha de visão, ela anda até enxergar o alvo.
+
+**Decidido (troca em relação à proposta):** a proposta tinha a Fada fugindo de quem chega perto o tempo todo, como o Salteador. Nas sondagens, com a lentidão do dardo, o Guerreiro nunca alcançava uma Fada que corria e vencia 0% (balance-v0.11 §2). A fuga ficou só na névoa.
+
+"Não pode ser alvo" (`flags.untargetable`, mecânica nova no Core): ninguém além dela mesma a escolhe como alvo de unidade. Ela também não é atingida por arcos, linhas, círculos, telegráfos, áreas persistentes, correntes ou alvos extras. Status que ela já tinha (veneno, marca) continuam correndo. Uma habilidade de alvo único lançada nela é rejeitada (`InvalidTarget`), e o jogador troca de alvo ou espera.
+
+Resposta de cada classe:
+
+- **Guerreiro:** avança e força o véu cedo. Na janela da recarga, mata a Fada com Golpe Pesado. Contra o par, Provocação puxa as duas para perto.
+- **Arqueiro:** mata a Fada de longe antes de ela se sentir ameaçada, porque o véu só sai por proximidade ou depois de perder vida. Marca do Caçador antes de ela sumir faz o dano voltar quando ela reaparece.
+- **Mago:** dano de explosão a distância (Explosão Elemental, Campo de Relâmpagos) a mata antes do véu. Prisão de Gelo a prende no lugar: mesmo que ela entre na névoa, não sai de perto.
+- **Clérigo:** troca dano com ela e se sustenta com Escudo Sagrado e Corrente Sagrada. Na névoa, aproveita para se curar.
+
+### Ent Corrompido (`monster.corrupted_ent`, nível 7)
+
+**Papel:** bruto lento e resistente, com controle de área. É o "muro" da Floresta e pune quem foge em linha reta.
+
+| | |
+|---|---|
+| Vida | 430 (1.462) |
+| Velocidade / raio | 2,4 (lento) / 0,7 |
+| Tags | `plant`, **`corrupted`** (as habilidades sagradas do Clérigo causam +25%, `bonusVsTags`) |
+| Resistências | **físico 25%**; **fogo −30%** (fraqueza: recebe 130%) |
+| IA | `ai.brute` (novo, `Combat/Ai/Profiles/BruteProfile.cs`) |
+
+Habilidades:
+
+- **Pisão Corrompido** (`corrupted_ent.trampling_slam`): círculo de raio 2,6 em volta dele, com **telegráfo de 1,2 s**. Dano físico 44 (89). Recarga de 7 s. Só sai com o alvo dentro do círculo, e ele fica parado até o golpe cair.
+- **Raízes Famintas** (`corrupted_ent.grasping_roots`): círculo de raio 1,6 no ponto do alvo, alcance 9, com **telegráfo de 1,0 s**. Quem continua na área marcada sofre dano de natureza 16 (32) e fica **Preso** (`status.snared`, já existia) por 2 s. Recarga de 8 s. Só sai com o alvo a 3 tiles ou mais.
+- **Rajada de Espinhos** (`corrupted_ent.thorn_volley`): instantânea, alvo único, alcance 8, a cada 2,5 s. Dano de natureza 14 (28). Só sai com o alvo a 3 tiles ou mais.
+- **Açoite de Galhos** (`corrupted_ent.branch_lash`): golpe corpo a corpo, alcance 1,8, a cada 1,8 s. Dano físico 19 (38).
+
+**Decidido:** a proposta foi mantida (golpe em área com telegráfo de 1,2 s, raízes que prendem quem fica na marca, resistência física e fraqueza a fogo). Entrou a **Rajada de Espinhos**. Sem ela, Arqueiro e Mago desviavam de tudo, levavam ~0 de dano e venciam mesmo 3 níveis abaixo (balance-v0.11 §2). Com ela, fugir do Ent custa vida, e o perfil fraco perde a corrida de dano.
+
+Resposta de cada classe:
+
+- **Guerreiro:** fica colado nele, sai do círculo no telegráfo do Pisão e volta. É a classe mais lenta contra ele, por causa da resistência física, mas ainda vence em ~36 s.
+- **Arqueiro:** mantém distância, sai da marca das raízes e aceita os espinhos. Recuo Rápido tira da marca quando o telegráfo pega no meio de um disparo.
+- **Mago:** fogo (Explosão Elemental) entra com +30%. Barreira Arcana absorve os espinhos e Prisão de Gelo segura o Ent longe.
+- **Clérigo:** Golpe e Corrente Sagrados entram com +25% (`corrupted`). Ele se cura dos espinhos, sai do Pisão e vence pela sustentação.
+
+### Grupos típicos e encontros de teste (`data/encounters.json`)
+
+| Encontro | Composição | Nível do grupo |
+|---|---|---|
+| `encounter.mist_fairies` | 2 Fadas nv6 | 6 |
+| `encounter.corrupted_ent` | 1 Ent nv7 | 7 |
+| `encounter.mist_ambush` (Emboscada na Névoa) | 3 Aranhas Menores nv5 na frente + 1 Fada nv6 atrás; Guerreiro + Arqueiro | 6 |
+
+Rodam na arena aberta do protótipo (`map.fields`). Os testes de design (`ForestDesignTests`) trocam o jogador por cada classe. Metas e resultados em `tasks/reports/balance-v0.11.md`:
+
+- o perfil esperado do nível do grupo vence ≥ 85% em até 40 s, nas 4 classes;
+- o perfil fraco (3 níveis abaixo) vence no máximo 50%. O Clérigo tem a mesma exceção do Guarda Esquelético: se cura indefinidamente, então a meta dele é demorar ≥ 1,3× o esperado;
+- na Emboscada, o par vence em no máximo 70% do tempo dos solos, e cada um recebe no máximo 60% do dano que receberia sozinho.
+
+### Falhas de design
+
+- a Fada ficar na névoa mais tempo do que visível;
+- o jogador perder o alvo sem ter visto o aviso da conjuração;
+- o Ent ser vencido sem ninguém nunca sair de uma marca;
+- o Guerreiro não conseguir lutar com o Ent (resistência física alta demais);
+- quem ataca de longe vencer o Ent sem tomar dano.
+
+---
+
 ## Matriz de decisões
 
 | Encontro | Posicionamento | Prioridade | Gestão de recurso | Controle | Cura/suporte |
@@ -280,6 +367,8 @@ O grupo vence por coordenação e leitura de prioridade, não apenas por dano ac
 | 4 Ratos | Alto | Médio | Alto | Alto | Baixo |
 | Guarda Esquelético | Médio | Médio | Médio | Médio | Médio |
 | Matriarca | Alto | Alto | Alto | Alto | Alto |
+| Fadas da Névoa | Alto | Alto | Baixo | Médio | Baixo |
+| Ent Corrompido | Alto | Médio | Médio | Alto | Médio |
 
 ## Critérios gerais de sucesso
 

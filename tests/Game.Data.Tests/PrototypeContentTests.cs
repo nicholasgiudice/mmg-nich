@@ -164,13 +164,15 @@ public class PrototypeContentTests
         Assert.Equal(3, m["monster.forest_matriarch"].Phases.Count);
         Assert.Contains("monster.spider_small", m.Keys);
         Assert.Contains("monster.spider_big", m.Keys);
+        Assert.Equal("ai.mist_kiter", m["monster.mist_fairy"].Ai.Id); // T-340
+        Assert.Equal("ai.brute", m["monster.corrupted_ent"].Ai.Id);
     }
 
     [Fact]
     public void Five_scenarios_exist_with_expected_classes()
     {
         var e = Db().Encounters;
-        Assert.Equal(5, e.Count);
+        Assert.Equal(5, e.Values.Count(x => x.MonsterLevel == 1)); // os 5 do protótipo; os outros são de teste (T-340)
         Assert.Equal(["class.warrior"], e["encounter.three_wolves"].Players.Select(p => p.Class));
         Assert.Equal(3, e["encounter.three_wolves"].Enemies.Count(x => x.Monster == "monster.grey_wolf"));
         Assert.Equal(["class.archer"], e["encounter.wolf_and_bandit"].Players.Select(p => p.Class));
