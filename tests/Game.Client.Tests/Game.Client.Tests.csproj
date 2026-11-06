@@ -23,6 +23,7 @@
     <Compile Include="..\..\client\scripts\Match\SkillPlan.cs" Link="Client\SkillPlan.cs" />
     <Compile Include="..\..\client\scripts\Presentation\IconIndex.cs" Link="Client\IconIndex.cs" />
     <Compile Include="..\..\client\scripts\Input\HotbarLayout.cs" Link="Client\HotbarLayout.cs" />
+    <Compile Include="..\..\client\scripts\Hud\BattleList.cs" Link="Client\BattleList.cs" />
   </ItemGroup>
 
   <ItemGroup>

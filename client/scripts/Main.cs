@@ -105,6 +105,9 @@ public partial class Main : Node2D
             // T-064/T-221: a entrada usa as definições no NH que o estado do jogador tem (raio da prévia, alcance, cargas);
             // online os NH mudam quando o jogador gasta pontos.
             _input = new PlayerInput(content) { Hotbar = _hud.Hotbar };
+            var input = _input;
+            input.TabCycle = (current, forward) => forward ? _hud.Battle.Next(current) : _hud.Battle.Previous(current);
+            _hud.TargetChosen += input.Select;
             _hud.HotbarKey = HotbarKey();
 
             _hud.SetContent(content);
@@ -214,6 +217,9 @@ public partial class Main : Node2D
             }
 
             _worldView.SelectedEntity = _input.SelectedTarget;
+            _worldView.HighlightedEntity = _hud.BattleHovered;
+            _hud.VisibleWorld = _camera.VisibleWorld();
+            _hud.TopRightReserved = _zoneScreen.CornerBottom;
             _worldView.Render(_authority, events);
             _hud.Render(_authority, _input.SelectedTarget, aim, events);
             if (_authority is NetAuthority statsNet && _args.ContainsKey("net-stats"))
@@ -234,7 +240,7 @@ public partial class Main : Node2D
                     + (n.Simulation.Length > 0 ? $" · {n.Simulation}" : "")
                 : "";
             _info.Text = $"Core {CoreInfo.Version} · {Engine.GetFramesPerSecond()} FPS · tick {_authority.CurrentTick}{netLine}\n"
-                + "WASD mover · Tab/clique seleciona e ataca sozinho · 1-6 atalhos (arraste da tela K) · Q poção · F pegar · I inventário · C personagem · K habilidades · Esc pausa";
+                + "WASD mover · Tab/Shift+Tab/clique (ou a lista, B) seleciona e ataca sozinho · 1-6 atalhos (arraste da tela K) · Q poção · F pegar · I inventário · C personagem · K habilidades · Esc pausa";
             _info.Visible = DebugView.Visible; // antes do jogo (conectando, erro) o texto fica sempre visível
         }
 

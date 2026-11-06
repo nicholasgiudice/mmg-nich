@@ -12,6 +12,9 @@ public static class InputActions
     /// <summary>Ataque básico pelo teclado (Espaço): usa o alvo selecionado (Tab) e mira nele.</summary>
     public const string AttackKey = "attack_key";
     public const string TargetNext = "target_next";
+
+    /// <summary>Shift+Tab: alvo anterior na lista de batalha (T-312).</summary>
+    public const string TargetPrevious = "target_prev";
     public const string TargetClear = "target_clear";
 
     /// <summary>Esc: pausa (quando não há alvo selecionado para limpar).</summary>
@@ -38,9 +41,12 @@ public static class InputActions
     /// <summary>Ctrl+F: mostra/esconde as informações de debug (T-085). Ler com correspondência exata, como o <see cref="PickUp"/>.</summary>
     public const string ToggleDebug = "toggle_debug";
 
+    /// <summary>B: mostra/esconde a lista de batalha (T-312).</summary>
+    public const string BattleList = "battle_list";
+
     /// <summary>Teclas 1 a 6 da barra de atalhos (T-081): o que cada uma usa é o jogador quem escolhe (<see cref="HotbarLayout"/>).</summary>
     public static readonly string[] AbilitySlots = ["ability_1", "ability_2", "ability_3", "ability_4", "ability_5", "ability_6"];
 
     public static IEnumerable<string> All =>
-        new[] { MoveUp, MoveDown, MoveLeft, MoveRight, Attack, AttackKey, TargetNext, TargetClear, Consumable, Pause, Restart, CharacterPanel, SkillsPanel, InventoryPanel, PickUp, ToggleDebug }.Concat(AbilitySlots);
+        new[] { MoveUp, MoveDown, MoveLeft, MoveRight, Attack, AttackKey, TargetNext, TargetPrevious, TargetClear, Consumable, Pause, Restart, CharacterPanel, SkillsPanel, InventoryPanel, PickUp, ToggleDebug, BattleList }.Concat(AbilitySlots);
 }

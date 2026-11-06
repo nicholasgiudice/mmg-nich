@@ -57,6 +57,9 @@ public partial class WorldView : Node2D
     /// <summary>Unidade com indicador de alvo selecionado.</summary>
     public EntityId? SelectedEntity { get; set; }
 
+    /// <summary>Unidade sob o mouse na lista de batalha (T-312): anel de destaque no mapa.</summary>
+    public EntityId? HighlightedEntity { get; set; }
+
     /// <summary>Definições (nomes e tags de status); vazio = só siglas cruas.</summary>
     public void SetContent(ContentCatalog content) => _content = content;
 
@@ -207,7 +210,7 @@ public partial class WorldView : Node2D
             seen.Add(state.Id);
             var view = GetOrCreateView(state.Id);
             var controlled = authority.ControlledEntity == state.Id;
-            view.ApplyState(state, controlled, SelectedEntity == state.Id, _sprites);
+            view.ApplyState(state, controlled, SelectedEntity == state.Id, _sprites, HighlightedEntity == state.Id);
             view.ApplyShield(_effects.Shield, state.TryGet<ShieldState>() is { Total: > 0 });
             var (chips, marks) = StatusVisuals.From(state.TryGet<StatusEffects>(), _content, now);
             view.ApplyStatus(chips, marks);

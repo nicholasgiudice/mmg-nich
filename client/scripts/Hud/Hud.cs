@@ -49,6 +49,22 @@ public partial class Hud : Control
     /// <summary>Personagem cuja barra é carregada e guardada (<see cref="HotbarStore"/>); defina antes da primeira renderização.</summary>
     public string? HotbarKey { get; set; }
     private CombatLogPanel _log = null!;
+    private BattleListPanel _battle = null!;
+
+    /// <summary>Lista de batalha (T-312): ordem dos monstros da tela; o Tab do <c>PlayerInput</c> anda por ela.</summary>
+    public BattleList Battle { get; } = new();
+
+    /// <summary>Retângulo do mundo visível na câmera (tiles); a lista de batalha só mostra o que está dentro.</summary>
+    public Rect2? VisibleWorld { get; set; }
+
+    /// <summary>Altura ocupada no canto superior direito por outra tela (nome da zona); a lista de batalha fica abaixo.</summary>
+    public float TopRightReserved { get; set; }
+
+    /// <summary>Clique numa linha da lista de batalha: o monstro escolhido como alvo.</summary>
+    public event Action<EntityId>? TargetChosen;
+
+    /// <summary>Monstro sob o mouse na lista de batalha (destaque no mapa); null = nenhum.</summary>
+    public EntityId? BattleHovered => _battle.Visible ? _battle.Hovered : null;
     private DeathSummaryPanel _death = null!;
     private Label _banner = null!;
     private HBoxContainer _panelButtons = null!;
@@ -108,6 +124,10 @@ public partial class Hud : Control
 
         _log = new CombatLogPanel();
         AddChild(_log);
+
+        _battle = new BattleListPanel { Visible = BattleListSettings.Visible };
+        _battle.RowClicked += id => TargetChosen?.Invoke(id);
+        AddChild(_battle);
 
         _death = new DeathSummaryPanel { Visible = false, SourceLabel = SourceLabel };
         AddChild(_death);
@@ -205,6 +225,7 @@ public partial class Hud : Control
         // Inventário: canto direito, acima do log; cabe ao lado da tela de personagem em 1280 px (equipar e ver os números).
         _inventory.Position = new Vector2(screen.X - _inventory.Size.X - 8, Mathf.Max(8, _log.Position.Y - _inventory.Size.Y - 8));
         _log.Position = new Vector2(screen.X - _log.Size.X - 8, screen.Y - _log.Size.Y - 8);
+        _battle.Position = new Vector2(screen.X - _battle.Size.X - 8, TopRightReserved > 0 ? TopRightReserved + 6 : 8);
         _death.Position = (screen - _death.Size) / 2;
         _banner.Position = new Vector2((screen.X - _banner.Size.X) / 2, screen.Y * 0.18f);
     }
@@ -299,6 +320,7 @@ public partial class Hud : Control
         }
 
         UpdateParty(latest, self, now);
+        UpdateBattleList(authority, latest, self, selected, events);
 
         if (authority is ICombatLogSource source)
         {
@@ -332,6 +354,11 @@ public partial class Hud : Control
         if (Godot.Input.IsActionJustPressed(Input.InputActions.SkillsPanel))
         {
             TogglePanel(_skills);
+        }
+
+        if (Godot.Input.IsActionJustPressed(Input.InputActions.BattleList))
+        {
+            _battle.Visible = BattleListSettings.Visible = !_battle.Visible;
         }
 
         var me = authority.ControlledEntity;
@@ -399,6 +426,64 @@ public partial class Hud : Control
             var used = inv.Slots.Count(i => i is not null);
             _inventoryButton.Text = $"Inventário (I) {used}/{inv.Capacity}";
             _inventoryButton.Modulate = used >= inv.Capacity ? HudTheme.Warning : Colors.White;
+        }
+    }
+
+    /// <summary>
+    /// T-312: monstros vivos inimigos dentro da câmera, a marca de quem mira o jogador (eventos e conjuração replicada)
+    /// e o painel. A lógica fica em <see cref="BattleList"/>; a lista é calculada mesmo com o painel escondido (Tab).
+    /// </summary>
+    private void UpdateBattleList(IGameAuthority authority, WorldSnapshot latest, EntitySnapshot? self, EntityId? selected, IReadOnlyList<GameEvent> events)
+    {
+        var me = authority.ControlledEntity;
+        var tick = authority.CurrentTick;
+        foreach (var e in events)
+        {
+            switch (e)
+            {
+                case AbilityStarted s when me is not null && s.Target == me && s.Source != me:
+                    Battle.NoteAimAtPlayer(s.Source, tick);
+                    break;
+                case AbilityExecuted x when me is { } m && x.Source != m && x.Targets.Contains(m):
+                    Battle.NoteAimAtPlayer(x.Source, tick);
+                    break;
+                case DamageDealt d when me is not null && d.Target == me && d.Source != me:
+                    Battle.NoteAimAtPlayer(d.Source, tick);
+                    break;
+            }
+        }
+
+        var faction = self?.TryGet<FactionTag>()?.Faction ?? Faction.Player;
+        var view = VisibleWorld;
+        var candidates = new List<BattleCandidate>();
+        var casting = new HashSet<EntityId>();
+        foreach (var e in latest.Entities)
+        {
+            if (e.TryGet<UnitInfo>() is not { } info || e.TryGet<Health>() is not { IsAlive: true } health
+                || e.TryGet<FactionTag>()?.Faction is not { } theirs || theirs == faction
+                || e.TryGet<Transform>() is not { } transform)
+            {
+                continue;
+            }
+
+            var p = transform.Position;
+            if (view is { } r && !r.HasPoint(new Vector2(p.X, p.Y)))
+            {
+                continue;
+            }
+
+            candidates.Add(new BattleCandidate(e.Id, p, info.Name, info.Level, info.Rank, health.Max > 0 ? health.Current / health.Max : 1f));
+            if (me is not null && e.TryGet<AbilityState>()?.Cast?.Target == me)
+            {
+                casting.Add(e.Id);
+            }
+        }
+
+        var origin = self?.TryGet<Transform>()?.Position ?? Vec2.Zero;
+        Battle.Update(candidates, origin, selected, tick, GetProcessDeltaTime(), casting);
+        if (_battle.Visible)
+        {
+            _battle.Show(Battle.Entries);
         }
     }
 
