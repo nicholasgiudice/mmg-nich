@@ -58,8 +58,10 @@ Se algum caminho não funcionar no teste, procure outro dentro do LPC antes de d
 
 ## Resultado
 
-**Em andamento (2026-11-05), aguardando o designer.**
+**Em andamento (2026-11-05).** Falta reexportar a Fada e a aprovação do designer em movimento.
 - Montagens propostas no gerador para Cavaleiro, Sacerdote, Vigia, Sombra e Fada, com links e amostra em `tasks/reports/arte-monstros-fase-3.md`.
 - Ent: os dois candidatos do OpenGameArt (Treant e Tree Ent) foram baixados, comparados em escala e **reprovados pelo designer**. O Ent Corrompido vai para encomenda no estilo LPC, junto com a Matriarca.
 - Cliente: campo genérico `tint` no `sprites.json` (`SpriteDefinition.Tint`, multiplicado no `EntityView`).
+- O designer exportou as cinco folhas. Cavaleiro, Sacerdote, Vigia (×2) e Sombra estão ligados no `sprites.json` (ids provisórios `monster.spectral_knight`, `monster.dead_priest`, `monster.faceless_watcher`, `monster.shade`, `monster.mist_fairy`) e na variante `preview_fase3`, com capturas no relatório. A folha da Fada veio vazia e precisa ser reexportada.
+- Créditos em `<monstro>-credits.txt` (o CSV do gerador renomeado, porque o Godot importava `.csv` como tradução) e em `CREDITS.md`. O manto e o escudo *kite* são CC-BY-SA.
 - A branch saiu de `docs/encerrar-trilha-pixellab`, que traz o `--art=<variante>` e ainda não está em `main`.

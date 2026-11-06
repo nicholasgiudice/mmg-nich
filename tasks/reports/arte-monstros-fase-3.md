@@ -1,6 +1,6 @@
 # Monstros da fase 3 com arte LPC (T-056)
 
-Situação em 2026-11-05: **montagem proposta, aguardando o designer.** Ainda não há folhas exportadas no jogo.
+Situação em 2026-11-05: **quatro monstros no jogo pela prévia; falta reexportar a Fada.** O designer vai refazer as montagens depois; basta exportar por cima com os mesmos nomes.
 
 ## Amostra do gerador
 
@@ -82,9 +82,32 @@ Depois da exportação, a variante `preview_fase3` do `sprites.json` troca monst
 
 ## Licenças
 
-Todas as peças das montagens acima têm OGA-BY, CC-BY ou CC0 como opção, exceto o **cabelo da Fada** (*Pixie*: CC-BY-SA 3.0 ou GPL). A folha montada com ele fica em CC-BY-SA, o que não afeta o resto do jogo (`design/art-direction-v0.1.md`, licenças). Se o designer preferir evitar, a Fada pode ficar com o capuz ou outro cabelo OGA-BY. Os créditos completos de cada folha saem no CSV do gerador.
+Conferido nos CSVs exportados: as peças têm OGA-BY, CC-BY ou CC0 como opção, **exceto** o manto (*robe*, só CC-BY-SA 3.0 ou GPL; usado no Sacerdote, no Vigia e na Sombra), o escudo *kite* do Cavaleiro e o cabelo da Fada. As folhas com essas peças ficam em CC-BY-SA, o que não afeta o resto do jogo (`design/art-direction-v0.1.md`, licenças). Os créditos de cada folha estão em `client/assets/art/characters/<monstro>-credits.txt` e em `CREDITS.md`.
+
+## No jogo
+
+As folhas do Cavaleiro, do Sacerdote, do Vigia e da Sombra estão ligadas no `sprites.json` com os ids provisórios e na variante `preview_fase3`. Capturas com `--art=preview_fase3` (Guerreiro LPC como referência):
+
+| Encontro | Mostra | Captura |
+|---|---|---|
+| `encounter.wolf_and_bandit` | Cavaleiro Espectral (no lugar do Salteador), azulado e translúcido | ![](arte-monstros-fase-3/jogo-wolf_and_bandit.png) |
+| `encounter.skeleton_guard` | Sacerdote Morto (no lugar do Guarda) | ![](arte-monstros-fase-3/jogo-skeleton_guard.png) |
+| `encounter.four_rats` | Sombras (no lugar dos ratos), escuras e translúcidas | ![](arte-monstros-fase-3/jogo-four_rats.png) |
+| `encounter.forest_matriarch` | Vigia Sem Rosto em ×2 (no lugar da Matriarca) | ![](arte-monstros-fase-3/jogo-forest_matriarch.png) |
+
+Para ver em movimento:
+
+```bash
+Godot_v4.7.2-stable_mono_win64.exe --path client res://scenes/Main.tscn -- --encounter=encounter.wolf_and_bandit --art=preview_fase3
+```
+
+**Detalhes técnicos:**
+- A folha do Cavaleiro tem as armas grandes em quadros de 192 px (golpe, contragolpe e estocada), na mesma posição da maça do Clérigo, então ele usa `slash_192`.
+- O Godot importava os CSVs de créditos como traduções; eles foram salvos como `-credits.txt`, como os das classes.
+- **A folha da Fada (`mist_fairy.png`) veio vazia**, toda transparente. Na prévia, o Lobo fica invisível até ela ser reexportada.
 
 ## Pendências
 
-- **Designer:** aprovar ou ajustar as montagens, exportar as 5 folhas e os CSVs, e autorizar o download dos dois pacotes de ent.
-- **Agente:** depois da exportação, ligar no `sprites.json` (ids provisórios e variante `preview_fase3`), medir pivôs, testar no jogo e gravar os GIFs.
+- **Designer:** reexportar `mist_fairy.png` (veio vazia), ver a prévia em movimento e, depois, refazer as montagens que quiser (exportando por cima, com os mesmos nomes).
+- **Ent Corrompido e Matriarca:** encomenda no estilo LPC, ou troca do Ent por um monstro que o gerador monte.
+- **Fase 3:** quando os dados existirem, conferir os ids provisórios e os raios (o pivô dos humanoides do gerador é o mesmo das classes).
