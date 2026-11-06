@@ -10,6 +10,8 @@
 
 Converter o esboço da fase 3 (`tasks/README.md`, seção 7: Floresta, Ruínas, Cripta instanciada, Vigia Sem Rosto, NPCs e missões) em tarefas, aproveitando o que a fase 2 e a trilha de arte já entregaram.
 
+**Arte (decisão de 2026-11-05):** a arte continua no LPC. A trilha PixelLab foi encerrada (`tasks/reports/arte-pixellab-piloto.md`, `tasks/reports/arte-alternativas.md`). Os sprites dos monstros da fase 3 vêm da T-056 (`tasks/trilha-arte/T-056-monstros-fase-3-lpc.md`), que propõe ids provisórios (`monster.mist_fairy`, `monster.corrupted_ent`, `monster.dead_priest`, `monster.spectral_knight`, `monster.faceless_watcher`, `monster.shade`). As tarefas de dados da fase 3 usam esses ids ou registram a troca, e a tarefa de cliente que liga os monstros se coordena com a T-056. Lacunas sem fonte LPC (Ent Corrompido, sprite próprio da Matriarca) viram encomenda a artista no estilo LPC; não bloqueiam a fase (use um sprite provisório).
+
 ## Requisitos
 
 1. Ler `tasks/reports/`, os Resultados da fase 2 e o código atual.

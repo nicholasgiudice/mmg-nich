@@ -1,7 +1,7 @@
 # Piloto PixelLab (T-090)
 
 Data: 2026-11-05. Conta: Tier 1 (2.000 gerações/mês). Ferramenta: MCP do PixelLab no Claude Code.
-Arquivos: `client/assets/art/pixellab/` (folhas, tileset, objeto, `manifest.json`, scripts em `tools/`), capturas em `tasks/reports/arte-pixellab-piloto/`.
+Arquivos (removidos do cliente ao encerrar a trilha; recupere com `git show 49b9720:<caminho>`): `client/assets/art/pixellab/` (folhas, tileset, objeto, `manifest.json`, scripts em `tools/`), capturas em `tasks/reports/arte-pixellab-piloto/`.
 
 Para ver no jogo:
 

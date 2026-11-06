@@ -65,6 +65,8 @@ Concluída em 2026-11-05. Relatório completo em `tasks/reports/arte-pixellab-pi
 
 Detalhes e comparações em movimento no relatório.
 
+**Encerramento (2026-11-05):** a trilha foi encerrada. As tarefas T-091 a T-096, os assets em `client/assets/art/pixellab/`, o tileset `data/maps/tilesets/pixellab_grass_dirt.tsx` e a variante `pixellab` do `sprites.json` foram removidos (recuperáveis pelo commit `49b9720`). O mecanismo `--art=<variante>` do `SpriteCatalog` ficou, para prévias de arte.
+
 **Feito**
 - **Guerreiro v2:** `create_character_pro_flash` com o sprite LPC como referência, 64 px. Parado, andar, atacar e morrer em `skeleton-v3`, que mantém escudo e espada. O ataque é o golpe `slash` com o escudo à frente.
 - **Lobo Cinzento v2:** pro-flash, modelo `dog`, com o Guerreiro v2 como referência. Parado e andar por modelo pronto; atacar e morrer por texto (v3). Os dois personagens têm 4 direções.

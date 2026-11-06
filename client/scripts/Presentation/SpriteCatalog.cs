@@ -117,7 +117,7 @@ public sealed class SpriteCatalog
         return new SpriteCatalog(sprites);
     }
 
-    /// <summary>Conjunto de arte alternativo pedido por <c>--art=nome</c> (ex.: <c>pixellab</c>, T-090); null = padrão (LPC).</summary>
+    /// <summary>Conjunto de arte alternativo pedido por <c>--art=nome</c> (ex.: <c>preview_fase3</c>, T-056); null = padrão (LPC).</summary>
     private static string? ArtVariant() =>
         OS.GetCmdlineUserArgs()
             .Select(a => a.TrimStart('-'))

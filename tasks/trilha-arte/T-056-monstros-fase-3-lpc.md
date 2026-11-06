@@ -2,8 +2,8 @@
 
 - **Ambiente:** Windows
 - **Modelo:** Humano + Médio
-- **Depende de:** T-053; T-090 em `main` (o mecanismo `--art=<variante>` do `SpriteCatalog`)
-- **Libera:** T-345 (fase 3), que liga os monstros no jogo
+- **Depende de:** T-053; o mecanismo `--art=<variante>` do `SpriteCatalog` (T-090), que entra em `main` com a branch `docs/encerrar-trilha-pixellab`
+- **Libera:** a tarefa de cliente da fase 3 que liga os monstros no jogo (criada pela T-240)
 - **Áreas que pode alterar:** `client/assets/art/monsters/`, `client/assets/art/characters/`, `client/assets/art/sprites.json`, `client/scripts/Presentation/` (só para o efeito visual de fantasma/névoa), `design/art-direction-v0.1.md` (tabela de lacunas e de pacotes), `CREDITS.md`, `tasks/reports/`
 
 ## Contexto
