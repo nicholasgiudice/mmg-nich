@@ -336,7 +336,7 @@ public partial class EntityView : Node2D
             : flash > 0 ? new Color(1 + flash * 2, 1 + flash * 2, 1 + flash * 2)
             : (_marks & ControlMarks.Frozen) != 0 ? new Color(0.75f, 0.9f, 1.2f)
             : Colors.White;
-        DrawTextureRectRegion(sprite.Texture, dest, strip.Frame(index), modulate);
+        DrawTextureRectRegion(sprite.Texture, dest, strip.Frame(index), modulate * sprite.Tint);
     }
 
     private (SpriteAnimation? Animation, double Time) CurrentAnimation(SpriteDefinition sprite, SpriteDirection direction)

@@ -54,8 +54,8 @@ Fluxo para você:
 |---|---|---|
 | **0 — Protótipo de combate** | Arena local, 4 classes com 3 habilidades + ataque básico, 4 inimigos, Matriarca simplificada, simulador de encontros | **Concluída** (T-025: aprovada como base; seção 6) |
 | **1 — Rede mínima** | Servidor dedicado na VPS, 4 jogadores na mesma arena, login de desenvolvimento | **Concluída** (T-111: playtest online aprovado; seção 6b) |
-| **2 — Persistência e progressão** | Contas, personagens, inventário, Cidade + Campos online; atributos, níveis, equipamento e habilidades reformuladas (`design/progression-v0.1.md`) | **Detalhada** (T-120; seção 6d) |
-| **3 — Primeiro mapa completo** | Floresta, Ruínas, Cripta instanciada, Vigia Sem Rosto | Esboço |
+| **2 — Persistência e progressão** | Contas, personagens, inventário, Cidade + Campos online; atributos, níveis, equipamento e habilidades reformuladas (`design/progression-v0.1.md`) | **Concluída** (T-230: playtest aprovado com correções para a fase 3; seção 6d) |
+| **3 — Primeiro mapa completo** | Floresta, Ruínas, Cripta instanciada, Vigia Sem Rosto; grupo, lista de batalha, ouro, lojas e mapas maiores (playtest v0.2) | **Detalhada** (T-240; seção 6e) |
 | **4 — Operação** | CI/CD, métricas, testes de carga, produção separada | Esboço |
 
 As fases são detalhadas em arquivos de tarefa somente quando a anterior termina (T-030 detalhou a fase 1; T-120 detalha a fase 2), porque dependem do que a fase anterior ensinar.
@@ -236,12 +236,14 @@ Arte com pacotes de assets, estilo simples como o Tibia mas não idêntico (deci
 | [T-053](trilha-arte/T-053-sprites-e-animacoes.md) | Cliente: sprites e animações | Windows | Médio | 050 |
 | [T-054](trilha-arte/T-054-efeitos-visuais.md) | Cliente: efeitos visuais de habilidades, áreas e telegráfos | Windows | Leve | 053 |
 | [T-055](trilha-arte/T-055-mapas-cidade-e-campos.md) | Mapas: Cidade-Fortaleza e Campos da Vigília | Windows | Humano + Médio | 051, 052, 053 |
+| [T-056](trilha-arte/T-056-monstros-fase-3-lpc.md) | Monstros da fase 3 com arte LPC (gerador, pacotes de criaturas, efeito de fantasma) | Windows | Humano + Médio | 053, 090 |
 
 ```text
 Habilidades:  T-034 ─► T-060 ─► T-061 ─► T-062 ─┬─► T-063
                                                  └─► T-064
 Arte/mapas:   T-050 ─┬─► T-053 ─► T-054 ─┐
               T-051 ─┴─► T-052 ──────────┴─► T-055
+              T-053 ─► T-056 (monstros da fase 3)
 ```
 
 ### Trilha Valdran: nome e site (`tasks/trilha-valdran/`)
@@ -280,6 +282,14 @@ Interface:    T-080 ─┬─► T-081
 ```
 
 Cuidados de integração: T-081, T-082, T-083 e T-085 mexem no `Hud.cs`; T-081 e T-085 mexem no Input Map (`project.godot`) e em `InputActions`. Integre uma de cada vez e rebase as outras. Ordem sugerida: T-085, T-082, T-080, T-081, T-083, T-084.
+
+### Trilha de arte PixelLab (`tasks/trilha-arte-pixellab/`) — encerrada
+
+Testou refazer a arte com o [PixelLab](https://www.pixellab.ai/docs) (decisão de 2026-11-04). **Encerrada em 2026-11-05:** o designer reprovou o piloto, porque as animações de andar e de ataque ficaram abaixo do LPC (`tasks/reports/arte-pixellab-piloto.md`). A pesquisa `tasks/reports/arte-alternativas.md` recomendou manter o LPC. As tarefas T-091 a T-096 foram removidas, e os assets do piloto saíram do cliente (ficam no histórico, commit `49b9720`). Do piloto ficou só o mecanismo `--art=<variante>` do `SpriteCatalog`, usado para prévias de arte (T-056). Os monstros da fase 3 ganham arte LPC na T-056.
+
+| ID | Tarefa | Ambiente | Modelo | Depende de |
+|---|---|---|---|---|
+| [T-090](trilha-arte-pixellab/T-090-piloto-pixellab.md) | Piloto: Guerreiro, Lobo, um tileset e um objeto no jogo, com custo e decisão (**reprovado**) | Windows | Humano + Médio | conta e MCP do PixelLab |
 
 ---
 
@@ -348,11 +358,91 @@ T-210 ─► T-211 ─┬─► T-212 ◄── (203, 204) │      │         
 T-207 ──────────────────────────────────────────┴──────────────────┘
 ```
 
+## 6e. Tarefas da fase 3 (primeiro mapa completo)
+
+Detalhadas pela T-240 a partir do esboço da seção 7, de `design/first-map-v0.1.md`, dos Resultados da fase 2 e do playtest v0.2 (`tasks/reports/playtest-v0.2.md`). A fase começa pelas correções do playtest. Depois vêm os sistemas que o designer pediu (lista de batalha, grupo, ouro, lojas, consumíveis, mapas maiores) e então o conteúdo novo (Floresta, Ruínas, Cripta, Vigia).
+
+**Decisões da T-240**
+- **Economia mínima autorizada:** ouro que cai dos monstros e NPCs com preço fixo (T-320–T-323). Fica de fora: troca entre jogadores, mercado de jogadores, crafting e armazém. As tarefas autorizam isso explicitamente, como o `AGENTS.md` exige.
+- **Chave da Cripta adiada:** os fragmentos de chave exigem missões e itens de missão. Na fase 3 a entrada fica aberta, com aviso de conteúdo para grupo.
+- **A Matriarca sai dos Campos** e volta para o Ninho, dentro da Floresta (T-342), como no design.
+- **Fora desta fase:** missões, armazém, portas que abrem, o altar da Galeria e o aumento do nível máximo (o designer pediu "não agora").
+
+### Índice
+
+| ID | Tarefa | Ambiente | Modelo | Depende de |
+|---|---|---|---|---|
+| **Correções do playtest** | | | | |
+| [T-301](fase-3/T-301-correcoes-do-playtest.md) | Recargas na troca de zona, corpos das invocações, aggro em cadeia | VPS | Médio | — |
+| [T-302](fase-3/T-302-ritmo-de-xp-e-queda.md) | Dados: ritmo de XP e taxa de queda | VPS | Médio | — |
+| **Sistemas pedidos no playtest** | | | | |
+| [T-310](fase-3/T-310-grupo-party.md) | Grupo (party): convite, XP e saque divididos | VPS | **Forte** | 301 |
+| [T-311](fase-3/T-311-cliente-grupo.md) | Cliente: grupo | Windows | Médio | 310 |
+| [T-312](fase-3/T-312-cliente-lista-de-batalha.md) | Cliente: lista de batalha | Windows | Médio | — |
+| [T-320](fase-3/T-320-consumiveis-e-ouro.md) | Core: consumíveis como itens e ouro | VPS | **Forte** | 310 |
+| [T-321](fase-3/T-321-npcs-e-lojas.md) | NPCs vendedores e lojas | VPS | **Forte** | 320, 331 |
+| [T-322](fase-3/T-322-dados-economia.md) | Dados: ouro, preços e poções | VPS | Médio | 302, 321 |
+| [T-323](fase-3/T-323-cliente-ouro-loja-e-consumiveis.md) | Cliente: ouro, loja e consumíveis na barra | Windows | Médio | 321 |
+| **Mundo** | | | | |
+| [T-331](fase-3/T-331-zonas-lidas-do-mapa.md) | Zonas lidas do mapa (portões, surgimentos, NPCs no Tiled) | VPS | Médio | 301 |
+| [T-330](fase-3/T-330-mapas-maiores-cidade-e-campos.md) | Mapas maiores: Cidade e Campos | Windows | Humano + Médio | 331 |
+| [T-340](fase-3/T-340-monstros-da-floresta.md) | Monstros da Floresta: Fada e Ent | VPS | **Forte** | — |
+| [T-341](fase-3/T-341-monstros-das-ruinas.md) | Monstros das Ruínas: Sacerdote e Cavaleiro | VPS | **Forte** | — (após 340) |
+| [T-342](fase-3/T-342-floresta-baixa.md) | Mapa e zona: Floresta Baixa e Ninho da Matriarca | Windows | Humano + Médio | 330, 331, 340 |
+| [T-343](fase-3/T-343-ruinas-da-estrada-antiga.md) | Mapa e zona: Ruínas da Estrada Antiga | Windows | Humano + Médio | 330, 331, 341 |
+| [T-345](fase-3/T-345-cliente-monstros-novos-e-vigia.md) | Cliente: sprites e leitura dos monstros novos e do Vigia | Windows | Médio | 340, 341, 351, 056 |
+| **Dungeon** | | | | |
+| [T-350](fase-3/T-350-instancias-de-dungeon.md) | Servidor: instâncias de dungeon sob demanda | VPS | **Forte** | 310, 331 |
+| [T-351](fase-3/T-351-vigia-sem-rosto.md) | Core e dados: o Vigia Sem Rosto | VPS | **Forte** | 341 |
+| [T-352](fase-3/T-352-cripta-do-vigia.md) | Mapa e instância: Cripta do Vigia | Windows | Humano + Médio | 343, 350, 351 |
+| **Fechamento** | | | | |
+| [T-380](fase-3/T-380-playtest-fase-3.md) | Playtest da fase 3 (4 pessoas, ping de cada uma) | Windows | Humano | 302, 311, 312, 322, 323, 342, 345, 352 |
+| [T-390](fase-3/T-390-planejar-fase-4.md) | Detalhar a fase 4 em tarefas | VPS | **Forte** | 380 |
+
+### Ondas de execução
+
+| Onda | VPS | Windows |
+|---|---|---|
+| 1 | T-301, T-302, T-340 | T-312 |
+| 2 | T-310, T-331, T-341 | — |
+| 3 | T-320, T-351 | T-311, T-330 |
+| 4 | T-321, T-350 | T-342, T-345 |
+| 5 | T-322 | T-323, T-343 |
+| 6 | — | T-352 |
+| 7 | — | T-380 |
+| 8 | T-390 | — |
+
+A T-216 (destino do backup, da fase 2) continua fora das ondas. Convém concluí-la antes de abrir o jogo a jogadores de fora.
+
+**Cuidados de integração**
+- A T-301 e a T-331 mexem no `OpenZone`: integre a 301 primeiro (a 331 depende dela).
+- A T-340 e a T-341 mexem em `monsters.json` e nos perfis de IA: integre a 340 antes da 341.
+- A T-310, a T-320, a T-321 e a T-350 sobem `ProtocolVersion`. A 321 e a 350 rodam na mesma onda: integre a 321 primeiro e ajuste a versão na 350.
+- A T-311, a T-312 e a T-323 mexem no `Hud.cs` e no Input Map: integre uma de cada vez e rebase as outras.
+- A T-330, a T-342 e a T-343 mexem em `city.tmj`: a ordem das ondas já as separa.
+- **Arte dos monstros novos:** vem da T-056 (trilha de arte, LPC), que já ligou no `sprites.json` os ids `monster.mist_fairy`, `monster.dead_priest`, `monster.spectral_knight`, `monster.faceless_watcher` e `monster.shade`. A T-340, a T-341 e a T-351 usam esses ids; a T-345 só confere e ajusta. O Ent Corrompido ainda não tem arte (encomenda).
+
+### Grafo de dependências
+
+```text
+T-301 ─┬─► T-310 ─┬─► T-311
+       │          ├─► T-320 ─► T-321 ─┬─► T-322 ◄── T-302
+       │          │              ▲    └─► T-323
+       │          └─► T-350 ◄────┼─────────── T-331
+       └─► T-331 ────────────────┘
+           T-331 ─► T-330 ─┬─► T-342 ◄── T-340
+                           └─► T-343 ◄── T-341 ─► T-351
+T-343, T-350, T-351 ─► T-352
+T-340, T-341, T-351 ─► T-345
+T-312 (independente)
+T-302, T-311, T-312, T-322, T-323, T-342, T-345, T-352 ─► T-380 ─► T-390
+```
+
 ---
 
 ## 7. Fases seguintes (esboço)
 
-Serão convertidas em arquivos de tarefa no fim de cada fase (T-240 para a fase 3). As fases 1 e 2 já estão detalhadas nas seções 6b e 6d.
+Serão convertidas em arquivos de tarefa no fim de cada fase (T-390 para a fase 4). As fases 1, 2 e 3 já estão detalhadas nas seções 6b, 6d e 6e.
 
 ### Fase 2 — Persistência e progressão
 
@@ -374,7 +464,11 @@ Detalhada na seção 6d (T-120). Esboço original, mantido como histórico:
 
 ### Fase 3 — Primeiro mapa completo
 
+Detalhada na seção 6e (T-240). Esboço original, mantido como histórico:
+
 As convenções do Tiled, o carregador de mapa e a importação no Godot foram antecipados para a trilha de arte e mapas (T-051, T-052); a Cidade e os Campos também (T-055).
+
+A arte continua no LPC (trilha de arte). Os sprites dos monstros novos (Fada da Névoa, Ent Corrompido, Sacerdote Morto, Cavaleiro Espectral, Vigia Sem Rosto, sombras) saem da T-056, que pode rodar antes ou em paralelo às tarefas de dados; os mapas novos usam os tilesets LPC da T-055.
 
 | Tarefa | Ambiente | Modelo |
 |---|---|---|
