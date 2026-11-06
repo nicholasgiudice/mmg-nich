@@ -66,6 +66,8 @@ Da esquerda para a direita: o Guerreiro LPC nas 4 direções, o Treant nas 4 dir
 
 **Recomendação:** o Tree Ent, se o design da fase 3 aceitar um Ent grande. Os dois têm andar de 3 quadros, mais curto que o do LPC (8 a 9), então o teste em movimento no jogo decide.
 
+**Decisão do designer (2026-11-05): os dois foram reprovados ("muito feio").** Nenhum entra no cliente; os arquivos ficam só em `mmg-art-src`. O Ent Corrompido vai para a lista de **encomenda no estilo LPC**, junto com a Matriarca. Até lá, a fase 3 usa um sprite provisório para ele.
+
 ## Teste no jogo
 
 Depois da exportação, a variante `preview_fase3` do `sprites.json` troca monstros atuais pelos novos para ver no jogo, com `--art=preview_fase3`:

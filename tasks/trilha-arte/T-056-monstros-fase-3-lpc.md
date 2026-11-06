@@ -60,6 +60,6 @@ Se algum caminho não funcionar no teste, procure outro dentro do LPC antes de d
 
 **Em andamento (2026-11-05), aguardando o designer.**
 - Montagens propostas no gerador para Cavaleiro, Sacerdote, Vigia, Sombra e Fada, com links e amostra em `tasks/reports/arte-monstros-fase-3.md`.
-- Dois candidatos a Ent (OpenGameArt, CC-BY) listados; o download espera autorização.
+- Ent: os dois candidatos do OpenGameArt (Treant e Tree Ent) foram baixados, comparados em escala e **reprovados pelo designer**. O Ent Corrompido vai para encomenda no estilo LPC, junto com a Matriarca.
 - Cliente: campo genérico `tint` no `sprites.json` (`SpriteDefinition.Tint`, multiplicado no `EntityView`).
 - A branch saiu de `docs/encerrar-trilha-pixellab`, que traz o `--art=<variante>` e ainda não está em `main`.
