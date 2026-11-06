@@ -90,7 +90,7 @@ Detalhes e comparações em movimento no relatório.
 - A branch saiu de `task/trilha-arte-pixellab`, que tem os documentos da trilha e ainda não está em `main`.
 
 **Pendências**
-- Decidir o que fazer com a assinatura do PixelLab antes da renovação (2026-12-05).
+- ~~Decidir o que fazer com a assinatura do PixelLab antes da renovação (2026-12-05).~~ **Cancelada pelo designer em 2026-11-05.**
 - O teste do pincel de terreno na interface do Tiled, se o tileset ainda interessar.
 - O parado do Guerreiro olhando para a esquerda tem a espada deformada nos quadros 2 a 4. Hoje não aparece no jogo; refazer custa 3 gerações.
 - O `idle` do cliente mostra só o primeiro quadro, então a respiração ainda não aparece (T-094).

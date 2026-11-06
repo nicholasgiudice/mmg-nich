@@ -39,7 +39,7 @@ O jogo passa a se chamar **Valdran** (decisão do designer, 2026-11-02). Hoje o 
 
 ## Resultado
 
-Concluída em 2026-11-02 no Windows, com uma pendência: o teste de conexão ao servidor com o executável novo precisa de login e fica com o humano.
+Concluída em 2026-11-02 no Windows. A pendência (teste de conexão com o executável novo) foi fechada pelo designer em 2026-11-05.
 
 **O que foi feito**
 
@@ -75,4 +75,4 @@ A branch saiu de `origin/main` e recebeu, por merge, `docs/tarefas-valdran`. Ess
 
 **Pendências**
 
-- Humano: entrar com uma conta no `Valdran.exe` e confirmar que conecta ao servidor como antes. Nenhum código de rede ou endereço mudou.
+- ~~Humano: entrar com uma conta no `Valdran.exe` e confirmar que conecta ao servidor como antes.~~ **Feito em 2026-11-05:** o designer testou o executável gerado pelo `export-client.ps1`.
