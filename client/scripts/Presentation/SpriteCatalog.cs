@@ -35,6 +35,9 @@ public sealed class SpriteDefinition
     /// <summary>Papel (idle, walk, attack, cast, death) → animação da folha; sem entrada, o papel é o próprio nome.</summary>
     public required IReadOnlyDictionary<string, string> Use { get; init; }
 
+    /// <summary>Cor multiplicada sobre o sprite (T-056): tom e transparência de fantasmas, névoa e sombras. Branco = sem efeito.</summary>
+    public Color Tint { get; init; } = Colors.White;
+
     public SpriteAnimation? For(string role) =>
         Animations.TryGetValue(Use.GetValueOrDefault(role, role), out var anim) ? anim : null;
 }
@@ -111,10 +114,22 @@ public sealed class SpriteCatalog
                 Animations = animations,
                 Use = node["use"]?.AsObject().ToDictionary(kv => kv.Key, kv => (string)kv.Value!, StringComparer.Ordinal)
                     ?? new Dictionary<string, string>(),
+                Tint = ParseTint(node["tint"]),
             };
         }
 
         return new SpriteCatalog(sprites);
+    }
+
+    /// <summary><c>"tint": [r, g, b]</c> ou <c>[r, g, b, a]</c>, de 0 a 1; ausente = branco (sem efeito).</summary>
+    private static Color ParseTint(JsonNode? node)
+    {
+        if (node is not JsonArray { Count: 3 or 4 } values)
+        {
+            return Colors.White;
+        }
+
+        return new Color((float)values[0]!, (float)values[1]!, (float)values[2]!, values.Count == 4 ? (float)values[3]! : 1f);
     }
 
     /// <summary>Conjunto de arte alternativo pedido por <c>--art=nome</c> (ex.: <c>preview_fase3</c>, T-056); null = padrão (LPC).</summary>
