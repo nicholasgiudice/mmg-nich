@@ -66,6 +66,7 @@ O cliente já recebe do servidor as entidades dentro da área de interesse. A li
 - `lista-escondida.png`: a tecla B esconde a lista; o `settings.cfg` guardou `false` e, depois de outro B, `true`.
 - A marca "!": numa execução com log, só os 7 monstros que atacaram ficaram marcados; os 3 lobos distantes, não.
 - O ataque básico automático no alvo escolhido pela lista usa o mesmo `SelectedTarget` do clique no mapa (o Guerreiro atacou o rato selecionado nas capturas).
+- **O designer testou com o mouse em 2026-11-06 e aprovou.**
 - Não verificado: a lista vazia em jogo (os Campos sempre têm monstros na tela; a regra está no código e no teste `EmptyListHasNoNextTarget`).
 
 **Observação para a T-301:** nos testes, todos os monstros dos Campos vinham juntos para o jogador ao nascer. É o aggro em cadeia que a T-301 corrige; por isso quase todas as linhas aparecem com "!".
