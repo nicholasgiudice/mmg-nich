@@ -236,12 +236,14 @@ Arte com pacotes de assets, estilo simples como o Tibia mas não idêntico (deci
 | [T-053](trilha-arte/T-053-sprites-e-animacoes.md) | Cliente: sprites e animações | Windows | Médio | 050 |
 | [T-054](trilha-arte/T-054-efeitos-visuais.md) | Cliente: efeitos visuais de habilidades, áreas e telegráfos | Windows | Leve | 053 |
 | [T-055](trilha-arte/T-055-mapas-cidade-e-campos.md) | Mapas: Cidade-Fortaleza e Campos da Vigília | Windows | Humano + Médio | 051, 052, 053 |
+| [T-056](trilha-arte/T-056-monstros-fase-3-lpc.md) | Monstros da fase 3 com arte LPC (gerador, pacotes de criaturas, efeito de fantasma) | Windows | Humano + Médio | 053, 090 |
 
 ```text
 Habilidades:  T-034 ─► T-060 ─► T-061 ─► T-062 ─┬─► T-063
                                                  └─► T-064
 Arte/mapas:   T-050 ─┬─► T-053 ─► T-054 ─┐
               T-051 ─┴─► T-052 ──────────┴─► T-055
+              T-053 ─► T-056 (monstros da fase 3)
 ```
 
 ### Trilha Valdran: nome e site (`tasks/trilha-valdran/`)
@@ -284,6 +286,8 @@ Cuidados de integração: T-081, T-082, T-083 e T-085 mexem no `Hud.cs`; T-081 e
 ### Trilha de arte PixelLab (`tasks/trilha-arte-pixellab/`)
 
 Refaz toda a arte com o [PixelLab](https://www.pixellab.ai/docs) (decisão de 2026-11-04): personagens e monstros com direções e animação, tilesets Wang de 32 px e objetos de mapa, gerados pelo MCP do PixelLab no Claude Code (o token fica só na máquina do humano). O FAQ permite uso comercial, com uma restrição: não usar as imagens para treinar modelos. Começa por um piloto. Se o designer não aprovar, a trilha para e o LPC (trilha de arte) continua. A troca é por categoria inteira, para não misturar estilos; até lá, `--art=pixellab` liga a arte nova no cliente.
+
+**Parada (2026-11-05):** o designer reprovou o piloto T-090 (animações abaixo do LPC; ver `tasks/reports/arte-pixellab-piloto.md` e `tasks/reports/arte-alternativas.md`). T-091 a T-096 não seguem; a arte continua no LPC, e os monstros da fase 3 vão para a T-056.
 
 | ID | Tarefa | Ambiente | Modelo | Depende de |
 |---|---|---|---|---|
