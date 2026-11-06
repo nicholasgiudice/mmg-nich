@@ -182,7 +182,7 @@
       ],
       "drops": {
         "normal": {
-          "chance": 0.08,
+          "chance": 0.04,
           "count": 1,
           "rarity": { "common": 70, "uncommon": 25, "rare": 5, "epic": 0 },
           "items": [
@@ -210,7 +210,7 @@
           ]
         },
         "elite": {
-          "chance": 0.4,
+          "chance": 0.25,
           "count": 1,
           "rarity": { "common": 40, "uncommon": 45, "rare": 15, "epic": 0 },
           "items": [

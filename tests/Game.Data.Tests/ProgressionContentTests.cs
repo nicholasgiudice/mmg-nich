@@ -132,9 +132,9 @@ public class ProgressionContentTests
     public void Drop_tables_follow_the_design_and_reference_existing_items()
     {
         var d = Db.Rules.Items.Drops;
-        Assert.Equal((0.08, 1), (d.Normal.Chance, d.Normal.Count));
+        Assert.Equal((0.04, 1), (d.Normal.Chance, d.Normal.Count));
         Assert.Equal((70.0, 25.0, 5.0, 0.0), (d.Normal.Rarity.Common, d.Normal.Rarity.Uncommon, d.Normal.Rarity.Rare, d.Normal.Rarity.Epic));
-        Assert.Equal((0.4, 1), (d.Elite.Chance, d.Elite.Count));
+        Assert.Equal((0.25, 1), (d.Elite.Chance, d.Elite.Count));
         Assert.Equal((40.0, 45.0, 15.0, 0.0), (d.Elite.Rarity.Common, d.Elite.Rarity.Uncommon, d.Elite.Rarity.Rare, d.Elite.Rarity.Epic));
         Assert.Equal((1.0, 2, ItemRarity.Uncommon), (d.Boss.Chance, d.Boss.Count, d.Boss.GuaranteedRarity));
         Assert.Equal((0.0, 60.0, 35.0, 5.0), (d.Boss.Rarity.Common, d.Boss.Rarity.Uncommon, d.Boss.Rarity.Rare, d.Boss.Rarity.Epic));

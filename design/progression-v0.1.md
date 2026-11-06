@@ -16,29 +16,29 @@ Todo número abaixo é ponto de partida para o simulador, não valor final. Regr
 ## 2. Níveis e XP
 
 - Nível máximo do MVP: **15**.
-- XP para passar do nível L para L+1: `round(50 × L^1,8)`.
+- XP para passar do nível L para L+1: `round(68 × L^1,8)` (era `50 × L^1,8` até a T-302: +36%, pedido do playtest v0.2).
 - XP por monstro: `6 × nível do monstro × multiplicador de categoria` (normal 1, elite 5, chefe 30) × modificador de diferença de nível.
 - Modificador de diferença: monstro acima do jogador +10% por nível (máx. +30%); abaixo, −20% por nível; 5 ou mais níveis abaixo dá 0 (evita farm de área fácil).
 - Em grupo, a XP do monstro é dividida entre quem participou e recebe +10% por membro além do primeiro (incentivo a grupo sem punir solo).
 
 | Nível | XP para o próximo | XP total | Monstros normais do próprio nível |
 |---|---|---|---|
-| 1 | 50 | 50 | ~8 |
-| 2 | 174 | 224 | ~15 |
-| 3 | 361 | 585 | ~20 |
-| 4 | 606 | 1 191 | ~34 |
-| 5 | 906 | 2 097 | ~30 |
-| 6 | 1 258 | 3 355 | ~35 |
-| 7 | 1 660 | 5 015 | ~40 |
-| 8 | 2 111 | 7 126 | ~50 |
-| 9 | 2 610 | 9 736 | ~48 |
-| 10 | 3 155 | 12 891 | ~53 |
-| 11 | 3 745 | 16 636 | ~57 |
-| 12 | 4 380 | 21 016 | ~61 |
-| 13 | 5 059 | 26 075 | ~65 |
-| 14 | 5 781 | 31 856 | ~69 |
+| 1 | 68 | 68 | ~11 |
+| 2 | 237 | 305 | ~20 |
+| 3 | 491 | 796 | ~27 |
+| 4 | 825 | 1 621 | ~34 |
+| 5 | 1 232 | 2 853 | ~41 |
+| 6 | 1 711 | 4 564 | ~48 |
+| 7 | 2 258 | 6 822 | ~54 |
+| 8 | 2 871 | 9 693 | ~60 |
+| 9 | 3 549 | 13 242 | ~66 |
+| 10 | 4 291 | 17 533 | ~72 |
+| 11 | 5 093 | 22 626 | ~77 |
+| 12 | 5 957 | 28 583 | ~83 |
+| 13 | 6 880 | 35 463 | ~88 |
+| 14 | 7 862 | 43 325 | ~94 |
 
-Cerca de 600 monstros normais até o nível 15 (menos com elites, chefes e a Cripta) — na ordem de 6 a 7 horas de jogo para o MVP.
+Cerca de 775 monstros normais até o nível 15 (menos com elites, chefes e a Cripta) — na ordem de 8 a 9 horas de jogo para o MVP (eram ~600 e 6–7 h antes da T-302).
 
 ### Nível por área (`first-map-v0.1.md`)
 
@@ -169,8 +169,8 @@ O nível do item é o nível da área onde caiu.
 
 | Fonte | Chance de item | Raridade (comum / incomum / raro / épico) |
 |---|---|---|
-| Monstro normal | 8% | 70 / 25 / 5 / 0 |
-| Elite | 40% | 40 / 45 / 15 / 0 |
+| Monstro normal | 4% | 70 / 25 / 5 / 0 |
+| Elite | 25% | 40 / 45 / 15 / 0 |
 | Chefe | 100% (2 itens, um incomum ou melhor garantido) | 0 / 60 / 35 / 5 |
 
 Morte não perde equipamento (visão do MVP).

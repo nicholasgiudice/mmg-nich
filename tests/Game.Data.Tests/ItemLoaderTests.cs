@@ -112,6 +112,6 @@ public class ItemLoaderTests
         Assert.All(db.Classes.Values, c => Assert.Equal(EquipSlot.Weapon, db.Items[Assert.Single(c.StartingEquipment).Item].Slot));
         var drops = db.Rules.Items.Drops;
         Assert.All(new[] { drops.Normal, drops.Elite, drops.Boss }.SelectMany(d => d.Items), id => Assert.True(db.Items.ContainsKey(id), id));
-        Assert.Equal((0.08, 0.4, 1.0), (drops.Normal.Chance, drops.Elite.Chance, drops.Boss.Chance));
+        Assert.Equal((0.04, 0.25, 1.0), (drops.Normal.Chance, drops.Elite.Chance, drops.Boss.Chance));
     }
 }
