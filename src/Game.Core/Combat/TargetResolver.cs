@@ -14,7 +14,7 @@ public sealed record TargetResolution(AbilityRejectReason? Reason, IReadOnlyList
 /// <summary>
 /// Resolve os alvos de uma habilidade para todos os tipos de <see cref="TargetingDefinition"/> usando
 /// <c>world.Spatial</c> e <c>world.Map</c>. Ataques à distância são hitscan (instantâneos, bloqueados por paredes).
-/// Regras: unit exige alvo válido (facção, vivo, alcance, LoS); tipos de área nunca falham por não acertar ninguém.
+/// Regras: unit exige alvo válido (facção, vivo, pode ser alvo, alcance, LoS); tipos de área nunca falham por não acertar ninguém.
 /// Em áreas, habilidades só com efeitos benéficos (heal/shield/remove_status) afetam aliados (inclui o conjurador);
 /// as demais afetam inimigos.
 /// </summary>
@@ -60,7 +60,8 @@ public static class TargetResolver
         var dir = AimDirection(caster, target, aim);
         var beneficial = IsBeneficial(ability);
 
-        bool AreaFilter(Entity e) => MatchesFaction(caster, e, beneficial ? FactionFilter.Ally : FactionFilter.Enemy);
+        bool AreaFilter(Entity e) =>
+            MatchesFaction(caster, e, beneficial ? FactionFilter.Ally : FactionFilter.Enemy) && CanBeHitBy(world, caster, e);
 
         switch (ability.Targeting)
         {
@@ -68,7 +69,8 @@ public static class TargetResolver
                 return new TargetResolution(null, [caster], dir);
 
             case UnitTargeting u:
-                if (target is null || !target.IsAlive || target.Has<Transform>() is false || !MatchesFaction(caster, target, u.Faction))
+                if (target is null || !target.IsAlive || target.Has<Transform>() is false || !MatchesFaction(caster, target, u.Faction)
+                    || !CanBeHitBy(world, caster, target))
                 {
                     return TargetResolution.Fail(AbilityRejectReason.InvalidTarget, dir);
                 }
@@ -123,6 +125,10 @@ public static class TargetResolver
                 throw new NotSupportedException($"Targeting {ability.Targeting.GetType().Name} not supported");
         }
     }
+
+    /// <summary>False se <paramref name="other"/> não pode ser alvo (T-340) e não é o próprio <paramref name="caster"/>.</summary>
+    public static bool CanBeHitBy(World world, Entity? caster, Entity other) =>
+        other == caster || !Status.StatusManager.IsUntargetable(world, other);
 
     public static bool MatchesFaction(Entity caster, Entity other, FactionFilter filter)
     {

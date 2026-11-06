@@ -366,7 +366,8 @@ public sealed class AbilitySystem : ISimulationSystem
             var next = world.Spatial.Nearest(
                 origin,
                 (float)unit.Range + 1f,
-                x => x.Id != hit.Target && x.Has<Transform>() && TargetResolver.MatchesFaction(caster, x, unit.Faction));
+                x => x.Id != hit.Target && x.Has<Transform>() && TargetResolver.MatchesFaction(caster, x, unit.Faction)
+                    && TargetResolver.CanBeHitBy(world, caster, x));
             if (next is null)
             {
                 return;

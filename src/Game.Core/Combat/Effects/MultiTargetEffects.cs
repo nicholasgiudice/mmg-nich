@@ -36,6 +36,7 @@ public static class MultiTargetEffects
                 fromPos,
                 (float)e.Radius,
                 x => !hit.Contains(x.Id) && x.Has<Health>() && TargetResolver.MatchesFaction(source, x, e.Affects)
+                    && TargetResolver.CanBeHitBy(c.World, source, x)
                     && HasLos(c.World, fromPos, x));
             if (next is null)
             {
@@ -62,6 +63,7 @@ public static class MultiTargetEffects
             center,
             (float)e.Radius,
             x => !primary.Contains(x.Id) && x.Has<Health>() && TargetResolver.MatchesFaction(source, x, e.Affects)
+                && TargetResolver.CanBeHitBy(c.World, source, x)
                 && HasLos(c.World, center, x));
         if (candidates.Count == 0)
         {

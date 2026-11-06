@@ -33,6 +33,9 @@ public static class StatusManager
 
     public static bool IsSilenced(World world, Entity e) => Active(world, e).Any(s => Def(world, s).Flags.Silenced);
 
+    /// <summary>Tem status com a marca <c>untargetable</c> (T-340): ninguém além dele mesmo o alcança com habilidades.</summary>
+    public static bool IsUntargetable(World world, Entity e) => Active(world, e).Any(s => Def(world, s).Flags.Untargetable);
+
     internal static StatusDefinition Def(World world, StatusInstance s) => world.Content.Statuses[s.StatusId];
 
     // ---------- aplicação ----------

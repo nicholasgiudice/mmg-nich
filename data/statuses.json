@@ -173,6 +173,23 @@
       "modifiers": { "speedMultiplier": 0.8 }
     },
     {
+      "id": "status.mist_chill",
+      "name": "Névoa Gelada",
+      "tags": ["debuff", "slow"],
+      "defaultDuration": 2.5,
+      "stacking": "refresh",
+      "modifiers": { "speedMultiplier": 0.8 }
+    },
+    {
+      "id": "status.in_mist",
+      "name": "Na Névoa",
+      "tags": ["buff", "mist"],
+      "defaultDuration": 2,
+      "stacking": "refresh",
+      "flags": { "untargetable": true },
+      "modifiers": { "speedMultiplier": 1.2 }
+    },
+    {
       "id": "status.purified",
       "name": "Purificado",
       "tags": ["buff", "cleanse"],

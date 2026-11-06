@@ -173,6 +173,12 @@ public sealed record StatusFlags
     public bool Stunned { get; init; }
     public bool Rooted { get; init; }
     public bool Silenced { get; init; }
+
+    /// <summary>
+    /// Não pode ser alvo (T-340, Fada da Névoa "na névoa"): outras entidades não o escolhem como alvo de unidade e ele não é
+    /// atingido por arcos, linhas, círculos, telegráfos, áreas, correntes nem alvos extras. Status que já tem continuam valendo.
+    /// </summary>
+    public bool Untargetable { get; init; }
 }
 
 public sealed record PeriodicEffectDefinition

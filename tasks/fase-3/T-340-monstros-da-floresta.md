@@ -34,4 +34,37 @@ A Floresta deve ensinar **posicionamento, controle de área, veneno e emboscadas
 
 ## Resultado
 
-_(preencher ao concluir)_
+Feito em 2026-11-06, na VPS, na branch `task/T-340-monstros-da-floresta`.
+
+**Design.** Seção nova "Floresta Baixa — Fada da Névoa e Ent Corrompido" em `design/combat-encounters-v0.1.md`, com papel, habilidades, telegráfos, resposta de cada classe, grupos típicos e falhas de design, mais duas linhas na matriz de decisões. O `design/bestiario.md` foi atualizado com os dois monstros, os encontros novos e as resistências.
+
+**Dados** (números do nível 1; ids `monster.mist_fairy` e `monster.corrupted_ent`, como pedido):
+- **Fada da Névoa** (nv6, normal): vida 110, velocidade 3,4, raio 0,38, tag `fey`, IA `ai.mist_kiter`. Dardo de Névoa (`mist_fairy.mist_bolt`): arcano 14 e `status.mist_chill` (−20% de velocidade, 2,5 s). Véu de Névoa (`mist_fairy.mist_veil`): conjuração de 0,6 s, que é o aviso, e depois `status.in_mist` por 2 s (não pode ser alvo, +20% de velocidade), com recarga de 8 s.
+- **Ent Corrompido** (nv7, normal): vida 430, velocidade 2,4, raio 0,7, tags `plant` e `corrupted`, resistências físico 0,25 e fogo −0,3 (fraqueza), IA `ai.brute`. Habilidades: Pisão Corrompido (círculo de 2,6 com telegráfo de 1,2 s, físico 44); Raízes Famintas (círculo de 1,6 no alvo com telegráfo de 1 s, natureza 16 e `status.snared` por 2 s, que já existia); Rajada de Espinhos (alvo único a até 8, natureza 14); Açoite de Galhos (corpo a corpo, físico 19).
+- Encontros de teste `encounter.mist_fairies`, `encounter.corrupted_ent` e `encounter.mist_ambush` (3 Aranhas nv5 + Fada nv6, Guerreiro + Arqueiro), todos em `map.fields`. Nenhuma arena nova.
+
+**Core.**
+- `StatusFlags.Untargetable` (`flags.untargetable` no JSON e no esquema) e `StatusManager.IsUntargetable`. A entidade fica fora de alvo de unidade, arcos, linhas, círculos, telegráfos, áreas persistentes, correntes, alvos extras e da troca de alvo dos acertos extras; ela mesma ainda se alcança (`TargetResolver.CanBeHitBy`).
+- Perfis `ai.mist_kiter` (`MistKiterProfile`) e `ai.brute` (`BruteProfile`) em `Combat/Ai/Profiles/`.
+- Lentidão e prisão já existiam. A fraqueza a fogo usa a resistência negativa, que a fórmula já aceitava.
+- Testes em `tests/Game.Core.Tests/ForestMonsterTests.cs`.
+
+**Testes de design** (`tests/Game.Design.Tests/ForestDesignTests.cs`, relatório `tasks/reports/balance-v0.11.md`):
+- perfil esperado: 100% nas 4 classes contra os dois grupos, entre 9,6 e 35,7 s;
+- perfil fraco: 0–39%;
+- Emboscada: o par vence em 51% do tempo médio dos solos e cada um recebe 28% do dano que receberia sozinho.
+
+**Decisões e desvios.**
+- **A Fada visível não foge.** A proposta era fugir de quem chega perto, como o Salteador. Assim o Guerreiro nunca a alcançava (0%), então a fuga ficou só na névoa (some, se afasta e reaparece longe).
+- **Rajada de Espinhos no Ent**, que não estava na proposta. Sem ela, quem ataca de longe e desvia vencia o Ent sem tomar dano, mesmo 3 níveis abaixo.
+- **Perfil novo `ai.brute`.** O `ai.melee_chaser` usa habilidades de área com o alvo fora de alcance, porque a validação de área nunca falha. O Pisão sairia no vazio.
+- **Exceção do Clérigo no perfil fraco**, a mesma do Guarda Esquelético (balance-v0.7 §3): ele se cura indefinidamente e vence fraco, mas com ≥ 1,3× o tempo (1,40× e 1,47×).
+- **Bots com `+dodge`** nos testes da Floresta (desviam dos telegráfos), como na Matriarca.
+- **Fora das "Áreas que pode alterar"** (mínimo): `data/schemas/game-data.schema.json` (a flag nova) e `src/Game.Site/Describe.cs` (o texto "não pode ser alvo" na descrição de status). Nos testes existentes que assumiam só os 5 encontros e os 7 monstros do protótipo, mudei os filtros e as listas: `MonsterScalingTests`, `PrototypeContentTests` e `ProgressionContentTests`.
+
+**Pendências.**
+- **T-345:** mostrar a conjuração do véu e o estado `status.in_mist`, impedir a seleção de alvo na névoa no cliente (o Core já rejeita) e criar a arte do Ent, que segue em encomenda.
+- **T-342:** medir o ritmo de XP da Floresta com a zona real e rever a linha de visão com árvores.
+- `design/habilidades.md` § Monstros não foi atualizado (fora das áreas da tarefa).
+- O `ai.ranged_kiter` do Salteador tem o mesmo problema de parar sem linha de visão que corrigi na Fada; não mexi para não mudar o balanço dos Campos.
+- **Tempo da suíte de design:** a T-340 acrescenta 19 lotes de 100 seeds, cerca de 1 min sozinha na VPS. A suíte inteira (102 testes) passou em 15,6 min de parede e 9 min de CPU, com outra sessão rodando testes ao mesmo tempo. Se o limite de 5 min do `DesignHarness` voltar a apertar, rodar os testes da Floresta com menos seeds.

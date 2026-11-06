@@ -51,7 +51,8 @@ public static class TelegraphService
     /// <summary>Entidades (vivas, com facção) dentro da forma agora, filtradas pela facção relativa à fonte. Paredes bloqueiam (linha de visão da origem).</summary>
     public static IReadOnlyList<Entity> Inside(World world, TelegraphState t, Vector2 origin, Vector2 dir)
     {
-        bool Filter(Entity e) => e.TryGet<FactionTag>() is { } f && e.Has<Health>() && e.IsAlive && Matches(t, f.Faction);
+        bool Filter(Entity e) => e.TryGet<FactionTag>() is { } f && e.Has<Health>() && e.IsAlive && Matches(t, f.Faction)
+            && (e.Id == t.Source || !Status.StatusManager.IsUntargetable(world, e));
 
         IReadOnlyList<Entity> hits = t.Shape switch
         {

@@ -32,5 +32,7 @@ public sealed class AiProfileRegistry
         .Register("ai.ranged_kiter", new RangedKiterProfile())
         .Register("ai.swarm", new SwarmProfile())
         .Register("ai.guardian", new GuardianProfile())
-        .Register("ai.boss", new BossProfile()); // T-012
+        .Register("ai.boss", new BossProfile()) // T-012
+        .Register("ai.mist_kiter", new MistKiterProfile()) // T-340
+        .Register("ai.brute", new BruteProfile()); // T-340
 }

@@ -254,6 +254,11 @@ public sealed class Describe
             parts.Add("silenciado");
         }
 
+        if (s.Flags.Untargetable)
+        {
+            parts.Add("não pode ser alvo");
+        }
+
         if (s.Frontal is { } f)
         {
             var reflect = f.ReflectMeleeFraction > 0 ? $"; devolve {Pct(f.ReflectMeleeFraction)} do dano corpo a corpo bloqueado a quem atacou" : "";

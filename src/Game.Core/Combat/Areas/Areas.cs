@@ -208,7 +208,8 @@ public sealed class AreaSystem : ISimulationSystem
     private static IReadOnlyList<Entity> Inside(World world, AreaState area, Vector2 pos)
     {
         bool Filter(Entity e) =>
-            e.TryGet<FactionTag>() is { } f && e.Has<Health>() && e.IsAlive && area.Affects switch
+            e.TryGet<FactionTag>() is { } f && e.Has<Health>() && e.IsAlive && !Status.StatusManager.IsUntargetable(world, e)
+            && area.Affects switch
             {
                 FactionFilter.Any => true,
                 FactionFilter.Ally => area.OwnerFaction == f.Faction,
