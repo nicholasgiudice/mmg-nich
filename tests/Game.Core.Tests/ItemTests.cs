@@ -335,14 +335,14 @@ public class ItemTests
     }
 
     [Fact]
-    public void Normal_monsters_drop_about_eight_percent_of_the_time()
+    public void Normal_monsters_drop_about_four_percent_of_the_time()
     {
         var w = NewWorld();
         var hero = Hero(w);
         var rat = EntityFactory.SpawnMonster(w, Content.Monsters["monster.field_rat"], new Vector2(2, 1));
         var drops = Enumerable.Range(0, 5000).Sum(_ => Gear.DropLoot(w, rat, [hero]).Count);
 
-        Assert.InRange(drops, 300, 500); // 8% de 5000 = 400
+        Assert.InRange(drops, 140, 260); // 4% de 5000 = 200
     }
 
     [Fact]

@@ -61,13 +61,13 @@ public class ProgressionTests
     [Fact]
     public void Xp_curve_follows_the_design_table()
     {
-        Assert.Equal(50, Rules.XpToNext(1));
-        Assert.Equal(174, Rules.XpToNext(2));
-        Assert.Equal(361, Rules.XpToNext(3));
-        Assert.Equal(3155, Rules.XpToNext(10));
-        Assert.Equal(5781, Rules.XpToNext(14));
+        Assert.Equal(68, Rules.XpToNext(1));
+        Assert.Equal(237, Rules.XpToNext(2));
+        Assert.Equal(491, Rules.XpToNext(3));
+        Assert.Equal(4291, Rules.XpToNext(10));
+        Assert.Equal(7862, Rules.XpToNext(14));
         Assert.Equal(0, Rules.XpToNext(15));
-        Assert.Equal(31856, Enumerable.Range(1, 14).Sum(Rules.XpToNext));
+        Assert.Equal(43325, Enumerable.Range(1, 14).Sum(Rules.XpToNext));
     }
 
     [Theory]
@@ -205,13 +205,13 @@ public class ProgressionTests
         var health = hero.Get<Health>();
         Assert.Equal(240, health.Max);
 
-        Leveling.GrantExperience(w, hero, 60, EntityId.None, "test");
+        Leveling.GrantExperience(w, hero, 78, EntityId.None, "test");
         w.Step();
 
         var p = hero.Get<CharacterProgress>();
         Assert.Equal(2, hero.Get<CharacterStats>().Level);
         Assert.Equal(10, p.Experience);
-        Assert.Equal(174, p.ExperienceToNext);
+        Assert.Equal(237, p.ExperienceToNext);
         Assert.Equal(5, p.AttributePoints);
         Assert.Equal(2, p.SkillPoints);
         Assert.Equal(254, health.Max); // + crescimento do Guerreiro (14)
@@ -226,7 +226,7 @@ public class ProgressionTests
         var w = NewWorld();
         var hero = Hero(w, "class.mage");
 
-        Leveling.GrantExperience(w, hero, 224, EntityId.None, "test");
+        Leveling.GrantExperience(w, hero, 305, EntityId.None, "test");
         Assert.Equal(3, hero.Get<CharacterStats>().Level);
         Assert.Equal(0, hero.Get<CharacterProgress>().Experience);
 
@@ -493,7 +493,7 @@ public class ProgressionTests
         var p = hero.Get<CharacterProgress>();
         Assert.Equal(0, p.AttributePoints);
         Assert.Equal(0, p.SkillPoints);
-        Assert.Equal(1660, p.ExperienceToNext);
+        Assert.Equal(2258, p.ExperienceToNext);
         Assert.Equal(13 + 20, hero.Get<CharacterStats>().Int);
         Assert.Equal(4, hero.Get<AbilityState>().RankOf("mage.elemental_blast"));
         Assert.Equal(hero.Get<Health>().Max, hero.Get<Health>().Current);
@@ -502,7 +502,7 @@ public class ProgressionTests
     [Theory]
     [InlineData(0, 0, 0, null, 0)]
     [InlineData(16, 0, 0, null, 0)]
-    [InlineData(1, 50, 0, null, 0)]
+    [InlineData(1, 68, 0, null, 0)]
     [InlineData(2, 0, 6, null, 0)]
     [InlineData(2, 0, 0, "warrior.heavy_strike", 3)]
     [InlineData(5, 0, 0, "warrior.heavy_strike", 4)]

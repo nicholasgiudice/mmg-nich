@@ -32,4 +32,26 @@ A curva de XP é `round(xpCurveBase × L^xpCurveExponent)` (`data/rules.json`: b
 
 ## Resultado
 
-_(preencher ao concluir)_
+Concluída em 2026-11-06. Relatório: `tasks/reports/balance-v0.9.md`.
+
+**Feito**
+
+- `data/rules.json`: `xpCurveBase` 50 → **68** (+36%); expoente 1,8 mantido (a forma da curva não precisava mudar). +30% exatos (base 65) dariam o nível 4 em 34,3 min, abaixo da meta; 68 é a menor base que cumpre as duas metas com folga.
+- Ritmo solo nos Campos (modelo da T-215): nível 4 em 26 → **36 min**, nível 5 em 43 → **59 min**, nível 6 em 75 → 102 min.
+- `data/items.json`: queda do monstro normal 8% → **4%**, elite 40% → **25%**; chefe sem mudança (100%, 2 itens).
+- `FieldsDesignTests`: o modelo de ritmo (`FieldGroups.Pace`) passou a calcular também itens por minuto (monstros mortos × chance da categoria). Teste de ritmo trocado para a faixa nova (`Solo_player_reaches_level_4_in_35_to_40_minutes_and_level_5_in_55_to_65`) e teste novo de queda (`Solo_hunting_in_the_fields_drops_an_item_every_12_to_18_minutes`).
+- `ProgressionContentTests`: chances novas.
+- `design/progression-v0.1.md` §2 (fórmula, tabela de XP por nível, total de ~775 monstros / 8–9 h) e §6 (tabela de queda). A coluna "monstros normais do próprio nível" foi recalculada como XP ÷ (6 × nível); a antiga tinha valores inconsistentes (ex.: ~34 no nível 4).
+
+**Desvio**
+
+- A meta "um item a cada 6–10 min" não é compatível com 3–4% de chance no modelo: ~100 monstros/h dão 1 item a cada 7,4 min com 8% (antes) e a cada **14,9 min com 4%** (depois). Segui a faixa de chance pedida (decisão explícita do designer: "cai item demais") no topo dela, e o teste de queda guarda 12–18 min. Se o playtest achar raro demais, subir para 5–6%. Detalhes em balance-v0.9 §3. Os 4% foram confirmados pelo humano em 2026-11-06.
+
+**Conferências**
+
+- Os outros testes de design não mudaram: usam o equipamento comum do nível da área e não dependem da curva de XP nem da queda.
+- **Fora das áreas listadas (mínimo):** alguns testes leem `data/` e fixavam a curva antiga ou a chance de 8%. Atualizados só os números: `tests/Game.Core.Tests/ProgressionTests.cs` (tabela de XP, XP concedida para subir 1 e 2 níveis, XP para o próximo no nível 7, build inválida com XP = XP do nível 1), `tests/Game.Core.Tests/ItemTests.cs` (`Normal_monsters_drop_about_four_percent_of_the_time`: 140–260 de 5000) e `tests/Game.Data.Tests/ItemLoaderTests.cs` (chances). Nenhum código de `src/` mudou; o padrão de `ProgressionRules` no código continua 50 (só vale quando os dados não definem a base).
+
+**Observação de ambiente**
+
+- Outro agente (T-301) trabalhava ao mesmo tempo no checkout `/root/mmo-rpg`. Esta tarefa foi feita num worktree separado (`/root/mmo-rpg-T302`) para não misturar mudanças; pode ser removido com `git worktree remove /root/mmo-rpg-T302` depois da integração.
