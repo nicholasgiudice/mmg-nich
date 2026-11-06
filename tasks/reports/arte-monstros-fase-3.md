@@ -46,7 +46,25 @@ O gerador não tem corpo de árvore. Dois pacotes no OpenGameArt têm um ent com
 | [Treant Monster](https://opengameart.org/content/treant-monster) | Tuomo Untinen (Reemax) | CC-BY 3.0 | andar, atacar, morrer; 4 direções | ~32×60 px, feito para tiles de 32. Andar de 3 quadros (padrão RPG), mais simples que o LPC |
 | [ents](https://opengameart.org/content/ents) | Matthew Ashworth (macmanmatty) | CC-BY 4.0 | andar e arremessar; 4 direções | o ent de árvore não tem morte (só o de planta); a morte pode ser um esmaecer no Godot |
 
-Os dois precisam ser baixados (`treant.png`, 89 KB; `$Tree Ent.png`, 26,5 KB, e `$Tree Ent throwing.png`, 32,6 KB) e vistos em movimento ao lado do Guerreiro. Se nenhum ficar bom, o Ent vai para encomenda, junto com a Matriarca.
+Baixados com a autorização do designer (2026-11-05) para `..\mmg-art-src\ent-candidates\` (`treant.png`, `tree_ent.png`, `tree_ent_throwing.png`). Ainda não entraram no cliente.
+
+![Escala em 1×: Guerreiro LPC, Treant e Tree Ent](arte-monstros-fase-3/ent-candidatos-escala.png)
+
+Da esquerda para a direita: o Guerreiro LPC nas 4 direções, o Treant nas 4 direções e o Tree Ent nas 4 direções mais um quadro do arremesso. Escala 1×, com a grade de 32 px.
+
+**Treant (Tuomo Untinen):**
+- folha 288×256, com quadros de 32×64: andar (colunas 0 a 2), morrer (3 a 5) e atacar (6 a 8); linhas baixo, esquerda, direita e cima;
+- do tamanho de um personagem (~2 tiles de altura);
+- traço de desenho animado, com copa verde-viva e contorno grosso. **Destoa do LPC** e não parece "corrompido".
+
+**Tree Ent (Matthew Ashworth):**
+- `tree_ent.png`, 240×512, com quadros de 80×128: andar com 3 quadros; linhas baixo, esquerda, direita e cima;
+- `tree_ent_throwing.png`, 288×512, com quadros de 96×128: arremesso/golpe com 3 quadros, que serve de ataque;
+- árvore seca e retorcida, com sombreamento próximo do LPC. **Combina com "corrompido"**;
+- grande: ~4 tiles de altura, o dobro de um personagem. Serve para um monstro de elite, com raio de ~0,7 a 0,9;
+- **não tem morte.** Proposta: no Godot, esmaecer e afundar o último quadro, ou recolorir o quadro parado para cinza e tombar.
+
+**Recomendação:** o Tree Ent, se o design da fase 3 aceitar um Ent grande. Os dois têm andar de 3 quadros, mais curto que o do LPC (8 a 9), então o teste em movimento no jogo decide.
 
 ## Teste no jogo
 
