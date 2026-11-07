@@ -22,6 +22,8 @@ const string Usage = """
                               (sem token, entra só com nome: o servidor precisa de --dev-login)
       --roam                  mundo aberto (T-214): em vez de lutar, anda do nascimento até o portão de cada zona e troca
                               de zona sem parar. Em qualquer modo, no mundo aberto o bot morto pede para renascer.
+      --party                 mundo aberto (T-310): os bots formam grupos de até rules.party.maxMembers em ordem
+                              (o primeiro de cada bloco convida os outros pelo nome; os outros aceitam)
     """;
 
 var a = args.ToList();
@@ -62,6 +64,8 @@ var options = new BotOptions(new Dictionary<string, string> { ["class.mage:explo
 var clock = Stopwatch.StartNew();
 var tickets = Opt("--ticket", "").Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 var roam = a.Contains("--roam");
+var party = a.Contains("--party");
+var partySize = content.Rules.Party.MaxMembers;
 
 Console.WriteLine($"{count} bots ({strategy}) em {servers.Count} servidor(es), {perRoom} por sala, por até {duration:0} s; conteúdo {content.Fingerprint}");
 var bots = new List<NetBot>();
@@ -69,7 +73,13 @@ for (var i = 0; i < count; i++)
 {
     var (host, port) = servers[Math.Min(i / perRoom, servers.Count - 1)];
     var cls = classOpt == "mix" ? mix[i % mix.Length] : classOpt;
-    bots.Add(new NetBot(i, host, port, cls, strategy, content, options, clock, i < tickets.Length ? tickets[i] : null) { Roam = roam });
+    var leader = party && i % partySize == 0;
+    bots.Add(new NetBot(i, host, port, cls, strategy, content, options, clock, i < tickets.Length ? tickets[i] : null)
+    {
+        Roam = roam,
+        PartyInvites = leader ? Enumerable.Range(i + 1, Math.Min(partySize - 1, count - i - 1)).Select(j => $"netbot{j}").ToArray() : [],
+        AcceptPartyInvites = party && !leader,
+    });
 }
 
 var lastReport = 0.0;
@@ -129,6 +139,12 @@ Console.WriteLine(string.Create(CultureInfo.InvariantCulture,
 if (bots.Any(b => b.InWorld))
 {
     Console.WriteLine($"MUNDO trocas de zona {bots.Sum(b => b.ZoneChanges)} · renascimentos {bots.Sum(b => b.Respawns)}");
+}
+
+if (party)
+{
+    Console.WriteLine($"GRUPO bots em grupo {bots.Count(b => b.PartySize > 1)}/{count} · tamanhos {string.Join(",", bots.Select(b => b.PartySize))} · "
+        + $"estados recebidos {bots.Sum(b => b.PartyStates)} · recusas {bots.Sum(b => b.PartyRejections)}");
 }
 
 foreach (var b in bots)

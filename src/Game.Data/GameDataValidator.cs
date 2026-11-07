@@ -532,6 +532,9 @@ internal static partial class GameDataValidator
         if (st.DefenseMax is < 0 or > 1) { sc.Error("defenseMax", "Deve estar em 0..1."); }
 
         ValidateProgression(rules.Progression, new Ctx("rules", "rules.progression", errors));
+        var pc = new Ctx("rules", "rules.party", errors);
+        if (rules.Party.MaxMembers < 2) { pc.Error("maxMembers", "Deve ser pelo menos 2."); }
+        pc.PositiveTicks("inviteTimeout", rules.Party.InviteTimeoutTicks);
         var mc = new Ctx("rules", "rules.monsters", errors);
         mc.NonNegative("healthPerLevel", rules.Monsters.HealthPerLevel);
         mc.NonNegative("powerPerLevel", rules.Monsters.PowerPerLevel);
@@ -574,6 +577,7 @@ internal static partial class GameDataValidator
         if (p.XpPenaltyPerLevelBelow is < 0 or > 1) { c.Error("xpPenaltyPerLevelBelow", "Deve estar em 0..1."); }
         if (p.XpZeroLevelsBelow < 1) { c.Error("xpZeroLevelsBelow", "Deve ser pelo menos 1."); }
         c.NonNegative("groupBonusPerMember", p.GroupBonusPerMember);
+        c.NonNegative("partyShareRange", p.PartyShareRange);
         c.PositiveTicks("participationWindow", p.ParticipationWindowTicks);
         c.NonNegative("combatTimeout", p.CombatTimeoutTicks);
         c.NonNegative("attributePointsPerLevel", p.AttributePointsPerLevel);

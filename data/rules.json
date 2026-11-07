@@ -32,13 +32,15 @@
       "xpPenaltyPerLevelBelow": 0.2,
       "xpZeroLevelsBelow": 5,
       "groupBonusPerMember": 0.1,
+      "partyShareRange": 30,
       "participationWindow": 30,
       "combatTimeout": 5,
       "attributePointsPerLevel": 5,
       "skillPointsPerLevel": 1,
       "skillRankLevels": [1, 3, 5, 7, 9],
       "signatureRankLevels": [12, 13, 15]
-    }
+    },
+    "party": { "maxMembers": 4, "inviteTimeout": 30 }
   },
   "threat": {
     "damageMultiplier": 1.0,

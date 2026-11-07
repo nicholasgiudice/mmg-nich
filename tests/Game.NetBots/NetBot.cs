@@ -48,6 +48,8 @@ public sealed class NetBot : IDisposable
     private bool _respawnPending;
     private bool _reachedSpawn;
     private double _nextPingAt;
+    private double _nextInviteAt;
+    private string[] _partyNames = [];
 
     public NetBot(int index, string host, int port, string? classId, string strategy, ContentCatalog content, BotOptions options, Stopwatch clock, string? ticket = null)
     {
@@ -115,6 +117,21 @@ public sealed class NetBot : IDisposable
 
     public int Respawns { get; private set; }
 
+    // ---------- grupo (T-310) ----------
+
+    /// <summary>Líder: nomes dos bots que ele convida (de novo a cada 5 s, enquanto não estão no grupo).</summary>
+    public IReadOnlyList<string> PartyInvites { get; init; } = [];
+
+    /// <summary>Aceita todo convite de grupo que chegar.</summary>
+    public bool AcceptPartyInvites { get; init; }
+
+    /// <summary>Membros no último <see cref="PartyState"/> (0 = sem grupo).</summary>
+    public int PartySize { get; private set; }
+
+    public int PartyStates { get; private set; }
+
+    public int PartyRejections { get; private set; }
+
     private ZoneDefinition? Zone => Welcome is { } w && _content.Zones.TryGetValue(w.EncounterId, out var z) ? z : null;
 
     /// <summary>Recebe o que chegou e, se há snapshot novo, decide e manda as intenções.</summary>
@@ -127,6 +144,7 @@ public sealed class NetBot : IDisposable
         }
 
         PingIfDue();
+        InviteIfDue();
         if (latest.Tick == _lastThought || _mirror is null || _controller is null)
         {
             return;
@@ -234,6 +252,17 @@ public sealed class NetBot : IDisposable
                 _lastTick = d.Tick;
                 Send(new SnapshotAck(d.Epoch, d.Tick), SnapshotChannel, DeliveryMethod.Unreliable);
                 break;
+            case PartyInviteReceived invite when AcceptPartyInvites:
+                Send(new PartyRespond(invite.InviteId, true), ReliableChannel, DeliveryMethod.ReliableOrdered);
+                break;
+            case PartyState party:
+                PartyStates++;
+                PartySize = party.Members.Length;
+                _partyNames = party.Members.Select(m => m.Name).ToArray();
+                break;
+            case PartyRejected:
+                PartyRejections++;
+                break;
             case Pong p:
                 PingMs = _clock.Elapsed.TotalMilliseconds - p.ClientTimeMs;
                 break;
@@ -269,6 +298,22 @@ public sealed class NetBot : IDisposable
         if (Outcome != BotOutcome.Playing)
         {
             EndedAfterSeconds = s.Tick / (double)World.TickRate;
+        }
+    }
+
+    /// <summary>Líder no mundo aberto: convida pelo nome quem ainda não está no grupo.</summary>
+    private void InviteIfDue()
+    {
+        var now = _clock.Elapsed.TotalMilliseconds;
+        if (PartyInvites.Count == 0 || !InWorld || now < _nextInviteAt)
+        {
+            return;
+        }
+
+        _nextInviteAt = now + 5000;
+        foreach (var name in PartyInvites.Where(n => !_partyNames.Contains(n)))
+        {
+            Send(new PartyInvite(null, name), ReliableChannel, DeliveryMethod.ReliableOrdered);
         }
     }
 

@@ -3,11 +3,13 @@ using Game.Auth;
 using Game.Core.Combat;
 using Game.Core.Combat.Items;
 using Game.Core.Combat.Progression;
+using Game.Core.Combat.Stats;
 using Game.Core.Definitions;
 using Game.Core.Simulation;
 using Game.Core.Simulation.Components;
 using Game.Protocol;
 using Game.Server.Interest;
+using Game.Server.Parties;
 using Game.Server.Persistence;
 using Game.Server.Transport;
 using Serilog;
@@ -26,10 +28,16 @@ namespace Game.Server.Zones;
 /// <item>Morte: o personagem fica caído até mandar <see cref="RespawnRequest"/>; renasce na zona inicial, cheio, sem perder nada.</item>
 /// <item>Só zonas com jogador avançam; zona vazia fica parada (monstros e renascimentos esperam).</item>
 /// <item>Personagens com conta são gravados como na sala (T-212) e também ao trocar de zona; a gravação leva zona e posição.</item>
+/// <item>Grupo (T-310): <see cref="PartyManager"/> acima das zonas; cada membro tem o <c>PartyMembership</c> na entidade
+/// (refeito a cada troca de zona) e recebe o <see cref="PartyState"/> quando algo muda. Desconectar tira do grupo; o
+/// grupo não é gravado.</item>
 /// </list>
 /// </summary>
-public sealed class WorldServer : ITransportHandler, IGameHost
+public sealed class WorldServer : ITransportHandler, IGameHost, IPartyHost
 {
+    /// <summary>De quantos em quantos ticks o estado do grupo (vida, Mana, zona) é conferido e reenviado se mudou.</summary>
+    public const int PartyStateIntervalTicks = 5;
+
     public const int MaxIntentsPerTick = 16;
     private const int RejectCloseDelayTicks = 10;
     private const string DevDefaultClass = "class.warrior";
@@ -44,6 +52,7 @@ public sealed class WorldServer : ITransportHandler, IGameHost
     private readonly Dictionary<int, Player> _players = new();
     private readonly Dictionary<Guid, int> _online = new();
     private readonly Dictionary<int, long> _closeAt = new();
+    private readonly PartyManager _parties;
     private long _tick;
     private long _ticksSinceSave;
 
@@ -54,6 +63,7 @@ public sealed class WorldServer : ITransportHandler, IGameHost
         _transport = transport;
         _log = log;
         _accounts = accounts;
+        _parties = new PartyManager(content.Rules.Party, this);
         var seed = options.Seed;
         foreach (var zone in content.Zones.Values.OrderBy(z => z.Id, StringComparer.Ordinal))
         {
@@ -66,6 +76,8 @@ public sealed class WorldServer : ITransportHandler, IGameHost
     }
 
     public IReadOnlyDictionary<string, OpenZone> Zones => _zones;
+
+    public PartyManager Parties => _parties;
 
     public int PlayerCount => _players.Values.Count(p => p.Entity is not null);
 
@@ -84,10 +96,14 @@ public sealed class WorldServer : ITransportHandler, IGameHost
     public void OnDisconnected(int peer)
     {
         _closeAt.Remove(peer);
-        if (!_players.Remove(peer, out var p))
+        if (!_players.TryGetValue(peer, out var p))
         {
             return;
         }
+
+        p.Leaving = true;
+        _parties.Disconnected(peer);
+        _players.Remove(peer);
 
         if (p.CharacterId is { } id && _online.TryGetValue(id, out var owner) && owner == peer)
         {
@@ -132,6 +148,18 @@ public sealed class WorldServer : ITransportHandler, IGameHost
                 break;
             case RespawnRequest:
                 p.WantsRespawn = true;
+                break;
+            case PartyInvite invite when p.Entity is not null:
+                _parties.Invite(peer, FindInvitee(p, invite), _tick);
+                break;
+            case PartyRespond respond when p.Entity is not null:
+                _parties.Respond(peer, respond.InviteId, respond.Accept, _tick);
+                break;
+            case PartyLeave when p.Entity is not null:
+                _parties.Leave(peer);
+                break;
+            case PartyKick kick when p.Entity is not null:
+                _parties.Kick(peer, kick.MemberId);
                 break;
             case Ping ping:
                 Send(peer, new Pong(ping.ClientTimeMs, p.Zone?.World.Tick ?? 0));
@@ -280,6 +308,12 @@ public sealed class WorldServer : ITransportHandler, IGameHost
             _log.Warning("Itens salvos que o conteúdo não aceita mais foram descartados: {Items}", string.Join(", ", dropped));
         }
 
+        if (_parties.PartyOf(p.Peer) is var party and not 0)
+        {
+            p.Entity.Add(new PartyMembership { PartyId = party }); // T-310: o grupo acompanha a troca de zona
+            MarkParty(p.Peer);
+        }
+
         Send(p.Peer, new Welcome(p.Entity.Id, zone.World.Tick, zone.Id, zone.Arena.Id, p.Epoch));
     }
 
@@ -308,6 +342,7 @@ public sealed class WorldServer : ITransportHandler, IGameHost
         _tick++;
         CloseRefused();
         ProcessLoads();
+        _parties.Expire(_tick);
 
         foreach (var p in _players.Values)
         {
@@ -342,6 +377,8 @@ public sealed class WorldServer : ITransportHandler, IGameHost
         {
             Broadcast(zone);
         }
+
+        SendPartyStates();
     }
 
     private void MoveThroughGatesAndRespawn()
@@ -471,6 +508,122 @@ public sealed class WorldServer : ITransportHandler, IGameHost
         }
     }
 
+    // ---------------- grupo (T-310) ----------------
+
+    /// <summary>Convidado pela entidade (na zona de quem convida) ou pelo nome (em qualquer zona); null se não achou.</summary>
+    private int? FindInvitee(Player from, PartyInvite invite)
+    {
+        var found = invite.Target is { } target
+            ? _players.Values.FirstOrDefault(q => q.Zone == from.Zone && q.Entity?.Id == target)
+            : string.IsNullOrWhiteSpace(invite.Name)
+                ? null
+                : _players.Values.Where(q => q.Entity is not null && string.Equals(q.Name, invite.Name.Trim(), StringComparison.OrdinalIgnoreCase))
+                    .OrderBy(q => q.Peer)
+                    .FirstOrDefault();
+        return found?.Peer;
+    }
+
+    string IPartyHost.NameOf(int member) => _players.TryGetValue(member, out var p) ? p.Name : "";
+
+    bool IPartyHost.IsOnline(int member) => _players.TryGetValue(member, out var p) && !p.Leaving && p.Entity is not null;
+
+    void IPartyHost.Send(int member, INetMessage message)
+    {
+        if (_players.TryGetValue(member, out var p) && !p.Leaving)
+        {
+            Send(member, message);
+        }
+    }
+
+    void IPartyHost.PartyChanged(int member, int partyId)
+    {
+        if (_players.TryGetValue(member, out var p) && p.Entity is { } e)
+        {
+            if (partyId == 0)
+            {
+                e.Remove<PartyMembership>();
+            }
+            else
+            {
+                e.Add(new PartyMembership { PartyId = partyId });
+            }
+
+            p.PartyDirty = true;
+        }
+
+        MarkParty(member);
+    }
+
+    /// <summary>Todos do grupo do membro recebem o estado de novo no próximo envio.</summary>
+    private void MarkParty(int member)
+    {
+        foreach (var m in _parties.Describe(member)?.Members ?? [])
+        {
+            if (_players.TryGetValue(m, out var q))
+            {
+                q.PartyDirty = true;
+            }
+        }
+    }
+
+    private void SendPartyStates()
+    {
+        var periodic = _tick % PartyStateIntervalTicks == 0;
+        foreach (var p in _players.Values)
+        {
+            if (p.Entity is null || p.Leaving || !(p.PartyDirty || (periodic && p.LastPartyState is not null)))
+            {
+                continue;
+            }
+
+            p.PartyDirty = false;
+            var state = PartyStateFor(p.Peer);
+            if (state.PartyId == 0 && p.LastPartyState is null)
+            {
+                continue; // nunca esteve em grupo
+            }
+
+            var bytes = ProtocolSerializer.Serialize(state);
+            if (p.LastPartyState is { } last && last.AsSpan().SequenceEqual(bytes))
+            {
+                continue;
+            }
+
+            p.LastPartyState = state.PartyId == 0 ? null : bytes;
+            _transport.Send(p.Peer, bytes, SendMode.Reliable);
+        }
+    }
+
+    /// <summary>Estado do grupo como o membro vê (sem grupo: id 0 e lista vazia).</summary>
+    public PartyState PartyStateFor(int member)
+    {
+        if (_parties.Describe(member) is not { } party)
+        {
+            return new PartyState(0, 0, member, []);
+        }
+
+        var members = party.Members.Select(m =>
+        {
+            var q = _players[m];
+            var e = q.Entity;
+            var health = e?.TryGet<Health>();
+            var mana = e?.TryGet<ResourcePool>();
+            return new PartyMemberInfo(
+                m,
+                e?.Id ?? default,
+                q.Name,
+                q.ClassId,
+                StatMath.LevelOf(e),
+                health?.Current ?? 0,
+                health?.Max ?? 0,
+                mana?.Current ?? 0,
+                mana?.Max ?? 0,
+                q.Zone?.Id ?? "",
+                e?.IsAlive ?? false);
+        }).ToArray();
+        return new PartyState(party.PartyId, party.Leader, member, members);
+    }
+
     // ---------------- console ----------------
 
     public void Restart(string reason) => _log.Information("Mundo aberto não reinicia ({Reason}); use quit e suba de novo", reason);
@@ -499,5 +652,13 @@ public sealed class WorldServer : ITransportHandler, IGameHost
         public bool WantsRespawn { get; set; }
         public Guid? CharacterId { get; set; }
         public CharacterState? Saved { get; set; }
+
+        /// <summary>Desconectando: não recebe mais mensagens nem conta como em jogo para o grupo.</summary>
+        public bool Leaving { get; set; }
+
+        public bool PartyDirty { get; set; }
+
+        /// <summary>Último <see cref="PartyState"/> enviado (null = sem grupo).</summary>
+        public byte[]? LastPartyState { get; set; }
     }
 }

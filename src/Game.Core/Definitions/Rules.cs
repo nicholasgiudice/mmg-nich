@@ -21,6 +21,9 @@ public sealed record RulesDefinition
     // ---- seção T-206 (escala dos monstros por nível) ----
     public MonsterScalingRules Monsters { get; init; } = new();
 
+    // ---- seção T-310 (grupo) ----
+    public PartyRules Party { get; init; } = new();
+
     // ---- seção T-011 (threat): adicione abaixo ----
 }
 
