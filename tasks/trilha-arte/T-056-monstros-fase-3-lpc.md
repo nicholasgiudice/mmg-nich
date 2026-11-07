@@ -58,10 +58,31 @@ Se algum caminho não funcionar no teste, procure outro dentro do LPC antes de d
 
 ## Resultado
 
-**Em andamento (2026-11-05).** Falta reexportar a Fada e a aprovação do designer em movimento.
-- Montagens propostas no gerador para Cavaleiro, Sacerdote, Vigia, Sombra e Fada, com links e amostra em `tasks/reports/arte-monstros-fase-3.md`.
-- Ent: os dois candidatos do OpenGameArt (Treant e Tree Ent) foram baixados, comparados em escala e **reprovados pelo designer**. O Ent Corrompido vai para encomenda no estilo LPC, junto com a Matriarca.
-- Cliente: campo genérico `tint` no `sprites.json` (`SpriteDefinition.Tint`, multiplicado no `EntityView`).
-- O designer exportou as cinco folhas. Cavaleiro, Sacerdote, Vigia (×2) e Sombra estão ligados no `sprites.json` (ids provisórios `monster.spectral_knight`, `monster.dead_priest`, `monster.faceless_watcher`, `monster.shade`, `monster.mist_fairy`) e na variante `preview_fase3`, com capturas no relatório. A folha da Fada veio vazia e precisa ser reexportada.
-- Créditos em `<monstro>-credits.txt` (o CSV do gerador renomeado, porque o Godot importava `.csv` como tradução) e em `CREDITS.md`. O manto e o escudo *kite* são CC-BY-SA.
-- A branch saiu de `docs/encerrar-trilha-pixellab`, que traz o `--art=<variante>` e ainda não está em `main`. Ela também recebeu, por merge, `task/T-240-planejar-fase-3` (com a T-230), para ligar as tarefas da fase 3 aos sprites: a T-340, a T-341 e a T-351 passam a usar os ids desta tarefa, e a T-345 depende dela. Integre a T-230 e a T-240 antes desta branch.
+**Concluída em 2026-11-06 (Windows).** O designer aprovou em movimento, com `--art=preview_fase3`, os cinco monstros montados no gerador. O Ent Corrompido ficou como encomenda. `dotnet build client/` sem avisos e `./scripts/check.sh` completo passa.
+
+**Monstros e ids** (ligados no `sprites.json`; a T-340, a T-341 e a T-351 usam os mesmos ids):
+
+| Monstro | Id | Folha | Observação |
+|---|---|---|---|
+| Fada da Névoa | `monster.mist_fairy` | `characters/mist_fairy.png` | versão "Violeta": cabeça feminina adulta, cabelo *XLong Wavy* violeta, vestido com faixa branco, asas transparentes; `tint` claro e translúcido |
+| Sacerdote Morto | `monster.dead_priest` | `characters/dead_priest.png` | esqueleto com manto, capuz e cajado simples |
+| Cavaleiro Espectral | `monster.spectral_knight` | `characters/spectral_knight.png` | esqueleto de armadura, golpe em `slash_192`; `tint` azulado e translúcido |
+| Vigia Sem Rosto (chefe) | `monster.faceless_watcher` | `characters/faceless_watcher.png` | máscara branca e capa vinho, escala ×2 |
+| Sombra | `monster.shade` | `characters/shade.png` | corpo e manto pretos; `tint` escuro e translúcido |
+| Ent Corrompido | `monster.corrupted_ent` | — | **encomenda** no estilo LPC (o gerador não tem árvore; os dois ents do OpenGameArt foram reprovados) |
+
+**O que foi feito**
+- Montagens no gerador, com links, amostra e capturas no jogo em `tasks/reports/arte-monstros-fase-3.md`.
+- Cliente: campo genérico `tint` no `sprites.json` (`SpriteDefinition.Tint`, multiplicado no `EntityView`) e a variante `preview_fase3`, que troca Salteador, Guarda Esquelético, Lobo, Ratos e Matriarca pelos monstros novos.
+- Créditos em `<monstro>-credits.txt` (o CSV do gerador renomeado, porque o Godot importava `.csv` como tradução) e em `CREDITS.md`. São CC-BY-SA o manto (Sacerdote, Vigia, Sombra), o escudo *kite* (Cavaleiro) e o vestido com faixa (Fada); o resto tem OGA-BY.
+- `design/art-direction-v0.1.md`: a lacuna dos monstros da fase 3 passa a resolvida, menos o Ent.
+
+**Decisões e desvios**
+- **Fada refeita.** A primeira exportação veio vazia. A segunda, com cabeça pequena e cabelo curto, parecia uma menina; o designer pediu uma Fada mais mulher e escolheu a versão "Violeta" entre nove variações de roupa, cabelo e pele.
+- **Ent:** o Treant e o Tree Ent do OpenGameArt foram reprovados ("muito feio"). Os arquivos ficam só em `..\mmg-art-src\ent-candidates\`.
+- A branch saiu de `docs/encerrar-trilha-pixellab` (traz o `--art=<variante>`) e recebeu `task/T-240-planejar-fase-3`; tudo isso já está em `main`.
+
+**Pendências**
+- **Encomenda** do Ent Corrompido e da Matriarca no estilo LPC. Até lá o Ent fica sem sprite próprio (T-345 decide o provisório).
+- **T-345:** conferir raios e pivôs com os dados reais da fase 3 e ajustar os `tint` no jogo.
+- O designer pode refazer qualquer montagem exportando por cima com o mesmo nome.

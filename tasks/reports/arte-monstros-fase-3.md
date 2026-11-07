@@ -1,6 +1,6 @@
 # Monstros da fase 3 com arte LPC (T-056)
 
-Situação em 2026-11-05: **quatro monstros no jogo pela prévia; falta reexportar a Fada.** O designer vai refazer as montagens depois; basta exportar por cima com os mesmos nomes.
+Situação em 2026-11-06: **concluída.** O designer aprovou em movimento os cinco monstros do gerador; o Ent Corrompido ficou como encomenda. O designer pode refazer as montagens depois; basta exportar por cima com os mesmos nomes.
 
 ## Amostra do gerador
 
@@ -18,10 +18,10 @@ Cada link abre o [gerador Universal LPC](https://liberatedpixelcup.github.io/Uni
 | Sacerdote Morto | `dead_priest.png` | esqueleto (corpo feminino, o único com manto), manto preto, capuz preto, cajado simples | [abrir](https://liberatedpixelcup.github.io/Universal-LPC-Spritesheet-Character-Generator/#sex=female&body=Skeleton_white&head=Skeleton_white&clothes=Robe_black&hat=Hood_black&weapon=Simple_staff_simple) |
 | Vigia Sem Rosto (chefe) | `faceless_watcher.png` | esqueleto cinza, manto cinza-escuro, capuz carvão, máscara lisa branca (o "rosto vazio"), capa rasgada vinho | [abrir](https://liberatedpixelcup.github.io/Universal-LPC-Spritesheet-Character-Generator/#sex=female&body=Skeleton_gray&head=Skeleton_gray&clothes=Robe_dark%20gray&hat=Hood_charcoal&facial_mask=Plain_Mask_white&cape=Tattered_maroon) |
 | Sombra | `shade.png` | corpo preto, manto e capuz pretos, capa rasgada preta | [abrir](https://liberatedpixelcup.github.io/Universal-LPC-Spritesheet-Character-Generator/#sex=female&body=Body_Color_black&head=Human_Female_black&clothes=Robe_black&hat=Hood_black&cape=Tattered_black) |
-| Fada da Névoa | `mist_fairy.png` | corpo feminino claro, cabeça pequena, túnica verde-floresta, cabelo curto branco, asas de fada transparentes | [abrir](https://liberatedpixelcup.github.io/Universal-LPC-Spritesheet-Character-Generator/#sex=female&body=Body_Color_light&head=Human_Female_Small_light&clothes=Tunic_forest&hair=Pixie_white&wings=Transparent_Pixie_Wings_pixie) |
+| Fada da Névoa | `mist_fairy.png` | corpo feminino claro, cabeça feminina adulta, cabelo *XLong Wavy* violeta, vestido com faixa (*sash dress*) branco, asas de fada transparentes (versão "Violeta", escolhida pelo designer em 2026-11-06) | [abrir](https://liberatedpixelcup.github.io/Universal-LPC-Spritesheet-Character-Generator/#sex=female&body=Body_Color_light&head=Human_Female_light&hair=XLong_Wavy_violet&dress=Sash_dress_white&wings=Transparent_Pixie_Wings_pixie) |
 
 **Escolhas e alternativas testadas:**
-- **Fada:** o corpo infantil (menor, mais "fada") perde a roupa no golpe e no conjurar, porque essas peças só existem para o andar. Ficou o corpo adulto com cabeça pequena; o tamanho de fada vem do raio e do `tint`.
+- **Fada:** o corpo infantil perde a roupa no golpe e no conjurar. A primeira montagem (corpo adulto, cabeça pequena, cabelo curto) parecia uma menina; o designer pediu uma Fada mais mulher, e escolheu entre nove variações a cabeça adulta com cabelo *XLong Wavy* violeta e vestido com faixa branco. Todas as roupas testadas (túnica, regata, blusa, vestidos, quimono) aparecem no conjurar, no golpe e na morte.
 - **Sacerdote:** o cajado retorcido some no conjurar; o cajado simples (CC0) aparece no andar, no conjurar e na estocada.
 - **Sombra:** com o manto, ela fica parecida com o Sacerdote na folha. No jogo, o `tint` escuro e semitransparente a separa. Se o designer preferir, ela pode ser outro corpo (zumbi, por exemplo).
 - **Vigia:** a capa vinho e a máscara branca o separam do Sacerdote. Como chefe, ele usa escala ×2, como a Matriarca.
@@ -82,7 +82,7 @@ Depois da exportação, a variante `preview_fase3` do `sprites.json` troca monst
 
 ## Licenças
 
-Conferido nos CSVs exportados: as peças têm OGA-BY, CC-BY ou CC0 como opção, **exceto** o manto (*robe*, só CC-BY-SA 3.0 ou GPL; usado no Sacerdote, no Vigia e na Sombra), o escudo *kite* do Cavaleiro e o cabelo da Fada. As folhas com essas peças ficam em CC-BY-SA, o que não afeta o resto do jogo (`design/art-direction-v0.1.md`, licenças). Os créditos de cada folha estão em `client/assets/art/characters/<monstro>-credits.txt` e em `CREDITS.md`.
+Conferido nos CSVs exportados: as peças têm OGA-BY, CC-BY ou CC0 como opção, **exceto** o manto (*robe*, só CC-BY-SA 3.0 ou GPL; usado no Sacerdote, no Vigia e na Sombra), o escudo *kite* do Cavaleiro e o vestido com faixa da Fada (o cabelo *XLong Wavy* é OGA-BY 3.0). As folhas com essas peças ficam em CC-BY-SA, o que não afeta o resto do jogo (`design/art-direction-v0.1.md`, licenças). Os créditos de cada folha estão em `client/assets/art/characters/<monstro>-credits.txt` e em `CREDITS.md`.
 
 ## No jogo
 
@@ -91,6 +91,7 @@ As folhas do Cavaleiro, do Sacerdote, do Vigia e da Sombra estão ligadas no `sp
 | Encontro | Mostra | Captura |
 |---|---|---|
 | `encounter.wolf_and_bandit` | Cavaleiro Espectral (no lugar do Salteador), azulado e translúcido | ![](arte-monstros-fase-3/jogo-wolf_and_bandit.png) |
+| `encounter.wolf_and_bandit` (2026-11-06) | Fada da Névoa "Violeta" (no lugar do Lobo), clara e translúcida, ao lado do Cavaleiro | ![](arte-monstros-fase-3/jogo-wolf_and_bandit-fada.png) |
 | `encounter.skeleton_guard` | Sacerdote Morto (no lugar do Guarda) | ![](arte-monstros-fase-3/jogo-skeleton_guard.png) |
 | `encounter.four_rats` | Sombras (no lugar dos ratos), escuras e translúcidas | ![](arte-monstros-fase-3/jogo-four_rats.png) |
 | `encounter.forest_matriarch` | Vigia Sem Rosto em ×2 (no lugar da Matriarca) | ![](arte-monstros-fase-3/jogo-forest_matriarch.png) |
@@ -104,10 +105,10 @@ Godot_v4.7.2-stable_mono_win64.exe --path client res://scenes/Main.tscn -- --enc
 **Detalhes técnicos:**
 - A folha do Cavaleiro tem as armas grandes em quadros de 192 px (golpe, contragolpe e estocada), na mesma posição da maça do Clérigo, então ele usa `slash_192`.
 - O Godot importava os CSVs de créditos como traduções; eles foram salvos como `-credits.txt`, como os das classes.
-- **A folha da Fada (`mist_fairy.png`) veio vazia**, toda transparente. Na prévia, o Lobo fica invisível até ela ser reexportada.
+- A primeira exportação da Fada (`mist_fairy.png`) veio vazia, toda transparente. Em 2026-11-06 ela foi reexportada e depois refeita na versão "Violeta".
 
 ## Pendências
 
-- **Designer:** reexportar `mist_fairy.png` (veio vazia), ver a prévia em movimento e, depois, refazer as montagens que quiser (exportando por cima, com os mesmos nomes).
+- **Designer:** ver a prévia em movimento e, depois, refazer as montagens que quiser (exportando por cima, com os mesmos nomes).
 - **Ent Corrompido e Matriarca:** encomenda no estilo LPC, ou troca do Ent por um monstro que o gerador monte.
 - **Fase 3:** quando os dados existirem, conferir os ids provisórios e os raios (o pivô dos humanoides do gerador é o mesmo das classes).

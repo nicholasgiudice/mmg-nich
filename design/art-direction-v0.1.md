@@ -112,7 +112,7 @@ Licenças conferidas nas páginas dos pacotes em 2026-10-31. Quando um pacote of
 | Lacuna | Proposta |
 |---|---|
 | Sprite próprio da Matriarca | aranha vermelha do item 6 (`spider04`) em escala ×2; arte própria fica para depois |
-| Fadas da Névoa, Cavaleiro Espectral, Vigia Sem Rosto (fase 3) | procurar quando a fase 3 for detalhada |
+| Monstros da fase 3 | **resolvida na T-056** pelo gerador LPC (Fada da Névoa, Sacerdote Morto, Cavaleiro Espectral, Vigia Sem Rosto, Sombra; montagens em `tasks/reports/arte-monstros-fase-3.md`), menos o **Ent Corrompido**: o gerador não tem corpo de árvore e os dois ents do OpenGameArt foram reprovados. Fica para encomenda no estilo LPC, junto com a Matriarca |
 | Ícones das habilidades | **resolvida na T-080** pelo item 9 (também usado para itens e atributos) |
 | Tema de interface (fonte, painéis, botões) | elementos do item 8 são candidatos; hoje a interface segue procedural (`HudTheme`). Fora do escopo desta tarefa |
 | Ícones de status | continuam procedurais (`StatusVisuals`) |
