@@ -64,6 +64,15 @@ public static class GameJson
                 (typeof(ReviveEffect), "revive"));
         }
 
+        if (info.Type == typeof(ZoneDefinition))
+        {
+            // T-331: posições vêm do mapa do Tiled (ZoneComposer); no zones.json esses campos são erro.
+            foreach (var fromMap in info.Properties.Where(p => ZoneComposer.FromMap.Contains(p.Name)).ToList())
+            {
+                info.Properties.Remove(fromMap);
+            }
+        }
+
         foreach (var property in info.Properties)
         {
             if (property.Name.EndsWith(TicksSuffix, StringComparison.Ordinal))

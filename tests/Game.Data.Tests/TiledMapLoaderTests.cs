@@ -12,8 +12,8 @@ public class TiledMapLoaderTests
           "monsters": [ { "id": "monster.rat", "name": "Rat", "health": 10, "speed": 3, "radius": 0.3, "ai": { "id": "ai.passive" } } ],
           "arenas": [ { "id": "arena.b", "lines": ["....", "...."] } ],
           "zones": [
-            { "id": "zone.a", "name": "A", "arena": "map.test", "spawn": { "x": 1.5, "y": 1.5 } },
-            { "id": "zone.b", "name": "B", "arena": "arena.b", "spawn": { "x": 0.5, "y": 0.5 } }
+            { "id": "zone.a", "name": "A", "arena": "map.zone" },
+            { "id": "zone.b", "name": "B", "arena": "map.zone" }
           ]
         }
         """;
@@ -88,8 +88,13 @@ public class TiledMapLoaderTests
         return o;
     }
 
+    /// <summary>Mapa das zonas de apoio (T-331: zona precisa de mapa com 'spawn'): chegadas 'spawn' e 'start'.</summary>
+    private static string ZoneMap() => Map(Objects("spawns",
+        Obj("spawn", "player_spawn", 48, 48, point: true),
+        Obj("start", "player_spawn", 80, 48, point: true))).ToJsonString();
+
     private static LoadResult Load(JsonObject map, string file = "maps/test.tmj") =>
-        GameDataLoader.LoadSources([("content.json", Content), (file, map.ToJsonString())]);
+        GameDataLoader.LoadSources([("content.json", Content), ("maps/zone.tmj", ZoneMap()), (file, map.ToJsonString())]);
 
     private static string Errors(LoadResult r) => string.Join("\n", r.Errors);
 
@@ -129,7 +134,7 @@ public class TiledMapLoaderTests
         Assert.Null(map.Transitions[0].Arrival);
 
         // Zonas usam o mapa pelo id.
-        Assert.Equal("map.test", r.Database.Zones["zone.a"].Arena);
+        Assert.Equal("map.zone", r.Database.Zones["zone.a"].Arena);
     }
 
     [Fact]
@@ -249,7 +254,7 @@ public class TiledMapLoaderTests
         AssertError(Load(shortData), "layers[collision].data", "23 células; esperado 24");
 
         AssertError(Load(Map(), "maps/Vigil-Fields.tmj"), "$", "snake_case");
-        AssertError(GameDataLoader.LoadSources([("content.json", Content), ("maps/test.tmj", "{ nope")]), "$", "JSON inválido");
+        AssertError(GameDataLoader.LoadSources([("content.json", Content), ("maps/zone.tmj", ZoneMap()), ("maps/test.tmj", "{ nope")]), "$", "JSON inválido");
     }
 
     [Fact]
@@ -257,6 +262,7 @@ public class TiledMapLoaderTests
     {
         var r = GameDataLoader.LoadSources([
             ("content.json", Content.Replace("\"arena.b\", \"lines\"", "\"map.test\", \"lines\"", StringComparison.Ordinal)),
+            ("maps/zone.tmj", ZoneMap()),
             ("maps/test.tmj", Map().ToJsonString()),
         ]);
         Assert.False(r.Success);
@@ -270,6 +276,7 @@ public class TiledMapLoaderTests
         {
             File.WriteAllText(Path.Combine(dir.FullName, "content.json"), Content);
             Directory.CreateDirectory(Path.Combine(dir.FullName, "maps"));
+            File.WriteAllText(Path.Combine(dir.FullName, "maps", "zone.tmj"), ZoneMap());
             var path = Path.Combine(dir.FullName, "maps", "test.tmj");
             File.WriteAllText(path, Map().ToJsonString());
             var first = GameDataLoader.LoadDirectory(dir.FullName);

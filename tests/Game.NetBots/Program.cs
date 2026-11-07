@@ -138,7 +138,8 @@ Console.WriteLine(string.Create(CultureInfo.InvariantCulture,
     + $"vitórias {bots.Count(b => b.Outcome == BotOutcome.Won)} · derrotas {bots.Count(b => b.Outcome == BotOutcome.Lost)}"));
 if (bots.Any(b => b.InWorld))
 {
-    Console.WriteLine($"MUNDO trocas de zona {bots.Sum(b => b.ZoneChanges)} · renascimentos {bots.Sum(b => b.Respawns)}");
+    Console.WriteLine($"MUNDO trocas de zona {bots.Sum(b => b.ZoneChanges)} · renascimentos {bots.Sum(b => b.Respawns)} · "
+        + $"zonas visitadas {string.Join(", ", bots.SelectMany(b => b.ZonesVisited).Distinct().Order(StringComparer.Ordinal))}");
 }
 
 if (party)

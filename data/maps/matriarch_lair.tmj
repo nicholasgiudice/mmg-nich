@@ -11,7 +11,7 @@
  "tilewidth": 32,
  "tileheight": 32,
  "nextlayerid": 9,
- "nextobjectid": 7,
+ "nextobjectid": 8,
  "layers": [
   {
    "id": 1,
@@ -256,7 +256,7 @@
    "objects": [
     {
      "id": 1,
-     "name": "start",
+     "name": "spawn",
      "type": "player_spawn",
      "x": 144.0,
      "y": 528.0,
@@ -277,6 +277,24 @@
      "rotation": 0,
      "visible": true,
      "point": true
+    },
+    {
+     "id": 7,
+     "name": "forest_matriarch_1",
+     "type": "monster_spawn",
+     "x": 1616,
+     "y": 528,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "point": true,
+     "properties": [
+      { "name": "monster", "type": "string", "value": "monster.forest_matriarch" },
+      { "name": "level", "type": "int", "value": 8 },
+      { "name": "count", "type": "int", "value": 1 },
+      { "name": "respawn", "type": "float", "value": 300 }
+     ]
     }
    ],
    "opacity": 1,

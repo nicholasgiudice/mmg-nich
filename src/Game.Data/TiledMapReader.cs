@@ -27,6 +27,17 @@ public static class TiledMapReader
     public const string MonsterSpawnClass = "monster_spawn";
     public const string TransitionClass = "transition";
 
+    /// <summary>T-331: área cujo nome é a subárea dos pontos de surgimento dentro dela.</summary>
+    public const string SubareaClass = "subarea";
+
+    /// <summary>T-331: NPC (camada <c>areas</c>), com as propriedades <c>npc</c> e, opcionalmente, <c>shop</c>.</summary>
+    public const string NpcClass = "npc";
+
+    /// <summary>T-331: nome do <c>player_spawn</c> que é o nascimento da zona (e a chegada de transição sem <c>arrival</c>).</summary>
+    public const string ZoneSpawnName = "spawn";
+
+    private static readonly System.Text.RegularExpressions.Regex IdPattern = new("^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)+$");
+
     /// <summary>Id da arena para um arquivo de mapa: <c>maps/fields.tmj</c> → <c>map.fields</c>.</summary>
     public static string MapId(string file) => "map." + Path.GetFileNameWithoutExtension(file);
 
@@ -298,6 +309,9 @@ public static class TiledMapReader
 
             string? monster = null;
             int? level = null;
+            var count = 1;
+            var radius = 0.0;
+            var respawn = TickConversion.SecondsToTicks(30); // padrão, igual ao de MapSpawn e MonsterSpawnDefinition
             if (kind == MapSpawnKind.Monster)
             {
                 monster = props.GetValueOrDefault("monster");
@@ -317,9 +331,56 @@ public static class TiledMapReader
                         Error(path, $"Propriedade 'level' deve ser um inteiro ≥ 1 (valor: '{lv}').");
                     }
                 }
+
+                if (props.TryGetValue("count", out var c))
+                {
+                    if (int.TryParse(c, NumberStyles.Integer, CultureInfo.InvariantCulture, out var n) && n >= 1)
+                    {
+                        count = n;
+                    }
+                    else
+                    {
+                        Error(path, $"Propriedade 'count' (quantos monstros) deve ser um inteiro ≥ 1 (valor: '{c}').");
+                    }
+                }
+
+                if (props.TryGetValue("radius", out var r))
+                {
+                    if (double.TryParse(r, NumberStyles.Float, CultureInfo.InvariantCulture, out var d) && d >= 0 && double.IsFinite(d))
+                    {
+                        radius = d;
+                    }
+                    else
+                    {
+                        Error(path, $"Propriedade 'radius' (tiles) deve ser um número ≥ 0 (valor: '{r}').");
+                    }
+                }
+
+                if (props.TryGetValue("respawn", out var rs))
+                {
+                    if (double.TryParse(rs, NumberStyles.Float, CultureInfo.InvariantCulture, out var sec) && double.IsFinite(sec)
+                        && TickConversion.SecondsToTicks(sec) >= 1)
+                    {
+                        respawn = TickConversion.SecondsToTicks(sec);
+                    }
+                    else
+                    {
+                        Error(path, $"Propriedade 'respawn' (segundos até renascer) deve ser maior que 0 (valor: '{rs}').");
+                    }
+                }
             }
 
-            output.Add(new MapSpawn { Kind = kind, Name = name, Position = new PositionDefinition(x, y), Monster = monster, Level = level });
+            output.Add(new MapSpawn
+            {
+                Kind = kind,
+                Name = name,
+                Position = new PositionDefinition(x, y),
+                Monster = monster,
+                Level = level,
+                Count = count,
+                Radius = radius,
+                RespawnTicks = respawn,
+            });
         }
 
         private void ReadArea(string path, JsonElement o, List<MapArea> output)
@@ -331,9 +392,28 @@ public static class TiledMapReader
                 Error(path, "Área sem classe: diga o que ela é (ex.: altar, seal, web).");
             }
 
+            var props = Properties(o);
+            if (cls == NpcClass)
+            {
+                var npc = props.GetValueOrDefault("npc");
+                if (string.IsNullOrEmpty(npc))
+                {
+                    Error(path, "Propriedade 'npc' (id do NPC, ex.: npc.smith) faltando.");
+                }
+                else if (!IdPattern.IsMatch(npc))
+                {
+                    Error(path, $"Propriedade 'npc' com id inválido '{npc}': use snake_case com namespace por ponto (ex.: npc.smith).");
+                }
+
+                if (props.TryGetValue("shop", out var shop) && !IdPattern.IsMatch(shop))
+                {
+                    Error(path, $"Propriedade 'shop' com id inválido '{shop}': use snake_case com namespace por ponto (ex.: shop.smith).");
+                }
+            }
+
             if (Rect(path, o) is { } rect)
             {
-                output.Add(new MapArea { Name = name, Kind = cls ?? "", Area = rect, Properties = Properties(o) });
+                output.Add(new MapArea { Name = name, Kind = cls ?? "", Area = rect, Properties = props });
             }
         }
 

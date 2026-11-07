@@ -6,7 +6,8 @@ namespace Game.Sim.Tests;
 
 /// <summary>
 /// T-055: Cidade e Campos são mapas do Tiled. Do nascimento de cada zona, um personagem chega andando (células livres,
-/// 4 vizinhos) a todos os pontos de surgimento, chegadas e portões; e os portões do mapa batem com os de <c>zones.json</c>.
+/// 4 vizinhos) a todos os pontos de surgimento, chegadas e portões; e os portões da zona batem com as transições do mapa.
+/// Desde a T-331 a zona inteira (nascimento, portões, surgimentos) é montada a partir do mapa.
 /// </summary>
 public class ZoneMapTests
 {
