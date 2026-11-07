@@ -15,6 +15,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Game.Core\Game.Core.csproj" />
     <ProjectReference Include="..\..\src\Game.Data\Game.Data.csproj" />
+    <ProjectReference Include="..\..\src\Game.Protocol\Game.Protocol.csproj" />
   </ItemGroup>
 
   <!-- T-108: código do cliente sem Godot, compilado aqui por link (o projeto do cliente usa o SDK do Godot). -->
@@ -24,6 +25,7 @@
     <Compile Include="..\..\client\scripts\Presentation\IconIndex.cs" Link="Client\IconIndex.cs" />
     <Compile Include="..\..\client\scripts\Input\HotbarLayout.cs" Link="Client\HotbarLayout.cs" />
     <Compile Include="..\..\client\scripts\Hud\BattleList.cs" Link="Client\BattleList.cs" />
+    <Compile Include="..\..\client\scripts\Hud\PartyModel.cs" Link="Client\PartyModel.cs" />
   </ItemGroup>
 
   <ItemGroup>

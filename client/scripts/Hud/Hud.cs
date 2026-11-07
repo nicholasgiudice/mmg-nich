@@ -38,6 +38,10 @@ public partial class Hud : Control
     private UnitFrame _player = null!;
     private UnitFrame _target = null!;
     private VBoxContainer _party = null!;
+    private PartyPanel _partyPanel = null!;
+    private PartyInviteDialog _inviteDialog = null!;
+    private PopupMenu _worldMenu = null!;
+    private EntityId _worldMenuTarget;
     private readonly List<UnitFrame> _partyFrames = new();
     private HBoxContainer _abilityBar = null!;
     private readonly List<AbilitySlot> _slots = new();
@@ -62,6 +66,44 @@ public partial class Hud : Control
 
     /// <summary>Clique numa linha da lista de batalha: o monstro escolhido como alvo.</summary>
     public event Action<EntityId>? TargetChosen;
+
+    /// <summary>
+    /// Grupo do mundo aberto (T-311): mostra o painel do grupo no lugar dos quadros de aliados da arena. Só online,
+    /// numa zona (a sala de encontro não tem grupo).
+    /// </summary>
+    public bool PartyEnabled { get; set; }
+
+    /// <summary>Painel do grupo (convite pelo nome, sair, expulsar e clique no membro).</summary>
+    public PartyPanel PartyPanel => _partyPanel;
+
+    /// <summary>Janela do convite recebido (Aceitar/Recusar).</summary>
+    public PartyInviteDialog InviteDialog => _inviteDialog;
+
+    /// <summary>"Convidar para o grupo" no menu do botão direito sobre outro jogador.</summary>
+    public event Action<EntityId>? InviteEntity;
+
+    /// <summary>A caixa de nome do grupo está com o foco: as teclas são texto, não comandos.</summary>
+    public bool IsTyping => _partyPanel.IsTyping;
+
+    /// <summary>Atualiza o painel e a janela do convite com o estado do grupo (chamado a cada frame, online).</summary>
+    public void ShowParty(PartyModel model, double now)
+    {
+        _partyPanel.Display(model);
+        _inviteDialog.Display(model.ActiveInvite(now), now);
+    }
+
+    /// <summary>Aviso ou recusa de grupo: texto curto no painel.</summary>
+    public void PartyMessage(string text) => _partyPanel.ShowMessage(text);
+
+    /// <summary>Abre o menu do botão direito sobre outro jogador, com "Convidar para o grupo".</summary>
+    public void OfferInvite(Vector2 screenPosition, EntityId target, string name)
+    {
+        _worldMenuTarget = target;
+        _worldMenu.Clear();
+        _worldMenu.AddItem($"Convidar {name} para o grupo", 0);
+        _worldMenu.Position = (Vector2I)screenPosition;
+        _worldMenu.Popup();
+    }
 
     /// <summary>Monstro sob o mouse na lista de batalha (destaque no mapa); null = nenhum.</summary>
     public EntityId? BattleHovered => _battle.Visible ? _battle.Hovered : null;
@@ -111,6 +153,15 @@ public partial class Hud : Control
         _party.AddThemeConstantOverride("separation", 6);
         _party.MouseFilter = MouseFilterEnum.Ignore;
         AddChild(_party);
+
+        // T-311: grupo do mundo aberto (painel, convite recebido e o menu do botão direito sobre outro jogador).
+        _partyPanel = new PartyPanel { Visible = false };
+        AddChild(_partyPanel);
+        _inviteDialog = new PartyInviteDialog();
+        AddChild(_inviteDialog);
+        _worldMenu = new PopupMenu();
+        _worldMenu.IdPressed += _ => InviteEntity?.Invoke(_worldMenuTarget);
+        AddChild(_worldMenu);
 
         _target = new UnitFrame(FrameWidth + 40, showResource: false, showCast: true);
         AddChild(_target);
@@ -216,6 +267,8 @@ public partial class Hud : Control
         _target.Position = new Vector2((screen.X - _target.Size.X) / 2, 8);
         _panelButtons.Position = new Vector2(8, _player.Position.Y + _player.Size.Y + 4);
         _party.Position = new Vector2(8, _panelButtons.Position.Y + _panelButtons.Size.Y + 6);
+        _partyPanel.Position = _party.Position;
+        _inviteDialog.Position = new Vector2((screen.X - _inviteDialog.Size.X) / 2, screen.Y * 0.26f);
         var panelX = Mathf.Max(_player.Position.X + _player.Size.X, _panelButtons.Visible ? _panelButtons.Position.X + _panelButtons.Size.X : 0) + 12;
         _character.Position = new Vector2(panelX, 64);
         // Habilidades: ao lado da tela de personagem; se não couber, encostada na direita (pode cobrir o log).
@@ -237,6 +290,7 @@ public partial class Hud : Control
         _character.SetContent(content);
         _skills.SetContent(content);
         _inventory.SetContent(content);
+        _partyPanel.SetContent(content);
         _removableTags.Clear();
         foreach (var cls in content.Classes.Values)
         {
@@ -341,22 +395,26 @@ public partial class Hud : Control
         _character.Send = authority.Send;
         _skills.Send = authority.Send;
         _inventory.Send = authority.Send;
-        if (Godot.Input.IsActionJustPressed(Input.InputActions.InventoryPanel))
+        if (IsTyping)
+        {
+            // T-311: digitando o nome do convite, C/K/I/B são letras.
+        }
+        else if (Godot.Input.IsActionJustPressed(Input.InputActions.InventoryPanel))
         {
             TogglePanel(_inventory);
         }
 
-        if (Godot.Input.IsActionJustPressed(Input.InputActions.CharacterPanel))
+        if (!IsTyping && Godot.Input.IsActionJustPressed(Input.InputActions.CharacterPanel))
         {
             TogglePanel(_character);
         }
 
-        if (Godot.Input.IsActionJustPressed(Input.InputActions.SkillsPanel))
+        if (!IsTyping && Godot.Input.IsActionJustPressed(Input.InputActions.SkillsPanel))
         {
             TogglePanel(_skills);
         }
 
-        if (Godot.Input.IsActionJustPressed(Input.InputActions.BattleList))
+        if (!IsTyping && Godot.Input.IsActionJustPressed(Input.InputActions.BattleList))
         {
             _battle.Visible = BattleListSettings.Visible = !_battle.Visible;
         }
@@ -496,6 +554,14 @@ public partial class Hud : Control
 
     private void UpdateParty(WorldSnapshot latest, EntitySnapshot? self, double now)
     {
+        // T-311: no mundo aberto o painel do grupo substitui os quadros de aliados (que mostrariam todo jogador por perto).
+        _partyPanel.Visible = PartyEnabled && self is not null;
+        _party.Visible = !PartyEnabled;
+        if (PartyEnabled)
+        {
+            return;
+        }
+
         var faction = self?.TryGet<FactionTag>()?.Faction ?? Faction.Player;
         var allies = latest.Entities
             .Where(e => e.Id != self?.Id && e.TryGet<FactionTag>()?.Faction == faction && e.TryGet<Health>() is not null

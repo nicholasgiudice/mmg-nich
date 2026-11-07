@@ -376,4 +376,23 @@ public class CombatLogTests
         Tick(s, new StatusResisted(EntityId.None, s.Wolf.Id, "status.bleed"));
         Assert.Equal("Lobo Cinzento resistiu a Sangramento", LastText(s));
     }
+
+    [Fact]
+    public void Note_adds_a_system_line_that_respects_capacity()
+    {
+        var log = new CombatLogRecorder(capacity: 2);
+        log.Note(10, "Lyra entrou no grupo.", new TestNote());
+        log.Note(20, "Thorin saiu do grupo.", new TestNote());
+        log.Note(30, "O grupo se desfez.", new TestNote());
+
+        Assert.Equal(2, log.Entries.Count);
+        Assert.All(log.Entries, e => Assert.Equal(LogCategory.Sistema, e.Category));
+        Assert.Equal("O grupo se desfez.", log.Entries[^1].Text);
+        Assert.Equal(30, log.Entries[^1].Tick);
+        Assert.IsType<TestNote>(log.Entries[^1].Event);
+        Assert.Empty(log.Entries[^1].Involved);
+    }
 }
+
+/// <summary>Origem de teste para <see cref="CombatLogRecorder.Note"/> (o cliente usa a sua).</summary>
+internal sealed record TestNote : Game.Core.Events.GameEvent;

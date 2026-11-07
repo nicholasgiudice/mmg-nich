@@ -21,6 +21,9 @@ public enum LogCategory
 
     /// <summary>Quedas, saque e equipamento (T-204).</summary>
     Itens,
+
+    /// <summary>Avisos que não vêm da simulação, como entradas e saídas do grupo (T-311).</summary>
+    Sistema,
 }
 
 /// <summary>
