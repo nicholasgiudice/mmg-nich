@@ -4,3 +4,5 @@ Licença: CC0 1.0 (domínio público) - https://creativecommons.org/publicdomain
 Origem: https://opengameart.org/content/496-pixel-art-icons-for-medievalfantasy-rpg
 Arquivo baixado: 496_RPG_icons.zip (2026-11-02), guardado fora do repositório em ..\mmg-art-src\lazarini-496\
 Uso: icons.png reúne os ícones escolhidos, sem modificação (34x34 px). O arquivo de origem de cada ícone está em icons.json ("source").
+
+Ícones das habilidades de classe (T-087, 2026-11-06): gerados no PixelLab (modelo Pro, 32x32 px, com o painel pedra e ouro como referência de estilo) pelo designer, com assinatura que dá ao assinante os direitos sobre o que gera. Ficam nas linhas novas no fim de icons.png, com 1 px de margem dentro da célula de 34 px; em icons.json, "source" = "pixellab:<id>#n" (candidato n de tasks/reports/interface/icones-amostra/pro/<id>-folha.png; o escolhido também em pro/escolhidos/<id>.png). Os ícones antigos dessas habilidades continuam na folha, sem uso.

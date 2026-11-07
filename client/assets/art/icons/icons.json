@@ -1,133 +1,133 @@
 {
-  "$comment": "Ícones de habilidades, itens e atributos (T-080). Só apresentação: o Core não lê este arquivo. Chave = id de data/ (habilidade, item), attribute.<str|dex|agi|int|vit> ou ui.<nome>. x/y = canto da região de size×size em 'sheet'; id sem entrada usa 'fallback'. 'source' = arquivo original do pacote 496 pixel art icons (Henrique Lazarini, CC0), para refazer a folha. Créditos em CREDITS.md.",
+  "$comment": "Ícones de habilidades, itens e atributos (T-080). Só apresentação: o Core não lê este arquivo. Chave = id de data/ (habilidade, item), attribute.<str|dex|agi|int|vit> ou ui.<nome>. x/y = canto da região de size×size em 'sheet'; id sem entrada usa 'fallback'. 'source' = arquivo original do pacote 496 pixel art icons (Henrique Lazarini, CC0), para refazer a folha; 'pixellab:<id>#n' = ícone de habilidade gerado no PixelLab (T-087), candidato n de tasks/reports/interface/icones-amostra/pro/<id>-folha.png, desenhado em 32 px com 1 px de margem. Créditos em CREDITS.md.",
   "sheet": "icons.png",
   "size": 34,
   "fallback": "ui.unknown",
   "icons": {
     "warrior.sword_strike": {
       "x": 0,
-      "y": 0,
-      "source": "S_Sword10.png"
+      "y": 238,
+      "source": "pixellab:warrior.sword_strike#1"
     },
     "warrior.heavy_strike": {
       "x": 34,
-      "y": 0,
-      "source": "S_Dagger05.png"
+      "y": 238,
+      "source": "pixellab:warrior.heavy_strike#3"
     },
     "warrior.whirlwind": {
       "x": 68,
-      "y": 0,
-      "source": "S_Sword06.png"
+      "y": 238,
+      "source": "pixellab:warrior.whirlwind#1"
     },
     "warrior.firm_guard": {
       "x": 102,
-      "y": 0,
-      "source": "S_Buff12.png"
+      "y": 238,
+      "source": "pixellab:warrior.firm_guard#17"
     },
     "warrior.taunt": {
       "x": 136,
-      "y": 0,
-      "source": "S_Buff14.png"
+      "y": 238,
+      "source": "pixellab:warrior.taunt#18"
     },
     "warrior.living_wall": {
       "x": 170,
-      "y": 0,
-      "source": "S_Earth03.png"
+      "y": 238,
+      "source": "pixellab:warrior.living_wall#2"
     },
     "archer.shot": {
       "x": 204,
-      "y": 0,
-      "source": "S_Bow11.png"
+      "y": 238,
+      "source": "pixellab:archer.shot#2"
     },
     "archer.power_shot": {
       "x": 238,
-      "y": 0,
-      "source": "S_Bow06.png"
+      "y": 238,
+      "source": "pixellab:archer.power_shot#39"
     },
     "archer.hunters_mark": {
       "x": 0,
-      "y": 34,
-      "source": "S_Bow09.png"
+      "y": 272,
+      "source": "pixellab:archer.hunters_mark#2"
     },
     "archer.quick_retreat": {
       "x": 34,
-      "y": 34,
-      "source": "S_Wind07.png"
+      "y": 272,
+      "source": "pixellab:archer.quick_retreat#1"
     },
     "archer.rain_of_arrows": {
       "x": 68,
-      "y": 34,
-      "source": "S_Bow08.png"
+      "y": 272,
+      "source": "pixellab:archer.rain_of_arrows#10"
     },
     "archer.devastating_arrow": {
       "x": 102,
-      "y": 34,
-      "source": "S_Bow13.png"
+      "y": 272,
+      "source": "pixellab:archer.devastating_arrow#55"
     },
     "archer.containment_trap": {
       "x": 136,
-      "y": 34,
-      "source": "S_Bow10.png"
+      "y": 272,
+      "source": "pixellab:archer.containment_trap#0"
     },
     "mage.arcane_missile": {
       "x": 170,
-      "y": 34,
-      "source": "S_Axe06.png"
+      "y": 272,
+      "source": "pixellab:mage.arcane_missile#6"
     },
     "mage.elemental_blast": {
       "x": 204,
-      "y": 34,
-      "source": "S_Fire06.png"
+      "y": 272,
+      "source": "pixellab:mage.elemental_blast#44"
     },
     "mage.ice_prison": {
       "x": 238,
-      "y": 34,
-      "source": "S_Ice08.png"
+      "y": 272,
+      "source": "pixellab:mage.ice_prison#0"
     },
     "mage.arcane_barrier": {
       "x": 0,
-      "y": 68,
-      "source": "S_Magic02.png"
+      "y": 306,
+      "source": "pixellab:mage.arcane_barrier#26"
     },
     "mage.lightning_field": {
       "x": 34,
-      "y": 68,
-      "source": "S_Thunder02.png"
+      "y": 306,
+      "source": "pixellab:mage.lightning_field#4"
     },
     "mage.arcane_cataclysm": {
       "x": 68,
-      "y": 68,
-      "source": "S_Fire05.png"
+      "y": 306,
+      "source": "pixellab:mage.arcane_cataclysm#3"
     },
     "cleric.holy_strike": {
       "x": 102,
-      "y": 68,
-      "source": "S_Light04.png"
+      "y": 306,
+      "source": "pixellab:cleric.holy_strike#4"
     },
     "cleric.direct_heal": {
       "x": 136,
-      "y": 68,
-      "source": "S_Holy03.png"
+      "y": 306,
+      "source": "pixellab:cleric.direct_heal#16"
     },
     "cleric.sacred_shield": {
       "x": 170,
-      "y": 68,
-      "source": "S_Holy09.png"
+      "y": 306,
+      "source": "pixellab:cleric.sacred_shield#1"
     },
     "cleric.holy_chain": {
       "x": 204,
-      "y": 68,
-      "source": "S_Light01.png"
+      "y": 306,
+      "source": "pixellab:cleric.holy_chain#5"
     },
     "cleric.purify": {
       "x": 238,
-      "y": 68,
-      "source": "S_Holy02.png"
+      "y": 306,
+      "source": "pixellab:cleric.purify#2"
     },
     "cleric.miracle": {
       "x": 0,
-      "y": 102,
-      "source": "S_Holy04.png"
+      "y": 340,
+      "source": "pixellab:cleric.miracle#0"
     },
     "item.minor_healing_potion": {
       "x": 34,
