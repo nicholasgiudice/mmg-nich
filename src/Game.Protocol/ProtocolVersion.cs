@@ -25,6 +25,9 @@ public static class ProtocolVersion
     /// 6 (T-212): token de jogo no <c>Hello</c> e motivos de recusa <c>Unauthorized</c>, <c>AlreadyConnected</c> e
     /// <c>Unavailable</c>.
     /// 7 (T-214): mensagem <c>RespawnRequest</c>; no mundo aberto o <c>Welcome</c> leva o id da zona e se repete a cada troca.
+    /// 8 (T-310): componente <c>PartyMembership</c> e mensagens de grupo (<c>PartyInvite</c>, <c>PartyRespond</c>,
+    /// <c>PartyLeave</c>, <c>PartyKick</c>, <c>PartyInviteReceived</c>, <c>PartyState</c>, <c>PartyNotice</c>,
+    /// <c>PartyRejected</c>).
     /// </summary>
-    public const int Current = 7;
+    public const int Current = 8;
 }

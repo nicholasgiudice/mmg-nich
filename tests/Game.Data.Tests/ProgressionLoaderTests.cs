@@ -44,6 +44,28 @@ public class ProgressionLoaderTests
     }
 
     [Fact]
+    public void Party_rules_load_with_defaults_and_validate()
+    {
+        var r = Load("""{ "rules": { "progression": { "partyShareRange": 25 }, "party": { "maxMembers": 5, "inviteTimeout": 10 } } }""");
+
+        Assert.True(r.Success, Errors(r));
+        Assert.Equal(25, r.Database!.Rules.Progression.PartyShareRange);
+        Assert.Equal(5, r.Database.Rules.Party.MaxMembers);
+        Assert.Equal(200, r.Database.Rules.Party.InviteTimeoutTicks);
+
+        var defaults = Load("{}").Database!.Rules;
+        Assert.Equal(30, defaults.Progression.PartyShareRange);
+        Assert.Equal(4, defaults.Party.MaxMembers);
+        Assert.Equal(600, defaults.Party.InviteTimeoutTicks);
+
+        var bad = Load("""{ "rules": { "progression": { "partyShareRange": -1 }, "party": { "maxMembers": 1, "inviteTimeout": 0 } } }""");
+        Assert.False(bad.Success);
+        Assert.Contains(bad.Errors, e => e.Path == "rules.progression.partyShareRange");
+        Assert.Contains(bad.Errors, e => e.Path == "rules.party.maxMembers");
+        Assert.Contains(bad.Errors, e => e.Path == "rules.party.inviteTimeout");
+    }
+
+    [Fact]
     public void Monster_level_loads_with_one_as_default_and_must_be_positive()
     {
         var r = Load("""

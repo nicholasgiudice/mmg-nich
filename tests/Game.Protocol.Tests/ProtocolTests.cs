@@ -43,6 +43,25 @@ public class ProtocolTests(ITestOutputHelper output)
     }
 
     [Fact]
+    public void Party_messages_round_trip()
+    {
+        Assert.Equal(new PartyInvite(new EntityId(4), null), RoundTrip(new PartyInvite(new EntityId(4), null)));
+        Assert.Equal(new PartyInvite(null, "aria"), RoundTrip(new PartyInvite(null, "aria")));
+        Assert.Equal(new PartyRespond(9, true), RoundTrip(new PartyRespond(9, true)));
+        Assert.IsType<PartyLeave>(RoundTrip(new PartyLeave()));
+        Assert.Equal(new PartyKick(3), RoundTrip(new PartyKick(3)));
+        Assert.Equal(new PartyInviteReceived(9, 2, "aria", 600), RoundTrip(new PartyInviteReceived(9, 2, "aria", 600)));
+        Assert.Equal(new PartyNotice(PartyNoticeKind.LeaderChanged, "bruno"), RoundTrip(new PartyNotice(PartyNoticeKind.LeaderChanged, "bruno")));
+        Assert.Equal(new PartyRejected(PartyRejectReason.PartyFull, "cheio"), RoundTrip(new PartyRejected(PartyRejectReason.PartyFull, "cheio")));
+
+        var member = new PartyMemberInfo(2, new EntityId(11), "bruno", "class.cleric", 5, 80, 120, 40.5f, 150, "zone.vigil_fields", true);
+        var state = RoundTrip(new PartyState(1, 1, 2, [member]));
+        Assert.Equal((1, 1, 2), (state.PartyId, state.LeaderId, state.YouId));
+        Assert.Equal(member, Assert.Single(state.Members));
+        Assert.Empty(RoundTrip(new PartyState(0, 0, 2, [])).Members);
+    }
+
+    [Fact]
     public void Intents_round_trip_and_always_use_the_connection_entity()
     {
         var me = new EntityId(3);

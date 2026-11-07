@@ -22,6 +22,14 @@ namespace Game.Protocol;
 [MemoryPackUnion(9, typeof(SnapshotDelta))]
 [MemoryPackUnion(10, typeof(SnapshotAck))]
 [MemoryPackUnion(11, typeof(RespawnRequest))]
+[MemoryPackUnion(12, typeof(PartyInvite))]
+[MemoryPackUnion(13, typeof(PartyRespond))]
+[MemoryPackUnion(14, typeof(PartyLeave))]
+[MemoryPackUnion(15, typeof(PartyKick))]
+[MemoryPackUnion(16, typeof(PartyInviteReceived))]
+[MemoryPackUnion(17, typeof(PartyState))]
+[MemoryPackUnion(18, typeof(PartyNotice))]
+[MemoryPackUnion(19, typeof(PartyRejected))]
 public partial interface INetMessage;
 
 // ---------------- cliente → servidor ----------------

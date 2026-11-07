@@ -63,12 +63,22 @@
             "xpPenaltyPerLevelBelow": { "type": "number", "minimum": 0, "maximum": 1 },
             "xpZeroLevelsBelow": { "type": "integer", "minimum": 1 },
             "groupBonusPerMember": { "type": "number", "minimum": 0 },
+            "partyShareRange": { "type": "number", "minimum": 0 },
             "participationWindow": { "$ref": "#/$defs/seconds" },
             "combatTimeout": { "$ref": "#/$defs/seconds" },
             "attributePointsPerLevel": { "type": "integer", "minimum": 0 },
             "skillPointsPerLevel": { "type": "integer", "minimum": 0 },
             "skillRankLevels": { "type": "array", "minItems": 5, "items": { "type": "integer", "minimum": 1 } },
             "signatureRankLevels": { "type": "array", "minItems": 3, "items": { "type": "integer", "minimum": 1 } }
+          }
+        },
+        "party": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "T-310: grupo (party): membros no máximo (com o líder) e validade do convite.",
+          "properties": {
+            "maxMembers": { "type": "integer", "minimum": 2 },
+            "inviteTimeout": { "$ref": "#/$defs/seconds" }
           }
         },
         "monsters": {

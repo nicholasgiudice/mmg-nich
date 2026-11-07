@@ -135,3 +135,17 @@ public sealed class XpContributors : IComponent
         }
     }
 }
+
+/// <summary>
+/// Grupo (party) do personagem (T-310). O servidor cuida do grupo (convite, membros, líder) e só põe aqui o id, que é
+/// determinístico (atribuído em ordem pelo servidor, nunca 0). A <see cref="ProgressionSystem"/> divide a XP e o direito
+/// ao saque com os membros do mesmo grupo. Replicável: o cliente sabe quem é do seu grupo.
+/// </summary>
+public sealed class PartyMembership : IComponent, IReplicated
+{
+    public int PartyId { get; init; }
+
+    public IComponent Clone() => new PartyMembership { PartyId = PartyId };
+
+    public void WriteHash(StateHasher hasher) => hasher.Add(PartyId);
+}

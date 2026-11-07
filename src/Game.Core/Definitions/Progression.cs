@@ -46,6 +46,12 @@ public sealed record ProgressionRules
     public double GroupBonusPerMember { get; init; } = 0.1;
 
     /// <summary>
+    /// T-310: membro do grupo de um participante também recebe a XP (e o direito ao saque) se estiver vivo, na mesma zona e
+    /// a até esta distância (tiles) do monstro.
+    /// </summary>
+    public double PartyShareRange { get; init; } = 30;
+
+    /// <summary>
     /// Quem causou dano ao monstro, ou curou/protegeu quem causou, nesta janela antes da morte participa da XP.
     /// JSON: "participationWindow" (segundos).
     /// </summary>
@@ -106,4 +112,14 @@ public sealed record ProgressionRules
     /// <summary>Parte de cada um entre <paramref name="participants"/>: XP × (1 + bônus × (n − 1)) / n, arredondada.</summary>
     public int Share(double xp, int participants) =>
         participants <= 0 ? 0 : (int)Math.Round(xp * (1 + (GroupBonusPerMember * (participants - 1))) / participants, MidpointRounding.AwayFromZero);
+}
+
+/// <summary>Grupo (party, T-310; data/rules.json, seção <c>party</c>).</summary>
+public sealed record PartyRules
+{
+    /// <summary>Membros no máximo, contando o líder.</summary>
+    public int MaxMembers { get; init; } = 4;
+
+    /// <summary>Validade de um convite. JSON: "inviteTimeout" (segundos).</summary>
+    public int InviteTimeoutTicks { get; init; } = 30 * 20;
 }

@@ -42,6 +42,7 @@ public static class ComponentCodecs
         [typeof(Inventory)] = 16,
         [typeof(Equipment)] = 17,
         [typeof(GroundItem)] = 18,
+        [typeof(PartyMembership)] = 19,
     };
 
     internal static void Write<TB>(ref MemoryPackWriter<TB> w, IComponent component)
@@ -225,6 +226,9 @@ public static class ComponentCodecs
                 }
 
                 w.L(g.ExpiresAtTick);
+                break;
+            case PartyMembership pm:
+                w.I(pm.PartyId);
                 break;
         }
     }
@@ -420,6 +424,9 @@ public static class ComponentCodecs
 
                     return new GroundItem { Item = item, Owners = owners, ExpiresAtTick = r.L() };
                 }
+
+            case 19:
+                return new PartyMembership { PartyId = r.I() };
 
             default:
                 throw new MemoryPackSerializationException($"Tag de componente desconhecida: {tag}");

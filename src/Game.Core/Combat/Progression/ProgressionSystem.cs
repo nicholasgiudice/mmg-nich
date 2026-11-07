@@ -1,3 +1,4 @@
+using System.Numerics;
 using Game.Core.CombatLog;
 using Game.Core.Intents;
 using Game.Core.Simulation;
@@ -109,7 +110,8 @@ public sealed class ProgressionSystem : ISimulationSystem
     /// <summary>
     /// XP do monstro morto para quem causou dano nele dentro da janela e para quem curou/protegeu um desses na janela,
     /// dividida entre todos com o bônus de grupo. Cada um recebe com o modificador do próprio nível. Os mesmos
-    /// participantes têm direito à queda (T-204).
+    /// participantes têm direito à queda (T-204). T-310: os membros do grupo de algum participante que estão perto também
+    /// entram na divisão e no saque.
     /// </summary>
     private static void AwardKill(World world, EntityId monsterId)
     {
@@ -137,6 +139,7 @@ public sealed class ProgressionSystem : ISimulationSystem
             .Where(e => e is { IsRemoved: false } && e.Has<CharacterProgress>())
             .Select(e => e!)
             .ToList();
+        members = WithParty(world, monster, members);
         foreach (var e in members)
         {
             var level = Stats.StatMath.LevelOf(e);
@@ -145,6 +148,34 @@ public sealed class ProgressionSystem : ISimulationSystem
         }
 
         Items.Gear.DropLoot(world, monster, members);
+    }
+
+    /// <summary>
+    /// T-310: soma aos participantes os membros dos grupos deles que estão vivos, nesta zona (este mundo) e a até
+    /// <see cref="Definitions.ProgressionRules.PartyShareRange"/> do monstro. Ordem por id da entidade (determinística).
+    /// </summary>
+    private static List<Entity> WithParty(World world, Entity monster, List<Entity> participants)
+    {
+        var parties = participants.Select(e => e.TryGet<PartyMembership>()?.PartyId ?? 0).Where(id => id != 0).ToHashSet();
+        if (parties.Count == 0 || monster.TryGet<Transform>() is not { } at)
+        {
+            return participants;
+        }
+
+        var range = world.Content.Rules.Progression.PartyShareRange;
+        var ids = participants.Select(e => e.Id.Value).ToHashSet();
+        var all = new List<Entity>(participants);
+        foreach (var e in world.Entities)
+        {
+            if (!ids.Contains(e.Id.Value) && !e.IsRemoved && e.IsAlive && e.Has<CharacterProgress>()
+                && e.TryGet<PartyMembership>() is { } m && parties.Contains(m.PartyId)
+                && e.TryGet<Transform>() is { } t && Vector2.Distance(t.Position, at.Position) <= range)
+            {
+                all.Add(e);
+            }
+        }
+
+        return all.OrderBy(e => e.Id.Value).ToList();
     }
 }
 
