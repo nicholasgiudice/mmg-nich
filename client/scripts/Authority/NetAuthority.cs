@@ -66,6 +66,7 @@ public sealed class NetAuthority : IGameAuthority, ICombatLogSource, IDisposable
     private readonly List<DeathSummary> _pendingDeaths = new();
     private readonly Queue<(long Tick, bool Received)> _lossWindow = new();
     private readonly Stopwatch _clock = Stopwatch.StartNew();
+    private readonly List<string> _partyMessages = new();
     private NetPeer? _peer;
     private uint _sequence;
     private double _renderTick = -1;
@@ -155,6 +156,68 @@ public sealed class NetAuthority : IGameAuthority, ICombatLogSource, IDisposable
 
     /// <summary>Snapshots que não chegaram, em % dos últimos 100 ticks.</summary>
     public double LossPercent => _lossWindow.Count == 0 ? 0 : 100.0 * _lossWindow.Count(x => !x.Received) / _lossWindow.Count;
+
+    // ---------------- grupo (T-311) ----------------
+
+    /// <summary>Grupo e convites como o servidor mandou (só no mundo aberto; a sala de encontro não tem grupo).</summary>
+    public MmoRpgClient.Hud.PartyModel Party { get; } = new();
+
+    /// <summary>Relógio do cliente em segundos (contagem dos convites).</summary>
+    public double ClockSeconds => _clock.Elapsed.TotalSeconds;
+
+    /// <summary>Avisos e recusas de grupo desde a última chamada, já como texto para o jogador.</summary>
+    public IReadOnlyList<string> TakePartyMessages()
+    {
+        if (_partyMessages.Count == 0)
+        {
+            return Array.Empty<string>();
+        }
+
+        var messages = _partyMessages.ToArray();
+        _partyMessages.Clear();
+        return messages;
+    }
+
+    /// <summary>Convida o personagem desta entidade (na mesma zona).</summary>
+    public void PartyInviteEntity(EntityId target) => SendParty(new PartyInvite(target, null));
+
+    /// <summary>Convida pelo nome (em qualquer zona).</summary>
+    public void PartyInviteName(string name)
+    {
+        if (!string.IsNullOrWhiteSpace(name))
+        {
+            SendParty(new PartyInvite(null, name.Trim()));
+        }
+    }
+
+    public void PartyRespond(int inviteId, bool accept)
+    {
+        Party.Answered(inviteId);
+        SendParty(new PartyRespond(inviteId, accept));
+    }
+
+    public void PartyLeave() => SendParty(new PartyLeave());
+
+    public void PartyKick(int memberId) => SendParty(new PartyKick(memberId));
+
+    private void SendParty(INetMessage message)
+    {
+        if (_peer is not null && Status == NetStatus.Playing)
+        {
+            SendRaw(ProtocolSerializer.Serialize(message), ReliableChannel, DeliveryMethod.ReliableOrdered);
+        }
+    }
+
+    private void OnPartyNotice(PartyNotice notice)
+    {
+        var text = MmoRpgClient.Hud.PartyText.Notice(notice.Kind, notice.Name, _name);
+        if (MmoRpgClient.Hud.PartyText.GoesToLog(notice.Kind))
+        {
+            _log.Note(Latest?.Tick ?? 0, text, new PartyLogNote(notice.Kind));
+        }
+
+        _partyMessages.Add(text);
+    }
 
     // ---------------- IGameAuthority ----------------
 
@@ -308,6 +371,18 @@ public sealed class NetAuthority : IGameAuthority, ICombatLogSource, IDisposable
                 break;
             case Pong p:
                 PingMs = _clock.Elapsed.TotalMilliseconds - p.ClientTimeMs;
+                break;
+            case PartyState ps:
+                Party.Apply(ps);
+                break;
+            case PartyInviteReceived inv:
+                Party.Receive(inv, ClockSeconds);
+                break;
+            case PartyNotice notice:
+                OnPartyNotice(notice);
+                break;
+            case PartyRejected rejected:
+                _partyMessages.Add(MmoRpgClient.Hud.PartyText.Rejection(rejected.Reason));
                 break;
         }
     }
@@ -656,3 +731,6 @@ public sealed class NetAuthority : IGameAuthority, ICombatLogSource, IDisposable
         }
     }
 }
+
+/// <summary>Origem das linhas de grupo no log (categoria Sistema, T-311); só no cliente, nunca vai pela rede.</summary>
+public sealed record PartyLogNote(PartyNoticeKind Kind) : GameEvent;
