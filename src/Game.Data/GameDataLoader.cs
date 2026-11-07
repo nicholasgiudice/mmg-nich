@@ -92,6 +92,7 @@ public static class GameDataLoader
 
         content.Rules = BuildRules(content.RuleSections, errors);
         ValidateThreat(content.Threat, errors);
+        ZoneComposer.Compose(content, errors); // T-331: nascimento, portões, surgimentos e NPCs vêm dos mapas
         GameDataValidator.Validate(content, errors);
         if (errors.Count > 0)
         {

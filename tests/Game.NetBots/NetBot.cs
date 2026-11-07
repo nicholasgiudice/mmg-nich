@@ -50,6 +50,7 @@ public sealed class NetBot : IDisposable
     private double _nextPingAt;
     private double _nextInviteAt;
     private string[] _partyNames = [];
+    private readonly Dictionary<string, int> _zoneVisits = new(StringComparer.Ordinal);
 
     public NetBot(int index, string host, int port, string? classId, string strategy, ContentCatalog content, BotOptions options, Stopwatch clock, string? ticket = null)
     {
@@ -116,6 +117,9 @@ public sealed class NetBot : IDisposable
     public int ZoneChanges { get; private set; }
 
     public int Respawns { get; private set; }
+
+    /// <summary>Zonas em que o bot já esteve (T-331: o <c>--roam</c> passa pelas três).</summary>
+    public IReadOnlyCollection<string> ZonesVisited => _zoneVisits.Keys;
 
     // ---------- grupo (T-310) ----------
 
@@ -188,7 +192,10 @@ public sealed class NetBot : IDisposable
         }
     }
 
-    /// <summary>Primeiro vai ao nascimento da zona; de lá, ao centro do primeiro portão.</summary>
+    /// <summary>
+    /// Primeiro vai ao nascimento da zona; de lá, ao centro de um portão. A cada visita à zona usa o portão seguinte
+    /// (T-331), para passar por todas as zonas e não só ir e voltar pelo primeiro.
+    /// </summary>
     private void RoamIntent(ZoneDefinition zone, Entity self)
     {
         var position = self.Get<Transform>().Position;
@@ -198,7 +205,7 @@ public sealed class NetBot : IDisposable
             _reachedSpawn = true;
         }
 
-        var gate = zone.Gates[0].Area;
+        var gate = zone.Gates[(_zoneVisits.GetValueOrDefault(zone.Id, 1) - 1) % zone.Gates.Count].Area;
         var target = _reachedSpawn ? new Vector2((float)(gate.X + (gate.Width / 2)), (float)(gate.Y + (gate.Height / 2))) : spawn;
         var to = target - position;
         _buffer.Add(to.LengthSquared() < 0.01f ? new StopIntent(self.Id) : new MoveIntent(self.Id, Vector2.Normalize(to)));
@@ -229,6 +236,7 @@ public sealed class NetBot : IDisposable
                 _respawnPending = false;
                 _reachedSpawn = false;
                 Welcome = w;
+                _zoneVisits[w.EncounterId] = _zoneVisits.GetValueOrDefault(w.EncounterId) + 1;
                 _state.Reset(w.Epoch);
                 _mirror = WorldBuilder.CreateDefault((ulong)w.Epoch, EntityFactory.BuildMap(_content.Arenas[w.ArenaId]), _content);
                 _controller = BotStrategies.Create(_strategy);

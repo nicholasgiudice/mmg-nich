@@ -615,55 +615,21 @@
     "zone": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "name", "arena", "spawn"],
-      "description": "T-214: zona do mundo aberto (um World no servidor).",
+      "required": ["id", "name", "arena"],
+      "description": "T-214/T-331: zona do mundo aberto (um World no servidor). Nascimento, portões, surgimentos e NPCs vêm do mapa do Tiled da arena (design/map-conventions-v0.1.md).",
       "properties": {
         "id": { "$ref": "#/$defs/id" },
         "name": { "type": "string" },
-        "arena": { "$ref": "#/$defs/id" },
+        "arena": { "$ref": "#/$defs/id", "description": "Mapa do Tiled da zona (map.*)." },
         "kind": { "enum": ["safe", "field"], "description": "safe = Cidade (sem monstros, descanso); field = área com monstros (padrão)." },
-        "spawn": { "$ref": "#/$defs/position" },
         "restPerSecond": { "type": "number", "minimum": 0, "maximum": 1, "description": "Fração da vida e da Mana máximas por segundo (só safe)." },
         "corpse": { "$ref": "#/$defs/seconds", "description": "Quanto o corpo do monstro fica no chão (padrão 5 s)." },
-        "gates": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "additionalProperties": false,
-            "required": ["area", "to", "arrival"],
-            "properties": {
-              "area": {
-                "type": "object",
-                "additionalProperties": false,
-                "required": ["x", "y", "width", "height"],
-                "properties": {
-                  "x": { "type": "number" },
-                  "y": { "type": "number" },
-                  "width": { "type": "number", "exclusiveMinimum": 0 },
-                  "height": { "type": "number", "exclusiveMinimum": 0 }
-                }
-              },
-              "to": { "$ref": "#/$defs/id" },
-              "arrival": { "$ref": "#/$defs/position" }
-            }
-          }
-        },
-        "monsterSpawns": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "additionalProperties": false,
-            "required": ["monster", "position"],
-            "properties": {
-              "area": { "type": "string", "description": "T-215: subárea da zona (ex.: Fazenda Abandonada)." },
-              "monster": { "$ref": "#/$defs/id" },
-              "position": { "$ref": "#/$defs/position" },
-              "count": { "type": "integer", "minimum": 1 },
-              "radius": { "type": "number", "minimum": 0 },
-              "level": { "type": "integer", "minimum": 1 },
-              "respawn": { "$ref": "#/$defs/seconds", "description": "Tempo até renascer (padrão 30 s)." }
-            }
-          }
+        "levels": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["min", "max"],
+          "description": "Faixa de nível mostrada ao jogador.",
+          "properties": { "min": { "type": "integer", "minimum": 1 }, "max": { "type": "integer", "minimum": 1 } }
         }
       }
     },

@@ -39,7 +39,7 @@ internal static partial class GameDataValidator
         var zones = c.Zones.GroupBy(z => z.Value.Id).ToDictionary(g => g.Key, g => g.First().Value, StringComparer.Ordinal);
         foreach (var e in c.Zones)
         {
-            ValidateZone(e, monsters, c.Arenas.GroupBy(a => a.Value.Id).ToDictionary(g => g.Key, g => g.First().Value), zones, errors);
+            ValidateZone(e, c.Arenas.GroupBy(a => a.Value.Id).ToDictionary(g => g.Key, g => g.First().Value), errors);
         }
 
         var arenaDefs = c.Arenas.GroupBy(a => a.Value.Id).ToDictionary(g => g.Key, g => g.First().Value, StringComparer.Ordinal);
@@ -86,61 +86,22 @@ internal static partial class GameDataValidator
     }
 
     /// <summary>
-    /// Zona (T-214): arena existe; nascimento, chegadas e surgimentos no chão; portões dentro do mapa, para zonas que existem,
-    /// sem chegada dentro de um portão do destino (senão volta na hora); zona segura sem monstros.
+    /// Zona (T-214, T-331): arena existe, nome, descanso só em zona segura, tempo do corpo e faixa de nível. O que é posição
+    /// (nascimento, portões, surgimentos, NPCs) vem do mapa e já foi conferido pelo <see cref="TiledMapReader"/> e pelo
+    /// <see cref="ZoneComposer"/>.
     /// </summary>
-    private static void ValidateZone(
-        Entry<ZoneDefinition> e,
-        HashSet<string> monsters,
-        Dictionary<string, ArenaDefinition> arenas,
-        Dictionary<string, ZoneDefinition> zones,
-        List<LoadError> errors)
+    private static void ValidateZone(Entry<ZoneDefinition> e, Dictionary<string, ArenaDefinition> arenas, List<LoadError> errors)
     {
         var x = e.Value;
         var ctx = new Ctx(e.File, e.Path, errors);
-        arenas.TryGetValue(x.Arena, out var arena);
-        if (arena is null) { ctx.Error("arena", $"Referência inexistente: arena '{x.Arena}'."); }
+        if (!arenas.ContainsKey(x.Arena)) { ctx.Error("arena", $"Referência inexistente: arena '{x.Arena}'."); }
         if (string.IsNullOrWhiteSpace(x.Name)) { ctx.Error("name", "Nome obrigatório."); }
-        CheckSpawn(ctx, "spawn", x.Spawn, arena);
         if (x.RestPerSecond < 0 || x.RestPerSecond > 1) { ctx.Error("restPerSecond", "Deve estar entre 0 e 1."); }
         if (x.Kind != ZoneKind.Safe && x.RestPerSecond > 0) { ctx.Error("restPerSecond", "Descanso só em zona segura."); }
         ctx.PositiveTicks("corpse", x.CorpseTicks);
-        if (x.Kind == ZoneKind.Safe && x.MonsterSpawns.Count > 0) { ctx.Error("monsterSpawns", "Zona segura não tem monstros."); }
-
-        for (var i = 0; i < x.Gates.Count; i++)
+        if (x.Levels is { } levels && (levels.Min < 1 || levels.Max < levels.Min))
         {
-            var g = x.Gates[i];
-            var field = $"gates[{i}]";
-            if (!(g.Area.Width > 0 && g.Area.Height > 0)) { ctx.Error(field + ".area", "Largura e altura devem ser maiores que 0."); }
-            if (arena is not null && (g.Area.X < 0 || g.Area.Y < 0 || g.Area.X + g.Area.Width > arena.Lines.Max(l => l.Length) || g.Area.Y + g.Area.Height > arena.Lines.Count))
-            {
-                ctx.Error(field + ".area", "Portão fora da arena.");
-            }
-
-            if (g.Area.Contains(x.Spawn.X, x.Spawn.Y)) { ctx.Error(field + ".area", "O nascimento da zona está dentro do portão."); }
-            if (!zones.TryGetValue(g.To, out var target))
-            {
-                ctx.Error(field + ".to", $"Referência inexistente: zona '{g.To}'.");
-                continue;
-            }
-
-            CheckSpawn(ctx, field + ".arrival", g.Arrival, arenas.GetValueOrDefault(target.Arena));
-            if (target.Gates.Any(tg => tg.Area.Contains(g.Arrival.X, g.Arrival.Y)))
-            {
-                ctx.Error(field + ".arrival", $"Chegada dentro de um portão de '{g.To}'.");
-            }
-        }
-
-        for (var i = 0; i < x.MonsterSpawns.Count; i++)
-        {
-            var m = x.MonsterSpawns[i];
-            var field = $"monsterSpawns[{i}]";
-            ctx.Exists(field + ".monster", m.Monster, monsters, "monstro");
-            CheckSpawn(ctx, field + ".position", m.Position, arena);
-            if (m.Count < 1) { ctx.Error(field + ".count", "Deve ser pelo menos 1."); }
-            if (m.Radius < 0) { ctx.Error(field + ".radius", "Não pode ser negativo."); }
-            if (m.Level is < 1) { ctx.Error(field + ".level", "Nível deve ser pelo menos 1."); }
-            ctx.PositiveTicks(field + ".respawn", m.RespawnTicks);
+            ctx.Error("levels", $"Faixa de nível inválida ({levels.Min}–{levels.Max}): mínimo ≥ 1 e máximo ≥ mínimo.");
         }
     }
 

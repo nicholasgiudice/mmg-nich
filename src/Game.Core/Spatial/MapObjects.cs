@@ -24,11 +24,22 @@ public sealed record MapSpawn
 
     /// <summary>Nível do monstro; null = o da definição.</summary>
     public int? Level { get; init; }
+
+    /// <summary>T-331: quantos monstros o ponto mantém (propriedade <c>count</c>, padrão 1).</summary>
+    public int Count { get; init; } = 1;
+
+    /// <summary>T-331: raio em tiles em volta do ponto onde eles nascem (propriedade <c>radius</c>, padrão 0).</summary>
+    public double Radius { get; init; }
+
+    /// <summary>T-331: tempo para renascer depois de morrer (propriedade <c>respawn</c> em segundos, padrão 30).</summary>
+    public int RespawnTicks { get; init; } = 600;
 }
 
 /// <summary>
 /// Área de evento lida da camada <c>areas</c> (T-051): altar, selo, teia... <see cref="Kind"/> é a classe do objeto no
-/// Tiled; as propriedades do objeto ficam em <see cref="Properties"/> (como texto) para quem usar a área.
+/// Tiled; as propriedades do objeto ficam em <see cref="Properties"/> (como texto) para quem usar a área. Classes com
+/// significado para as zonas (T-331): <c>subarea</c> (dá o nome da subárea aos pontos de surgimento dentro dela) e
+/// <c>npc</c> (NPC; propriedades <c>npc</c> e <c>shop</c>, conferidas na carga).
 /// </summary>
 public sealed record MapArea
 {
