@@ -1,6 +1,6 @@
 # Monstros da fase 3 com arte LPC (T-056)
 
-Situação em 2026-11-06: **os cinco monstros do gerador estão no jogo pela prévia**, a Fada reexportada nesse dia. Falta a aprovação do designer em movimento. O designer vai refazer as montagens depois; basta exportar por cima com os mesmos nomes.
+Situação em 2026-11-06: **concluída.** O designer aprovou em movimento os cinco monstros do gerador; o Ent Corrompido ficou como encomenda. O designer pode refazer as montagens depois; basta exportar por cima com os mesmos nomes.
 
 ## Amostra do gerador
 
