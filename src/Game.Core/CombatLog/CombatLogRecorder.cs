@@ -121,6 +121,13 @@ public sealed class CombatLogRecorder
         return new DeathSummary(victim, deathTick, related, bySource);
     }
 
+    /// <summary>
+    /// Acrescenta um aviso de fora da simulação (categoria <see cref="LogCategory.Sistema"/>), como as entradas e saídas
+    /// do grupo que chegam por mensagem de rede (T-311). <paramref name="origin"/> é o evento de quem anota (o cliente
+    /// define o seu; ele nunca passa pela simulação nem pela rede).
+    /// </summary>
+    public void Note(long tick, string text, GameEvent origin) => Append(new CombatLogEntry(tick, LogCategory.Sistema, text, [], origin));
+
     private void Append(CombatLogEntry entry)
     {
         _entries.Add(entry);

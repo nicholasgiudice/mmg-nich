@@ -26,6 +26,69 @@ public static class HudTheme
     private const int StonePanelMargin = 22;
     private static StyleBoxTexture? _stonePanel;
 
+    private const string UiDirectory = "res://assets/art/ui/";
+    private static readonly Dictionary<string, StyleBox?> UiStyles = new(StringComparer.Ordinal);
+
+    /// <summary>Texto claro dos painéis de pedra.</summary>
+    public static readonly Color StoneText = new(0.94f, 0.91f, 0.82f);
+
+    /// <summary>
+    /// 9-slice de uma peça do kit pedra e ouro (<c>assets/art/ui/&lt;file&gt;</c>), desenhada em 1×; null sem o arquivo.
+    /// </summary>
+    public static StyleBox? UiPiece(string file, int margin, float contentX, float contentY)
+    {
+        var key = $"{file}|{margin}|{contentX}|{contentY}";
+        if (UiStyles.TryGetValue(key, out var cached))
+        {
+            return cached;
+        }
+
+        var path = UiDirectory + file;
+        var texture = ResourceLoader.Exists(path) ? ResourceLoader.Load<Texture2D>(path) : null;
+        StyleBox? style = texture is null ? null : new StyleBoxTexture
+        {
+            Texture = texture,
+            TextureMarginLeft = margin,
+            TextureMarginRight = margin,
+            TextureMarginTop = margin,
+            TextureMarginBottom = margin,
+            ContentMarginLeft = contentX,
+            ContentMarginRight = contentX,
+            ContentMarginTop = contentY,
+            ContentMarginBottom = contentY,
+        };
+        UiStyles[key] = style;
+        return style;
+    }
+
+    /// <summary>Moldura fina de pedra (quadro de membro do grupo, T-311).</summary>
+    public static StyleBox MemberFrame() =>
+        UiPiece("frame_member.png", 9, 10, 7)
+        ?? new StyleBoxFlat { BgColor = Panel, ContentMarginLeft = 6, ContentMarginRight = 6, ContentMarginTop = 4, ContentMarginBottom = 4 };
+
+    /// <summary>Botão de pedra e ouro nos quatro estados (T-311); sem as peças, o botão fica com o tema padrão.</summary>
+    public static void StoneButton(Button button)
+    {
+        foreach (var (state, file) in new[] { ("normal", "button_normal.png"), ("hover", "button_hover.png"),
+                     ("pressed", "button_pressed.png"), ("disabled", "button_disabled.png"), ("focus", "button_hover.png") })
+        {
+            if (UiPiece(file, 9, 14, 6) is { } style)
+            {
+                button.AddThemeStyleboxOverride(state, style);
+            }
+        }
+
+        button.AddThemeColorOverride("font_color", StoneText);
+        button.AddThemeColorOverride("font_hover_color", Colors.White);
+        button.AddThemeColorOverride("font_pressed_color", StoneText);
+        button.AddThemeColorOverride("font_outline_color", Colors.Black);
+        button.AddThemeConstantOverride("outline_size", 4);
+    }
+
+    /// <summary>Coroa do líder do grupo (T-311); null sem o arquivo.</summary>
+    public static Texture2D? Crown() =>
+        ResourceLoader.Exists(UiDirectory + "crown.png") ? ResourceLoader.Load<Texture2D>(UiDirectory + "crown.png") : null;
+
     /// <summary>
     /// Painel de pedra com cantos dourados (kit pedra e ouro, T-086): 9-slice de <c>assets/art/ui/panel.png</c>,
     /// desenhado em 1×. Sem a textura (export sem o arquivo), devolve o painel escuro de sempre.
@@ -99,6 +162,7 @@ public static class HudTheme
         LogCategory.Morte => new Color(1.00f, 0.35f, 0.35f),
         LogCategory.Progressao => Xp,
         LogCategory.Itens => new Color(0.55f, 0.85f, 1f),
+        LogCategory.Sistema => new Color(0.95f, 0.80f, 0.45f),
         _ => new Color(0.85f, 0.85f, 0.85f),
     };
 

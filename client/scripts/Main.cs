@@ -72,6 +72,7 @@ public partial class Main : Node2D
     private Godot.Vector2? _statsLast;
     private float _statsMaxJump;
     private double _statsNextAt = 1;
+    private bool _rightWasDown;
 
     public override void _Ready()
     {
@@ -108,6 +109,16 @@ public partial class Main : Node2D
             var input = _input;
             input.TabCycle = (current, forward) => forward ? _hud.Battle.Next(current) : _hud.Battle.Previous(current);
             _hud.TargetChosen += input.Select;
+            if (authority is NetAuthority party)
+            {
+                // T-311: o painel e a janela do grupo só pedem; o servidor decide e manda o estado.
+                _hud.PartyPanel.InviteByName += party.PartyInviteName;
+                _hud.PartyPanel.Leave += party.PartyLeave;
+                _hud.PartyPanel.Kick += party.PartyKick;
+                _hud.PartyPanel.Select += input.Select;
+                _hud.InviteDialog.Responded += party.PartyRespond;
+                _hud.InviteEntity += party.PartyInviteEntity;
+            }
             _hud.HotbarKey = HotbarKey();
 
             _hud.SetContent(content);
@@ -190,7 +201,12 @@ public partial class Main : Node2D
                 {
                     // T-222: clique num item no chão pega (e não ataca); F pega o mais próximo ao alcance.
                     var itemUnderMouse = _worldView.PickGroundItemAt(mousePx);
-                    _input.Update(_authority, aim, hovered, _hud.IsPointerOverUi() || itemUnderMouse is not null);
+                    if (!_hud.IsTyping)
+                    {
+                        _input.Update(_authority, aim, hovered, _hud.IsPointerOverUi() || itemUnderMouse is not null);
+                    }
+
+                    OfferPartyInvite(mousePx, hovered);
                     var pick = itemUnderMouse is not null && !_hud.IsPointerOverUi() && Godot.Input.IsActionJustPressed(InputActions.Attack)
                         ? itemUnderMouse
                         : Godot.Input.IsActionJustPressed(InputActions.PickUp, exactMatch: true) ? _worldView.NearestPickableItem(_authority.ControlledEntity) : null;
@@ -293,7 +309,7 @@ public partial class Main : Node2D
     /// <summary>Esc: limpa o alvo se houver (a ação do PlayerInput); senão pausa/continua. R: reinicia com a mesma seed.</summary>
     private void HandleMatchKeys()
     {
-        if (_settings is null)
+        if (_settings is null || _hud.IsTyping)
         {
             return;
         }
@@ -386,9 +402,41 @@ public partial class Main : Node2D
         _overlay.Close();
     }
 
+    /// <summary>
+    /// T-311: botão direito sobre outro jogador (mundo aberto) abre o menu "Convidar para o grupo".
+    /// </summary>
+    private void OfferPartyInvite(Godot.Vector2 mousePx, EntityId? hovered)
+    {
+        var down = Godot.Input.IsMouseButtonPressed(MouseButton.Right);
+        var pressed = down && !_rightWasDown;
+        _rightWasDown = down;
+        if (!pressed || !_hud.PartyEnabled || _hud.IsPointerOverUi() || hovered is not { } id || _authority is null
+            || id == _authority.ControlledEntity || _authority.Latest is not { } latest)
+        {
+            return;
+        }
+
+        var unit = latest.Entities.FirstOrDefault(e => e.Id == id)?.TryGet<Game.Core.Combat.UnitInfo>();
+        if (unit is not null && unit.DefinitionId.StartsWith("class.", StringComparison.Ordinal))
+        {
+            _hud.OfferInvite(GetViewport().GetMousePosition(), id, unit.Name);
+        }
+    }
+
     /// <summary>Online (T-107): mapa a cada Welcome, mensagens de conexão e volta ao menu. Devolve true se há jogo para desenhar.</summary>
     private bool UpdateOnline(NetAuthority net, double delta)
     {
+        // T-311: o grupo só existe no mundo aberto (numa zona).
+        _hud.PartyEnabled = _zone is not null && net.Status == NetStatus.Playing;
+        if (_hud.PartyEnabled)
+        {
+            _hud.ShowParty(net.Party, net.ClockSeconds);
+            foreach (var message in net.TakePartyMessages())
+            {
+                _hud.PartyMessage(message);
+            }
+        }
+
         if (net.Status is NetStatus.Rejected or NetStatus.Disconnected)
         {
             if (_leaveAt < 0)
@@ -668,6 +716,30 @@ public partial class Main : Node2D
         if (verb is "click" or "rclick" or "dclick" or "hover" or "drag")
         {
             DemoMouse(verb, arg);
+            return;
+        }
+
+        // T-311: grupo pelo roteiro (teste com dois clientes): invite:nome, accept, decline, leave e kick:nome.
+        if (_authority is NetAuthority net && verb is "invite" or "accept" or "decline" or "leave" or "kick")
+        {
+            var invite = net.Party.ActiveInvite(net.ClockSeconds);
+            switch (verb)
+            {
+                case "invite":
+                    net.PartyInviteName(arg);
+                    break;
+                case "accept" or "decline" when invite is not null:
+                    net.PartyRespond(invite.InviteId, verb == "accept");
+                    break;
+                case "leave":
+                    net.PartyLeave();
+                    break;
+                case "kick" when net.Party.Others.FirstOrDefault(m => string.Equals(m.Name, arg, StringComparison.OrdinalIgnoreCase)) is { } member:
+                    net.PartyKick(member.MemberId);
+                    break;
+            }
+
+            GD.Print($"[party] {command}: grupo={net.Party.InParty} membros={net.Party.State?.Members.Length ?? 0} convite={(invite is null ? "-" : invite.FromName)}");
             return;
         }
 
