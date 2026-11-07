@@ -753,14 +753,18 @@ public partial class Hud : Control
         public UnitFrame(float width, bool showResource, bool showCast = false, bool compact = false, bool showXp = false)
         {
             MouseFilter = MouseFilterEnum.Ignore;
-            AddThemeStyleboxOverride("panel", new StyleBoxFlat
-            {
-                BgColor = HudTheme.Panel,
-                ContentMarginLeft = 6,
-                ContentMarginRight = 6,
-                ContentMarginTop = 4,
-                ContentMarginBottom = 4,
-            });
+            // T-086: o quadro do personagem e o do alvo usam o painel de pedra; os compactos (aliados) seguem escuros.
+            AddThemeStyleboxOverride("panel", compact
+                ? new StyleBoxFlat
+                {
+                    BgColor = HudTheme.Panel,
+                    ContentMarginLeft = 6,
+                    ContentMarginRight = 6,
+                    ContentMarginTop = 4,
+                    ContentMarginBottom = 4,
+                }
+                : HudTheme.StonePanel());
+            var barBorder = compact ? Colors.Black : HudTheme.BarBorderGold;
             var box = new VBoxContainer { MouseFilter = MouseFilterEnum.Ignore };
             box.AddThemeConstantOverride("separation", 2);
             AddChild(box);
@@ -771,23 +775,24 @@ public partial class Hud : Control
             _health.CustomMinimumSize = new Vector2(width, compact ? 12 : 18);
             _health.FontSize = compact ? 10 : 12;
             _health.MouseFilter = MouseFilterEnum.Ignore;
+            _health.BorderColor = barBorder;
             box.AddChild(_health);
 
             if (showResource)
             {
-                _resource = new HudBar { CustomMinimumSize = new Vector2(width, compact ? 8 : 12), FontSize = compact ? 0 : 10, MouseFilter = MouseFilterEnum.Ignore };
+                _resource = new HudBar { CustomMinimumSize = new Vector2(width, compact ? 8 : 12), FontSize = compact ? 0 : 10, MouseFilter = MouseFilterEnum.Ignore, BorderColor = barBorder };
                 box.AddChild(_resource);
             }
 
             if (showXp)
             {
-                _xp = new HudBar { CustomMinimumSize = new Vector2(width, 11), FontSize = 9, MouseFilter = MouseFilterEnum.Ignore, Visible = false };
+                _xp = new HudBar { CustomMinimumSize = new Vector2(width, 11), FontSize = 9, MouseFilter = MouseFilterEnum.Ignore, Visible = false, BorderColor = barBorder };
                 box.AddChild(_xp);
             }
 
             if (showCast)
             {
-                _cast = new HudBar { CustomMinimumSize = new Vector2(width, 14), FontSize = 10, MouseFilter = MouseFilterEnum.Ignore };
+                _cast = new HudBar { CustomMinimumSize = new Vector2(width, 14), FontSize = 10, MouseFilter = MouseFilterEnum.Ignore, BorderColor = barBorder };
                 box.AddChild(_cast);
             }
 

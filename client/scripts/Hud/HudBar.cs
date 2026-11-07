@@ -14,6 +14,9 @@ public partial class HudBar : Control
 
     public int FontSize { get; set; } = 12;
 
+    /// <summary>Cor do contorno (preto; dourado nos quadros de pedra, T-086).</summary>
+    public Color BorderColor { get; set; } = Colors.Black;
+
     /// <summary>Atualiza (redesenha só se algo mudou). Frações em 0..1; overlay começa onde o fill termina.</summary>
     public void Set(float fill, Color color, string text, float overlay = 0f)
     {
@@ -42,7 +45,7 @@ public partial class HudBar : Control
             DrawRect(new Rect2(new Vector2(size.X * start, 0), new Vector2(size.X * _overlay, size.Y)), OverlayColor);
         }
 
-        DrawRect(new Rect2(Vector2.Zero, size), Colors.Black, filled: false, width: 1f);
+        DrawRect(new Rect2(Vector2.Zero, size), BorderColor, filled: false, width: 1f);
         if (_text.Length > 0)
         {
             var font = ThemeDB.FallbackFont;

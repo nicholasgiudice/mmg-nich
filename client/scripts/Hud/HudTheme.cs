@@ -19,6 +19,45 @@ public static class HudTheme
     public static readonly Color Suggested = new(1f, 0.85f, 0.45f);
     public static readonly Color Warning = new(1f, 0.55f, 0.4f);
 
+    /// <summary>Borda dourada das barras nos quadros de pedra (kit pedra e ouro, T-086).</summary>
+    public static readonly Color BarBorderGold = new(0.80f, 0.64f, 0.26f);
+
+    private const string StonePanelPath = "res://assets/art/ui/panel.png";
+    private const int StonePanelMargin = 22;
+    private static StyleBoxTexture? _stonePanel;
+
+    /// <summary>
+    /// Painel de pedra com cantos dourados (kit pedra e ouro, T-086): 9-slice de <c>assets/art/ui/panel.png</c>,
+    /// desenhado em 1×. Sem a textura (export sem o arquivo), devolve o painel escuro de sempre.
+    /// </summary>
+    public static StyleBox StonePanel()
+    {
+        if (_stonePanel is not null)
+        {
+            return _stonePanel;
+        }
+
+        var texture = ResourceLoader.Exists(StonePanelPath) ? ResourceLoader.Load<Texture2D>(StonePanelPath) : null;
+        if (texture is null)
+        {
+            return new StyleBoxFlat { BgColor = Panel, ContentMarginLeft = 6, ContentMarginRight = 6, ContentMarginTop = 4, ContentMarginBottom = 4 };
+        }
+
+        _stonePanel = new StyleBoxTexture
+        {
+            Texture = texture,
+            TextureMarginLeft = StonePanelMargin,
+            TextureMarginRight = StonePanelMargin,
+            TextureMarginTop = StonePanelMargin,
+            TextureMarginBottom = StonePanelMargin,
+            ContentMarginLeft = 24,
+            ContentMarginRight = 24,
+            ContentMarginTop = 21,
+            ContentMarginBottom = 24,
+        };
+        return _stonePanel;
+    }
+
     public static Color Resource(string type) => Key(type) switch
     {
         "vigor" => new Color(0.90f, 0.45f, 0.20f),

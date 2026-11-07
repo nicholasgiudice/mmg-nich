@@ -10,6 +10,8 @@
 
 A T-310 criou o grupo no servidor: até 4 membros, convite, XP e saque divididos com quem está perto. Esta tarefa leva o grupo para a tela. O cliente só envia intenções e mostra o estado que o servidor manda (`AGENTS.md`).
 
+**Arte da interface (aprovada em 2026-11-06):** a janela de convite e o painel do grupo usam o kit pedra e ouro de `client/assets/art/ui/` (painel, moldura de membro, botão em quatro estados e a coroa do líder). Margens de 9-slice, uso e prévia em `tasks/reports/interface/kit-pedra-ouro.md`. O resto do HUD continua como está; aplicar o kit nele é outra tarefa.
+
 ## Requisitos
 
 1. **Convidar:** clicar com o botão direito em outro jogador abre um menu pequeno com "Convidar para o grupo". Também dá para convidar pelo nome, numa caixa de texto do painel do grupo.
