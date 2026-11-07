@@ -273,6 +273,7 @@ Refaz as telas do cliente com ícones (estilo dos RPGs clássicos, sem copiar ar
 | [T-083](trilha-interface/T-083-inventario-com-boneco.md) | Inventário com o boneco do personagem | Windows | Médio | 080 |
 | [T-084](trilha-interface/T-084-icone-do-item-no-chao.md) | Ícone do item no chão | Windows | Leve | 080 |
 | [T-085](trilha-interface/T-085-ocultar-debug-ctrl-f.md) | Esconder logs e debug; Ctrl+F mostra | Windows | Leve | — |
+| [T-086](trilha-interface/T-086-hud-pedra-ouro.md) | Quadros do personagem e do alvo no tema pedra e ouro (kit PixelLab) | Windows | Leve | kit pedra e ouro |
 
 ```text
 Interface:    T-080 ─┬─► T-081
