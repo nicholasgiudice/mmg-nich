@@ -45,6 +45,7 @@ public static class ContentLoader
             Threat = db.Threat,
             Fingerprint = db.Fingerprint,
             Zones = db.Zones,
+            Shops = db.Shops,
         };
     }
 }

@@ -70,6 +70,8 @@ public class ZoneMapEquivalenceTests
         var smith = Assert.Single(npcs, n => n.Npc == "npc.smith");
         Assert.Equal(new PositionDefinition(33, 9.5), smith.Position); // retângulo (1040, 288) 32×32 px: o centro
         Assert.Equal("Ferreiro", smith.Properties["name"]);
-        Assert.Null(smith.Shop);
+        Assert.Equal("shop.smith", smith.Shop); // T-321
+        Assert.Equal("shop.temple", Assert.Single(npcs, n => n.Npc == "npc.priest").Shop);
+        Assert.All(npcs.Where(n => n.Npc is not ("npc.smith" or "npc.priest")), n => Assert.Null(n.Shop));
     }
 }

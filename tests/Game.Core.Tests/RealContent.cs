@@ -28,6 +28,8 @@ internal static class RealContent
             Rules = db.Rules,
             Threat = db.Threat,
             Fingerprint = db.Fingerprint,
+            Zones = db.Zones,
+            Shops = db.Shops,
         };
     }
 }

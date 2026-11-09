@@ -43,7 +43,16 @@ public sealed class OpenZone
                 _slots.Add(slot);
             }
         }
+
+        // T-321: NPCs do mapa (sem vida nem IA; a loja vem da propriedade "shop").
+        foreach (var npc in definition.Npcs)
+        {
+            Npcs.Add(Core.Combat.Shops.Shop.SpawnNpc(World, npc));
+        }
     }
+
+    /// <summary>NPCs da zona (T-321), na ordem do mapa.</summary>
+    public List<Entity> Npcs { get; } = [];
 
     public ZoneDefinition Definition { get; }
 

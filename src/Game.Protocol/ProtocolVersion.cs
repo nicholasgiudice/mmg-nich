@@ -31,6 +31,9 @@ public static class ProtocolVersion
     /// 9 (T-320): componente <c>Wallet</c> (só o dono), quantidade (<c>Count</c>) nos itens, intenção <c>UseItem</c>, eventos
     /// <c>ItemUsed</c> e <c>GoldGained</c>, motivos novos em <c>ItemRejectReason</c>; saem os consumíveis e as cargas do
     /// <c>AbilityState</c>, as cargas restantes do <c>AbilityExecuted</c> e o motivo <c>NoCharges</c>.
+    /// 10 (T-321): componente <c>NpcInfo</c> (definição, nome e loja do NPC), intenções <c>Buy</c> e <c>Sell</c> (campo novo
+    /// <c>Quantity</c> no <c>NetIntent</c>) e eventos <c>ItemBought</c>, <c>ItemSold</c> e <c>ShopRejected</c>. As ofertas não vão
+    /// pela rede: o cliente lê <c>data/shops.json</c> (o fingerprint garante a mesma versão).
     /// </summary>
-    public const int Current = 9;
+    public const int Current = 10;
 }

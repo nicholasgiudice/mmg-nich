@@ -21,5 +21,6 @@ public static class SystemsRegistry
         b.AddSystem(SystemOrder.Death, new Systems.DeathSystem());
         b.AddSystem(SystemOrder.Progression, new Combat.Progression.ProgressionSystem()); // T-203
         b.AddSystem(SystemOrder.Items, new Combat.Items.ItemSystem()); // T-204
+        b.AddSystem(SystemOrder.Shops, new Combat.Shops.ShopSystem()); // T-321
     }
 }

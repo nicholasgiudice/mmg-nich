@@ -24,6 +24,8 @@ const string Usage = """
                               de zona sem parar. Em qualquer modo, no mundo aberto o bot morto pede para renascer.
       --party                 mundo aberto (T-310): os bots formam grupos de até rules.party.maxMembers em ordem
                               (o primeiro de cada bloco convida os outros pelo nome; os outros aceitam)
+      --shop                  mundo aberto (T-321): anda até o Templo e compra uma poção de vida; sem ouro, vende antes
+                              as poções iniciais. No fim sai a linha LOJA.
     """;
 
 var a = args.ToList();
@@ -58,6 +60,7 @@ var content = new ContentCatalog(db.Classes.Values, db.Abilities.Values, db.Stat
     Threat = db.Threat,
     Fingerprint = db.Fingerprint,
     Zones = db.Zones,
+    Shops = db.Shops,
 };
 var mix = new[] { "class.warrior", "class.archer", "class.mage", "class.cleric" };
 var options = new BotOptions(new Dictionary<string, string> { ["class.mage:explosion"] = "mage.elemental_blast" });
@@ -65,6 +68,7 @@ var clock = Stopwatch.StartNew();
 var tickets = Opt("--ticket", "").Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 var roam = a.Contains("--roam");
 var party = a.Contains("--party");
+var shop = a.Contains("--shop");
 var partySize = content.Rules.Party.MaxMembers;
 
 Console.WriteLine($"{count} bots ({strategy}) em {servers.Count} servidor(es), {perRoom} por sala, por até {duration:0} s; conteúdo {content.Fingerprint}");
@@ -77,6 +81,7 @@ for (var i = 0; i < count; i++)
     bots.Add(new NetBot(i, host, port, cls, strategy, content, options, clock, i < tickets.Length ? tickets[i] : null)
     {
         Roam = roam,
+        Shop = shop,
         PartyInvites = leader ? Enumerable.Range(i + 1, Math.Min(partySize - 1, count - i - 1)).Select(j => $"netbot{j}").ToArray() : [],
         AcceptPartyInvites = party && !leader,
     });
@@ -146,6 +151,12 @@ if (party)
 {
     Console.WriteLine($"GRUPO bots em grupo {bots.Count(b => b.PartySize > 1)}/{count} · tamanhos {string.Join(",", bots.Select(b => b.PartySize))} · "
         + $"estados recebidos {bots.Sum(b => b.PartyStates)} · recusas {bots.Sum(b => b.PartyRejections)}");
+}
+
+if (shop)
+{
+    Console.WriteLine($"LOJA chegaram ao NPC {bots.Count(b => b.ReachedShop)}/{count} · compraram {bots.Count(b => b.ShopBuys > 0)}/{count} · "
+        + $"compras {bots.Sum(b => b.ShopBuys)} · vendas {bots.Sum(b => b.ShopSales)} · recusas {bots.Sum(b => b.ShopRejections)}");
 }
 
 foreach (var b in bots)

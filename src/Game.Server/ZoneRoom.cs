@@ -32,7 +32,7 @@ namespace Game.Server;
 /// <see cref="ServerOptions.RestartAfterSeconds"/> e recomeça para quem está nela.</item>
 /// <item>Contas (T-212): com token de jogo, o personagem salvo é carregado fora do loop e entra quando chega; nasce com o
 /// build, o equipamento e o inventário salvos. É gravado (também fora do loop) ao sair, a cada
-/// <see cref="ServerOptions.SaveIntervalSeconds"/>, ao subir de nível, ao pegar item raro, no reinício da sala e na parada
+/// <see cref="ServerOptions.SaveIntervalSeconds"/>, ao subir de nível, ao pegar item raro, depois de comprar ou vender (T-321), no reinício da sala e na parada
 /// (<see cref="SaveAll"/>). Um personagem só entra uma vez; ao sair, a entidade some na hora (sem vaga reservada).</item>
 /// </list>
 /// </summary>
@@ -365,6 +365,8 @@ public sealed class ZoneRoom : ITransportHandler, IGameHost
             {
                 LevelUp l => (l.Entity, "nível"),
                 ItemPickedUp p when World.Find(p.Entity)?.TryGet<Inventory>()?[p.InventorySlot] is { Rarity: >= ItemRarity.Rare } => (p.Entity, "item raro"),
+                Core.Combat.Shops.ItemBought b => (b.Entity, "compra"), // T-321
+                Core.Combat.Shops.ItemSold s => (s.Entity, "venda"),
                 _ => (default(EntityId?), ""),
             };
             if (entity is { } id && _connections.Values.FirstOrDefault(c => c.CharacterId is not null && c.Slot is { } i && _slots[i].Entity?.Id == id) is { } owner)

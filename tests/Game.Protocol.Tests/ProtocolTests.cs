@@ -79,6 +79,8 @@ public class ProtocolTests(ITestOutputHelper output)
             new PickUpItemIntent(new EntityId(99), new EntityId(41)),
             new DropItemIntent(new EntityId(99), 29),
             new UseItemIntent(new EntityId(99), 4),
+            new BuyIntent(new EntityId(99), new EntityId(7), 12, 3),
+            new SellIntent(new EntityId(99), new EntityId(7), 28, 15),
         };
 
         for (var i = 0; i < intents.Length; i++)
@@ -94,6 +96,33 @@ public class ProtocolTests(ITestOutputHelper output)
         Assert.Null(new NetIntent(NetIntentKind.SpendAttributePoint, default, null, null, null, (Game.Core.Definitions.AttributeKind)99).ToIntent(me));
         Assert.Null(new NetIntent(NetIntentKind.UnequipItem, default, null, null, null, Slot: 6).ToIntent(me));
         Assert.Null(new NetIntent(NetIntentKind.PickUpItem, default, null, null, null).ToIntent(me));
+        Assert.Null(new NetIntent(NetIntentKind.Buy, default, null, null, null, Slot: 1, Quantity: 1).ToIntent(me)); // T-321: sem NPC
+        Assert.Null(new NetIntent(NetIntentKind.Sell, default, null, null, null, Slot: 1, Quantity: 1).ToIntent(me));
+    }
+
+    [Fact]
+    public void Npc_round_trips_with_and_without_shop()
+    {
+        var content = RealContent();
+        var world = WorldBuilder.CreateDefault(5, null, content);
+        foreach (var placement in content.Zones["zone.city"].Npcs)
+        {
+            Game.Core.Combat.Shops.Shop.SpawnNpc(world, placement);
+        }
+
+        var snap = world.Snapshot(SnapshotScope.Replicated);
+        var msg = RoundTrip(SnapshotMessage.From(snap));
+
+        Assert.Equal(6, msg.Entities.Length);
+        for (var i = 0; i < snap.Entities.Count; i++)
+        {
+            Assert.Equal(snap.Entities[i].Components.Select(Hash), msg.Entities[i].Components.Select(Hash));
+            var sent = snap.Entities[i].Components.OfType<Game.Core.Combat.Shops.NpcInfo>().Single();
+            var got = msg.Entities[i].Components.OfType<Game.Core.Combat.Shops.NpcInfo>().Single();
+            Assert.Equal((sent.DefinitionId, sent.Name, sent.Shop), (got.DefinitionId, got.Name, got.Shop));
+        }
+
+        Assert.Contains(msg.Entities, e => e.Components.OfType<Game.Core.Combat.Shops.NpcInfo>().Single().Shop is null);
     }
 
     [Fact]
@@ -274,6 +303,8 @@ public class ProtocolTests(ITestOutputHelper output)
             Rules = db.Rules,
             Threat = db.Threat,
             Fingerprint = db.Fingerprint,
+            Zones = db.Zones,
+            Shops = db.Shops,
         };
     }
 

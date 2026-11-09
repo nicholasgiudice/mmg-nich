@@ -152,6 +152,7 @@ public sealed record ServerOptions
             Threat = db.Threat,
             Fingerprint = db.Fingerprint,
             Zones = db.Zones,
+            Shops = db.Shops,
         };
     }
 

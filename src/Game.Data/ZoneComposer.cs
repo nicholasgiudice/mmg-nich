@@ -22,10 +22,36 @@ internal static class ZoneComposer
     /// <summary>Campos da zona (nome no JSON) que vêm do mapa e não podem estar no <c>zones.json</c>.</summary>
     public static readonly IReadOnlySet<string> FromMap = new HashSet<string>(StringComparer.Ordinal) { "spawn", "gates", "monsterSpawns", "npcs" };
 
+    /// <summary>
+    /// T-321: NPC só em zona segura, no chão (o centro do retângulo fora de parede) e, com <c>shop</c>, apontando para uma
+    /// loja de <c>data/shops.json</c>.
+    /// </summary>
+    private static void ValidateNpc(ZoneDefinition zone, ArenaDefinition map, NpcPlacementDefinition npc, HashSet<string> shops, List<LoadError> errors)
+    {
+        var path = $"layers[{TiledMapReader.AreasLayer}].objects[{npc.Name}]";
+        if (zone.Kind != ZoneKind.Safe)
+        {
+            errors.Add(new LoadError(map.Source!, path, $"NPC '{npc.Npc}' fora de zona segura: '{zone.Id}' tem monstros."));
+        }
+
+        var col = (int)Math.Floor(npc.Position.X);
+        var row = (int)Math.Floor(npc.Position.Y);
+        if (row < 0 || row >= map.Lines.Count || col < 0 || col >= map.Lines[row].Length || map.Lines[row][col] == '#')
+        {
+            errors.Add(new LoadError(map.Source!, path, $"NPC '{npc.Npc}' fora do chão: o centro ({npc.Position.X}, {npc.Position.Y}) é parede ou está fora do mapa."));
+        }
+
+        if (npc.Shop is { } shop && !shops.Contains(shop))
+        {
+            errors.Add(new LoadError(map.Source!, path, $"Loja '{shop}' não existe em data/shops.json."));
+        }
+    }
+
     public static void Compose(RawContent c, List<LoadError> errors)
     {
         var arenas = c.Arenas.GroupBy(a => a.Value.Id).ToDictionary(g => g.Key, g => g.First().Value, StringComparer.Ordinal);
         var zones = c.Zones.GroupBy(z => z.Value.Id).ToDictionary(g => g.Key, g => g.First().Value, StringComparer.Ordinal);
+        var shops = c.Shops.Select(s => s.Value.Id).ToHashSet(StringComparer.Ordinal);
 
         ArenaDefinition? MapOf(ZoneDefinition z) => arenas.GetValueOrDefault(z.Arena) is { Source: not null } a ? a : null;
 
@@ -96,6 +122,10 @@ internal static class ZoneComposer
                 Position = new PositionDefinition(a.Area.X + (a.Area.Width / 2), a.Area.Y + (a.Area.Height / 2)),
                 Properties = a.Properties.Where(p => p.Key is not ("npc" or "shop")).ToDictionary(p => p.Key, p => p.Value, StringComparer.Ordinal),
             }).ToList();
+            foreach (var npc in npcs)
+            {
+                ValidateNpc(zone, arena, npc, shops, errors);
+            }
 
             c.Zones[i] = entry with
             {

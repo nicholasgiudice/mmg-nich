@@ -86,8 +86,11 @@ public class ZoneLoaderTests
         Layer("areas", Obj("Toca", "subarea", 96, 64, 64, 32)),
         Layer("transitions", Obj("west", "transition", 32, 32, 32, 64, ("to", "zone.a"), ("arrival", "from_b"))));
 
+    /// <summary>T-321: a loja do NPC do mapa da cidade.</summary>
+    private const string Shops = """ "shops": [ { "id": "shop.smith", "name": "Ferreiro" } ] """;
+
     private static LoadResult Load(string zones, JsonObject? a = null, JsonObject? b = null) => GameDataLoader.LoadSources([
-        ("t.json", "{" + Monsters + ", \"zones\": [" + zones + "] }"),
+        ("t.json", "{" + Monsters + ", " + Shops + ", \"zones\": [" + zones + "] }"),
         ("maps/a.tmj", (a ?? CityMap()).ToJsonString()),
         ("maps/b.tmj", (b ?? FieldMap()).ToJsonString()),
     ]);
@@ -307,5 +310,29 @@ public class ZoneLoaderTests
 
             Assert.True(Distance(a.Position, fields.Spawn) >= 12, $"{a.Monster} perto da chegada"); // a chegada pelo portão é o nascimento
         }
+    }
+
+    // ---------- T-321: NPCs ----------
+
+    [Fact]
+    public void Npc_with_unknown_shop_is_an_error()
+    {
+        var city = Map(
+            Layer("spawns", Obj("spawn", "player_spawn", 48, 48), Obj("from_b", "player_spawn", 80, 80)),
+            Layer("areas", Obj("Feirante", "npc", 32, 32, 64, 64, ("npc", "npc.trader"), ("shop", "shop.nope"))),
+            Layer("transitions", Obj("east", "transition", 128, 32, 32, 64, ("to", "zone.b"))));
+        AssertError(Load(ZoneA + ", " + ZoneB, a: city), "maps/a.tmj", "objects[Feirante]", "Loja 'shop.nope' não existe");
+    }
+
+    [Fact]
+    public void Npc_outside_a_safe_zone_or_inside_a_wall_is_an_error()
+    {
+        var field = Map(
+            Layer("spawns", Obj("spawn", "player_spawn", 80, 48)),
+            Layer("areas", Obj("Eremita", "npc", 64, 32, 32, 32, ("npc", "npc.hermit")), Obj("Preso", "npc", 0, 0, 32, 32, ("npc", "npc.stuck"))),
+            Layer("transitions", Obj("west", "transition", 32, 32, 32, 64, ("to", "zone.a"), ("arrival", "from_b"))));
+        var r = Load(ZoneA + ", " + ZoneB, b: field);
+        AssertError(r, "maps/b.tmj", "objects[Eremita]", "fora de zona segura");
+        AssertError(r, "maps/b.tmj", "objects[Preso]", "fora do chão");
     }
 }

@@ -6,6 +6,7 @@ using Game.Core.Combat.Items;
 using Game.Core.Combat.Phases;
 using Game.Core.Combat.Progression;
 using Game.Core.Combat.Resources;
+using Game.Core.Combat.Shops;
 using Game.Core.Combat.Status;
 using Game.Core.Combat.Telegraphs;
 using Game.Core.Combat.Threat;
@@ -71,6 +72,9 @@ public static class EventCodecs
         [typeof(ItemRejected)] = 105,
         [typeof(ItemUsed)] = 106,
         [typeof(GoldGained)] = 107,
+        [typeof(ItemBought)] = 108,
+        [typeof(ItemSold)] = 109,
+        [typeof(ShopRejected)] = 110,
     };
 
     internal static void Write<TB>(ref MemoryPackWriter<TB> w, GameEvent e)
@@ -172,6 +176,9 @@ public static class EventCodecs
             case ItemRejected x: w.Id(x.Entity); w.E(x.Action); w.E(x.Reason); break;
             case ItemUsed x: w.Id(x.Entity); w.I(x.InventorySlot); w.S(x.BaseId); w.S(x.AbilityId); w.I(x.Remaining); break;
             case GoldGained x: w.Id(x.Entity); w.I(x.Amount); w.Id(x.Monster); break;
+            case ItemBought x: w.Id(x.Entity); w.Id(x.Npc); w.S(x.BaseId); w.I(x.Level); w.I(x.Quantity); w.I(x.Gold); break;
+            case ItemSold x: w.Id(x.Entity); w.Id(x.Npc); w.S(x.BaseId); w.I(x.InventorySlot); w.I(x.Quantity); w.I(x.Gold); break;
+            case ShopRejected x: w.Id(x.Entity); w.E(x.Action); w.E(x.Reason); break;
         }
     }
 
@@ -244,6 +251,9 @@ public static class EventCodecs
             105 => new ItemRejected(r.Id(), r.E<ItemAction>(), r.E<ItemRejectReason>()),
             106 => new ItemUsed(r.Id(), r.I(), r.S(), r.S(), r.I()),
             107 => new GoldGained(r.Id(), r.I(), r.Id()),
+            108 => new ItemBought(r.Id(), r.Id(), r.S(), r.I(), r.I(), r.I()),
+            109 => new ItemSold(r.Id(), r.Id(), r.S(), r.I(), r.I(), r.I()),
+            110 => new ShopRejected(r.Id(), r.E<ShopAction>(), r.E<ShopRejectReason>()),
             _ => throw new MemoryPackSerializationException($"Tag de evento desconhecida: {tag}"),
         };
         e.Tick = tick;

@@ -19,6 +19,9 @@ public sealed class GameDatabase
     /// <summary>Zonas do mundo aberto (T-214, seção "zones").</summary>
     public IReadOnlyDictionary<string, ZoneDefinition> Zones { get; init; } = new Dictionary<string, ZoneDefinition>();
 
+    /// <summary>Lojas dos NPCs (T-321, seção "shops").</summary>
+    public IReadOnlyDictionary<string, ShopDefinition> Shops { get; init; } = new Dictionary<string, ShopDefinition>();
+
     /// <summary>Itens base (T-204, seção "items").</summary>
     public IReadOnlyDictionary<string, ItemBaseDefinition> Items { get; }
 
