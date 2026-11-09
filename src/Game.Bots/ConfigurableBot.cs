@@ -83,7 +83,7 @@ public sealed class ConfigurableBot(BotPlan plan) : IBotController
         }
 
         var dashed = false;
-        var used = TryPotion(ctx, output) || TryUseAbilities(ctx, allowed, enemies, focus, fleeing, output, out dashed);
+        var used = TryPotion(ctx, output) || TryManaPotion(ctx, output) || TryUseAbilities(ctx, allowed, enemies, focus, fleeing, output, out dashed);
         if (!used && plan.UseBasicAttack)
         {
             dashed = TryBasic(ctx, enemies, focus, fleeing, output);
@@ -367,6 +367,44 @@ public sealed class ConfigurableBot(BotPlan plan) : IBotController
             {
                 output.Add(new UseItemIntent(ctx.Self.Id, slot));
                 _reactor.Reset("potion");
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// T-322: consumível que devolve o recurso do bot (poção de Mana) quando ele cai abaixo de <c>manaPotionBelow</c> (fração;
+    /// padrão 0 = desligado, para não mudar os testes que não pedem). Vale o primeiro espaço com um consumível cujo efeito é
+    /// <c>resource</c> no tipo de recurso do bot.
+    /// </summary>
+    private bool TryManaPotion(BotContext ctx, List<Intent> output)
+    {
+        var below = (float)ctx.Options.GetDouble(ctx.ClassId, "manaPotionBelow", 0);
+        if (below <= 0 || ctx.Self.TryGet<Inventory>() is not { } inv || ctx.Self.TryGet<ResourcePool>() is not { Max: > 0 } pool)
+        {
+            return false;
+        }
+
+        if (!_reactor.Ready(ctx, "mana_potion", pool.Current / pool.Max <= below))
+        {
+            return false;
+        }
+
+        for (var slot = 0; slot < inv.Capacity; slot++)
+        {
+            if (inv[slot] is not { } item || !ctx.World.Content.Items.TryGetValue(item.BaseId, out var def)
+                || def.UseAbility is not { } abilityId || !ctx.World.Content.Abilities.TryGetValue(abilityId, out var ability)
+                || !ability.Effects.OfType<ResourceEffect>().Any(e => e.Resource == pool.Type && e.Amount > 0))
+            {
+                continue;
+            }
+
+            if (Consumables.Validate(ctx.World, ctx.Self, slot, out _) is null)
+            {
+                output.Add(new UseItemIntent(ctx.Self.Id, slot));
+                _reactor.Reset("mana_potion");
                 return true;
             }
         }

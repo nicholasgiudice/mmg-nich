@@ -83,8 +83,13 @@ public class FieldsDesignTests
             $"um item a cada {minutesPerItem:F1} min ({items / minutes * 60:F1} por hora); {Report(pace)}");
     }
 
-    private static List<FieldGroups.LevelPace> Pace() =>
-        FieldGroups.Pace(g => Classes.Average(c => RunGroup(g, c.Class).TimeToWinMean));
+    private static List<FieldGroups.LevelPace> Pace() => CachedPace();
+
+    private static readonly Lazy<List<FieldGroups.LevelPace>> PaceCache =
+        new(() => FieldGroups.Pace(g => Classes.Average(c => RunGroup(g, c.Class).TimeToWinMean)));
+
+    /// <summary>O modelo de ritmo (uma vez por execução; também usado pelos testes de economia da T-322).</summary>
+    internal static List<FieldGroups.LevelPace> CachedPace() => PaceCache.Value;
 
     private static string Report(List<FieldGroups.LevelPace> pace) => string.Join("; ", pace.Select(p =>
         $"nv{p.Level}: {p.Minutes:F1} min ({p.XpPerMinute:F1} XP/min, {p.ItemsPerMinute * 60:F1} itens/h)"));
@@ -197,7 +202,10 @@ internal static class FieldGroups
     }
 
     /// <param name="ItemsPerMinute">Itens que caem por minuto (monstros mortos por minuto × chance da tabela da categoria).</param>
-    public sealed record LevelPace(int Level, double Minutes, double XpPerMinute, double ItemsPerMinute);
+    /// <param name="GoldPerMinute">T-322: ouro direto dos monstros por minuto (média da variação = o valor base).</param>
+    /// <param name="SalePerMinute">T-322: ouro por minuto vendendo tudo o que cai (valor médio da queda × <c>sellRatio</c>).</param>
+    /// <param name="Tier">Nível dos grupos caçados (min(nível, maior nível dos Campos)).</param>
+    public sealed record LevelPace(int Level, double Minutes, double XpPerMinute, double ItemsPerMinute, double GoldPerMinute = 0, double SalePerMinute = 0, int Tier = 0);
 
     /// <summary>Minutos em cada nível de 1 a 5 (modelo da doc de <c>Solo_player_reaches_level_4_in_35_to_40_minutes_and_level_5_in_55_to_65</c>).</summary>
     public static List<LevelPace> Pace(Func<FieldGroup, double> fightSeconds)
@@ -218,9 +226,48 @@ internal static class FieldGroups
             var xpPerMinute = xpPerGroup * groupsPerSecond * 60;
             var itemsPerGroup = hunted.Average(g => g.Points.Sum(p =>
                 p.Count * DesignHarness.Content.Rules.Items.Drops.For(DesignHarness.Content.Monsters[p.Monster].Rank).Chance));
-            result.Add(new LevelPace(level, rules.XpToNext(level) / xpPerMinute, xpPerMinute, itemsPerGroup * groupsPerSecond * 60));
+            var goldPerGroup = hunted.Average(g => g.Points.Sum(p => p.Count * Economy.GoldPerKill(p)));
+            var salePerGroup = hunted.Average(g => g.Points.Sum(p => p.Count * Economy.SalePerKill(p)));
+            result.Add(new LevelPace(level, rules.XpToNext(level) / xpPerMinute, xpPerMinute, itemsPerGroup * groupsPerSecond * 60,
+                goldPerGroup * groupsPerSecond * 60, salePerGroup * groupsPerSecond * 60, tier));
         }
 
         return result;
     }
+}
+
+/// <summary>T-322: valores esperados de ouro e de venda por monstro morto, lidos dos dados.</summary>
+internal static class Economy
+{
+    private static ContentCatalog C => DesignHarness.Content;
+
+    /// <summary>Ouro médio de um monstro do ponto (a variação ± é simétrica: a média é o valor base).</summary>
+    public static double GoldPerKill(MonsterSpawnDefinition p)
+    {
+        var rules = C.Rules.Progression;
+        return rules.GoldPerMonsterLevel * (p.Level ?? 1) * rules.GoldByRank.For(C.Monsters[p.Monster].Rank);
+    }
+
+    /// <summary>
+    /// Ouro médio da venda do que um monstro do ponto deixa cair: chance × itens × Σ peso da raridade × preço de venda de um
+    /// item da tabela no nível do monstro (média entre as bases da tabela).
+    /// </summary>
+    public static double SalePerKill(MonsterSpawnDefinition p)
+    {
+        var table = C.Rules.Items.Drops.For(C.Monsters[p.Monster].Rank);
+        var rarities = Enum.GetValues<ItemRarity>();
+        var total = rarities.Sum(r => table.Rarity.For(r));
+        if (table.Items.Count == 0 || total <= 0)
+        {
+            return 0;
+        }
+
+        var perItem = rarities.Sum(r => table.Rarity.For(r) / total
+            * table.Items.Average(id => Game.Core.Combat.Shops.Shop.SellPriceOf(C, new Game.Core.Combat.Items.ItemInstance(id, p.Level ?? 1, r, []))));
+        return table.Chance * table.Count * perItem;
+    }
+
+    /// <summary>Preço de compra de uma oferta da loja pelo item e nível.</summary>
+    public static int Price(string shop, string item, int level = 1) =>
+        Game.Core.Combat.Shops.Shop.PriceOf(C, C.Shops[shop].Offers.Single(o => o.Item == item && o.Level == level));
 }

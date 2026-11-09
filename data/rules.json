@@ -27,7 +27,7 @@
       "xpCurveExponent": 1.8,
       "xpPerMonsterLevel": 6,
       "xpByRank": { "normal": 1, "elite": 5, "boss": 30 },
-      "goldPerMonsterLevel": 2,
+      "goldPerMonsterLevel": 1,
       "goldByRank": { "normal": 1, "elite": 4, "boss": 20 },
       "goldVariance": 0.2,
       "xpBonusPerLevelAbove": 0.1,

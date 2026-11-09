@@ -7,7 +7,7 @@
       "type": "consumable",
       "stack": 20,
       "useAbility": "item.minor_healing_potion",
-      "price": 10
+      "price": 15
     },
     {
       "id": "consumable.minor_mana_potion",
@@ -15,7 +15,7 @@
       "type": "consumable",
       "stack": 20,
       "useAbility": "item.minor_mana_potion",
-      "price": 10
+      "price": 15
     },
     {
       "id": "weapon.sword",
