@@ -27,4 +27,25 @@ O designer pediu em 2026-11-09 para levar as janelas do personagem ao kit pedra 
 
 ## Resultado
 
-_(preencher ao concluir)_
+**Feito** (Windows, 2026-11-09). Aprovado pelo designer.
+
+**Opções.** Quatro chamadas de `create_image_pro`, todas com `panel.png` como referência de estilo: duas de moldura de janela com placa de título (160×128, 4 candidatas cada), uma de nicho para o boneco (128×160, 4 candidatas) e uma de espaço de equipamento (44×44, 25 candidatas). Pranchas em `tasks/reports/interface/equip-amostra/` (`prancha-janelas.png`, `prancha-nichos.png`, `prancha-espacos.png`). O designer escolheu **janela 5** (`janela-b-1.png`), **nicho 1** e **espaço 3**.
+
+**Peças** (`client/assets/art/ui/`):
+- `window_frame.png` (153×115): a janela 5 sem a placa; a borda de cima embaixo da placa foi refeita repetindo um trecho da própria borda. 9-slice com margem de 18 px.
+- `window_title.png` (68×20): a placa, recortada da mesma imagem. 9-slice com margem de 6 px; estica com o texto.
+- `doll_niche.png` (108×140): o nicho 1, recortado; desenhado em 2× atrás da figura (que está em 3×).
+- `equip_slot.png` (37×39): o espaço 3, recortado. 9-slice com borda de 9 px.
+
+**No cliente.**
+- `HudTheme`: `WindowFrame()`, `WindowTitlePlate()`, `EquipSlot()` e `DollNiche()`; todas devolvem null sem o arquivo.
+- `ProgressionPanel`: `StoneWindow` (virtual, falso por padrão) troca o painel escuro pela moldura de pedra, e `WindowTitle(texto)` põe o título na placa, por cima da borda de cima. Só o `InventoryPanel` liga a moldura agora; as T-097 e T-098 ligam a das telas de habilidades e de atributos.
+- `InventoryPanel`: nicho atrás do boneco; espaços do boneco de 50 px (borda de pedra de 9 px em volta do ícone de 32 px, em 1×), com a raridade num contorno fino por dentro da pedra e o nível no canto.
+- **Ajuste pedido pelo designer:** o espaço da armadura cobria o rosto do boneco. Ele foi para a coluna da direita (armadura em cima, acessório embaixo), espelhando mãos e arma à esquerda, e a figura subiu 24 px para os pés não ficarem sob o espaço das botas.
+- Sem as peças, a janela volta ao painel escuro e aos quadrados de antes. Equipar, desequipar e largar não mudaram.
+
+**Captura:** `tasks/reports/interface/t089-local.png` (partida local, Guerreiro, tela cheia).
+
+**Custo:** 55 gerações da assinatura.
+
+**Pendências:** a grade da mochila, o ouro e o resumo de dano/armadura continuam no estilo antigo (T-099). Branch feita a partir de `docs/tarefas-interface-telas`, não da T-088: ao integrar as duas, o `CREDITS.md` pode pedir resolução manual (as duas acrescentam uma linha no mesmo ponto da tabela).

@@ -21,7 +21,13 @@ public partial class InventoryPanel : ProgressionPanel
     private const int Columns = 6;
     private const float SlotSize = 42f;
     private const float DollWidth = 250f;
-    private const float DollHeight = 270f;
+    private const float DollHeight = 290f;
+
+    /// <summary>Espaço do boneco (T-089): borda de pedra de 9 px em volta do ícone de 32 px, em 1×.</summary>
+    private const float EquipSlotSize = 50f;
+
+    /// <summary>Zoom inteiro do nicho de pedra atrás do boneco.</summary>
+    private const int NicheZoom = 2;
 
     /// <summary>Zoom inteiro da figura (sem borrão).</summary>
     private const int FigureZoom = 3;
@@ -30,6 +36,8 @@ public partial class InventoryPanel : ProgressionPanel
     private const string DragEquipped = "equipped";
 
     private static SpriteCatalog? s_sprites;
+
+    protected override bool StoneWindow => true;
 
     /// <summary>Última posição do mouse vista pelos eventos (para saber se o item foi solto fora da janela).</summary>
     private Vector2 _lastMouse;
@@ -61,7 +69,7 @@ public partial class InventoryPanel : ProgressionPanel
 
     protected override void Build(VBoxContainer box, EntitySnapshot self)
     {
-        box.AddChild(Title("Inventário"));
+        box.AddChild(WindowTitle("Inventário"));
         var inventory = self.TryGet<Inventory>();
         var equipment = self.TryGet<Equipment>();
         var classId = self.TryGet<UnitInfo>()?.DefinitionId;
@@ -118,7 +126,7 @@ public partial class InventoryPanel : ProgressionPanel
         columns.AddChild(bag);
     }
 
-    /// <summary>A figura da classe (parada, de frente) com os 6 espaços em volta: cabeça em cima, peito no meio, mãos e arma de um lado, acessório do outro, pés embaixo.</summary>
+    /// <summary>A figura da classe (parada, de frente) com os 6 espaços em volta: cabeça em cima, mãos e arma à esquerda, peito e acessório à direita (fora da figura, T-089), pés embaixo.</summary>
     private Control Doll(EntitySnapshot self, Equipment equipment, string? classId)
     {
         s_sprites ??= SpriteCatalog.Load();
@@ -127,25 +135,30 @@ public partial class InventoryPanel : ProgressionPanel
             CustomMinimumSize = new Vector2(DollWidth, DollHeight),
             Sprite = classId is null ? null : s_sprites.For(classId),
             Zoom = FigureZoom,
+            Niche = HudTheme.DollNiche(),
+            NicheZoom = NicheZoom,
         };
-        var center = DollWidth / 2 - SlotSize / 2;
+        var slotStyle = HudTheme.EquipSlot();
+        var size = slotStyle is null ? SlotSize : EquipSlotSize;
+        var center = DollWidth / 2 - size / 2;
         var positions = new Dictionary<EquipSlot, Vector2>
         {
             [EquipSlot.Head] = new(center, 4),
-            [EquipSlot.Chest] = new(center, 150),
+            [EquipSlot.Chest] = new(DollWidth - size - 6, 120),
             [EquipSlot.Hands] = new(6, 120),
-            [EquipSlot.Weapon] = new(6, 172),
-            [EquipSlot.Accessory] = new(DollWidth - SlotSize - 6, 146),
-            [EquipSlot.Feet] = new(center, DollHeight - SlotSize - 4),
+            [EquipSlot.Weapon] = new(6, 176),
+            [EquipSlot.Accessory] = new(DollWidth - size - 6, 176),
+            [EquipSlot.Feet] = new(center, DollHeight - size - 4),
         };
         foreach (var (slot, position) in positions)
         {
             var item = equipment[slot];
             var target = slot;
-            doll.AddChild(new ItemSlotButton(Content, item, SlotSize, empty: Silhouette(slot),
+            doll.AddChild(new ItemSlotButton(Content, item, size, empty: Silhouette(slot),
                 item is null ? $"{ItemText.SlotName(slot)}: vazio" : ItemText.Tooltip(Content, item, classId, null, isEquipped: true))
             {
                 Position = position,
+                Frame = slotStyle,
                 SlotLabel = ItemText.SlotName(slot),
                 DragData = item is null ? null : new Godot.Collections.Dictionary { [DragEquipped] = (int)slot },
                 DoubleClick = item is null ? null : () => Send?.Invoke(new UnequipItemIntent(self.Id, target)),
@@ -203,6 +216,11 @@ public partial class InventoryPanel : ProgressionPanel
 
         public int Zoom { get; init; } = 3;
 
+        /// <summary>Nicho de pedra atrás da figura (T-089); null = fundo liso de antes.</summary>
+        public Texture2D? Niche { get; init; }
+
+        public int NicheZoom { get; init; } = 2;
+
         public override void _Ready()
         {
             TextureFilter = TextureFilterEnum.Nearest;
@@ -211,8 +229,16 @@ public partial class InventoryPanel : ProgressionPanel
 
         public override void _Draw()
         {
-            DrawRect(new Rect2(Vector2.Zero, Size), new Color(0.13f, 0.15f, 0.12f, 0.9f));
-            DrawRect(new Rect2(Vector2.Zero, Size), new Color(1, 1, 1, 0.1f), filled: false);
+            if (Niche is not null)
+            {
+                var size = Niche.GetSize() * NicheZoom;
+                DrawTextureRect(Niche, new Rect2(((Size - size) / 2).Floor(), size), tile: false);
+            }
+            else
+            {
+                DrawRect(new Rect2(Vector2.Zero, Size), new Color(0.13f, 0.15f, 0.12f, 0.9f));
+                DrawRect(new Rect2(Vector2.Zero, Size), new Color(1, 1, 1, 0.1f), filled: false);
+            }
             if (Sprite?.For("idle") is not { } idle)
             {
                 return;
@@ -220,7 +246,7 @@ public partial class InventoryPanel : ProgressionPanel
 
             var strip = idle.For(SpriteDirection.Down);
             var frame = strip.Frame(0);
-            var feet = new Vector2(Size.X / 2, Size.Y - 34);
+            var feet = new Vector2(Size.X / 2, Size.Y - 58); // acima do espaço dos pés
             DrawTextureRectRegion(Sprite.Texture, new Rect2(feet - strip.Pivot * Zoom, frame.Size * Zoom), frame);
         }
     }
@@ -254,6 +280,9 @@ public partial class InventoryPanel : ProgressionPanel
             Flat = true;
             GuiInput += OnGuiInput;
         }
+
+        /// <summary>Moldura de pedra do espaço (T-089); o ícone vai na área de dentro, em 1×. Null = quadrado de antes.</summary>
+        public StyleBox? Frame { get; init; }
 
         /// <summary>Item que a classe não usa: ícone esmaecido e um X.</summary>
         public bool Unusable { get; init; }
@@ -349,8 +378,14 @@ public partial class InventoryPanel : ProgressionPanel
         public override void _Draw()
         {
             var rect = new Rect2(Vector2.Zero, Size);
-            DrawRect(rect, new Color(0.1f, 0.1f, 0.12f, 0.95f));
             var font = ThemeDB.FallbackFont;
+            if (Frame is not null)
+            {
+                DrawFramed(rect, font);
+                return;
+            }
+
+            DrawRect(rect, new Color(0.1f, 0.1f, 0.12f, 0.95f));
             if (_item is null)
             {
                 if (_empty is not null)
@@ -382,6 +417,42 @@ public partial class InventoryPanel : ProgressionPanel
             if (Unusable)
             {
                 DrawLine(new Vector2(6, 6), Size - new Vector2(6, 6), new Color(1f, 0.4f, 0.35f, 0.8f), 2f);
+            }
+        }
+
+        /// <summary>Espaço de pedra: a moldura em volta, a raridade na borda de dentro, o ícone em 1× no meio.</summary>
+        private void DrawFramed(Rect2 rect, Font font)
+        {
+            Frame!.Draw(GetCanvasItem(), rect);
+            var inner = rect.Grow(-Frame.GetMargin(Side.Left));
+            if (_item is null)
+            {
+                if (_empty is not null)
+                {
+                    DrawTextureRect(_empty, inner, tile: false, new Color(0.8f, 0.85f, 0.9f, 0.16f));
+                }
+
+                if (_dropHover)
+                {
+                    DrawRect(inner.Grow(1), AcceptColor, filled: false, width: 2f);
+                }
+
+                return;
+            }
+
+            var color = ItemText.RarityColor(_item.Rarity);
+            DrawRect(inner, new Color(color, 0.18f));
+            if (IconCatalog.Shared.For(_item.BaseId) is { } icon)
+            {
+                DrawTextureRect(icon, inner, tile: false, Unusable ? new Color(1, 1, 1, 0.35f) : Colors.White);
+            }
+
+            DrawRect(inner.Grow(1), _dropHover ? AcceptColor : color, filled: false, width: _dropHover || IsHovered() ? 2f : 1f);
+            DrawString(font, inner.Position + new Vector2(1, inner.Size.Y - 1),
+                _item.Level.ToString(System.Globalization.CultureInfo.InvariantCulture), HorizontalAlignment.Left, -1, 9, new Color(1, 1, 1, 0.7f));
+            if (Unusable)
+            {
+                DrawLine(inner.Position + new Vector2(3, 3), inner.End - new Vector2(3, 3), new Color(1f, 0.4f, 0.35f, 0.8f), 2f);
             }
         }
 
