@@ -110,15 +110,6 @@ public sealed class AbilityState : IComponent, IReplicated
 
     public bool IsCasting => Cast is not null;
 
-    /// <summary>
-    /// Consumíveis (T-017, <c>ClassDefinition.Consumables</c>): conhecidos e usáveis como qualquer habilidade, mas separados de
-    /// <see cref="Known"/> (que lista só as habilidades de classe) para cliente e bots distinguirem.
-    /// </summary>
-    public List<string> Consumables { get; } = new();
-
-    /// <summary>Cargas já gastas por habilidade (ausente = 0). Restantes = <c>AbilityDefinition.Charges</c> - gastas.</summary>
-    public SortedDictionary<string, int> ChargesUsed { get; } = new(StringComparer.Ordinal);
-
     // Criados sob demanda: o protótipo (tudo no NH1, sem cargas por recarga) não paga a alocação a cada snapshot.
     private SortedDictionary<string, int>? _ranks;
     private SortedDictionary<string, int>? _cooldownChargesSpent;
@@ -138,7 +129,7 @@ public sealed class AbilityState : IComponent, IReplicated
     /// <summary>Há cargas por recarga em uso (sem criar o dicionário).</summary>
     public bool HasCooldownChargesSpent => _cooldownChargesSpent is { Count: > 0 };
 
-    public bool Knows(string abilityId) => Known.Contains(abilityId) || Consumables.Contains(abilityId);
+    public bool Knows(string abilityId) => Known.Contains(abilityId);
 
     /// <summary>NH da habilidade (T-060); 1 quando não definido.</summary>
     public int RankOf(string abilityId) => _ranks is not null && _ranks.TryGetValue(abilityId, out var r) ? r : 1;
@@ -158,10 +149,6 @@ public sealed class AbilityState : IComponent, IReplicated
             ? ability.CooldownCharges - (_cooldownChargesSpent is not null && _cooldownChargesSpent.TryGetValue(ability.Id, out var spent) ? spent : 0)
             : CooldownRemaining(ability.Id, currentTick) > 0 ? 0 : 1;
 
-    /// <summary>Usos restantes da habilidade, ou null se ilimitada.</summary>
-    public int? ChargesRemaining(AbilityDefinition ability) =>
-        ability.Charges is { } max ? Math.Max(0, max - (ChargesUsed.TryGetValue(ability.Id, out var u) ? u : 0)) : null;
-
     public bool IsBasicAttack(string abilityId) => BasicAttackId == abilityId;
 
     public long CooldownRemaining(string abilityId, long currentTick) =>
@@ -171,12 +158,6 @@ public sealed class AbilityState : IComponent, IReplicated
     {
         var c = new AbilityState { BasicAttackId = BasicAttackId, Cast = Cast?.Clone() };
         c.Known.AddRange(Known);
-        c.Consumables.AddRange(Consumables);
-        foreach (var kv in ChargesUsed)
-        {
-            c.ChargesUsed[kv.Key] = kv.Value;
-        }
-
         foreach (var kv in ReadyAtTick)
         {
             c.ReadyAtTick[kv.Key] = kv.Value;
@@ -204,17 +185,6 @@ public sealed class AbilityState : IComponent, IReplicated
         }
 
         foreach (var kv in ReadyAtTick)
-        {
-            hasher.Add(kv.Key);
-            hasher.Add(kv.Value);
-        }
-
-        foreach (var k in Consumables)
-        {
-            hasher.Add(k);
-        }
-
-        foreach (var kv in ChargesUsed)
         {
             hasher.Add(kv.Key);
             hasher.Add(kv.Value);

@@ -129,10 +129,15 @@
       "y": 340,
       "source": "pixellab:cleric.miracle#0"
     },
-    "item.minor_healing_potion": {
+    "consumable.minor_healing_potion": {
       "x": 34,
       "y": 102,
       "source": "P_Red01.png"
+    },
+    "consumable.minor_mana_potion": {
+      "x": 204,
+      "y": 204,
+      "source": "P_Red01.png (recolorido para azul, T-320)"
     },
     "weapon.sword": {
       "x": 68,

@@ -9,10 +9,14 @@ namespace Game.Core.Combat;
 
 public sealed record AbilityCheck(AbilityRejectReason? Reason, AbilityDefinition? Ability, TargetResolution? Resolution);
 
-/// <summary>Validação de uma tentativa de uso. Ordem: vivo, conjurando, gates, conhecida, cargas, recarga, recurso, alvo, alcance, LoS.</summary>
+/// <summary>Validação de uma tentativa de uso. Ordem: vivo, conjurando, gates, conhecida, recarga, recurso, alvo, alcance, LoS.</summary>
 public static class AbilityValidator
 {
-    public static AbilityCheck Validate(World world, Entity caster, string abilityId, EntityId? target, Vector2? aim)
+    /// <param name="itemUse">
+    /// T-320: habilidade de um consumível (<c>UseItemIntent</c>): não precisa estar entre as conhecidas; o resto da validação
+    /// (recarga, recurso, gates, alvo) vale igual.
+    /// </param>
+    public static AbilityCheck Validate(World world, Entity caster, string abilityId, EntityId? target, Vector2? aim, bool itemUse = false)
     {
         if (!caster.IsAlive)
         {
@@ -34,14 +38,9 @@ public static class AbilityValidator
             return new AbilityCheck(gate, ability, null);
         }
 
-        if (st is null || ability is null || !st.Knows(abilityId))
+        if (st is null || ability is null || !(itemUse || st.Knows(abilityId)))
         {
             return new AbilityCheck(AbilityRejectReason.UnknownAbility, ability, null);
-        }
-
-        if (st.ChargesRemaining(ability) is 0)
-        {
-            return new AbilityCheck(AbilityRejectReason.NoCharges, ability, null);
         }
 
         if (st.IsOnCooldown(ability, world.Tick))
@@ -82,6 +81,10 @@ public sealed class AbilitySystem : ISimulationSystem
             if (intent is UseAbilityIntent use)
             {
                 HandleUse(world, use);
+            }
+            else if (intent is UseItemIntent item)
+            {
+                Items.Consumables.Handle(world, item);
             }
         }
     }
@@ -211,6 +214,16 @@ public sealed class AbilitySystem : ISimulationSystem
         Execute(world, caster, st, check, use.Target, use.AimPoint);
     }
 
+    /// <summary>
+    /// T-320: executa a habilidade de um consumível, já validada (<c>itemUse: true</c>). Sempre instantânea, no próprio
+    /// personagem; a recarga fica em <see cref="AbilityState.ReadyAtTick"/> pelo id da habilidade.
+    /// </summary>
+    internal static void ExecuteItemAbility(World world, Entity caster, AbilityCheck check)
+    {
+        world.Events.Publish(new AbilityStarted(caster.Id, check.Ability!.Id, 0, world.Tick, null, null));
+        Execute(world, caster, caster.Get<AbilityState>(), check, null, null);
+    }
+
     private static void Execute(World world, Entity caster, AbilityState st, AbilityCheck check, EntityId? target, Vector2? aim)
     {
         var ability = check.Ability!;
@@ -243,14 +256,9 @@ public sealed class AbilitySystem : ISimulationSystem
             st.ReadyAtTick[ability.Id] = ready;
         }
 
-        if (ability.Charges is not null)
-        {
-            st.ChargesUsed[ability.Id] = (st.ChargesUsed.TryGetValue(ability.Id, out var used) ? used : 0) + 1;
-        }
-
         world.Events.Publish(new AbilityExecuted(
             caster.Id, ability.Id, res.Targets.Select(t => t.Id).ToList(), costResource, costAmount,
-            st.IsBasicAttack(ability.Id), ready, st.ChargesRemaining(ability)));
+            st.IsBasicAttack(ability.Id), ready));
 
         var rank = st.RankOf(ability.Id);
         var power = world.Combat.ConsumeAbilityPower(world, caster, ability.Id); // T-061: fortalecer o próximo uso

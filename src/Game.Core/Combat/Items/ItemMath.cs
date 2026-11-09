@@ -114,7 +114,8 @@ public static class ItemMath
                 throw new InvalidOperationException($"Item inicial '{start.Item}' de {cls.Id} não está no catálogo (faltou passar os itens?)");
             }
 
-            equipment[def.Slot] = ItemInstance.Common(def.Id, start.Level);
+            equipment[def.Slot ?? throw new InvalidOperationException($"Item inicial '{start.Item}' de {cls.Id} não é equipamento")] =
+                ItemInstance.Common(def.Id, start.Level);
         }
 
         return equipment;

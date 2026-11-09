@@ -142,7 +142,9 @@ public class ProgressionContentTests
         var tables = new[] { d.Normal, d.Elite, d.Boss };
         Assert.All(tables.SelectMany(t => t.Items), id => Assert.True(Db.Items.ContainsKey(id), id));
         Assert.All(tables, t => Assert.Equal(t.Items.Count, t.Items.Distinct().Count()));
-        Assert.All(Db.Items.Keys, id => Assert.Contains(tables, t => t.Items.Contains(id))); // todo item cai de algum lugar
+        // Todo equipamento cai de algum lugar; consumíveis (T-320) não caem: vêm do inventário inicial e da loja (T-321).
+        Assert.All(Db.Items.Values.Where(i => !i.IsConsumable), i => Assert.Contains(tables, t => t.Items.Contains(i.Id)));
+        Assert.All(tables.SelectMany(t => t.Items), id => Assert.False(Db.Items[id].IsConsumable, id));
     }
 
     // ---------- monstros ----------

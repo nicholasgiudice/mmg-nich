@@ -196,11 +196,6 @@ internal static partial class GameDataValidator
             ctx.Exists($"abilities[{i}]", x.Abilities[i], refs.Abilities, "habilidade");
         }
 
-        for (var i = 0; i < x.Consumables.Count; i++)
-        {
-            ctx.Exists($"consumables[{i}]", x.Consumables[i], refs.Abilities, "habilidade");
-        }
-
         ValidateResourceRules(x, ctx);
     }
 
@@ -250,7 +245,6 @@ internal static partial class GameDataValidator
             ctx.NonNegative("cost.amount", cost.Amount);
         }
 
-        if (x.Charges is { } charges && charges < 1) { ctx.Error("charges", "Deve ser pelo menos 1 (ausente = ilimitado)."); }
         ValidateTargeting(x.Targeting, ctx.At(".targeting"));
         if (x.Telegraph is { } tg) { ValidateTelegraph(tg, ctx.At(".telegraph")); }
         ValidateEffects(x.Effects, ctx, "effects", refs);
@@ -533,6 +527,11 @@ internal static partial class GameDataValidator
         c.NonNegative("xpByRank.normal", p.XpByRank.Normal);
         c.NonNegative("xpByRank.elite", p.XpByRank.Elite);
         c.NonNegative("xpByRank.boss", p.XpByRank.Boss);
+        c.NonNegative("goldPerMonsterLevel", p.GoldPerMonsterLevel);
+        c.NonNegative("goldByRank.normal", p.GoldByRank.Normal);
+        c.NonNegative("goldByRank.elite", p.GoldByRank.Elite);
+        c.NonNegative("goldByRank.boss", p.GoldByRank.Boss);
+        if (p.GoldVariance is < 0 or > 1) { c.Error("goldVariance", "Deve estar em 0..1."); }
         c.NonNegative("xpBonusPerLevelAbove", p.XpBonusPerLevelAbove);
         c.NonNegative("xpMaxBonus", p.XpMaxBonus);
         if (p.XpPenaltyPerLevelBelow is < 0 or > 1) { c.Error("xpPenaltyPerLevelBelow", "Deve estar em 0..1."); }

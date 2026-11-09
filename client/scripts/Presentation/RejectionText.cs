@@ -27,7 +27,6 @@ public static class RejectionText
         AbilityRejectReason.InvalidTarget => "Alvo inválido",
         AbilityRejectReason.OutOfRange => "Fora de alcance",
         AbilityRejectReason.NoLineOfSight => "Sem linha de visão",
-        AbilityRejectReason.NoCharges => "Sem cargas",
         _ => reason.ToString(),
     };
 

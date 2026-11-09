@@ -75,16 +75,19 @@ public class PrototypeContentTests
     }
 
     [Fact]
-    public void Every_class_has_the_minor_healing_potion_as_a_limited_consumable()
+    public void Every_class_starts_with_five_minor_healing_potions_in_the_inventory()
     {
         var db = Db();
         var potion = db.Abilities["item.minor_healing_potion"];
-        Assert.InRange(potion.Charges ?? 0, 2, 3);
         Assert.InRange(potion.CooldownTicks, 15 * 20, 25 * 20);
         Assert.IsType<SelfTargeting>(potion.Targeting);
+        var item = db.Items["consumable.minor_healing_potion"];
+        Assert.Equal((ItemKind.Consumable, "item.minor_healing_potion", 20), (item.Type, item.UseAbility, item.Stack));
+        Assert.Null(item.Slot);
         foreach (var cls in db.Classes.Values)
         {
-            Assert.Contains("item.minor_healing_potion", cls.Consumables);
+            var start = Assert.Single(cls.StartingInventory);
+            Assert.Equal(("consumable.minor_healing_potion", 5), (start.Item, start.Count));
             Assert.DoesNotContain("item.minor_healing_potion", cls.Abilities);
         }
     }

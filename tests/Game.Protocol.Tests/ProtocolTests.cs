@@ -78,6 +78,7 @@ public class ProtocolTests(ITestOutputHelper output)
             new UnequipItemIntent(new EntityId(99), Game.Core.Definitions.EquipSlot.Feet),
             new PickUpItemIntent(new EntityId(99), new EntityId(41)),
             new DropItemIntent(new EntityId(99), 29),
+            new UseItemIntent(new EntityId(99), 4),
         };
 
         for (var i = 0; i < intents.Length; i++)
@@ -104,6 +105,7 @@ public class ProtocolTests(ITestOutputHelper output)
         var ring = new Game.Core.Combat.Items.ItemInstance("accessory.ring", 7, Game.Core.Definitions.ItemRarity.Rare, ["affix.crit", "affix.mana_regen"]);
         hero.Get<Game.Core.Combat.Items.Inventory>()[3] = ring;
         hero.Get<Game.Core.Combat.Items.Inventory>()[29] = Game.Core.Combat.Items.ItemInstance.Common("armor.light_feet", 2);
+        hero.Get<Game.Core.Combat.Items.Wallet>().Gold = 98765; // T-320
         Assert.Null(Game.Core.Combat.Items.Gear.Equip(world, hero, 3));
         Game.Core.Combat.Items.Gear.SpawnGround(world, new Vector2(4, 2), ring with { Level = 8 }, [hero.Id.Value, 9], EntityId.None);
 
@@ -117,6 +119,8 @@ public class ProtocolTests(ITestOutputHelper output)
 
         var inv = msg.Entities[0].Components.OfType<Game.Core.Combat.Items.Inventory>().Single();
         Assert.Equal((30, "armor.light_feet"), (inv.Capacity, inv[29]!.BaseId));
+        Assert.Equal(("consumable.minor_healing_potion", 5), (inv[0]!.BaseId, inv[0]!.Count)); // T-320: pilha inicial
+        Assert.Equal(98765, msg.Entities[0].Components.OfType<Game.Core.Combat.Items.Wallet>().Single().Gold);
         var eq = msg.Entities[0].Components.OfType<Game.Core.Combat.Items.Equipment>().Single();
         Assert.Equal(new[] { "affix.crit", "affix.mana_regen" }, eq[Game.Core.Definitions.EquipSlot.Accessory]!.Affixes);
         var stats = msg.Entities[0].Components.OfType<Game.Core.Combat.Stats.CharacterStats>().Single();
@@ -330,7 +334,8 @@ public class ProtocolTests(ITestOutputHelper output)
         var full = ProtocolSerializer.Serialize(SnapshotMessage.From(first)).Length;
         output.WriteLine($"Snapshot completo da Matriarca no início: {full} B ({first.Entities.Count} entidades); maior na luta: {biggest} B");
         output.WriteLine($"Componentes vistos no snapshot mais variado: {string.Join(", ", seenTypes.Select(t => t.Name).Order())}");
-        Assert.True(full < 2048, $"snapshot inicial grande demais: {full} B");
+        // T-320: cada personagem começa com uma pilha de poções no inventário e uma carteira (~+50 B por jogador).
+        Assert.True(full < 2304, $"snapshot inicial grande demais: {full} B");
 
         var back = RoundTrip(new EventsMessage(world.Tick, events.ToArray()));
         Assert.Equal(events.Count, back.Events.Length);

@@ -63,6 +63,9 @@ public static class ItemLog
         f.Register<ItemUnequipped>((c, e) => c.Entry(e, LogCategory.Itens, $"{c.Name(e.Entity)} desequipou {c.SourceLabel(e.BaseId)}", e.Entity));
         f.Register<GroundItemExpired>((c, e) => c.Entry(e, LogCategory.Itens, $"{c.SourceLabel(e.BaseId)} sumiu do chão", e.Item));
         f.Register<ItemRejected>((c, e) => c.Entry(e, LogCategory.Itens, $"{c.Name(e.Entity)}: {RejectText(e.Reason)}", e.Entity));
+        f.Register<ItemUsed>((c, e) => c.Entry(
+            e, LogCategory.Itens, $"{c.Name(e.Entity)} usou {c.SourceLabel(e.BaseId)} ({e.Remaining} restante(s))", e.Entity));
+        f.Register<GoldGained>((c, e) => c.Entry(e, LogCategory.Itens, $"{c.Name(e.Entity)} recebeu {e.Amount} de ouro", e.Entity, e.Monster));
         return f;
     }
 
@@ -83,6 +86,11 @@ public static class ItemLog
         ItemRejectReason.InventoryFull => "inventário cheio",
         ItemRejectReason.NotFound => "o item não está mais lá",
         ItemRejectReason.NotOwner => "o item não é seu",
+        ItemRejectReason.NotEquippable => "o item não é equipável",
+        ItemRejectReason.NotConsumable => "o item não é consumível",
+        ItemRejectReason.OnCooldown => "item em recarga",
+        ItemRejectReason.Dead => "morto não usa item",
+        ItemRejectReason.CannotUseNow => "não dá para usar o item agora",
         _ => "longe demais para pegar",
     };
 }

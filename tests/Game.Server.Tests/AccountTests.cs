@@ -379,4 +379,101 @@ public class AccountTests
         Assert.Equal(1, fresh.Build.Level);
         Assert.Throws<InvalidDataException>(() => CharacterDocument.Read(99, "{}", 1, 0));
     }
+
+    [Fact]
+    public void Gold_and_stacks_are_saved_and_loaded()
+    {
+        const string Potion = "consumable.minor_healing_potion";
+        const string Mana = "consumable.minor_mana_potion";
+        var store = new FakeStore();
+        var row = store.Add("class.mage");
+
+        using (var a = new AccountRig(store))
+        {
+            var client = a.Join(AccountRig.Ticket(row));
+            var hero = a.Entity(client);
+            Assert.Equal(5, Consumables.CountOf(hero, Potion)); // personagem novo: inventário inicial
+            Assert.Equal(0, hero.Get<Wallet>().Gold);
+
+            hero.Get<Wallet>().Gold = 123;
+            Assert.Null(Consumables.Use(a.Room.World, hero, Consumables.FindSlot(hero, Potion)));
+            Assert.True(Gear.AddToInventory(a.Room.World, hero, ItemInstance.Stack(Mana, 27)) >= 0); // 20 + 7
+            a.Rig.Tick(2, [client]);
+
+            client.Raw.Leave();
+            a.Rig.Tick(1);
+            a.Flush();
+        }
+
+        var saved = store.Row(row.Id);
+        Assert.Equal(2, saved.ProgressionVersion);
+        Assert.Contains("\"gold\":123", saved.Progression);
+
+        using var b = new AccountRig(store);
+        var back = b.Entity(b.Join(AccountRig.Ticket(row)));
+        Assert.Equal(123, back.Get<Wallet>().Gold);
+        Assert.Equal(4, Consumables.CountOf(back, Potion));
+        Assert.Equal([20, 7], back.Get<Inventory>().Slots.Where(i => i?.BaseId == Mana).Select(i => i!.Count));
+    }
+
+    [Fact]
+    public void Version_1_document_loads_with_zero_gold_and_the_starting_potions_once()
+    {
+        const string Potion = "consumable.minor_healing_potion";
+        var store = new FakeStore();
+        var v1 = """
+            {"allocated":{"str":0,"dex":0,"agi":0,"int":0,"vit":0},"skillRanks":{},
+             "equipment":{"weapon":{"base":"weapon.sword","level":2,"rarity":"common","affixes":[]}},
+             "inventory":[{"slot":0,"item":{"base":"accessory.ring","level":3,"rarity":"rare","affixes":["affix.dex","affix.str"]}}]}
+            """;
+        var row = store.Add(progression: v1);
+        Assert.Equal(1, row.ProgressionVersion);
+
+        using (var a = new AccountRig(store))
+        {
+            var client = a.Join(AccountRig.Ticket(row));
+            var hero = a.Entity(client);
+            Assert.Equal(0, hero.Get<Wallet>().Gold);
+            AssertSame(RareRing, hero.Get<Inventory>()[0]);
+            Assert.Equal(5, Consumables.CountOf(hero, Potion));
+
+            // Gasta as 5: na próxima carga (já v2) ninguém devolve as poções.
+            for (var i = 0; i < 5; i++)
+            {
+                hero.Get<Game.Core.Combat.AbilityState>().ReadyAtTick.Clear();
+                Assert.Null(Consumables.Use(a.Room.World, hero, Consumables.FindSlot(hero, Potion)));
+            }
+
+            client.Raw.Leave();
+            a.Rig.Tick(1);
+            a.Flush();
+        }
+
+        Assert.Equal(2, store.Row(row.Id).ProgressionVersion);
+        using var b = new AccountRig(store);
+        var back = b.Entity(b.Join(AccountRig.Ticket(row)));
+        Assert.Equal(0, Consumables.CountOf(back, Potion));
+        AssertSame(RareRing, back.Get<Inventory>()[0]);
+    }
+
+    [Fact]
+    public void Document_keeps_counts_and_gold_and_reads_version_1()
+    {
+        var state = new CharacterState(new CharacterBuild(), new Dictionary<EquipSlot, ItemInstance>(), [ItemInstance.Stack("consumable.minor_healing_potion", 13), RareRing])
+        {
+            Gold = 4567,
+        };
+
+        var json = CharacterDocument.Write(state);
+        var read = CharacterDocument.Read(2, json, 1, 0);
+        Assert.Equal((4567L, false), (read.Gold, read.GrantStartingInventory));
+        Assert.Equal(13, read.Inventory[0]!.Count);
+        Assert.Equal(1, read.Inventory[1]!.Count);
+        Assert.DoesNotContain("\"count\":1}", json); // pilha de 1 não grava a quantidade
+
+        var old = CharacterDocument.Read(1, json, 1, 0);
+        Assert.Equal((0L, true), (old.Gold, old.GrantStartingInventory));
+        Assert.Throws<InvalidDataException>(() => CharacterDocument.Read(2, """{"equipment":{},"gold":-1}""", 1, 0));
+        Assert.Throws<InvalidDataException>(() => CharacterDocument.Read(2, """{"equipment":{},"inventory":[{"slot":0,"item":{"base":"x","count":0}}]}""", 1, 0));
+    }
 }

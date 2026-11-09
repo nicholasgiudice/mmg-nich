@@ -20,7 +20,7 @@ internal sealed partial class SiteBuilder
             index.Add(AbilityList(index, new[] { c.BasicAttack }.Concat(c.Abilities), c.BasicAttack));
         }
 
-        var consumables = _db.Classes.Values.SelectMany(c => c.Consumables).Distinct().ToList();
+        var consumables = _db.Items.Values.Where(i => i.UseAbility is not null).Select(i => i.UseAbility!).Distinct().ToList();
         if (consumables.Count > 0)
         {
             index.Add("<h2 id=\"consumables\">Consumíveis</h2>");
@@ -70,7 +70,7 @@ internal sealed partial class SiteBuilder
         var users = new List<string>();
         if (_usage.AbilityClasses.TryGetValue(a.Id, out var classes))
         {
-            users.AddRange(classes.Select(id => _d.ClassLink(p, id) + (_db.Classes[id].BasicAttack == a.Id ? " (ataque básico)" : _db.Classes[id].Consumables.Contains(a.Id) ? " (consumível)" : "")));
+            users.AddRange(classes.Select(id => _d.ClassLink(p, id) + (_db.Classes[id].BasicAttack == a.Id ? " (ataque básico)" : "")));
         }
 
         var isMonster = _usage.AbilityMonsters.TryGetValue(a.Id, out var monsters);
@@ -90,9 +90,10 @@ internal sealed partial class SiteBuilder
             head.Add(("Tags", string.Join(" ", a.Tags.Select(t => Code(t)))));
         }
 
-        if (a.Charges is { } charges)
+        var items = _db.Items.Values.Where(i => i.UseAbility == a.Id).ToList();
+        if (items.Count > 0)
         {
-            head.Add(("Cargas", $"{charges} usos"));
+            head.Add(("Usada pelo item", string.Join(", ", items.Select(i => Icon(p, i.Id) + p.A($"{Url.Items}#{i.Id}", i.Name)))));
         }
 
         p.Add(Dl(head));

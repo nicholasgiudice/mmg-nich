@@ -1,5 +1,8 @@
 namespace Game.Core.Definitions;
 
+/// <summary>Tipo de item (T-320). JSON: <c>equipment</c> (padrão) ou <c>consumable</c>.</summary>
+public enum ItemKind { Equipment, Consumable }
+
 /// <summary>Espaço de equipamento (T-204, <c>design/progression-v0.1.md</c> §6). JSON: <c>weapon</c>, <c>head</c>, ...</summary>
 public enum EquipSlot { Weapon, Head, Chest, Hands, Feet, Accessory }
 
@@ -28,12 +31,32 @@ public sealed record ItemStatValue
 /// <summary>
 /// Item base (T-204, <c>data/items.json</c>, seção <c>items</c>): espaço, quem usa e as estatísticas base por nível do
 /// item. Armaduras (cabeça, peito, mãos, pés) têm <see cref="ArmorType"/>; a armadura base é multiplicada pelo tipo.
+/// T-320: consumíveis (<see cref="Type"/> = <c>consumable</c>) não têm espaço; empilham até <see cref="Stack"/> e, ao
+/// usar, executam a habilidade <see cref="UseAbility"/> no próprio personagem.
 /// </summary>
 public sealed record ItemBaseDefinition
 {
     public required string Id { get; init; }
     public required string Name { get; init; }
-    public required EquipSlot Slot { get; init; }
+
+    public ItemKind Type { get; init; } = ItemKind.Equipment;
+
+    /// <summary>Espaço de equipamento. Obrigatório em equipamento; ausente em consumível.</summary>
+    public EquipSlot? Slot { get; init; }
+
+    /// <summary>Unidades por espaço do inventário (T-320). Equipamento: sempre 1.</summary>
+    public int Stack { get; init; } = 1;
+
+    /// <summary>Consumível (T-320): id da habilidade (<c>abilities_items.json</c>) com o efeito e a recarga.</summary>
+    public string? UseAbility { get; init; }
+
+    /// <summary>Preço base de venda na loja (T-320; o uso fica para a T-321/T-322).</summary>
+    public int Price { get; init; }
+
+    public bool IsConsumable => Type == ItemKind.Consumable;
+
+    /// <summary>Máximo por espaço: <see cref="Stack"/> nos consumíveis, 1 no resto.</summary>
+    public int MaxStack => IsConsumable ? Math.Max(1, Stack) : 1;
 
     /// <summary>Classes que usam. Vazio = as do <see cref="ArmorType"/> (armaduras) ou todas.</summary>
     public IReadOnlyList<string> Classes { get; init; } = [];
@@ -43,14 +66,20 @@ public sealed record ItemBaseDefinition
 
     public IReadOnlyList<ItemStatValue> Stats { get; init; } = [];
 
-    public static bool IsArmorSlot(EquipSlot slot) => slot is EquipSlot.Head or EquipSlot.Chest or EquipSlot.Hands or EquipSlot.Feet;
+    public static bool IsArmorSlot(EquipSlot? slot) => slot is EquipSlot.Head or EquipSlot.Chest or EquipSlot.Hands or EquipSlot.Feet;
 }
 
-/// <summary>Item que a classe começa usando (T-204; substitui a arma inicial da T-201). Raridade comum, sem afixos.</summary>
+/// <summary>
+/// Item que a classe começa usando (T-204; substitui a arma inicial da T-201). Raridade comum, sem afixos. Também serve
+/// para o inventário inicial (T-320, <c>startingInventory</c>), com <see cref="Count"/> unidades.
+/// </summary>
 public sealed record StartingItemDefinition
 {
     public required string Item { get; init; }
     public int Level { get; init; } = 1;
+
+    /// <summary>Unidades (T-320, só no inventário inicial; consumíveis empilham).</summary>
+    public int Count { get; init; } = 1;
 }
 
 /// <summary>Afixo (T-204): uma estatística a mais, com valor pelo nível do item.</summary>

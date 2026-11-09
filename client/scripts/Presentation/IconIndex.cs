@@ -37,12 +37,12 @@ public sealed class IconIndex
     public const string GroundItemId = "ui.ground_item";
 
     /// <summary>
-    /// Ids que as telas mostram com ícone: ataque básico, habilidades e consumíveis de cada classe, itens base, atributos
-    /// e o item no chão.
+    /// Ids que as telas mostram com ícone: ataque básico e habilidades de cada classe, itens base (T-320: inclusive os
+    /// consumíveis), atributos e o item no chão.
     /// </summary>
     public static IEnumerable<string> RequiredIds(ContentCatalog content) =>
         content.Classes.Values
-            .SelectMany(c => c.Abilities.Prepend(c.BasicAttack).Concat(c.Consumables))
+            .SelectMany(c => c.Abilities.Prepend(c.BasicAttack))
             .Concat(content.Items.Keys)
             .Concat(Enum.GetValues<AttributeKind>().Select(AttributeId))
             .Append(GroundItemId)

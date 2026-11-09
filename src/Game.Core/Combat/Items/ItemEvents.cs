@@ -5,7 +5,7 @@ using Game.Core.Simulation;
 namespace Game.Core.Combat.Items;
 
 /// <summary>Ação de item pedida por intenção (T-204).</summary>
-public enum ItemAction { Equip, Unequip, PickUp, Drop }
+public enum ItemAction { Equip, Unequip, PickUp, Drop, Use }
 
 /// <summary>Motivo de rejeição de uma intenção de item (a UI traduz).</summary>
 public enum ItemRejectReason
@@ -27,10 +27,34 @@ public enum ItemRejectReason
     /// <summary>Quem pediu não tem direito ao item no chão.</summary>
     NotOwner,
     TooFar,
+
+    /// <summary>T-320: equipar um item que não é equipamento (consumível).</summary>
+    NotEquippable,
+
+    /// <summary>T-320: usar um item que não é consumível.</summary>
+    NotConsumable,
+
+    /// <summary>T-320: a habilidade do consumível está em recarga (as pilhas do mesmo item dividem a recarga).</summary>
+    OnCooldown,
+
+    /// <summary>T-320: morto não usa item.</summary>
+    Dead,
+
+    /// <summary>T-320: a habilidade do item não pode ser usada agora (conjurando, atordoado, sem alvo...).</summary>
+    CannotUseNow,
 }
 
 /// <summary>Item foi para o chão: queda de monstro ou largado por um personagem (<paramref name="Source"/>).</summary>
 public sealed record ItemDropped(EntityId Item, EntityId Source, string BaseId, int Level, ItemRarity Rarity) : GameEvent;
+
+/// <summary>
+/// Consumível usado (T-320): a habilidade <paramref name="AbilityId"/> foi executada e saiu 1 unidade do espaço
+/// <paramref name="InventorySlot"/>; <paramref name="Remaining"/> = o que sobrou nele (0 = espaço vazio).
+/// </summary>
+public sealed record ItemUsed(EntityId Entity, int InventorySlot, string BaseId, string AbilityId, int Remaining) : GameEvent;
+
+/// <summary>Ouro recebido (T-320): a parte de <paramref name="Entity"/> pela morte de <paramref name="Monster"/>.</summary>
+public sealed record GoldGained(EntityId Entity, int Amount, EntityId Monster) : GameEvent;
 
 /// <summary>Item do chão foi para o espaço <paramref name="InventorySlot"/> do inventário.</summary>
 public sealed record ItemPickedUp(EntityId Entity, EntityId Item, string BaseId, int InventorySlot) : GameEvent;

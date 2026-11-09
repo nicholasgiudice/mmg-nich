@@ -51,15 +51,22 @@ internal sealed partial class SiteBuilder
         p.Add(ItemTable(p, _db.Items.Values.Where(i => i.Slot == EquipSlot.Accessory), levels, showType: false));
 
         p.Add("<h2 id=\"consumables\">Consumíveis</h2>");
-        var consumables = _db.Classes.Values.SelectMany(c => c.Consumables).Distinct().Where(_db.Abilities.ContainsKey).Select(id => _db.Abilities[id]).ToList();
-        p.Add(Table(["Item", "Efeito", "Recarga", "Cargas", "Como se obtém"],
-            consumables.Select(a => new[]
+        p.Add("<p>Consumíveis empilham no inventário. Usar gasta 1 unidade e executa a habilidade do item; pilhas do mesmo item dividem a recarga.</p>");
+        var consumables = _db.Items.Values.Where(i => i.IsConsumable && i.UseAbility is not null && _db.Abilities.ContainsKey(i.UseAbility)).ToList();
+        p.Add(Table(["Item", "Efeito", "Recarga", "Pilha", "Preço base", "Inventário inicial"],
+            consumables.Select(i =>
             {
-                $"<span id=\"{Esc(a.Id)}\">{Icon(p, a.Id)}{p.A(Url.Ability(a.Id), a.Name)}</span>",
-                _d.Effects(p, a.Effects),
-                Describe.Cooldown(a),
-                a.Charges is { } ch ? Num(ch) : "—",
-                "vem com " + string.Join(", ", _db.Classes.Values.Where(c => c.Consumables.Contains(a.Id)).Select(c => _d.ClassLink(p, c.Id))),
+                var a = _db.Abilities[i.UseAbility!];
+                var start = _db.Classes.Values.Where(c => c.StartingInventory.Any(s => s.Item == i.Id)).ToList();
+                return new[]
+                {
+                    $"<span id=\"{Esc(i.Id)}\">{Icon(p, i.Id)}{p.A(Url.Ability(a.Id), i.Name)}</span>",
+                    _d.Effects(p, a.Effects),
+                    Describe.Cooldown(a),
+                    Num(i.MaxStack),
+                    Num(i.Price),
+                    start.Count == 0 ? "—" : string.Join(", ", start.Select(c => $"{_d.ClassLink(p, c.Id)} × {c.StartingInventory.First(s => s.Item == i.Id).Count}")),
+                };
             })));
 
         p.Add("<h2 id=\"rarity\">Raridade e afixos</h2>");
@@ -121,7 +128,7 @@ internal sealed partial class SiteBuilder
         foreach (var i in items)
         {
             var classes = ItemMath.ClassesOf(rules, i);
-            sb.Append($"<tr id=\"{Esc(i.Id)}\" data-item=\"{Esc(i.Id)}\"><td><span class=\"named\">{Icon(p, i.Id)}<span>{Esc(i.Name)}<br>{Code(i.Id)}</span></span></td><td>{Slot(i.Slot)}</td>");
+            sb.Append($"<tr id=\"{Esc(i.Id)}\" data-item=\"{Esc(i.Id)}\"><td><span class=\"named\">{Icon(p, i.Id)}<span>{Esc(i.Name)}<br>{Code(i.Id)}</span></span></td><td>{(i.Slot is { } slot ? Slot(slot) : "—")}</td>");
             if (showType)
             {
                 sb.Append($"<td>{(i.ArmorType is { } t ? p.A($"{Url.Items}#armor-types", ArmorType(t)) : "—")}</td>");

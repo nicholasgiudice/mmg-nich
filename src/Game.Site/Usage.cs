@@ -31,7 +31,7 @@ public sealed class Usage
         _db = db;
         foreach (var cls in db.Classes.Values)
         {
-            foreach (var id in new[] { cls.BasicAttack }.Concat(cls.Abilities).Concat(cls.Consumables))
+            foreach (var id in new[] { cls.BasicAttack }.Concat(cls.Abilities))
             {
                 Add(AbilityClasses, id, cls.Id);
             }
@@ -69,7 +69,9 @@ public sealed class Usage
         Merge(SummonSources);
     }
 
-    public bool IsUsed(string abilityId) => AbilityClasses.ContainsKey(abilityId) || AbilityMonsters.ContainsKey(abilityId);
+    public bool IsUsed(string abilityId) =>
+        AbilityClasses.ContainsKey(abilityId) || AbilityMonsters.ContainsKey(abilityId)
+        || _db.Items.Values.Any(i => i.UseAbility == abilityId); // T-320: habilidade de consumível
 
     public bool IsStatusUsed(string id) => StatusSources.ContainsKey(id);
 

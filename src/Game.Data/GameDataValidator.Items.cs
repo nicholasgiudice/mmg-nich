@@ -8,14 +8,27 @@ internal static partial class GameDataValidator
     private static void ValidateItems(RawContent c, HashSet<string> classes, List<LoadError> errors)
     {
         var items = UniqueIds(c.Items, x => x.Id, "item", errors);
+        var abilities = c.Abilities.GroupBy(a => a.Value.Id).ToDictionary(g => g.Key, g => g.First().Value, StringComparer.Ordinal);
         foreach (var e in c.Items)
         {
-            ValidateItem(e, classes, new Ctx(e.File, e.Path, errors));
+            ValidateItem(e, classes, abilities, new Ctx(e.File, e.Path, errors));
         }
 
         ValidateItemRules(c.Rules.Items, classes, items, new Ctx("rules", "rules.items", errors));
 
         var defs = c.Items.GroupBy(i => i.Value.Id).ToDictionary(g => g.Key, g => g.First().Value, StringComparer.Ordinal);
+        foreach (var rank in Enum.GetValues<MonsterRank>())
+        {
+            var table = c.Rules.Items.Drops.For(rank);
+            for (var i = 0; i < table.Items.Count; i++)
+            {
+                if (defs.TryGetValue(table.Items[i], out var dropped) && dropped.IsConsumable)
+                {
+                    new Ctx("rules", "rules.items", errors).Error(
+                        $"drops.{rank.ToString().ToLowerInvariant()}.items[{i}]", $"'{dropped.Id}' é consumível; a queda é só de equipamento.");
+                }
+            }
+        }
         foreach (var e in c.Classes)
         {
             var ctx = new Ctx(e.File, e.Path, errors);
@@ -31,19 +44,59 @@ internal static partial class GameDataValidator
                     continue;
                 }
 
-                if (!slots.Add(item.Slot)) { ctx.Error(field, $"Dois itens iniciais no espaço {item.Slot}."); }
+                if (item.Slot is not { } slot)
+                {
+                    ctx.Error(field + ".item", $"'{item.Id}' não é equipamento.");
+                    continue;
+                }
+
+                if (start.Count != 1) { ctx.Error(field + ".count", "Equipamento inicial tem 1 unidade."); }
+                if (!slots.Add(slot)) { ctx.Error(field, $"Dois itens iniciais no espaço {slot}."); }
                 if (!Game.Core.Combat.Items.ItemMath.CanUse(c.Rules.Items, item, e.Value.Id))
                 {
                     ctx.Error(field + ".item", $"A classe não usa '{item.Id}'.");
                 }
             }
+
+            // T-320: inventário inicial (consumíveis empilham; o total tem de caber no inventário).
+            var used = 0;
+            for (var i = 0; i < e.Value.StartingInventory.Count; i++)
+            {
+                var start = e.Value.StartingInventory[i];
+                var field = $"startingInventory[{i}]";
+                if (start.Level < 1) { ctx.Error(field + ".level", "Nível do item deve ser pelo menos 1."); }
+                if (start.Count < 1) { ctx.Error(field + ".count", "Deve ser pelo menos 1."); }
+                if (!defs.TryGetValue(start.Item, out var item))
+                {
+                    ctx.Exists(field + ".item", start.Item, items, "item");
+                    continue;
+                }
+
+                used += (int)Math.Ceiling(Math.Max(1, start.Count) / (double)item.MaxStack);
+            }
+
+            if (used > c.Rules.Items.InventorySize)
+            {
+                ctx.Error("startingInventory", $"Ocupa {used} espaços; o inventário tem {c.Rules.Items.InventorySize}.");
+            }
         }
     }
 
-    private static void ValidateItem(Entry<ItemBaseDefinition> e, HashSet<string> classes, Ctx ctx)
+    private static void ValidateItem(Entry<ItemBaseDefinition> e, HashSet<string> classes, Dictionary<string, AbilityDefinition> abilities, Ctx ctx)
     {
         var x = e.Value;
         if (string.IsNullOrWhiteSpace(x.Name)) { ctx.Error("name", "Nome vazio."); }
+        if (x.Price < 0) { ctx.Error("price", "Não pode ser negativo."); }
+        if (x.Stack < 1) { ctx.Error("stack", "Deve ser pelo menos 1."); }
+        if (x.IsConsumable)
+        {
+            ValidateConsumable(x, abilities, ctx);
+            return;
+        }
+
+        if (x.Slot is null) { ctx.Error("slot", "Obrigatório em equipamento."); }
+        if (x.Stack != 1) { ctx.Error("stack", "Só consumível empilha."); }
+        if (x.UseAbility is not null) { ctx.Error("useAbility", "Só em consumível."); }
         for (var i = 0; i < x.Classes.Count; i++)
         {
             ctx.Exists($"classes[{i}]", x.Classes[i], classes, "classe");
@@ -61,6 +114,36 @@ internal static partial class GameDataValidator
             if (!seen.Add(s.Stat)) { ctx.Error($"stats[{i}].stat", $"Estatística {s.Stat} repetida."); }
             ctx.NonNegative($"stats[{i}].base", s.Base);
             ctx.NonNegative($"stats[{i}].perLevel", s.PerLevel);
+        }
+    }
+
+    /// <summary>T-320: consumível sem espaço, sem estatísticas, com uma habilidade de item instantânea.</summary>
+    private static void ValidateConsumable(ItemBaseDefinition x, Dictionary<string, AbilityDefinition> abilities, Ctx ctx)
+    {
+        if (x.Slot is not null) { ctx.Error("slot", "Consumível não tem espaço de equipamento."); }
+        if (x.ArmorType is not null) { ctx.Error("armorType", "Consumível não tem tipo de armadura."); }
+        if (x.Stats.Count > 0) { ctx.Error("stats", "Consumível não dá estatísticas."); }
+        if (x.Classes.Count > 0) { ctx.Error("classes", "Consumível serve para todas as classes."); }
+        if (x.UseAbility is not { } id)
+        {
+            ctx.Error("useAbility", "Obrigatório em consumível.");
+            return;
+        }
+
+        if (!abilities.TryGetValue(id, out var ability))
+        {
+            ctx.Error("useAbility", $"Habilidade '{id}' não existe.");
+            return;
+        }
+
+        if (ability.CastTimeTicks > 0 || ability.Ranks.Count > 0 || ability.Telegraph is not null || ability.CooldownCharges > 1)
+        {
+            ctx.Error("useAbility", $"A habilidade '{id}' de item deve ser instantânea, sem NH, telegráfo nem cargas por recarga.");
+        }
+
+        if (ability.Targeting is not SelfTargeting and not CircleSelfTargeting)
+        {
+            ctx.Error("useAbility", $"A habilidade '{id}' de item deve ter alvo em si (self ou circle_self).");
         }
     }
 

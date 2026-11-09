@@ -148,6 +148,40 @@ public sealed class ProgressionSystem : ISimulationSystem
         }
 
         Items.Gear.DropLoot(world, monster, members);
+        DropGold(world, monster, info, members);
+    }
+
+    /// <summary>
+    /// T-320: ouro da morte = porNível × nível × categoria, com variação de ± <c>goldVariance</c> (um sorteio do RNG da
+    /// simulação, depois da queda de itens). Dividido igualmente entre quem recebeu a XP, arredondando para baixo; o resto
+    /// se perde. Vai direto para a <see cref="Items.Wallet"/>. Sem ninguém (ou sem ouro configurado) não consome o RNG.
+    /// </summary>
+    private static void DropGold(World world, Entity monster, UnitInfo info, IReadOnlyList<Entity> members)
+    {
+        var rules = world.Content.Rules.Progression;
+        var baseGold = rules.GoldPerMonsterLevel * info.Level * rules.GoldByRank.For(info.Rank);
+        if (members.Count == 0 || baseGold <= 0)
+        {
+            return;
+        }
+
+        var variance = Math.Clamp(rules.GoldVariance, 0, 1);
+        var roll = (world.Random.NextFloat() * 2) - 1;
+        var total = (int)Math.Round(baseGold * (1 + (variance * roll)), MidpointRounding.AwayFromZero);
+        var share = total / members.Count;
+        if (share <= 0)
+        {
+            return;
+        }
+
+        foreach (var e in members)
+        {
+            if (e.TryGet<Items.Wallet>() is { } wallet)
+            {
+                wallet.Gold += share;
+                world.Events.Publish(new Items.GoldGained(e.Id, share, monster.Id));
+            }
+        }
     }
 
     /// <summary>

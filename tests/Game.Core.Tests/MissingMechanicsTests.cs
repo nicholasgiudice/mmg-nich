@@ -11,19 +11,18 @@ using Game.Core.Simulation.Components;
 
 namespace Game.Core.Tests;
 
-/// <summary>T-017: alvo por efeito (self), bonusVsTags, cargas/consumíveis, controlDurationMultiplier, armTime e remove_status por várias tags.</summary>
+/// <summary>T-017: alvo por efeito (self), bonusVsTags, controlDurationMultiplier, armTime e remove_status por várias tags.</summary>
 public class MissingMechanicsTests
 {
     private static AbilityDefinition Ab(
-        string id, TargetingDefinition targeting, EffectDefinition[] effects, int cooldown = 0, int? charges = null) =>
-        new() { Id = id, Name = id, Targeting = targeting, Effects = effects, CooldownTicks = cooldown, Charges = charges };
+        string id, TargetingDefinition targeting, EffectDefinition[] effects, int cooldown = 0) =>
+        new() { Id = id, Name = id, Targeting = targeting, Effects = effects, CooldownTicks = cooldown };
 
     private static Entity Unit(
-        World w, Vector2 pos, Faction f, float hp = 100, string[]? tags = null, string[]? known = null, string[]? consumables = null)
+        World w, Vector2 pos, Faction f, float hp = 100, string[]? tags = null, string[]? known = null)
     {
         var st = new AbilityState();
         st.Known.AddRange(known ?? []);
-        st.Consumables.AddRange(consumables ?? []);
         return w.Spawn(
             new Transform { Position = pos },
             new Health(hp),
@@ -124,90 +123,6 @@ public class MissingMechanicsTests
         var dmg = Assert.Single(Use(w, hero, "hero.smite", foe).OfType<DamageDealt>());
 
         Assert.Equal(expected, dmg.Amount);
-    }
-
-    // ---------- cargas ----------
-
-    [Fact]
-    public void Charges_run_out_and_report_NoCharges()
-    {
-        var potion = Ab("item.potion", new SelfTargeting(), [new HealEffect { Base = 10 }], cooldown: 0, charges: 2);
-        var w = WorldBuilder.CreateDefault(1, null, new ContentCatalog(abilities: [potion]));
-        var hero = Unit(w, new Vector2(1, 1), Faction.Player, consumables: ["item.potion"]);
-        hero.Get<Health>().Current = 10;
-
-        var first = Assert.Single(Use(w, hero, "item.potion").OfType<AbilityExecuted>());
-        var second = Assert.Single(Use(w, hero, "item.potion").OfType<AbilityExecuted>());
-        var third = Use(w, hero, "item.potion");
-
-        Assert.Equal(1, first.ChargesRemaining);
-        Assert.Equal(0, second.ChargesRemaining);
-        Assert.Empty(third.OfType<AbilityExecuted>());
-        Assert.Equal(AbilityRejectReason.NoCharges, Assert.Single(third.OfType<AbilityRejected>()).Reason);
-        Assert.Equal(30, hero.Get<Health>().Current);
-        Assert.Equal(0, hero.Get<AbilityState>().ChargesRemaining(potion));
-    }
-
-    [Fact]
-    public void Unlimited_abilities_report_null_charges()
-    {
-        var hit = Ab("hero.hit", new SelfTargeting(), [new HealEffect { Base = 1 }]);
-        var w = WorldBuilder.CreateDefault(1, null, new ContentCatalog(abilities: [hit]));
-        var hero = Unit(w, new Vector2(1, 1), Faction.Player, known: ["hero.hit"]);
-
-        var ex = Assert.Single(Use(w, hero, "hero.hit").OfType<AbilityExecuted>());
-
-        Assert.Null(ex.ChargesRemaining);
-        Assert.Null(hero.Get<AbilityState>().ChargesRemaining(hit));
-    }
-
-    [Fact]
-    public void Spawned_player_has_consumables_apart_from_abilities_and_cooldown_still_applies()
-    {
-        var potion = Ab("item.potion", new SelfTargeting(), [new HealEffect { Base = 10 }], cooldown: 100, charges: 3);
-        var basic = Ab("hero.basic", new SelfTargeting(), []);
-        var cls = new ClassDefinition
-        {
-            Id = "class.hero",
-            Name = "Heroi",
-            Health = 100,
-            Speed = 4,
-            Radius = 0.4,
-            Resource = new ResourceDefinition { Type = "mana", Max = 100 },
-            BasicAttack = "hero.basic",
-            Abilities = [],
-            Consumables = ["item.potion"],
-        };
-        var w = WorldBuilder.CreateDefault(1, null, new ContentCatalog(classes: [cls], abilities: [potion, basic]));
-        var hero = EntityFactory.SpawnPlayer(w, cls, new Vector2(1, 1));
-        var st = hero.Get<AbilityState>();
-
-        Assert.Equal(["item.potion"], st.Consumables);
-        Assert.DoesNotContain("item.potion", st.Known);
-
-        Assert.Single(Use(w, hero, "item.potion").OfType<AbilityExecuted>());
-        var again = Use(w, hero, "item.potion");
-        Assert.Equal(AbilityRejectReason.OnCooldown, Assert.Single(again.OfType<AbilityRejected>()).Reason);
-        Assert.Equal(2, st.ChargesRemaining(potion));
-    }
-
-    [Fact]
-    public void Charges_affect_the_state_hash()
-    {
-        var potion = Ab("item.potion", new SelfTargeting(), [new HealEffect { Base = 1 }], charges: 2);
-        World Make()
-        {
-            var w = WorldBuilder.CreateDefault(1, null, new ContentCatalog(abilities: [potion]));
-            Unit(w, new Vector2(1, 1), Faction.Player, consumables: ["item.potion"]);
-            return w;
-        }
-
-        var a = Make();
-        var b = Make();
-        Assert.Equal(a.ComputeStateHash(), b.ComputeStateHash());
-        Use(a, a.Entities.First(), "item.potion");
-        Run(b, 1);
-        Assert.NotEqual(a.ComputeStateHash(), b.ComputeStateHash());
     }
 
     // ---------- controlDurationMultiplier ----------
@@ -341,17 +256,15 @@ public class MissingMechanicsTests
     // ---------- log ----------
 
     [Fact]
-    public void Log_formats_area_armed_and_no_charges()
+    public void Log_formats_area_armed()
     {
         var w = WorldBuilder.CreateDefault(1, null, new ContentCatalog(abilities: [Ab("item.potion", new SelfTargeting(), [])]));
         var hero = Unit(w, new Vector2(1, 1), Faction.Player);
         var log = new CombatLogRecorder(viewer: hero.Id);
         w.Events.Publish(new AreaArmed(EntityId.None, "area.trap", hero.Id));
-        w.Events.Publish(new AbilityRejected(hero.Id, "item.potion", AbilityRejectReason.NoCharges));
         w.Step();
         log.Record(w);
 
         Assert.Contains(log.Entries, e => e.Text.Contains("está armada"));
-        Assert.Contains(log.Entries, e => e.Text.Contains("sem cargas"));
     }
 }
