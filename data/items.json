@@ -2,6 +2,22 @@
   "$schema": "./schemas/game-data.schema.json",
   "items": [
     {
+      "id": "consumable.minor_healing_potion",
+      "name": "Poção de Cura Menor",
+      "type": "consumable",
+      "stack": 20,
+      "useAbility": "item.minor_healing_potion",
+      "price": 10
+    },
+    {
+      "id": "consumable.minor_mana_potion",
+      "name": "Poção de Mana Menor",
+      "type": "consumable",
+      "stack": 20,
+      "useAbility": "item.minor_mana_potion",
+      "price": 10
+    },
+    {
       "id": "weapon.sword",
       "name": "Espada",
       "slot": "weapon",

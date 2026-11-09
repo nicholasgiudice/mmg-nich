@@ -6,9 +6,16 @@
       "name": "Poção de Cura Menor",
       "tags": ["consumable", "heal"],
       "cooldown": 20,
-      "charges": 3,
       "targeting": { "type": "self" },
       "effects": [{ "type": "heal", "base": 60 }]
+    },
+    {
+      "id": "item.minor_mana_potion",
+      "name": "Poção de Mana Menor",
+      "tags": ["consumable", "mana"],
+      "cooldown": 20,
+      "targeting": { "type": "self" },
+      "effects": [{ "type": "resource", "resource": "mana", "amount": 40 }]
     }
   ]
 }

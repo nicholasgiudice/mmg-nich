@@ -93,9 +93,9 @@ public partial class InventoryPanel : ProgressionPanel
             var item = inventory[i];
             var index = i;
             ItemInstance? current = null;
-            if (item is not null && Content.Items.TryGetValue(item.BaseId, out var def))
+            if (item is not null && Content.Items.TryGetValue(item.BaseId, out var def) && def.Slot is { } slot)
             {
-                current = equipment[def.Slot];
+                current = equipment[slot];
             }
 
             grid.AddChild(new ItemSlotButton(Content, item, SlotSize, empty: null,

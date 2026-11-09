@@ -21,9 +21,6 @@ public enum AbilityRejectReason
     InvalidTarget,
     OutOfRange,
     NoLineOfSight,
-
-    /// <summary>Habilidade com <c>charges</c> sem usos restantes neste encontro (T-017).</summary>
-    NoCharges,
 }
 
 public enum CastInterruptReason
@@ -48,13 +45,10 @@ public enum ShieldEndReason { Expired, Depleted }
 public sealed record AbilityStarted(
     EntityId Source, string AbilityId, int CastTicks, long EndTick, EntityId? Target, Vector2? AimPoint) : GameEvent;
 
-/// <summary>
-/// Habilidade resolvida. Custo e recarga já aplicados. Targets = alvos resolvidos (em ordem de id).
-/// ChargesRemaining (T-017) = usos restantes depois deste, ou null se a habilidade tem usos ilimitados.
-/// </summary>
+/// <summary>Habilidade resolvida. Custo e recarga já aplicados. Targets = alvos resolvidos (em ordem de id).</summary>
 public sealed record AbilityExecuted(
     EntityId Source, string AbilityId, IReadOnlyList<EntityId> Targets, string? CostResource, float CostAmount,
-    bool IsBasicAttack, long CooldownReadyTick, int? ChargesRemaining = null) : GameEvent;
+    bool IsBasicAttack, long CooldownReadyTick) : GameEvent;
 
 public sealed record AbilityRejected(EntityId Source, string AbilityId, AbilityRejectReason Reason) : GameEvent;
 

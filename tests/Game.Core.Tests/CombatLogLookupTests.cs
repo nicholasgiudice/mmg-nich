@@ -95,7 +95,7 @@ public class CombatLogLookupTests
 
             if (tick % 10 == 0)
             {
-                var all = abilities.Known.Concat(abilities.Consumables).ToList();
+                var all = abilities.Known.ToList();
                 var pick = all[tick / 10 % all.Count];
                 var ally = content(world).Abilities.TryGetValue(pick, out var def) && def.Targeting is Definitions.UnitTargeting
                 {

@@ -1,4 +1,5 @@
 using System.Numerics;
+using Game.Core.Combat.Items;
 using Game.Core.Combat.Status;
 using Game.Core.Definitions;
 using Game.Core.Intents;
@@ -335,12 +336,14 @@ public sealed class ConfigurableBot(BotPlan plan) : IBotController
         return info.NeedsUnitTarget;
     }
 
-    /// <summary>Consumível de cura própria (poção) quando a vida cai abaixo de <c>potionBelow</c> (padrão 0,4; 0 desliga).</summary>
+    /// <summary>
+    /// Consumível de cura própria (poção) quando a vida cai abaixo de <c>potionBelow</c> (padrão 0,4; 0 desliga). T-320: a
+    /// poção é um item do inventário, usado por <see cref="UseItemIntent"/>; vale o primeiro espaço com um consumível de cura.
+    /// </summary>
     private bool TryPotion(BotContext ctx, List<Intent> output)
     {
         var below = (float)ctx.Options.GetDouble(ctx.ClassId, "potionBelow", 0.4);
-        var consumables = ctx.Abilities.Consumables;
-        if (consumables.Count == 0 || below <= 0)
+        if (below <= 0 || ctx.Self.TryGet<Inventory>() is not { } inv)
         {
             return false;
         }
@@ -351,21 +354,18 @@ public sealed class ConfigurableBot(BotPlan plan) : IBotController
             return false;
         }
 
-        foreach (var id in consumables)
+        for (var slot = 0; slot < inv.Capacity; slot++)
         {
-            if (!ctx.World.Content.Abilities.TryGetValue(id, out var def))
+            if (inv[slot] is not { } item || !ctx.World.Content.Items.TryGetValue(item.BaseId, out var def)
+                || def.UseAbility is not { } abilityId || !ctx.World.Content.Abilities.TryGetValue(abilityId, out var ability)
+                || !AbilityInfo.For(ability).HasHeal)
             {
                 continue;
             }
 
-            var info = AbilityInfo.For(def);
-            if (!info.HasHeal || !(info.IsSelfCentered || info.NeedsUnitTarget))
+            if (Consumables.Validate(ctx.World, ctx.Self, slot, out _) is null)
             {
-                continue;
-            }
-
-            if (ctx.TryUse(info, info.NeedsUnitTarget ? ctx.Self.Id : null, null, output))
-            {
+                output.Add(new UseItemIntent(ctx.Self.Id, slot));
                 _reactor.Reset("potion");
                 return true;
             }

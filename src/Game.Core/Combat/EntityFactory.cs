@@ -37,8 +37,6 @@ public static class EntityFactory
             }
         }
 
-        abilities.Consumables.AddRange(def.Consumables.Where(c => !abilities.Known.Contains(c)).Distinct());
-
         // T-201: com perfil de atributos, vida e Mana saem das estatísticas (regras em data/rules.json, seção stats).
         // T-204: o equipamento inicial (itens de verdade) entra nas estatísticas antes da vida e da Mana.
         var stats = Stats.StatMath.FromClass(def);
@@ -67,9 +65,34 @@ public static class EntityFactory
             player.Add(stats);
             player.Add(equipment!);
             player.Add(new Items.Inventory(world.Content.Rules.Items.InventorySize));
+            player.Add(new Items.Wallet());
+            AddStartingInventory(world, def, player);
         }
 
         return player;
+    }
+
+    /// <summary>
+    /// Põe o inventário inicial da classe (T-320, <see cref="ClassDefinition.StartingInventory"/>; ex.: 5 poções de vida).
+    /// Consumíveis empilham; o que não couber é ignorado.
+    /// </summary>
+    public static void AddStartingInventory(World world, ClassDefinition def, Entity player)
+    {
+        foreach (var start in def.StartingInventory)
+        {
+            if (!world.Content.Items.TryGetValue(start.Item, out var item))
+            {
+                continue;
+            }
+
+            var instance = item.IsConsumable
+                ? Items.ItemInstance.Stack(start.Item, start.Count)
+                : Items.ItemInstance.Common(start.Item, start.Level);
+            for (var n = item.IsConsumable ? 1 : start.Count; n > 0; n--)
+            {
+                Items.Gear.AddToInventory(world, player, instance);
+            }
+        }
     }
 
     /// <param name="level">Nível em que o monstro surge (T-206); null = o da definição. A vida cresce com ele.</param>

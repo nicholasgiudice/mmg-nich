@@ -2,7 +2,7 @@ using Game.Core.Definitions;
 
 namespace Game.Data.Tests;
 
-/// <summary>T-017: formato JSON e validação de target, bonusVsTags, tags, charges, consumables, controlDurationMultiplier e armTime.</summary>
+/// <summary>T-017: formato JSON e validação de target, bonusVsTags, tags, controlDurationMultiplier e armTime.</summary>
 public class MissingMechanicsLoaderTests
 {
     private static LoadResult Load(string json) => GameDataLoader.LoadSources([("t.json", json)]);
@@ -16,7 +16,7 @@ public class MissingMechanicsLoaderTests
             {
               "classes": [ { "id": "class.hero", "name": "Hero", "health": 100, "speed": 4, "radius": 0.4,
                 "resource": { "type": "mana", "max": 100 }, "basicAttack": "hero.hit",
-                "abilities": [ "hero.chain" ], "consumables": [ "item.potion" ] } ],
+                "abilities": [ "hero.chain" ] } ],
               "abilities": [
                 { "id": "hero.hit", "name": "Hit", "targeting": { "type": "self" } },
                 { "id": "hero.chain", "name": "Chain", "targeting": { "type": "unit", "range": 5 },
@@ -24,7 +24,7 @@ public class MissingMechanicsLoaderTests
                     { "type": "damage", "school": "holy", "base": 10, "bonusVsTags": { "undead": 0.5 } },
                     { "type": "heal", "base": 5, "target": "self" },
                     { "type": "remove_status", "tags": [ "poison", "curse" ] } ] },
-                { "id": "item.potion", "name": "Potion", "cooldown": 20, "charges": 3, "targeting": { "type": "self" },
+                { "id": "item.potion", "name": "Potion", "cooldown": 20, "targeting": { "type": "self" },
                   "effects": [ { "type": "heal", "base": 60 } ] } ],
               "statuses": [ { "id": "status.steady", "name": "Steady", "defaultDuration": 5,
                 "modifiers": { "controlDurationMultiplier": 0.5 } },
@@ -35,32 +35,16 @@ public class MissingMechanicsLoaderTests
 
         Assert.True(r.Success, Errors(r));
         var db = r.Database!;
-        Assert.Equal(["item.potion"], db.Classes["class.hero"].Consumables);
         var fx = db.Abilities["hero.chain"].Effects;
         var dmg = Assert.IsType<DamageEffect>(fx[0]);
         Assert.Equal(0.5, dmg.BonusVsTags["undead"]);
         Assert.Equal(EffectTarget.Targets, dmg.Target);
         Assert.Equal(EffectTarget.Self, fx[1].Target);
         Assert.Equal(["poison", "curse"], Assert.IsType<RemoveStatusEffect>(fx[2]).Tags);
-        Assert.Equal(3, db.Abilities["item.potion"].Charges);
-        Assert.Null(db.Abilities["hero.chain"].Charges);
         Assert.Equal(400, db.Abilities["item.potion"].CooldownTicks);
         Assert.Equal(0.5, db.Statuses["status.steady"].Modifiers.ControlDurationMultiplier);
         Assert.Equal(1, db.Statuses["status.plain"].Modifiers.ControlDurationMultiplier);
         Assert.Equal(10, db.Areas["area.trap"].ArmTimeTicks);
-    }
-
-    [Fact]
-    public void Unknown_consumable_reference_is_an_error()
-    {
-        var r = Load("""
-            { "classes": [ { "id": "class.hero", "name": "Hero", "health": 100, "speed": 4, "radius": 0.4,
-                "resource": { "type": "mana", "max": 100 }, "basicAttack": "hero.hit", "consumables": [ "item.nope" ] } ],
-              "abilities": [ { "id": "hero.hit", "name": "Hit", "targeting": { "type": "self" } } ] }
-            """);
-
-        Assert.False(r.Success);
-        Assert.Contains("item.nope", Errors(r));
     }
 
     [Theory]

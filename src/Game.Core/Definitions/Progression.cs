@@ -34,6 +34,15 @@ public sealed record ProgressionRules
     public double XpPerMonsterLevel { get; init; } = 6;
     public XpByRank XpByRank { get; init; } = new();
 
+    /// <summary>
+    /// T-320: ouro de um monstro = porNível × nível do monstro × categoria (<see cref="GoldByRank"/>), com variação de
+    /// ± <see cref="GoldVariance"/> (fração) sorteada pelo RNG da simulação. Dividido igualmente entre quem recebe a XP.
+    /// Padrão 0 = sem ouro.
+    /// </summary>
+    public double GoldPerMonsterLevel { get; init; }
+    public XpByRank GoldByRank { get; init; } = new() { Normal = 1, Elite = 1, Boss = 1 };
+    public double GoldVariance { get; init; } = 0.2;
+
     /// <summary>Monstro acima do personagem: + bônus por nível, até o máximo.</summary>
     public double XpBonusPerLevelAbove { get; init; } = 0.1;
     public double XpMaxBonus { get; init; } = 0.3;

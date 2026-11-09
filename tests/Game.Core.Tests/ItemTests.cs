@@ -30,8 +30,18 @@ public class ItemTests
 
     private static World NewWorld(ContentCatalog? content = null, ulong seed = 11) => WorldBuilder.CreateDefault(seed, null, content ?? Content);
 
-    private static Entity Hero(World w, string cls = "class.warrior", float x = 1) =>
-        Leveling.SpawnCharacter(w, w.Content.Classes[cls], new Vector2(x, 1));
+    /// <summary>Personagem com o inventário vazio (T-320: sem as poções iniciais, para os espaços dos testes ficarem previsíveis).</summary>
+    private static Entity Hero(World w, string cls = "class.warrior", float x = 1)
+    {
+        var e = Leveling.SpawnCharacter(w, w.Content.Classes[cls], new Vector2(x, 1));
+        var inv = e.Get<Inventory>();
+        for (var i = 0; i < inv.Capacity; i++)
+        {
+            inv[i] = null;
+        }
+
+        return e;
+    }
 
     private static Entity Monster(World w, string id, float x = 2)
     {
@@ -64,9 +74,9 @@ public class ItemTests
         return events;
     }
 
-    private static int Give(Entity e, string baseId, int level, ItemRarity rarity = ItemRarity.Common, params string[] affixes)
+    private static int Give(World w, Entity e, string baseId, int level, ItemRarity rarity = ItemRarity.Common, params string[] affixes)
     {
-        var slot = Gear.AddToInventory(e, new ItemInstance(baseId, level, rarity, affixes));
+        var slot = Gear.AddToInventory(w, e, new ItemInstance(baseId, level, rarity, affixes));
         Assert.True(slot >= 0);
         return slot;
     }
@@ -83,7 +93,7 @@ public class ItemTests
     public void Starting_equipment_reproduces_the_prototype_numbers(string cls, string weapon, float damage, int intel)
     {
         var w = NewWorld();
-        foreach (var e in new[] { EntityFactory.SpawnPlayer(w, Content.Classes[cls], Vector2.Zero), Hero(w, cls) })
+        foreach (var e in new[] { EntityFactory.SpawnPlayer(w, Content.Classes[cls], Vector2.Zero), Leveling.SpawnCharacter(w, Content.Classes[cls], Vector2.Zero) })
         {
             var s = e.Get<CharacterStats>();
             Assert.Equal(damage, s.WeaponDamage);
@@ -96,9 +106,12 @@ public class ItemTests
             var item = Assert.Single(e.Get<Equipment>().Items);
             Assert.Equal((EquipSlot.Weapon, ItemInstance.Common(weapon, 2)), (item.Slot, item.Item));
             Assert.Equal(30, e.Get<Inventory>().Capacity);
-            Assert.All(e.Get<Inventory>().Slots, Assert.Null);
+            Assert.All(e.Get<Inventory>().Slots.Skip(1), Assert.Null);
 
             // Mesmos números da T-201: vida pela VIT e Mana pela INT (o cajado dá +2 INT ao Mago).
+            Assert.Equal(ItemInstance.Stack("consumable.minor_healing_potion", 5), e.Get<Inventory>()[0]); // T-320
+            Assert.Equal(0, e.Get<Wallet>().Gold);
+
             Assert.Equal(StatMath.MaxHealth(Content.Classes[cls], s, Content.Rules.Stats), e.Get<Health>().Max, 3);
             Assert.Equal(80 + (2 * intel), e.Get<ResourcePool>().Max, 3);
         }
@@ -141,8 +154,8 @@ public class ItemTests
         var health = hero.Get<Health>();
         var baseMax = health.Max;
         var baseCrit = StatMath.CritChance(s, Content.Rules.Stats);
-        var chest = Give(hero, "armor.heavy_chest", 5);
-        var ring = Give(hero, "accessory.ring", 4, ItemRarity.Rare, "affix.health", "affix.crit");
+        var chest = Give(w, hero, "armor.heavy_chest", 5);
+        var ring = Give(w, hero, "accessory.ring", 4, ItemRarity.Rare, "affix.health", "affix.crit");
 
         var events = Step(w, new EquipItemIntent(hero.Id, chest), new EquipItemIntent(hero.Id, ring));
 
@@ -173,7 +186,7 @@ public class ItemTests
         Step(w, new SpendAttributePointIntent(hero.Id, AttributeKind.Str), new SpendAttributePointIntent(hero.Id, AttributeKind.Str));
         var s = hero.Get<CharacterStats>();
         Assert.Equal(14, s.Str);
-        var slot = Give(hero, "weapon.axe", 5, ItemRarity.Uncommon, "affix.str");
+        var slot = Give(w, hero, "weapon.axe", 5, ItemRarity.Uncommon, "affix.str");
 
         var equipped = Assert.Single(Step(w, new EquipItemIntent(hero.Id, slot)).OfType<ItemEquipped>());
 
@@ -202,14 +215,14 @@ public class ItemTests
     {
         var w = NewWorld();
         var hero = Hero(w, cls);
-        var slot = Give(hero, item, 3);
+        var slot = Give(w, hero, item, 3);
 
         var events = Step(w, new EquipItemIntent(hero.Id, slot));
 
         if (allowed)
         {
             Assert.Single(events.OfType<ItemEquipped>());
-            Assert.Equal(item, hero.Get<Equipment>()[Content.Items[item].Slot]!.BaseId);
+            Assert.Equal(item, hero.Get<Equipment>()[Content.Items[item].Slot!.Value]!.BaseId);
         }
         else
         {
@@ -247,10 +260,10 @@ public class ItemTests
         var hero = Hero(w);
         for (var i = 0; i < 30; i++)
         {
-            Give(hero, "armor.light_hands", 1);
+            Give(w, hero, "armor.light_hands", 1);
         }
 
-        Assert.Equal(-1, Gear.AddToInventory(hero, ItemInstance.Common("accessory.ring", 1)));
+        Assert.Equal(-1, Gear.AddToInventory(w, hero, ItemInstance.Common("accessory.ring", 1)));
         var rejected = Assert.Single(Step(w, new UnequipItemIntent(hero.Id, EquipSlot.Weapon)).OfType<ItemRejected>());
         Assert.Equal(ItemRejectReason.InventoryFull, rejected.Reason);
         Assert.NotNull(hero.Get<Equipment>()[EquipSlot.Weapon]);
@@ -414,7 +427,7 @@ public class ItemTests
         var w = NewWorld();
         var hero = Hero(w);
         var other = Hero(w, "class.archer");
-        var slot = Give(hero, "accessory.ring", 3, ItemRarity.Uncommon, "affix.vit");
+        var slot = Give(w, hero, "accessory.ring", 3, ItemRarity.Uncommon, "affix.vit");
 
         var dropped = Assert.Single(Step(w, new DropItemIntent(hero.Id, slot)).OfType<ItemDropped>());
 
@@ -442,7 +455,7 @@ public class ItemTests
     {
         var w = NewWorld();
         var hero = Hero(w);
-        var slot = Give(hero, "armor.heavy_head", 2);
+        var slot = Give(w, hero, "armor.heavy_head", 2);
         var before = w.Snapshot();
         var hash = w.ComputeStateHash();
 

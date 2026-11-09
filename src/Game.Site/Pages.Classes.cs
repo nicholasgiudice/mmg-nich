@@ -107,9 +107,10 @@ internal sealed partial class SiteBuilder
             .Where(t => rules.Items.ArmorTypes.For(t).Classes is var cl && (cl.Count == 0 || cl.Contains(c.Id)))
             .Select(t => p.A($"{Url.Items}#armor-types", ArmorType(t)));
         equip.Add(("Armaduras que pode usar", string.Join(", ", types)));
-        if (c.Consumables.Count > 0)
+        if (c.StartingInventory.Count > 0)
         {
-            equip.Add(("Consumíveis", string.Join(", ", c.Consumables.Select(id => Icon(p, id) + _d.AbilityLink(p, id)))));
+            equip.Add(("Inventário inicial", string.Join(", ", c.StartingInventory.Select(s =>
+                Icon(p, s.Item) + p.A($"{Url.Items}#{s.Item}", _db.Items.TryGetValue(s.Item, out var it) ? it.Name : s.Item) + $" × {s.Count}"))));
         }
 
         p.Add(Dl(equip));

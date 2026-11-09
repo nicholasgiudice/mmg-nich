@@ -27,10 +27,10 @@ public sealed record ClassDefinition
     public IReadOnlyList<string> Abilities { get; init; } = [];
 
     /// <summary>
-    /// Consumíveis (T-017): ids de habilidade com uso limitado por <see cref="AbilityDefinition.Charges"/>. Ficam separados de
-    /// <see cref="Abilities"/>; o jogador os conhece mas eles não entram em <c>AbilityState.Known</c> (ver <c>AbilityState.Consumables</c>).
+    /// Itens com que o personagem novo começa no inventário (T-320; ex.: 5 poções de vida). Substitui os consumíveis como
+    /// habilidade da T-017.
     /// </summary>
-    public IReadOnlyList<string> Consumables { get; init; } = [];
+    public IReadOnlyList<StartingItemDefinition> StartingInventory { get; init; } = [];
 
     /// <summary>Regras de geração de recurso por evento (T-010).</summary>
     public IReadOnlyList<ResourceRuleDefinition> ResourceRules { get; init; } = [];
@@ -45,9 +45,6 @@ public sealed record AbilityDefinition
     public int CooldownTicks { get; init; }
     public int CastTimeTicks { get; init; }
     public bool CastWhileMoving { get; init; }
-
-    /// <summary>Usos por encontro (T-017). Null = ilimitado. Esgotadas: <c>AbilityRejectReason.NoCharges</c>.</summary>
-    public int? Charges { get; init; }
     public required TargetingDefinition Targeting { get; init; }
 
     /// <summary>

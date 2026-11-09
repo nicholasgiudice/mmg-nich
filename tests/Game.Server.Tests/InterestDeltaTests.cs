@@ -68,6 +68,8 @@ public class InterestDeltaTests(ITestOutputHelper output)
             var theirs = viewer.Entity(other.Me)!.Components;
             Assert.Single(own.OfType<Game.Core.Combat.Items.Inventory>());
             Assert.Empty(theirs.OfType<Game.Core.Combat.Items.Inventory>());
+            Assert.Single(own.OfType<Game.Core.Combat.Items.Wallet>()); // T-320: ouro só para o dono
+            Assert.Empty(theirs.OfType<Game.Core.Combat.Items.Wallet>());
             Assert.Single(own.OfType<Game.Core.Combat.Items.Equipment>());
             Assert.Single(theirs.OfType<Game.Core.Combat.Items.Equipment>());
         }

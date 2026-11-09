@@ -43,6 +43,7 @@ public static class ComponentCodecs
         [typeof(Equipment)] = 17,
         [typeof(GroundItem)] = 18,
         [typeof(PartyMembership)] = 19,
+        [typeof(Wallet)] = 20,
     };
 
     internal static void Write<TB>(ref MemoryPackWriter<TB> w, IComponent component)
@@ -229,6 +230,9 @@ public static class ComponentCodecs
                 break;
             case PartyMembership pm:
                 w.I(pm.PartyId);
+                break;
+            case Wallet wallet:
+                w.L(wallet.Gold);
                 break;
         }
     }
@@ -428,6 +432,9 @@ public static class ComponentCodecs
             case 19:
                 return new PartyMembership { PartyId = r.I() };
 
+            case 20:
+                return new Wallet { Gold = r.L() };
+
             default:
                 throw new MemoryPackSerializationException($"Tag de componente desconhecida: {tag}");
         }
@@ -440,9 +447,10 @@ public static class ComponentCodecs
         w.I(item.Level);
         w.E(item.Rarity);
         w.Strs(item.Affixes);
+        w.I(item.Count);
     }
 
-    private static ItemInstance ReadItem(ref MemoryPackReader r) => new(r.S(), r.I(), r.E<ItemRarity>(), r.Strs());
+    private static ItemInstance ReadItem(ref MemoryPackReader r) => new(r.S(), r.I(), r.E<ItemRarity>(), r.Strs(), r.I());
 
     private static Faction? OptFaction(int v) =>
         v < 0 ? null : Enum.IsDefined((Faction)v) ? (Faction)v : throw new MemoryPackSerializationException($"Facção inválida: {v}");
@@ -463,9 +471,6 @@ public static class ComponentCodecs
             w.VOpt(cast.AimPoint);
             w.B(cast.LockedFacing);
         }
-
-        w.Strs(a.Consumables);
-        WriteMap(ref w, a.ChargesUsed, static (ref MemoryPackWriter<TB> w2, int v) => w2.I(v));
 
         // Dicionários criados sob demanda no Core: vazios não alocam nada aqui nem no cliente.
         w.B(a.HasRanks);
@@ -500,8 +505,6 @@ public static class ComponentCodecs
             };
         }
 
-        a.Consumables.AddRange(r.Strs());
-        ReadMap(ref r, a.ChargesUsed, static (ref MemoryPackReader r2) => r2.I());
         if (r.B())
         {
             ReadMap(ref r, a.Ranks, static (ref MemoryPackReader r2) => r2.I());

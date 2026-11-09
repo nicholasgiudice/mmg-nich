@@ -32,16 +32,21 @@ public static class Gear
             return ItemRejectReason.UnknownItem;
         }
 
+        if (def.Slot is not { } slot)
+        {
+            return ItemRejectReason.NotEquippable;
+        }
+
         if (!ItemMath.CanUse(world.Content.Rules.Items, def, e.TryGet<UnitInfo>()?.DefinitionId ?? ""))
         {
             return ItemRejectReason.ClassCannotUse;
         }
 
-        var previous = eq[def.Slot];
-        eq[def.Slot] = item;
+        var previous = eq[slot];
+        eq[slot] = item;
         inv[inventorySlot] = previous;
         Refresh(world, e);
-        world.Events.Publish(new ItemEquipped(e.Id, def.Slot, item.BaseId, previous?.BaseId ?? ""));
+        world.Events.Publish(new ItemEquipped(e.Id, slot, item.BaseId, previous?.BaseId ?? ""));
         return null;
     }
 
@@ -71,7 +76,10 @@ public static class Gear
         return null;
     }
 
-    /// <summary>Pega o item do chão (precisa ter direito, estar no alcance e ter espaço). Null = feito.</summary>
+    /// <summary>
+    /// Pega o item do chão (precisa ter direito, estar no alcance e ter espaço). Pilhas (T-320) completam as pilhas do mesmo
+    /// item antes de abrir espaço novo; se a pilha inteira não couber, nada é pego. Null = feito.
+    /// </summary>
     public static ItemRejectReason? PickUp(World world, Entity e, EntityId itemId)
     {
         if (e.TryGet<Inventory>() is not { } inv)
@@ -95,19 +103,21 @@ public static class Gear
             return ItemRejectReason.TooFar;
         }
 
-        var free = inv.FirstFree();
+        var free = AddToInventory(world, e, g.Item);
         if (free < 0)
         {
             return ItemRejectReason.InventoryFull;
         }
 
-        inv[free] = g.Item;
         world.Remove(ground.Id);
         world.Events.Publish(new ItemPickedUp(e.Id, itemId, g.Item.BaseId, free));
         return null;
     }
 
-    /// <summary>Larga o item do espaço do inventário no chão, aos pés do personagem (só ele pode pegar de volta). Null = feito.</summary>
+    /// <summary>
+    /// Larga o item do espaço do inventário no chão, aos pés do personagem (só ele pode pegar de volta). Pilha (T-320): larga
+    /// a pilha inteira. Null = feito.
+    /// </summary>
     public static ItemRejectReason? Drop(World world, Entity e, int inventorySlot)
     {
         if (e.TryGet<Inventory>() is not { } inv)
@@ -125,17 +135,82 @@ public static class Gear
         return null;
     }
 
-    /// <summary>Põe o item no primeiro espaço livre; retorna o espaço ou -1 (sem inventário ou cheio).</summary>
-    public static int AddToInventory(Entity e, ItemInstance item)
+    /// <summary>
+    /// Põe o item no inventário; retorna o primeiro espaço usado ou -1 (sem inventário ou sem lugar, e então nada muda).
+    /// Consumível (T-320): completa as pilhas do mesmo item, em ordem de espaço, até <see cref="ItemBaseDefinition.MaxStack"/>,
+    /// e o que sobrar abre espaços novos. Tudo ou nada: se não couber inteiro, não entra nada.
+    /// </summary>
+    public static int AddToInventory(World world, Entity e, ItemInstance item)
     {
-        var free = e.TryGet<Inventory>()?.FirstFree() ?? -1;
-        if (free >= 0)
+        if (e.TryGet<Inventory>() is not { } inv || item.Count < 1)
         {
-            e.Get<Inventory>()[free] = item;
+            return -1;
         }
 
-        return free;
+        var max = MaxStack(world, item);
+        if (max <= 1)
+        {
+            var free = inv.FirstFree();
+            if (free >= 0)
+            {
+                inv[free] = item;
+            }
+
+            return free;
+        }
+
+        if (Room(inv, item, max) < item.Count)
+        {
+            return -1;
+        }
+
+        var left = item.Count;
+        var first = -1;
+        for (var i = 0; i < inv.Capacity && left > 0; i++)
+        {
+            if (inv[i] is { } other && SameStack(other, item) && other.Count < max)
+            {
+                var add = Math.Min(left, max - other.Count);
+                inv[i] = other.WithCount(other.Count + add);
+                left -= add;
+                first = first < 0 ? i : first;
+            }
+        }
+
+        for (var i = 0; i < inv.Capacity && left > 0; i++)
+        {
+            if (inv[i] is null)
+            {
+                var add = Math.Min(left, max);
+                inv[i] = item.WithCount(add);
+                left -= add;
+                first = first < 0 ? i : first;
+            }
+        }
+
+        return first;
     }
+
+    /// <summary>Quantas unidades do item ainda cabem no inventário (pilhas do mesmo item + espaços livres).</summary>
+    public static int Room(World world, Inventory inv, ItemInstance item) => Room(inv, item, MaxStack(world, item));
+
+    /// <summary>Unidades por espaço do item (1 para equipamento e itens que o catálogo não conhece).</summary>
+    public static int MaxStack(World world, ItemInstance item) =>
+        world.Content.Items.TryGetValue(item.BaseId, out var def) ? def.MaxStack : 1;
+
+    private static int Room(Inventory inv, ItemInstance item, int max)
+    {
+        var room = 0;
+        foreach (var slot in inv.Slots)
+        {
+            room += slot is null ? max : SameStack(slot, item) ? Math.Max(0, max - slot.Count) : 0;
+        }
+
+        return room;
+    }
+
+    private static bool SameStack(ItemInstance a, ItemInstance b) =>
+        a.BaseId == b.BaseId && a.Level == b.Level && a.Rarity == b.Rarity && a.Affixes.SequenceEqual(b.Affixes);
 
     /// <summary>Cria o item no chão com dono e prazo (<see cref="ItemRules.GroundDurationTicks"/>) e publica <see cref="ItemDropped"/>.</summary>
     public static Entity SpawnGround(World world, Vector2 position, ItemInstance item, IEnumerable<int> owners, EntityId source)

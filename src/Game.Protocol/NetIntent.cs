@@ -30,6 +30,9 @@ public enum NetIntentKind : byte
 
     /// <summary>T-204: <see cref="NetIntent.Slot"/> = espaço do inventário.</summary>
     DropItem,
+
+    /// <summary>T-320: <see cref="NetIntent.Slot"/> = espaço do inventário (consumível).</summary>
+    UseItem,
 }
 
 /// <summary>
@@ -58,6 +61,7 @@ public sealed partial record NetIntent(
         UnequipItemIntent u => new NetIntent(NetIntentKind.UnequipItem, default, null, null, null, Slot: (int)u.Slot),
         PickUpItemIntent p => new NetIntent(NetIntentKind.PickUpItem, default, null, p.Item, null),
         DropItemIntent d => new NetIntent(NetIntentKind.DropItem, default, null, null, null, Slot: d.InventorySlot),
+        UseItemIntent u => new NetIntent(NetIntentKind.UseItem, default, null, null, null, Slot: u.InventorySlot),
         _ => throw new NotSupportedException($"Intenção sem formato de rede: {intent.GetType().Name}"),
     };
 
@@ -74,6 +78,7 @@ public sealed partial record NetIntent(
         NetIntentKind.UnequipItem when Enum.IsDefined((EquipSlot)Slot) => new UnequipItemIntent(entity, (EquipSlot)Slot),
         NetIntentKind.PickUpItem when Target is { } item => new PickUpItemIntent(entity, item),
         NetIntentKind.DropItem => new DropItemIntent(entity, Slot),
+        NetIntentKind.UseItem => new UseItemIntent(entity, Slot),
         _ => null,
     };
 }

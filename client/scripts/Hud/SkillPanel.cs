@@ -84,13 +84,13 @@ public partial class SkillPanel : ProgressionPanel
             grid.AddChild(AbilityCell(self, ability, plan, progress, stats, level));
         }
 
-        foreach (var id in state.Consumables.Count > 0 ? state.Consumables : cls.Consumables)
+        // T-320: consumíveis são itens do inventário (T-323 põe o inventário e a barra de itens); aqui só a referência.
+        foreach (var id in cls.StartingInventory.Select(s => s.Item).Distinct())
         {
-            if (Content.AbilityAt(id, 1) is { } item)
+            if (Content.Items.TryGetValue(id, out var it) && it.UseAbility is { } use && Content.AbilityAt(use, 1) is { } item)
             {
-                var left = item.Charges is { } max ? $"{Math.Max(0, max - state.ChargesUsed.GetValueOrDefault(id))}/{max} cargas" : "consumível";
-                grid.AddChild(Cell(item, IconCatalog.Shared.For(id), ItemBorder, left, Tip(item.Name + " — consumível (Q)", item, stats, null),
-                    draggable: true, plus: null, req: null));
+                grid.AddChild(Cell(item, IconCatalog.Shared.For(id), ItemBorder, "consumível", Tip(it.Name + " — consumível (Q)", item, stats, null),
+                    draggable: false, plus: null, req: null));
             }
         }
 
@@ -228,7 +228,7 @@ public partial class SkillPanel : ProgressionPanel
         {
             text += $"\n\nPróximo (NH {SkillPlan.Roman(n.Rank)}):" + Section(n.Def, stats);
         }
-        else if (current is not null && !current.Id.StartsWith("item.", StringComparison.Ordinal) && current.Charges is null)
+        else if (current is not null && !current.Id.StartsWith("item.", StringComparison.Ordinal))
         {
             text += "\n\nNH máximo.";
         }

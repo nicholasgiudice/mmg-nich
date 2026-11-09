@@ -198,12 +198,12 @@ public sealed class PlayerInput
             }
 
             var action = InputActions.AbilitySlots[i];
-            if (abilities.Consumables.Contains(id))
+            if (IsConsumableItem(id))
             {
-                // Poção só no aperto: segurar não deve gastar todas.
+                // Poção só no aperto: segurar não deve gastar todas. T-320: consumível é item do inventário.
                 if (_justPressed(action))
                 {
-                    UseAbility(authority, self, units, id, hovered, abilities, tick);
+                    UseConsumable(authority, self, id);
                 }
 
                 continue;
@@ -229,10 +229,34 @@ public sealed class PlayerInput
             }
         }
 
-        // Poção só no aperto: segurar não deve gastar todas.
-        if (abilities.Consumables.Count > 0 && _justPressed(InputActions.Consumable))
+        // Poção só no aperto: segurar não deve gastar todas. T-320: usa o primeiro consumível do inventário.
+        if (_justPressed(InputActions.Consumable))
         {
-            UseAbility(authority, self, units, abilities.Consumables[0], hovered, abilities, tick);
+            UseConsumable(authority, self, null);
+        }
+    }
+
+    /// <summary>T-320: ids de item consumível (<c>consumable.*</c>) na barra.</summary>
+    private static bool IsConsumableItem(string id) => id.StartsWith("consumable.", StringComparison.Ordinal);
+
+    /// <summary>
+    /// T-320: usa a primeira pilha do consumível <paramref name="baseId"/> (null = qualquer consumível) com
+    /// <see cref="UseItemIntent"/>. A barra e o painel de verdade ficam para a T-323.
+    /// </summary>
+    private static void UseConsumable(IGameAuthority authority, EntitySnapshot self, string? baseId)
+    {
+        if (self.TryGet<Game.Core.Combat.Items.Inventory>() is not { } inv)
+        {
+            return;
+        }
+
+        for (var i = 0; i < inv.Capacity; i++)
+        {
+            if (inv[i] is { } item && IsConsumableItem(item.BaseId) && (baseId is null || item.BaseId == baseId))
+            {
+                authority.Send(new UseItemIntent(self.Id, i));
+                return;
+            }
         }
     }
 
@@ -248,7 +272,7 @@ public sealed class PlayerInput
         }
 
         return bar.Slots
-            .Select(id => id is not null && (id == abilities.BasicAttackId || abilities.Consumables.Contains(id) || abilities.Knows(id)) ? id : null)
+            .Select(id => id is not null && (id == abilities.BasicAttackId || IsConsumableItem(id) || abilities.Knows(id)) ? id : null)
             .ToList();
     }
 

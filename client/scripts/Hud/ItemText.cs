@@ -103,8 +103,10 @@ public static class ItemText
         var lines = new List<string>
         {
             $"[b][color=#{RarityColor(item.Rarity).ToHtml(false)}]{Hud.Escape(Name(content, item))}[/color][/b]",
-            $"[color=#aaaaaa]{RarityName(item.Rarity)} · {(def is null ? "?" : SlotName(def.Slot))}"
-                + (def?.ArmorType is { } t ? $" ({ArmorName(t)})" : "") + $" · nível do item {item.Level}[/color]",
+            def is { IsConsumable: true }
+                ? $"[color=#aaaaaa]consumível · {item.Count}/{def.MaxStack}[/color]"
+                : $"[color=#aaaaaa]{RarityName(item.Rarity)} · {(def?.Slot is { } s ? SlotName(s) : "?")}"
+                    + (def?.ArmorType is { } t ? $" ({ArmorName(t)})" : "") + $" · nível do item {item.Level}[/color]",
         };
 
         var stats = ItemMath.StatsOf(content, item);
@@ -129,10 +131,10 @@ public static class ItemText
             lines.Add($"[color=#ff8866]Sua classe não usa (só {string.Join(", ", who)})[/color]");
         }
 
-        if (!isEquipped && def is not null)
+        if (!isEquipped && def?.Slot is { } slot)
         {
             lines.Add("");
-            lines.Add(equipped is null ? $"[color=#aaaaaa]Nada equipado em {SlotName(def.Slot)}.[/color]" : "[color=#aaaaaa]Comparado com o equipado:[/color]");
+            lines.Add(equipped is null ? $"[color=#aaaaaa]Nada equipado em {SlotName(slot)}.[/color]" : "[color=#aaaaaa]Comparado com o equipado:[/color]");
             if (equipped is not null)
             {
                 var current = ItemMath.StatsOf(content, equipped);
@@ -177,6 +179,11 @@ public static class ItemText
         ItemRejectReason.NotFound => "O item não está mais lá",
         ItemRejectReason.NotOwner => "Esse item não é seu",
         ItemRejectReason.TooFar => "Longe demais para pegar",
+        ItemRejectReason.NotEquippable => "Esse item não se equipa",
+        ItemRejectReason.NotConsumable => "Esse item não se usa",
+        ItemRejectReason.OnCooldown => "Em recarga",
+        ItemRejectReason.Dead => "Você está morto",
+        ItemRejectReason.CannotUseNow => "Não dá para usar agora",
         _ => reason.ToString(),
     };
 }

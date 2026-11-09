@@ -19,7 +19,7 @@
         "warrior.taunt",
         "warrior.living_wall"
       ],
-      "consumables": ["item.minor_healing_potion"]
+      "startingInventory": [{ "item": "consumable.minor_healing_potion", "count": 5 }]
     },
     {
       "id": "class.archer",
@@ -39,7 +39,7 @@
         "archer.rain_of_arrows",
         "archer.devastating_arrow"
       ],
-      "consumables": ["item.minor_healing_potion"]
+      "startingInventory": [{ "item": "consumable.minor_healing_potion", "count": 5 }]
     },
     {
       "id": "class.mage",
@@ -59,7 +59,7 @@
         "mage.lightning_field",
         "mage.arcane_cataclysm"
       ],
-      "consumables": ["item.minor_healing_potion"]
+      "startingInventory": [{ "item": "consumable.minor_healing_potion", "count": 5 }]
     },
     {
       "id": "class.cleric",
@@ -73,7 +73,7 @@
       "resource": { "type": "mana", "max": 100, "initial": 100, "regenPerSecond": 5 },
       "basicAttack": "cleric.holy_strike",
       "abilities": ["cleric.direct_heal", "cleric.sacred_shield", "cleric.holy_chain", "cleric.purify", "cleric.miracle"],
-      "consumables": ["item.minor_healing_potion"]
+      "startingInventory": [{ "item": "consumable.minor_healing_potion", "count": 5 }]
     }
   ]
 }

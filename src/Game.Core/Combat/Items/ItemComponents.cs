@@ -6,10 +6,17 @@ namespace Game.Core.Combat.Items;
 /// <summary>
 /// Item concreto (T-204): base, nível do item, raridade e ids dos afixos sorteados. Os valores saem das definições
 /// (<see cref="ItemMath"/>), então isto é tudo que se salva e se manda pela rede. Imutável: componentes compartilham.
+/// T-320: <see cref="Count"/> = unidades da pilha (consumíveis, até <c>ItemBaseDefinition.MaxStack</c>); equipamento = 1.
 /// </summary>
-public sealed record ItemInstance(string BaseId, int Level, ItemRarity Rarity, IReadOnlyList<string> Affixes)
+public sealed record ItemInstance(string BaseId, int Level, ItemRarity Rarity, IReadOnlyList<string> Affixes, int Count = 1)
 {
     public static ItemInstance Common(string baseId, int level) => new(baseId, level, ItemRarity.Common, []);
+
+    /// <summary>Pilha de consumível (T-320): nível 1, comum, sem afixos.</summary>
+    public static ItemInstance Stack(string baseId, int count) => new(baseId, 1, ItemRarity.Common, [], count);
+
+    /// <summary>Mesmo item com outra quantidade.</summary>
+    public ItemInstance WithCount(int count) => this with { Count = count };
 
     public void WriteHash(StateHasher hasher)
     {
@@ -21,6 +28,8 @@ public sealed record ItemInstance(string BaseId, int Level, ItemRarity Rarity, I
         {
             hasher.Add(a);
         }
+
+        hasher.Add(Count);
     }
 }
 
@@ -148,6 +157,16 @@ public sealed class Equipment : ItemSlots, IComponent, IReplicated
     }
 
     public IComponent Clone() => new Equipment(this);
+}
+
+/// <summary>Ouro do personagem (T-320). Replicável, mas só o dono recebe (como o <see cref="Inventory"/>).</summary>
+public sealed class Wallet : IComponent, IReplicated
+{
+    public long Gold { get; set; }
+
+    public IComponent Clone() => new Wallet { Gold = Gold };
+
+    public void WriteHash(StateHasher hasher) => hasher.Add(Gold);
 }
 
 /// <summary>

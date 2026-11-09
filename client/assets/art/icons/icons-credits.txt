@@ -6,3 +6,5 @@ Arquivo baixado: 496_RPG_icons.zip (2026-11-02), guardado fora do repositório e
 Uso: icons.png reúne os ícones escolhidos, sem modificação (34x34 px). O arquivo de origem de cada ícone está em icons.json ("source").
 
 Ícones das habilidades de classe (T-087, 2026-11-06): gerados no PixelLab (modelo Pro, 32x32 px, com o painel pedra e ouro como referência de estilo) pelo designer, com assinatura que dá ao assinante os direitos sobre o que gera. Ficam nas linhas novas no fim de icons.png, com 1 px de margem dentro da célula de 34 px; em icons.json, "source" = "pixellab:<id>#n" (candidato n de tasks/reports/interface/icones-amostra/pro/<id>-folha.png; o escolhido também em pro/escolhidos/<id>.png). Os ícones antigos dessas habilidades continuam na folha, sem uso.
+
+Poção de Mana Menor (T-320, 2026-11-09): o ícone P_Red01.png com os tons de vermelho girados para azul (única modificação), na célula (204, 204) de icons.png. A poção de vida passou a usar a chave do item (consumable.minor_healing_potion).

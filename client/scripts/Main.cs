@@ -828,7 +828,7 @@ public partial class Main : Node2D
             return;
         }
 
-        var equipped = _content.Items.TryGetValue(item.BaseId, out var def) ? self.TryGet<Game.Core.Combat.Items.Equipment>()?[def.Slot] : null;
+        var equipped = _content.Items.TryGetValue(item.BaseId, out var def) && def.Slot is { } equipSlot ? self.TryGet<Game.Core.Combat.Items.Equipment>()?[equipSlot] : null;
         GD.Print($"[tooltip {slot}] " + ItemText.Tooltip(_content, item, self.TryGet<UnitInfo>()?.DefinitionId, equipped, isEquipped: false));
     }
 

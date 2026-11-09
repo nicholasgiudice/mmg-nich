@@ -114,4 +114,73 @@ public class ItemLoaderTests
         Assert.All(new[] { drops.Normal, drops.Elite, drops.Boss }.SelectMany(d => d.Items), id => Assert.True(db.Items.ContainsKey(id), id));
         Assert.Equal((0.04, 0.25, 1.0), (drops.Normal.Chance, drops.Elite.Chance, drops.Boss.Chance));
     }
+
+    // ---------- T-320: consumíveis e inventário inicial ----------
+
+    private const string Drink = """{ "id": "item.drink", "name": "Gole", "cooldown": 20, "targeting": { "type": "self" }, "effects": [ { "type": "heal", "base": 60 } ] }""";
+    private const string Potion = """{ "id": "consumable.drink", "name": "Poção", "type": "consumable", "stack": 20, "useAbility": "item.drink", "price": 10 }""";
+
+    private static string ConsumableData(string items, string inventory = "[]", string abilities = Drink) => $$"""
+        { "classes": [ { "id": "class.hero", "name": "Hero", "speed": 4, "radius": 0.4, "attributes": { "str": 5 }, "baseHealth": 100,
+            "startingInventory": {{inventory}}, "resource": { "type": "mana", "max": 100 }, "basicAttack": "hero.hit" } ],
+          "abilities": [ {{Hit}}, {{abilities}} ], "items": {{items}}, "rules": { "items": { "inventorySize": 3 } } }
+        """;
+
+    [Fact]
+    public void Consumables_and_starting_inventory_load()
+    {
+        var r = Load(ConsumableData($"[{Potion}]", """[{ "item": "consumable.drink", "count": 5 }]"""));
+
+        Assert.True(r.Success, Errors(r));
+        var item = r.Database!.Items["consumable.drink"];
+        Assert.Equal((ItemKind.Consumable, (EquipSlot?)null, 20, "item.drink", 10), (item.Type, item.Slot, item.MaxStack, item.UseAbility, item.Price));
+        var start = Assert.Single(r.Database.Classes["class.hero"].StartingInventory);
+        Assert.Equal(("consumable.drink", 5), (start.Item, start.Count));
+    }
+
+    [Theory]
+    [InlineData("""{ "id": "consumable.x", "name": "X", "type": "consumable" }""", "useAbility")]
+    [InlineData("""{ "id": "consumable.x", "name": "X", "type": "consumable", "useAbility": "item.nope" }""", "item.nope")]
+    [InlineData("""{ "id": "consumable.x", "name": "X", "type": "consumable", "useAbility": "item.drink", "slot": "weapon" }""", "slot")]
+    [InlineData("""{ "id": "consumable.x", "name": "X", "type": "consumable", "useAbility": "item.drink", "stack": 0 }""", "stack")]
+    [InlineData("""{ "id": "consumable.x", "name": "X", "type": "consumable", "useAbility": "hero.slow" }""", "instantânea")]
+    [InlineData("""{ "id": "consumable.x", "name": "X", "type": "consumable", "useAbility": "hero.bolt" }""", "alvo em si")]
+    [InlineData("""{ "id": "weapon.x", "name": "X", "stack": 5, "slot": "weapon" }""", "stack")]
+    [InlineData("""{ "id": "weapon.x", "name": "X" }""", "slot")]
+    [InlineData("""{ "id": "weapon.x", "name": "X", "slot": "weapon", "useAbility": "item.drink" }""", "useAbility")]
+    [InlineData("""{ "id": "weapon.x", "name": "X", "slot": "weapon", "price": -1 }""", "price")]
+    public void Invalid_consumables_are_errors(string item, string expected)
+    {
+        var abilities = Drink + """
+            , { "id": "hero.slow", "name": "Lenta", "castTime": 1, "targeting": { "type": "self" } },
+              { "id": "hero.bolt", "name": "Raio", "targeting": { "type": "unit", "range": 5 } }
+            """;
+        var r = Load(ConsumableData($"[{item}]", abilities: abilities));
+        Assert.False(r.Success);
+        Assert.Contains(expected, Errors(r));
+    }
+
+    [Theory]
+    [InlineData("""[{ "item": "consumable.nope" }]""", "consumable.nope")]
+    [InlineData("""[{ "item": "consumable.drink", "count": 0 }]""", "count")]
+    [InlineData("""[{ "item": "consumable.drink", "count": 61 }]""", "startingInventory")] // 4 pilhas de 20 num inventário de 3
+    public void Invalid_starting_inventory_is_an_error(string inventory, string expected)
+    {
+        var r = Load(ConsumableData($"[{Potion}]", inventory));
+        Assert.False(r.Success);
+        Assert.Contains(expected, Errors(r));
+    }
+
+    [Fact]
+    public void Consumables_cannot_be_starting_equipment_nor_drop()
+    {
+        var asEquipment = Load(Data($"[{Blade}, {Potion}]", $"[{Class("""[{ "item": "consumable.drink" }]""")}]").Replace("\"abilities\": [", "\"abilities\": [" + Drink + ","));
+        Assert.False(asEquipment.Success);
+        Assert.Contains("não é equipamento", Errors(asEquipment));
+
+        var drops = """{ "drops": { "normal": { "chance": 0.5, "items": ["consumable.drink"] } } }""";
+        var dropped = Load(Data($"[{Potion}]", rules: drops).Replace("\"abilities\": [", "\"abilities\": [" + Drink + ","));
+        Assert.False(dropped.Success);
+        Assert.Contains("consumível", Errors(dropped));
+    }
 }

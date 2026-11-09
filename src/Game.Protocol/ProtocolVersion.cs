@@ -28,6 +28,9 @@ public static class ProtocolVersion
     /// 8 (T-310): componente <c>PartyMembership</c> e mensagens de grupo (<c>PartyInvite</c>, <c>PartyRespond</c>,
     /// <c>PartyLeave</c>, <c>PartyKick</c>, <c>PartyInviteReceived</c>, <c>PartyState</c>, <c>PartyNotice</c>,
     /// <c>PartyRejected</c>).
+    /// 9 (T-320): componente <c>Wallet</c> (só o dono), quantidade (<c>Count</c>) nos itens, intenção <c>UseItem</c>, eventos
+    /// <c>ItemUsed</c> e <c>GoldGained</c>, motivos novos em <c>ItemRejectReason</c>; saem os consumíveis e as cargas do
+    /// <c>AbilityState</c>, as cargas restantes do <c>AbilityExecuted</c> e o motivo <c>NoCharges</c>.
     /// </summary>
-    public const int Current = 8;
+    public const int Current = 9;
 }

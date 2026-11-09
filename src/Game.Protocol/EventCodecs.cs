@@ -69,6 +69,8 @@ public static class EventCodecs
         [typeof(ItemUnequipped)] = 103,
         [typeof(GroundItemExpired)] = 104,
         [typeof(ItemRejected)] = 105,
+        [typeof(ItemUsed)] = 106,
+        [typeof(GoldGained)] = 107,
     };
 
     internal static void Write<TB>(ref MemoryPackWriter<TB> w, GameEvent e)
@@ -93,7 +95,7 @@ public static class EventCodecs
                 break;
             case AbilityExecuted x:
                 w.Id(x.Source); w.S(x.AbilityId); w.Ids(x.Targets); w.S(x.CostResource); w.F(x.CostAmount);
-                w.B(x.IsBasicAttack); w.L(x.CooldownReadyTick); w.IOpt(x.ChargesRemaining);
+                w.B(x.IsBasicAttack); w.L(x.CooldownReadyTick);
                 break;
             case AbilityRejected x: w.Id(x.Source); w.S(x.AbilityId); w.E(x.Reason); break;
             case AbilityHit x: w.Id(x.Source); w.S(x.AbilityId); w.I(x.HitIndex); w.I(x.HitCount); w.Ids(x.Targets); break;
@@ -168,6 +170,8 @@ public static class EventCodecs
             case ItemUnequipped x: w.Id(x.Entity); w.E(x.Slot); w.S(x.BaseId); w.I(x.InventorySlot); break;
             case GroundItemExpired x: w.Id(x.Item); w.S(x.BaseId); break;
             case ItemRejected x: w.Id(x.Entity); w.E(x.Action); w.E(x.Reason); break;
+            case ItemUsed x: w.Id(x.Entity); w.I(x.InventorySlot); w.S(x.BaseId); w.S(x.AbilityId); w.I(x.Remaining); break;
+            case GoldGained x: w.Id(x.Entity); w.I(x.Amount); w.Id(x.Monster); break;
         }
     }
 
@@ -189,7 +193,7 @@ public static class EventCodecs
             4 => new EntityRevived(r.Id(), r.Id(), r.S(), r.F()),
 
             10 => new AbilityStarted(r.Id(), r.S(), r.I(), r.L(), r.IdOpt(), r.VOpt()),
-            11 => new AbilityExecuted(r.Id(), r.S(), r.Ids(), r.SOpt(), r.F(), r.B(), r.L(), r.IOpt()),
+            11 => new AbilityExecuted(r.Id(), r.S(), r.Ids(), r.SOpt(), r.F(), r.B(), r.L()),
             12 => new AbilityRejected(r.Id(), r.S(), r.E<AbilityRejectReason>()),
             13 => new AbilityHit(r.Id(), r.S(), r.I(), r.I(), r.Ids()),
             14 => new CastInterrupted(r.Id(), r.S(), r.E<CastInterruptReason>(), r.IdOpt()),
@@ -238,6 +242,8 @@ public static class EventCodecs
             103 => new ItemUnequipped(r.Id(), r.E<EquipSlot>(), r.S(), r.I()),
             104 => new GroundItemExpired(r.Id(), r.S()),
             105 => new ItemRejected(r.Id(), r.E<ItemAction>(), r.E<ItemRejectReason>()),
+            106 => new ItemUsed(r.Id(), r.I(), r.S(), r.S(), r.I()),
+            107 => new GoldGained(r.Id(), r.I(), r.Id()),
             _ => throw new MemoryPackSerializationException($"Tag de evento desconhecida: {tag}"),
         };
         e.Tick = tick;

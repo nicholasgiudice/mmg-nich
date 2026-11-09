@@ -607,9 +607,10 @@ public partial class Hud : Control
             entries.Add((Hotbar[i], (i + 1).ToString(CultureInfo.InvariantCulture), i));
         }
 
-        if (abilities.Consumables.Count > 0 && Hotbar.IndexOf(abilities.Consumables[0]) < 0)
+        // T-320: Q usa o primeiro consumível do inventário (a barra e o inventário de verdade ficam para a T-323).
+        if (FirstConsumable(self) is { } q && Hotbar.IndexOf(q) < 0)
         {
-            entries.Add((abilities.Consumables[0], "Q", -1));
+            entries.Add((q, "Q", -1));
         }
 
         while (_slots.Count < entries.Count)
@@ -668,25 +669,35 @@ public partial class Hud : Control
         }
 
         var saved = HotbarKey is { } key ? HotbarStore.Load(key) : null;
-        var consumables = abilities.Consumables.Count > 0 ? abilities.Consumables : cls.Consumables;
-        Hotbar.Load(saved, HotbarLayout.Defaults(cls.Abilities, consumables), id => _content.Abilities.ContainsKey(id));
+        var consumables = cls.StartingInventory.Select(s => s.Item)
+            .Where(id => _content.Items.TryGetValue(id, out var item) && item.IsConsumable).Take(1).ToList();
+        Hotbar.Load(saved, HotbarLayout.Defaults(cls.Abilities, consumables),
+            id => _content.Abilities.ContainsKey(id) || (_content.Items.TryGetValue(id, out var item) && item.IsConsumable));
     }
+
+    /// <summary>T-320: id do primeiro consumível do inventário do jogador (null = nenhum).</summary>
+    private string? FirstConsumable(EntitySnapshot self) =>
+        self.TryGet<Game.Core.Combat.Items.Inventory>()?.Slots
+            .FirstOrDefault(i => i is not null && _content.Items.TryGetValue(i.BaseId, out var def) && def.IsConsumable)?.BaseId;
 
     private (AbilitySlotState, string) SlotState(EntitySnapshot self, AbilityState abilities,
         IReadOnlyDictionary<EntityId, EntitySnapshot> byId, EntityId? selected, Vec2 aimPoint, double now, string id, string key)
     {
         // T-064: a definição do NH que o jogador tem (raio, recarga, custo e acertos mudam com o NH).
-        var isBasic = id == abilities.BasicAttackId || abilities.Consumables.Contains(id);
-        var rank = abilities.RankOf(id);
-        var def = _content.AbilityAt(id, rank);
-        var name = def?.Name ?? id;
-        var remaining = abilities.ReadyAtTick.TryGetValue(id, out var ready) ? Math.Max(0, ready - now) : 0;
+        // T-320: consumível na barra = item; recarga e efeito vêm da habilidade dele, e o número é quantas unidades há.
+        var item = _content.Items.TryGetValue(id, out var itemDef) && itemDef is { IsConsumable: true, UseAbility: not null } ? itemDef : null;
+        var abilityId = item?.UseAbility ?? id;
+        var isBasic = id == abilities.BasicAttackId || item is not null;
+        var rank = abilities.RankOf(abilityId);
+        var def = _content.AbilityAt(abilityId, rank);
+        var name = item?.Name ?? def?.Name ?? id;
+        var remaining = abilities.ReadyAtTick.TryGetValue(abilityId, out var ready) ? Math.Max(0, ready - now) : 0;
         var cdFraction = def is { CooldownTicks: > 0 } ? (float)Math.Clamp(remaining / def.CooldownTicks, 0, 1) : 0f;
         var pool = self.TryGet<ResourcePool>();
         var noResource = def?.Cost is { } cost && (pool is null || pool.Type != cost.Resource || pool.Current < cost.Amount);
         var chargesReady = def is { CooldownCharges: > 1 } ? abilities.CooldownChargesReady(def, (long)Math.Floor(now)) : -1;
-        var charges = def?.Charges is { } max
-            ? Math.Max(0, max - (abilities.ChargesUsed.TryGetValue(id, out var used) ? used : 0)).ToString(CultureInfo.InvariantCulture)
+        var charges = item is not null
+            ? (self.TryGet<Game.Core.Combat.Items.Inventory>()?.Slots.Where(i => i?.BaseId == id).Sum(i => i!.Count) ?? 0).ToString(CultureInfo.InvariantCulture)
             : chargesReady >= 0 ? chargesReady.ToString(CultureInfo.InvariantCulture) : null;
         if (chargesReady > 0)
         {

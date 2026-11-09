@@ -198,7 +198,7 @@ public class WorldTests
     }
 
     [Fact]
-    public void Cooldowns_and_spent_potion_charges_survive_a_zone_change()
+    public void Cooldowns_and_potions_used_survive_a_zone_change()
     {
         using var w = new WorldRig();
         var c = w.Join("aria");
@@ -210,13 +210,15 @@ public class WorldTests
         Assert.NotEqual(w.City.World.Tick, fields.World.Tick);
 
         const string Potion = "item.minor_healing_potion";
-        c.Send(new IntentMessage(1, 0, NetIntent.From(new UseAbilityIntent(hero.Id, Potion))));
+        const string Item = "consumable.minor_healing_potion";
+        var slot = Consumables.FindSlot(hero, Item);
+        Assert.Equal(5, Consumables.CountOf(hero, Item));
+        c.Send(new IntentMessage(1, 0, NetIntent.From(new UseItemIntent(hero.Id, slot))));
         w.Tick(1, c);
-        var potion = w.Content.Abilities[Potion];
-        var st = hero.Get<AbilityState>();
-        Assert.Equal(potion.Charges - 1, st.ChargesRemaining(potion));
+        Assert.Equal(4, Consumables.CountOf(hero, Item));
         w.Tick(20, c);
-        var remaining = st.CooldownRemaining(Potion, fields.World.Tick);
+        var potion = w.Content.Abilities[Potion];
+        var remaining = hero.Get<AbilityState>().CooldownRemaining(Potion, fields.World.Tick);
         Assert.True(remaining > 0);
 
         Teleport(hero, 0.5, 31.5);
@@ -225,7 +227,7 @@ public class WorldTests
         Assert.Same(w.City, city);
         var after = moved.Get<AbilityState>();
         Assert.InRange(after.CooldownRemaining(Potion, city.World.Tick), remaining - 1, remaining);
-        Assert.Equal(potion.Charges - 1, after.ChargesRemaining(potion));
+        Assert.Equal(4, Consumables.CountOf(moved, Item));
         Assert.True(after.IsOnCooldown(potion, city.World.Tick));
     }
 

@@ -34,3 +34,6 @@ public sealed record PickUpItemIntent(EntityId Entity, EntityId Item) : Intent(E
 
 /// <summary>Larga no chão o item do espaço do inventário (T-204).</summary>
 public sealed record DropItemIntent(EntityId Entity, int InventorySlot) : Intent(Entity);
+
+/// <summary>Usa o consumível do espaço do inventário no próprio personagem e gasta 1 unidade (T-320). Tratada pelo <c>AbilitySystem</c>.</summary>
+public sealed record UseItemIntent(EntityId Entity, int InventorySlot) : Intent(Entity);

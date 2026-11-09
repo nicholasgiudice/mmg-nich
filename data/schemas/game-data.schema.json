@@ -58,6 +58,17 @@
                 "boss": { "type": "number", "minimum": 0 }
               }
             },
+            "goldPerMonsterLevel": { "type": "number", "minimum": 0, "description": "T-320: ouro = isto × nível × goldByRank, ± goldVariance." },
+            "goldByRank": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "normal": { "type": "number", "minimum": 0 },
+                "elite": { "type": "number", "minimum": 0 },
+                "boss": { "type": "number", "minimum": 0 }
+              }
+            },
+            "goldVariance": { "type": "number", "minimum": 0, "maximum": 1 },
             "xpBonusPerLevelAbove": { "type": "number", "minimum": 0 },
             "xpMaxBonus": { "type": "number", "minimum": 0 },
             "xpPenaltyPerLevelBelow": { "type": "number", "minimum": 0, "maximum": 1 },
@@ -193,12 +204,16 @@
     "item": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "name", "slot"],
-      "description": "T-204: item base. armorType obrigatório em head/chest/hands/feet; classes vazio = as do tipo de armadura ou todas.",
+      "required": ["id", "name"],
+      "description": "T-204: item base. armorType obrigatório em head/chest/hands/feet; classes vazio = as do tipo de armadura ou todas. T-320: type consumable = sem slot, com stack, useAbility e price.",
       "properties": {
         "id": { "$ref": "#/$defs/id" },
         "name": { "type": "string" },
-        "slot": { "enum": ["weapon", "head", "chest", "hands", "feet", "accessory"] },
+        "type": { "enum": ["equipment", "consumable"], "description": "T-320: padrão equipment." },
+        "slot": { "enum": ["weapon", "head", "chest", "hands", "feet", "accessory"], "description": "Obrigatório em equipamento; proibido em consumível." },
+        "stack": { "type": "integer", "minimum": 1, "description": "T-320: unidades por espaço do inventário (só consumível)." },
+        "useAbility": { "$ref": "#/$defs/id", "description": "T-320: habilidade executada ao usar (só consumível)." },
+        "price": { "type": "integer", "minimum": 0, "description": "T-320: preço base de venda na loja." },
         "classes": { "$ref": "#/$defs/idList" },
         "armorType": { "enum": ["heavy", "medium", "light"] },
         "stats": { "type": "array", "items": { "$ref": "#/$defs/itemStat" } }
@@ -283,6 +298,20 @@
             "properties": { "item": { "$ref": "#/$defs/id" }, "level": { "type": "integer", "minimum": 1 } }
           }
         },
+        "startingInventory": {
+          "type": "array",
+          "description": "T-320: itens com que o personagem novo começa no inventário (consumíveis empilham).",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["item"],
+            "properties": {
+              "item": { "$ref": "#/$defs/id" },
+              "level": { "type": "integer", "minimum": 1 },
+              "count": { "type": "integer", "minimum": 1 }
+            }
+          }
+        },
         "speed": { "type": "number", "minimum": 0 },
         "radius": { "type": "number", "exclusiveMinimum": 0 },
         "resource": {
@@ -300,7 +329,6 @@
         },
         "basicAttack": { "$ref": "#/$defs/id" },
         "abilities": { "$ref": "#/$defs/idList" },
-        "consumables": { "$ref": "#/$defs/idList" },
         "resourceRules": { "type": "array", "items": { "$ref": "#/$defs/resourceRule" } }
       }
     },
@@ -382,7 +410,6 @@
         "cooldown": { "$ref": "#/$defs/seconds" },
         "castTime": { "$ref": "#/$defs/seconds" },
         "castWhileMoving": { "type": "boolean" },
-        "charges": { "type": "integer", "minimum": 1, "description": "Usos por encontro; ausente = ilimitado." },
         "signature": { "type": "boolean", "description": "T-060: assinatura (até 3 níveis em vez de 5)." },
         "hits": { "$ref": "#/$defs/abilityHits" },
         "cooldownCharges": { "type": "integer", "minimum": 1, "description": "T-060: usos guardados que recarregam um a um." },
