@@ -589,6 +589,19 @@
           }
         },
         "immuneToTags": { "$ref": "#/$defs/stringList" },
+        "reflect": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["fraction"],
+          "description": "T-341: devolve esta fração do dano direto recebido a quem atacou (sem multiplicadores).",
+          "properties": { "fraction": { "type": "number", "minimum": 0, "maximum": 1 } }
+        },
+        "breaks": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "T-341: o status acaba antes do tempo ao receber damageFraction da vida máxima em dano e/ou ao ser interrompido.",
+          "properties": { "damageFraction": { "type": "number", "minimum": 0 }, "interrupt": { "type": "boolean" } }
+        },
         "empower": {
           "type": "object",
           "additionalProperties": false,
@@ -603,7 +616,8 @@
             "speedMultiplier": { "type": "number", "minimum": 0 },
             "damageTakenMultiplier": { "type": "number", "minimum": 0 },
             "damageDealtMultiplier": { "type": "number", "minimum": 0 },
-            "controlDurationMultiplier": { "type": "number", "minimum": 0 }
+            "controlDurationMultiplier": { "type": "number", "minimum": 0 },
+            "healingTakenMultiplier": { "type": "number", "minimum": 0, "description": "T-341: multiplica a cura recebida (0,5 = metade)." }
           }
         },
         "flags": {

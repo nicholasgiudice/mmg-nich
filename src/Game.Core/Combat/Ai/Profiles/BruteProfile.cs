@@ -5,15 +5,18 @@ namespace Game.Core.Combat.Ai.Profiles;
 /// <summary>
 /// <c>ai.brute</c> (Ent Corrompido, T-340): monstro lento de controle. Usa a primeira habilidade ofensiva (lista =
 /// prioridade) cujo alcance cobre o alvo, sem golpear o vazio: um círculo em volta de si só sai com o alvo dentro dele.
+/// Antes de tudo, a habilidade de tag <see cref="BuffTag"/> (auto-alvo, ex.: o Escudo Espectral do Cavaleiro, T-341) sai assim
+/// que estiver pronta com o alvo a até <c>buffDistance</c> (3) tiles de borda.
 /// As habilidades de tag <see cref="AreaTag"/> (raízes) e <see cref="RangedTag"/> (espinhos), na ordem da definição, só
 /// saem com o alvo a pelo menos <c>farDistance</c> (3) tiles de borda: elas punem quem foge dele. Depois de usar uma habilidade com telegráfo, fica parado até o telegráfo
 /// resolver (a preparação do golpe). Sem nada ao alcance, persegue. Parâmetros: <c>aggroRange</c>, <c>approachRange</c>,
-/// <c>farDistance</c>.
+/// <c>farDistance</c>, <c>buffDistance</c>.
 /// </summary>
 public sealed class BruteProfile : MeleeChaserProfile
 {
     public const string AreaTag = "ai.area";
     public const string RangedTag = "ai.ranged";
+    public const string BuffTag = "ai.buff";
 
     public override void Think(AiContext ctx)
     {
@@ -26,6 +29,11 @@ public sealed class BruteProfile : MeleeChaserProfile
 
         var target = ctx.Target!;
         var distance = ctx.DistanceTo(target);
+        if (distance <= ctx.Param("buffDistance", 3) && ctx.FindByTag(BuffTag) is { } buff && ctx.Use(buff, ctx.Self))
+        {
+            return;
+        }
+
         if (distance >= ctx.Param("farDistance", 3))
         {
             foreach (var id in ctx.Abilities.Known)

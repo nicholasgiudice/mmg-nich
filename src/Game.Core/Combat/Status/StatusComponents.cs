@@ -18,6 +18,9 @@ public sealed class StatusInstance
     /// <summary>Próximo tick de cada entrada de <c>Periodic</c> (mesma ordem da definição).</summary>
     public long[] NextPeriodicTick { get; set; } = [];
 
+    /// <summary>Dano recebido desde a aplicação (para <c>breaks.damageFraction</c>, T-341). Renovar o status zera.</summary>
+    public float DamageTaken { get; set; }
+
     public StatusInstance Clone() => new()
     {
         Id = Id,
@@ -27,6 +30,7 @@ public sealed class StatusInstance
         ExpiresAtTick = ExpiresAtTick,
         Stacks = Stacks,
         NextPeriodicTick = (long[])NextPeriodicTick.Clone(),
+        DamageTaken = DamageTaken,
     };
 }
 
@@ -67,6 +71,7 @@ public sealed class StatusEffects : IComponent, IReplicated
             hasher.Add(a.AppliedAtTick);
             hasher.Add(a.ExpiresAtTick);
             hasher.Add(a.Stacks);
+            hasher.Add(a.DamageTaken);
             foreach (var n in a.NextPeriodicTick)
             {
                 hasher.Add(n);

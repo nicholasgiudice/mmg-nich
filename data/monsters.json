@@ -139,6 +139,34 @@
           "abilities": ["matriarch.charge", "matriarch.rending_bite", "matriarch.venom_pool_fast"]
         }
       ]
+    },
+    {
+      "id": "monster.dead_priest",
+      "name": "Sacerdote Morto",
+      "level": 10,
+      "health": 180,
+      "speed": 3.0,
+      "radius": 0.45,
+      "tags": ["undead"],
+      "abilities": ["dead_priest.mend_dead", "dead_priest.withering_curse", "dead_priest.grave_bolt"],
+      "ai": { "id": "ai.support", "parameters": { "aggroRange": 14, "healBelow": 0.7, "behindDistance": 3, "preferredDistance": 7 } }
+    },
+    {
+      "id": "monster.spectral_knight",
+      "name": "Cavaleiro Espectral",
+      "level": 11,
+      "rank": "elite",
+      "health": 4500,
+      "speed": 3.4,
+      "radius": 0.5,
+      "tags": ["undead"],
+      "abilities": [
+        "spectral_knight.spectral_shield",
+        "spectral_knight.whirling_strike",
+        "spectral_knight.spectral_blade",
+        "spectral_knight.spectral_charge"
+      ],
+      "ai": { "id": "ai.brute", "parameters": { "aggroRange": 14, "approachRange": 1.9, "farDistance": 3, "buffDistance": 3 } }
     }
   ]
 }

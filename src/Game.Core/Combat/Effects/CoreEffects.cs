@@ -64,7 +64,7 @@ public static class CoreEffects
 
         var crit = Stats.StatMath.RollCrit(c.World, c.Source); // crítico vale para cura (design §10)
         var amount = Math.Max(0, Round(Stats.StatMath.Scaled(e.Base, e.Scaling, c.Source) * Stats.StatMath.MonsterPower(c.World, c.Source)
-            * c.Power * CritFactor(c.World, crit)));
+            * c.Power * CritFactor(c.World, crit) * Status.StatusManager.HealingTakenMultiplier(c.World, target)));
         var effective = Math.Min(amount, health.Max - health.Current);
         health.Current += effective;
         c.World.Events.Publish(new HealApplied(c.SourceEntityId, target.Id, c.SourceId, amount, effective, amount - effective, crit));
@@ -98,8 +98,12 @@ public static class CoreEffects
         c.World.Events.Publish(new ShieldApplied(c.SourceEntityId, target.Id, c.SourceId, id, amount, expires, crit));
     }
 
-    private static void OnInterrupt(EffectContext c, InterruptEffect e) =>
+    /// <summary>Cancela a conjuração do alvo e quebra os status dele com <c>breaks.interrupt</c> (T-341, Escudo Espectral).</summary>
+    private static void OnInterrupt(EffectContext c, InterruptEffect e)
+    {
         CastControl.Cancel(c.World, c.Target!, CastInterruptReason.Interrupted, c.SourceEntityId);
+        Status.StatusManager.BreakOnInterrupt(c.World, c.Target!, c.SourceEntityId);
+    }
 
     private static void OnDisplacement(EffectContext c, DisplacementEffect e)
     {

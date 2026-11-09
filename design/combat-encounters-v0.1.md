@@ -356,6 +356,81 @@ Rodam na arena aberta do protótipo (`map.fields`). Os testes de design (`Forest
 - o Guerreiro não conseguir lutar com o Ent (resistência física alta demais);
 - quem ataca de longe vencer o Ent sem tomar dano.
 
+## Ruínas da Estrada Antiga — Sacerdote Morto e Cavaleiro Espectral (T-341)
+
+As Ruínas (`design/first-map-v0.1.md` §4, níveis 9–11 pelo `design/progression-v0.1.md` §2) introduzem **mortos-vivos, corredores estreitos e prioridade de alvo**: os Guardas Esqueléticos (9) protegem o Sacerdote Morto (10), que fica atrás deles e cura; o Cavaleiro Espectral (11, elite) é o duelo opcional da Torre Quebrada. Os três são `undead`: o Golpe e a Corrente Sagrados do Clérigo causam +25% (`bonusVsTags`).
+
+Números nos dados (`data/monsters.json`, `data/abilities_monsters.json`, `data/statuses.json`), no **nível 1**; entre parênteses, no nível do monstro (vida × (1 + 0,4 × (nível − 1)), potência × (1 + 0,17 × (nível − 1))), antes da defesa do jogador.
+
+### Sacerdote Morto (`monster.dead_priest`, nível 10)
+
+**Papel:** suporte inimigo. Cura os Guardas e amaldiçoa quem cura. Sozinho é frágil; atrás dos Guardas, prolonga a luta até o jogador perder.
+
+| | |
+|---|---|
+| Vida | 180 (828) |
+| Velocidade / raio | 3,0 / 0,45 (sprite humanoide LPC da T-056) |
+| Tags | `undead` |
+| IA | `ai.support` (novo, `Combat/Ai/Profiles/SupportProfile.cs`) |
+
+Habilidades:
+
+- **Remendar os Mortos** (`dead_priest.mend_dead`): **conjuração de 2 s**, interrompível, num aliado a até 9. Cura 105 (266). Recarga de 6 s. Vai no aliado mais ferido com até 70% da vida. Ele **não cura a si mesmo**.
+- **Maldição Definhante** (`dead_priest.withering_curse`): instantânea, alcance 9. Dano arcano 6 (15) e **Maldição Definhante** (`status.withering_curse`, tags `debuff` e `curse`) por 8 s: **cura recebida −50%** (mecânica nova: `modifiers.healingTakenMultiplier`). Vale para curas, Corrente Sagrada e poções. Recarga de 12 s. A Purificação do Clérigo remove (tag `curse`).
+- **Dardo Sepulcral** (`dead_priest.grave_bolt`): instantâneo, alcance 9, a cada 2,2 s. Dano arcano 10 (25).
+
+Comportamento: fica 3 tiles atrás do centro dos protetores (os outros monstros do grupo), do lado oposto ao alvo, e acompanha quando eles andam. Sem protetores, fica a 7 tiles do alvo, sem fugir. Ataca só com as instantâneas, mesmo andando. A conjuração da cura é o aviso: ele para, e o cliente mostra a barra (T-345).
+
+**Interrupção (confirmado):** o efeito `interrupt` cancela qualquer conjuração, inclusive a de um monstro. O Golpe Pesado do Guerreiro cancela a cura, e a cura não acontece (teste `Dead_priest_heal_is_interrupted_by_the_warrior_heavy_strike`). Hoje só o Guerreiro tem interrupção; as outras classes respondem matando o Sacerdote.
+
+**Decidido (troca em relação à proposta):** a proposta não dizia quem o Sacerdote cura. Nas sondagens, curando a si mesmo, ele se mantinha vivo contra Arqueiro e Mago sozinhos (perfil esperado com foco nele: 10–30%). Sem a cura em si, quem o alcança vence a corrida (100% com foco), e a lição do Pátio fica clara: **mate o Sacerdote primeiro**.
+
+### Cavaleiro Espectral (`monster.spectral_knight`, nível 11, elite)
+
+**Papel:** duelo de elite para grupo de 2–3. Bate forte, avisa todos os golpes grandes e pune quem ataca sem pensar enquanto o escudo está erguido.
+
+| | |
+|---|---|
+| Vida | 4.500 (22.500) |
+| Velocidade / raio | 3,4 / 0,5 (sprite humanoide LPC da T-056) |
+| Tags | `undead` |
+| IA | `ai.brute` (o mesmo do Ent), com a tag nova `ai.buff` |
+
+Habilidades:
+
+- **Escudo Espectral** (`spectral_knight.spectral_shield`): em si mesmo, quando o alvo está a até 3 tiles. Recarga de 15 s. **Escudo Espectral** (`status.spectral_shield`) por 6 s: **devolve 30%** do dano direto que recebe a quem causou (mecânica nova: `reflect`). **Quebra** ao receber 8% da vida máxima em dano (1.800 no nv11) ou ao ser **interrompido** (mecânica nova: `breaks`). Dano de status (veneno, sangramento) não é devolvido.
+- **Golpe Giratório** (`spectral_knight.whirling_strike`): círculo de raio 2,4 em volta dele, com **telegráfo de 1 s**. Dano físico 130 (351). Recarga de 9 s. Pune quem fica colado sem ler o chão.
+- **Lâmina Espectral** (`spectral_knight.spectral_blade`): corpo a corpo, alcance 1,9, a cada 1,6 s. Dano físico 55 (149).
+- **Investida Espectral** (`spectral_knight.spectral_charge`): linha de 8 × 1,4 com **telegráfo de 1 s**, e ele avança ao longo dela. Dano físico 140 (378). Recarga de 10 s. Só sai com o alvo a 3 tiles ou mais: pune quem se afasta em linha reta.
+
+Resposta do grupo:
+
+- **Guerreiro:** segura o Cavaleiro, sai do giro no telegráfo e quebra o escudo com o Golpe Pesado (interrupção).
+- **Arqueiro e Mago:** atacam de longe, saem da linha da investida e param de bater com o escudo erguido, ou o quebram juntos de uma vez.
+- **Clérigo:** cura o Guerreiro e purifica a maldição do Sacerdote, se houver um por perto.
+
+### Grupos típicos e encontros de teste (`data/encounters.json`)
+
+| Encontro | Composição | Arena | Jogadores |
+|---|---|---|---|
+| `encounter.dead_courtyard` (Pátio dos Mortos) | 3 Guardas nv9 na frente + 1 Sacerdote nv10 atrás | `map.broken_gate` | Guerreiro + Clérigo |
+| `encounter.spectral_knight` (Torre Quebrada) | 1 Cavaleiro nv11 | `map.broken_gate` | Guerreiro + Arqueiro + Clérigo |
+
+O Portão Partido tem um corredor estreito (4 tiles) que abre para um pátio: é o "corredor estreito" das Ruínas. Os testes de design (`RuinsDesignTests`) trocam as classes. Metas e resultados em `tasks/reports/balance-v0.12.md`:
+
+- **Pátio, par de nível 10:** vence ≥ 80% (todos os 5 pares testados: 100%).
+- **Pátio, solo de nível 10:** média das 4 classes entre 40% e 70% (57%). O Mago vence quase sempre, o Guerreiro às vezes; o Arqueiro quase nunca, se atacar o mais próximo. O Clérigo vence sempre, mas devagar, como contra o Guarda.
+- **Prioridade de alvo:** focar o Sacerdote primeiro termina mais rápido (par: 55 → 43 s). Sozinho, com foco nele, as 4 classes vencem 100%.
+- **Cavaleiro, grupo de 3 de nível 10–11 com incomuns:** vitória média entre 70% e 90% (82%), em 75–95 s.
+
+### Falhas de design
+
+- o Sacerdote morrer antes de curar alguém (frágil demais) ou nunca ser alcançável (os Guardas como parede perfeita);
+- a cura do Sacerdote ser mais rápida que o dano de um par;
+- o Escudo Espectral ser ignorado (reflexo baixo) ou parar o grupo por inteiro (quebra alta demais);
+- o Cavaleiro ser vencido sem ninguém sair de um telegráfo;
+- o solo do Cavaleiro: hoje **não é viável** (veja balance-v0.12 §4).
+
 ---
 
 ## Matriz de decisões
@@ -369,6 +444,8 @@ Rodam na arena aberta do protótipo (`map.fields`). Os testes de design (`Forest
 | Matriarca | Alto | Alto | Alto | Alto | Alto |
 | Fadas da Névoa | Alto | Alto | Baixo | Médio | Baixo |
 | Ent Corrompido | Alto | Médio | Médio | Alto | Médio |
+| Pátio dos Mortos | Médio | **Alto** | Médio | Médio | Alto |
+| Cavaleiro Espectral | Alto | Médio | Médio | Alto | Alto |
 
 ## Critérios gerais de sucesso
 
