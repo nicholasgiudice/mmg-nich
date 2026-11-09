@@ -1,6 +1,7 @@
 using Game.Core.Combat;
 using Godot;
 using MmoRpgClient.Data;
+using MmoRpgClient.Hud;
 using MmoRpgClient.Match;
 using MmoRpgClient.Presentation;
 
@@ -32,8 +33,10 @@ public partial class AccountScreen : Control
     private static string? s_email;
 
     private readonly Dictionary<string, string> _args = new(StringComparer.Ordinal);
-    private readonly VBoxContainer _root = new() { Position = new Godot.Vector2(48, 36), CustomMinimumSize = new Godot.Vector2(700, 0) };
-    private readonly Label _status = new() { AutowrapMode = TextServer.AutowrapMode.WordSmart, CustomMinimumSize = new Godot.Vector2(700, 0) };
+    private const string BackgroundPath = "res://assets/art/ui/login_background.png";
+
+    private readonly VBoxContainer _root = new() { CustomMinimumSize = new Godot.Vector2(420, 0) };
+    private readonly Label _status = new() { AutowrapMode = TextServer.AutowrapMode.WordSmart };
     private ContentCatalog _content = ContentCatalog.Empty;
     private SpriteCatalog _sprites = SpriteCatalog.Empty;
     private IReadOnlyList<CharacterSummary> _characters = [];
@@ -56,9 +59,16 @@ public partial class AccountScreen : Control
         }
 
         SetAnchorsPreset(LayoutPreset.FullRect);
-        AddChild(new ColorRect { Color = new Color(0.08f, 0.09f, 0.11f), AnchorRight = 1, AnchorBottom = 1 });
+        AddBackground();
         _root.AddThemeConstantOverride("separation", 10);
-        AddChild(_root);
+        var frame = new PanelContainer();
+        frame.AddThemeStyleboxOverride("panel", HudTheme.StonePanel());
+        // Entre o castelo (à esquerda) e o grupo (à direita) da imagem de fundo.
+        frame.AnchorLeft = frame.AnchorRight = 0.4f;
+        frame.GrowHorizontal = GrowDirection.Both;
+        frame.OffsetTop = 24;
+        frame.AddChild(_root);
+        AddChild(frame);
         try
         {
             _content = ContentLoader.Load();
@@ -101,6 +111,29 @@ public partial class AccountScreen : Control
             GetViewport().GetTexture().GetImage().SavePng(path);
             GetTree().Quit();
         }
+    }
+
+    /// <summary>
+    /// Fundo da tela (T-088): a cena do PixelLab cobre a janela sem distorcer, com pixels nítidos; sem o arquivo, fundo liso.
+    /// </summary>
+    private void AddBackground()
+    {
+        AddChild(new ColorRect { Color = new Color(0.08f, 0.09f, 0.11f), AnchorRight = 1, AnchorBottom = 1 });
+        if (!ResourceLoader.Exists(BackgroundPath))
+        {
+            return;
+        }
+
+        AddChild(new TextureRect
+        {
+            Texture = ResourceLoader.Load<Texture2D>(BackgroundPath),
+            ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
+            StretchMode = TextureRect.StretchModeEnum.KeepAspectCovered,
+            TextureFilter = TextureFilterEnum.Nearest,
+            AnchorRight = 1,
+            AnchorBottom = 1,
+            MouseFilter = MouseFilterEnum.Ignore,
+        });
     }
 
     // ---------------- telas ----------------
@@ -455,7 +488,6 @@ public partial class AccountScreen : Control
         Text = text,
         Modulate = new Color(1, 1, 1, 0.65f),
         AutowrapMode = TextServer.AutowrapMode.WordSmart,
-        CustomMinimumSize = new Godot.Vector2(700, 0),
     };
 
     private CharacterSummary? Selected(ItemList list) =>
