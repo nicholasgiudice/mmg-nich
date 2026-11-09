@@ -114,9 +114,9 @@
   "rules": {
     "shops": {
       "interactRange": 3,
-      "sellRatio": 0.25,
-      "equipmentValueBase": 10,
-      "equipmentValuePerLevel": 5,
+      "sellRatio": 0.1,
+      "equipmentValueBase": 0,
+      "equipmentValuePerLevel": 45,
       "equipmentRarityMultiplier": { "common": 1, "uncommon": 2, "rare": 4, "epic": 8 },
       "maxQuantity": 100
     }

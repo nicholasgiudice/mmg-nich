@@ -1,6 +1,6 @@
 # Itens — referência dos dados
 
-Status: **referência gerada a partir dos dados** (2026-11-02). Fonte: `data/items.json` (itens base e `rules.items`), `data/abilities_items.json` (consumíveis) e `data/classes.json` (equipamento inicial e consumíveis por classe). Os números saem desses arquivos; quando os dados mudarem, este documento deve ser atualizado.
+Status: **referência gerada a partir dos dados** (2026-11-02; consumíveis, ouro e lojas em 2026-11-09, T-320–T-322). Fonte: `data/items.json` (itens base e `rules.items`), `data/abilities_items.json` (efeito dos consumíveis), `data/classes.json` (equipamento e inventário iniciais), `data/shops.json` (lojas e `rules.shops`) e `data/rules.json` (ouro, em `rules.progression`). Os números saem desses arquivos; quando os dados mudarem, este documento deve ser atualizado.
 
 Monstros e onde cada um aparece em `design/bestiario.md`; habilidades em `design/habilidades.md`.
 
@@ -71,11 +71,14 @@ Sem restrição de classe nos dados.
 
 ## Consumíveis
 
-| Item | Id | Efeito | Recarga | Cargas |
-|---|---|---|---|---|
-| Poção de Cura Menor | `item.minor_healing_potion` | cura 60 em quem usa | 20 s | 3 |
+Itens de inventário (`type: consumable` em `items.json`): empilham, e usar gasta 1 unidade e executa a habilidade do item (`useAbility`, em `abilities_items.json`) em quem usa. A recarga é da habilidade: pilhas do mesmo item dividem a recarga, e itens diferentes têm recargas separadas.
 
-A poção é uma habilidade de item (`abilities_items.json`), não um item de inventário de `items.json`. Todas as classes a têm (`consumables` em `classes.json`); nenhum monstro a deixa cair.
+| Item | Id | Habilidade | Efeito | Recarga | Pilha | Preço (loja) |
+|---|---|---|---|---|---|---|
+| Poção de Cura Menor | `consumable.minor_healing_potion` | `item.minor_healing_potion` | cura 60 | 20 s | 20 | 15 |
+| Poção de Mana Menor | `consumable.minor_mana_potion` | `item.minor_mana_potion` | +40 de Mana | 20 s | 20 | 15 |
+
+Todo personagem novo começa com **5 Poções de Cura Menor** (`startingInventory` em `classes.json`). Nenhum monstro deixa cair consumível: eles vêm do inventário inicial e do Templo.
 
 ## Raridade e afixos
 
@@ -120,14 +123,60 @@ Todos os 21 itens base (as 7 armas, as 12 armaduras e os 2 acessórios) estão n
 
 | Categoria | Monstros | Chance | Itens por queda | Peso de raridade (comum / incomum / raro / épico) | Garantia |
 |---|---|---|---|---|---|
-| Normal | Rato de Campo, Lobo Cinzento, Salteador da Estrada, Aranha Menor, Guarda Esquelético | 8% | 1 | 70 / 25 / 5 / 0 | — |
-| Elite | Aranha Grande | 40% | 1 | 40 / 45 / 15 / 0 | — |
+| Normal | Rato de Campo, Lobo Cinzento, Salteador da Estrada, Aranha Menor, Guarda Esquelético | 4% | 1 | 70 / 25 / 5 / 0 | — |
+| Elite | Aranha Grande | 25% | 1 | 40 / 45 / 15 / 0 | — |
 | Chefe | Matriarca da Floresta | 100% | 2 | 0 / 60 / 35 / 5 | o primeiro sai pelo menos incomum |
 
 Item épico só cai da Matriarca. Os itens caem para quem participou da morte e ficam 120 s no chão.
+
+## Economia (T-320–T-322)
+
+Economia mínima da fase 3: **só ouro de monstros e NPCs com preço fixo** (sem troca entre jogadores). Metas e medição em `tasks/reports/balance-v0.10.md`; testes em `tests/Game.Design.Tests/EconomyDesignTests.cs`.
+
+### Ouro dos monstros (`rules.progression`)
+
+Ouro de uma morte = `goldPerMonsterLevel` (**1**) × nível do monstro × categoria (`goldByRank`: normal **1**, elite **4**, chefe **20**), com variação de **±20%** (`goldVariance`) sorteada pela simulação. O ouro é dividido igualmente entre quem recebe a XP daquela morte (participantes e grupo por perto), arredondando para baixo. Vai direto para a carteira; não há ouro no chão.
+
+| Monstro | Ouro (média) |
+|---|---|
+| normal nível L | L (ex.: Lobo nv2 = 2) |
+| elite nível L | 4 × L |
+| Matriarca (chefe nv8) | 160, dividido pelo grupo |
+
+### Lojas (`data/shops.json`)
+
+| NPC | Loja | Vende |
+|---|---|---|
+| Sacerdote (Templo) | `shop.temple` | Poção de Cura Menor e Poção de Mana Menor (15 cada) |
+| Ferreiro | `shop.smith` | as 7 armas e as 12 armaduras, **comuns**, nos níveis 2 a 6 |
+
+O Mercado, o Armazém, a Estalagem e o Salão de Treinamento ainda não têm loja. Para comprar ou vender é preciso estar a até **3 tiles** do NPC (`interactRange`). Estoque ilimitado; até 100 unidades por pedido.
+
+**Preço de compra:** o `price` da oferta ou, sem ele (o caso de todas hoje), o **valor do item**:
+
+- consumível: o `price` do item (15);
+- equipamento: `(equipmentValueBase + equipmentValuePerLevel × nível) × raridade` = **45 × nível** × (comum **1**, incomum **2**, raro **4**, épico **8**).
+
+| Nível do item | 2 | 3 | 4 | 5 | 6 |
+|---|---|---|---|---|---|
+| Comum no Ferreiro | 90 | 135 | 180 | 225 | 270 |
+
+**Venda:** qualquer NPC com loja compra qualquer item do inventário por **10%** do valor (`sellRatio`), arredondado para baixo, por unidade. Comum nv L = 4,5 × L (nv4 = 18); poção = 1. Item equipado não se vende (desequipe antes). Não há recompra.
+
+### Metas (caça solo nos Campos, modelo da T-215/T-302)
+
+| Meta | Resultado |
+|---|---|
+| 30 min de caça pagam 8–12 poções de vida | **10,4** (~156 de ouro) |
+| Equipamento comum do próprio nível custa 20–40 min de caça na área desse nível | nv2 **30**, nv3 **24**, nv4 **30** min |
+| Vender tudo o que cai rende < 30% do ouro direto | **25%** |
+| Poção de Mana não carrega o perfil fraco (vitória ≤ 50%) | Mago fraco: 0% (nv5) e 6% (nv9), igual sem poção |
+
+Ouro por hora nos Campos: grupos nv1 ≈ 92, nv2 ≈ 178, nv3 ≈ 335, nv4 ≈ 362 (limitado pelo renascimento).
 
 ## Pontos em aberto nos dados
 
 - **Arredondamento** e **`resistanceFromArmor`** não estão descritos nos JSON nem no esquema; as regras acima vêm do código (`ItemMath.cs`).
 - **Armas iguais**: Espada, Machado e Maça de Guerra têm atributos idênticos; qualquer diferença entre elas não está nos dados.
-- **Cargas da poção**: o esquema fala em "usos por encontro"; no mundo aberto, quando as cargas voltam não está nos dados.
+- **Cargas da poção**: resolvido na T-320 (a poção virou item de inventário, sem cargas).
+- **Fontes e destinos de ouro**: hoje o ouro só sai pelas lojas; redistribuir pontos (progression §10) ainda não cobra.
