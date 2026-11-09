@@ -382,6 +382,54 @@ public class WorldTests
     }
 
     [Fact]
+    public void City_has_the_map_npcs_and_clients_see_them()
+    {
+        using var w = new WorldRig();
+        var npcs = w.City.World.Entities.Where(e => e.Has<Game.Core.Combat.Shops.NpcInfo>()).ToList();
+        Assert.Equal(6, npcs.Count);
+        Assert.Equal(npcs, w.City.Npcs);
+        Assert.All(npcs, n => Assert.Null(n.TryGet<Health>()));
+        Assert.Empty(w.Fields.Npcs);
+
+        var c = w.Join("aria");
+        var temple = npcs.Single(n => n.Get<Game.Core.Combat.Shops.NpcInfo>().Shop == "shop.temple");
+        Teleport(w.Where(c).Entity, temple.Get<Transform>().Position.X + 1, temple.Get<Transform>().Position.Y);
+        w.Tick(3, c);
+        var seen = c.Entity(temple.Id)!.Components.OfType<Game.Core.Combat.Shops.NpcInfo>().Single();
+        Assert.Equal(("npc.priest", "Sacerdote", "shop.temple"), (seen.DefinitionId, seen.Name, seen.Shop));
+    }
+
+    [Fact]
+    public void Buying_saves_gold_and_inventory_right_away()
+    {
+        const string Potion = "consumable.minor_healing_potion";
+        var store = new FakeStore();
+        var row = store.Add();
+        using var w = new WorldRig(store, devLogin: false);
+        var c = w.JoinWithTicket(AccountRig.Ticket(row));
+        var hero = w.Where(c).Entity;
+        var temple = w.City.Npcs.Single(n => n.Get<Game.Core.Combat.Shops.NpcInfo>().Shop == "shop.temple");
+        Teleport(hero, temple.Get<Transform>().Position.X + 1, temple.Get<Transform>().Position.Y);
+        hero.Get<Wallet>().Gold = 100;
+        w.Tick(1, c);
+        w.Flush();
+        var savesBefore = store.Saves;
+
+        var offer = w.Content.Shops["shop.temple"].Offers.ToList().FindIndex(o => o.Item == Potion);
+        c.Send(new IntentMessage(1, 0, NetIntent.From(new Game.Core.Intents.BuyIntent(hero.Id, temple.Id, offer, 3))));
+        w.Tick(1, c);
+        w.Flush();
+
+        Assert.Equal(8, Consumables.CountOf(hero, Potion)); // 5 iniciais + 3
+        var gold = 100 - (3 * w.Content.Items[Potion].Price);
+        Assert.Equal(gold, hero.Get<Wallet>().Gold);
+        Assert.Equal(savesBefore + 1, store.Saves); // gravou pela compra, ainda conectado
+        var saved = store.Row(row.Id).Progression;
+        Assert.Contains($"\"gold\":{gold}", saved);
+        Assert.Contains("\"count\":8", saved);
+    }
+
+    [Fact]
     public void Dead_account_character_is_saved_back_at_the_city_spawn()
     {
         var store = new FakeStore();

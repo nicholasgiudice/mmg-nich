@@ -37,3 +37,9 @@ public sealed record DropItemIntent(EntityId Entity, int InventorySlot) : Intent
 
 /// <summary>Usa o consumível do espaço do inventário no próprio personagem e gasta 1 unidade (T-320). Tratada pelo <c>AbilitySystem</c>.</summary>
 public sealed record UseItemIntent(EntityId Entity, int InventorySlot) : Intent(Entity);
+
+/// <summary>Compra <paramref name="Quantity"/> unidades da oferta <paramref name="Offer"/> (índice) da loja do NPC (T-321). Tratada pelo <c>ShopSystem</c>.</summary>
+public sealed record BuyIntent(EntityId Entity, EntityId Npc, int Offer, int Quantity) : Intent(Entity);
+
+/// <summary>Vende <paramref name="Quantity"/> unidades do espaço do inventário a um NPC com loja (T-321).</summary>
+public sealed record SellIntent(EntityId Entity, EntityId Npc, int InventorySlot, int Quantity) : Intent(Entity);

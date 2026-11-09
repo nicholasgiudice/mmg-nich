@@ -4,6 +4,7 @@ using Game.Core.Combat.Areas;
 using Game.Core.Combat.Items;
 using Game.Core.Combat.Phases;
 using Game.Core.Combat.Progression;
+using Game.Core.Combat.Shops;
 using Game.Core.Combat.Stats;
 using Game.Core.Combat.Status;
 using Game.Core.Combat.Telegraphs;
@@ -44,6 +45,7 @@ public static class ComponentCodecs
         [typeof(GroundItem)] = 18,
         [typeof(PartyMembership)] = 19,
         [typeof(Wallet)] = 20,
+        [typeof(NpcInfo)] = 21,
     };
 
     internal static void Write<TB>(ref MemoryPackWriter<TB> w, IComponent component)
@@ -233,6 +235,11 @@ public static class ComponentCodecs
                 break;
             case Wallet wallet:
                 w.L(wallet.Gold);
+                break;
+            case NpcInfo npc:
+                w.S(npc.DefinitionId);
+                w.S(npc.Name);
+                w.S(npc.Shop);
                 break;
         }
     }
@@ -434,6 +441,9 @@ public static class ComponentCodecs
 
             case 20:
                 return new Wallet { Gold = r.L() };
+
+            case 21:
+                return new NpcInfo { DefinitionId = r.S(), Name = r.S(), Shop = r.SOpt() };
 
             default:
                 throw new MemoryPackSerializationException($"Tag de componente desconhecida: {tag}");

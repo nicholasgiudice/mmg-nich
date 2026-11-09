@@ -28,6 +28,7 @@ internal static partial class GameDataValidator
         foreach (var e in c.Monsters) { ValidateMonster(e, refs, errors); }
         ValidateRules(c.Rules, errors);
         ValidateItems(c, classes, errors);
+        ValidateShops(c, errors); // T-321
         foreach (var e in c.Arenas) { ValidateArena(e, errors); }
         var abilityDefs = c.Abilities.GroupBy(a => a.Value.Id).ToDictionary(g => g.Key, g => g.First().Value, StringComparer.Ordinal);
         foreach (var e in c.Encounters)

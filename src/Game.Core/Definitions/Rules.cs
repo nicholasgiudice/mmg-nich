@@ -24,6 +24,9 @@ public sealed record RulesDefinition
     // ---- seção T-310 (grupo) ----
     public PartyRules Party { get; init; } = new();
 
+    // ---- seção T-321 (lojas; fica em data/shops.json) ----
+    public ShopRules Shops { get; init; } = new();
+
     // ---- seção T-011 (threat): adicione abaixo ----
 }
 

@@ -2,6 +2,8 @@ using System.Diagnostics;
 using System.Numerics;
 using Game.Bots;
 using Game.Core.Combat;
+using Game.Core.Combat.Items;
+using Game.Core.Combat.Shops;
 using Game.Core.Definitions;
 using Game.Core.Intents;
 using Game.Core.Simulation;
@@ -51,6 +53,8 @@ public sealed class NetBot : IDisposable
     private double _nextInviteAt;
     private string[] _partyNames = [];
     private readonly Dictionary<string, int> _zoneVisits = new(StringComparer.Ordinal);
+    private List<Vector2> _shopPath = [];
+    private long _nextShopTick;
 
     public NetBot(int index, string host, int port, string? classId, string strategy, ContentCatalog content, BotOptions options, Stopwatch clock, string? ticket = null)
     {
@@ -136,6 +140,24 @@ public sealed class NetBot : IDisposable
 
     public int PartyRejections { get; private set; }
 
+    // ---------- loja (T-321) ----------
+
+    /// <summary>Mundo aberto: anda até o NPC da loja <see cref="ShopId"/> e compra 1 unidade de <see cref="ShopItem"/>.</summary>
+    public bool Shop { get; init; }
+
+    public string ShopId { get; init; } = "shop.temple";
+    public string ShopItem { get; init; } = "consumable.minor_healing_potion";
+
+    /// <summary>Compras e vendas confirmadas (eventos do servidor) e recusas da loja.</summary>
+    public int ShopBuys { get; private set; }
+
+    public int ShopSales { get; private set; }
+
+    public int ShopRejections { get; private set; }
+
+    /// <summary>Chegou perto do NPC da loja.</summary>
+    public bool ReachedShop { get; private set; }
+
     private ZoneDefinition? Zone => Welcome is { } w && _content.Zones.TryGetValue(w.EncounterId, out var z) ? z : null;
 
     /// <summary>Recebe o que chegou e, se há snapshot novo, decide e manda as intenções.</summary>
@@ -176,7 +198,11 @@ public sealed class NetBot : IDisposable
         }
 
         _buffer.Clear();
-        if (Roam && Zone is { } here)
+        if (Shop && Zone is { } shopZone)
+        {
+            ShopIntent(shopZone, self, latest.Tick);
+        }
+        else if (Roam && Zone is { } here)
         {
             RoamIntent(here, self);
         }
@@ -211,6 +237,64 @@ public sealed class NetBot : IDisposable
         _buffer.Add(to.LengthSquared() < 0.01f ? new StopIntent(self.Id) : new MoveIntent(self.Id, Vector2.Normalize(to)));
     }
 
+    /// <summary>
+    /// T-321: segue um caminho (A*) até o NPC da loja na zona e, ao alcance, compra 1 unidade do item. Sem ouro, vende antes
+    /// as pilhas de outros itens (o bot de <c>--dev-login</c> nasce sem ouro, só com as poções iniciais) e depois compra.
+    /// Um pedido por segundo; para depois da primeira compra.
+    /// </summary>
+    private void ShopIntent(ZoneDefinition zone, Entity self, long tick)
+    {
+        if (ShopBuys > 0 || zone.Npcs.FirstOrDefault(n => n.Shop == ShopId) is not { } placement)
+        {
+            _buffer.Add(new StopIntent(self.Id));
+            return;
+        }
+
+        var position = self.Get<Transform>().Position;
+        var target = new Vector2((float)placement.Position.X, (float)placement.Position.Y);
+        var range = (float)_content.Rules.Shops.InteractRange - 0.5f;
+        if (Vector2.Distance(position, target) > range)
+        {
+            if (_shopPath.Count == 0 && _mirror?.Map is { } map)
+            {
+                _shopPath = Game.Core.Spatial.Pathfinder.FindPath(map, position, target, self.TryGet<Collider>()?.Radius ?? 0).ToList();
+            }
+
+            while (_shopPath.Count > 0 && Vector2.Distance(position, _shopPath[0]) < 0.3f)
+            {
+                _shopPath.RemoveAt(0);
+            }
+
+            var to = (_shopPath.Count > 0 ? _shopPath[0] : target) - position;
+            _buffer.Add(to.LengthSquared() < 0.01f ? new StopIntent(self.Id) : new MoveIntent(self.Id, Vector2.Normalize(to)));
+            return;
+        }
+
+        ReachedShop = true;
+        _buffer.Add(new StopIntent(self.Id));
+        var npc = _mirror!.Entities.FirstOrDefault(e => e.TryGet<NpcInfo>()?.Shop == ShopId);
+        if (npc is null || tick < _nextShopTick || !_content.Shops.TryGetValue(ShopId, out var shop))
+        {
+            return;
+        }
+
+        _nextShopTick = tick + World.TickRate;
+        var offer = shop.Offers.Select((o, i) => (o, i)).First(x => x.o.Item == ShopItem);
+        var price = Game.Core.Combat.Shops.Shop.PriceOf(_content, offer.o);
+        if ((self.TryGet<Wallet>()?.Gold ?? 0) >= price)
+        {
+            _buffer.Add(new BuyIntent(self.Id, npc.Id, offer.i, 1));
+            return;
+        }
+
+        var inv = self.TryGet<Inventory>();
+        var sell = inv?.Slots.Select((item, slot) => (item, slot)).FirstOrDefault(x => x.item is not null);
+        if (sell is { item: { } item } found)
+        {
+            _buffer.Add(new SellIntent(self.Id, npc.Id, found.slot, item.Count));
+        }
+    }
+
     public void Dispose()
     {
         _peer?.Disconnect();
@@ -235,6 +319,7 @@ public sealed class NetBot : IDisposable
 
                 _respawnPending = false;
                 _reachedSpawn = false;
+                _shopPath = [];
                 Welcome = w;
                 _zoneVisits[w.EncounterId] = _zoneVisits.GetValueOrDefault(w.EncounterId) + 1;
                 _state.Reset(w.Epoch);
@@ -270,6 +355,18 @@ public sealed class NetBot : IDisposable
                 break;
             case PartyRejected:
                 PartyRejections++;
+                break;
+            case EventsMessage events when Welcome is { } me:
+                foreach (var ev in events.Events)
+                {
+                    switch (ev)
+                    {
+                        case ItemBought b when b.Entity == me.ControlledEntity: ShopBuys++; break;
+                        case ItemSold x when x.Entity == me.ControlledEntity: ShopSales++; break;
+                        case ShopRejected r when r.Entity == me.ControlledEntity: ShopRejections++; break;
+                    }
+                }
+
                 break;
             case Pong p:
                 PingMs = _clock.Elapsed.TotalMilliseconds - p.ClientTimeMs;

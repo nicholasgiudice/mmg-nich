@@ -16,6 +16,7 @@
     "encounters": { "type": "array", "items": { "$ref": "#/$defs/encounter" } },
     "items": { "type": "array", "items": { "$ref": "#/$defs/item" } },
     "zones": { "type": "array", "items": { "$ref": "#/$defs/zone" } },
+    "shops": { "type": "array", "items": { "$ref": "#/$defs/shop" } },
     "rules": {
       "type": "object",
       "description": "Regras globais; uma seção por assunto (control, threat...).",
@@ -81,6 +82,19 @@
             "skillPointsPerLevel": { "type": "integer", "minimum": 0 },
             "skillRankLevels": { "type": "array", "minItems": 5, "items": { "type": "integer", "minimum": 1 } },
             "signatureRankLevels": { "type": "array", "minItems": 3, "items": { "type": "integer", "minimum": 1 } }
+          }
+        },
+        "shops": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "T-321: alcance para negociar com NPC, fração do valor paga ao vender e valor dos equipamentos ((base + porNível × nível) × raridade).",
+          "properties": {
+            "interactRange": { "type": "number", "exclusiveMinimum": 0 },
+            "sellRatio": { "type": "number", "minimum": 0, "maximum": 1 },
+            "equipmentValueBase": { "type": "number", "minimum": 0 },
+            "equipmentValuePerLevel": { "type": "number", "minimum": 0 },
+            "equipmentRarityMultiplier": { "$ref": "#/$defs/rarityValues" },
+            "maxQuantity": { "type": "integer", "minimum": 1 }
           }
         },
         "party": {
@@ -215,7 +229,30 @@
         "useAbility": { "$ref": "#/$defs/id", "description": "T-320: habilidade executada ao usar (só consumível)." },
         "price": { "type": "integer", "minimum": 0, "description": "T-320: preço base de venda na loja." },
         "classes": { "$ref": "#/$defs/idList" },
-        "armorType": { "enum": ["heavy", "medium", "light"] },
+        "shop": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name"],
+      "description": "T-321: loja de NPC. Ofertas com preço fixo e estoque ilimitado; price ausente = valor do item.",
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "name": { "type": "string" },
+        "offers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["item"],
+            "properties": {
+              "item": { "$ref": "#/$defs/id" },
+              "level": { "type": "integer", "minimum": 1 },
+              "price": { "type": "integer", "minimum": 0 }
+            }
+          }
+        }
+      }
+    },
+    "armorType": { "enum": ["heavy", "medium", "light"] },
         "stats": { "type": "array", "items": { "$ref": "#/$defs/itemStat" } }
       }
     },

@@ -33,6 +33,12 @@ public enum NetIntentKind : byte
 
     /// <summary>T-320: <see cref="NetIntent.Slot"/> = espaço do inventário (consumível).</summary>
     UseItem,
+
+    /// <summary>T-321: <see cref="NetIntent.Target"/> = NPC, <see cref="NetIntent.Slot"/> = oferta, <see cref="NetIntent.Quantity"/>.</summary>
+    Buy,
+
+    /// <summary>T-321: <see cref="NetIntent.Target"/> = NPC, <see cref="NetIntent.Slot"/> = espaço do inventário, <see cref="NetIntent.Quantity"/>.</summary>
+    Sell,
 }
 
 /// <summary>
@@ -47,7 +53,8 @@ public sealed partial record NetIntent(
     EntityId? Target,
     Vector2? AimPoint,
     AttributeKind Attribute = AttributeKind.Str,
-    int Slot = 0)
+    int Slot = 0,
+    int Quantity = 0)
 {
     public static NetIntent From(Intent intent) => intent switch
     {
@@ -62,6 +69,8 @@ public sealed partial record NetIntent(
         PickUpItemIntent p => new NetIntent(NetIntentKind.PickUpItem, default, null, p.Item, null),
         DropItemIntent d => new NetIntent(NetIntentKind.DropItem, default, null, null, null, Slot: d.InventorySlot),
         UseItemIntent u => new NetIntent(NetIntentKind.UseItem, default, null, null, null, Slot: u.InventorySlot),
+        BuyIntent b => new NetIntent(NetIntentKind.Buy, default, null, b.Npc, null, Slot: b.Offer, Quantity: b.Quantity),
+        SellIntent s => new NetIntent(NetIntentKind.Sell, default, null, s.Npc, null, Slot: s.InventorySlot, Quantity: s.Quantity),
         _ => throw new NotSupportedException($"Intenção sem formato de rede: {intent.GetType().Name}"),
     };
 
@@ -79,6 +88,8 @@ public sealed partial record NetIntent(
         NetIntentKind.PickUpItem when Target is { } item => new PickUpItemIntent(entity, item),
         NetIntentKind.DropItem => new DropItemIntent(entity, Slot),
         NetIntentKind.UseItem => new UseItemIntent(entity, Slot),
+        NetIntentKind.Buy when Target is { } npc => new BuyIntent(entity, npc, Slot, Quantity),
+        NetIntentKind.Sell when Target is { } npc => new SellIntent(entity, npc, Slot, Quantity),
         _ => null,
     };
 }

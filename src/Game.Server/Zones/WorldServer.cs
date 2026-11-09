@@ -498,6 +498,8 @@ public sealed class WorldServer : ITransportHandler, IGameHost, IPartyHost
                 {
                     LevelUp l => (l.Entity, "nível"),
                     ItemPickedUp i when zone.World.Find(i.Entity)?.TryGet<Inventory>()?[i.InventorySlot] is { Rarity: >= ItemRarity.Rare } => (i.Entity, "item raro"),
+                    Core.Combat.Shops.ItemBought b => (b.Entity, "compra"), // T-321: ouro e inventário gravados logo
+                    Core.Combat.Shops.ItemSold s => (s.Entity, "venda"),
                     _ => (default(EntityId?), ""),
                 };
                 if (entity is { } id && _players.Values.FirstOrDefault(p => p.CharacterId is not null && p.Zone == zone && p.Entity?.Id == id) is { } owner)

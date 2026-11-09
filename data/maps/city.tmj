@@ -363,6 +363,11 @@
                          "name":"npc",
                          "type":"string",
                          "value":"npc.priest"
+                        }, 
+                        {
+                         "name":"shop",
+                         "type":"string",
+                         "value":"shop.temple"
                         }],
                  "rotation":0,
                  "type":"npc",
@@ -419,6 +424,11 @@
                          "name":"npc",
                          "type":"string",
                          "value":"npc.smith"
+                        }, 
+                        {
+                         "name":"shop",
+                         "type":"string",
+                         "value":"shop.smith"
                         }],
                  "rotation":0,
                  "type":"npc",

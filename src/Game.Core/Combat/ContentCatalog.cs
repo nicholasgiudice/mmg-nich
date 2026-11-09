@@ -58,6 +58,9 @@ public sealed class ContentCatalog
     /// <summary>Zonas do mundo aberto (T-214, <c>data/zones.json</c>). Vazio = só encontros.</summary>
     public IReadOnlyDictionary<string, ZoneDefinition> Zones { get; init; } = new Dictionary<string, ZoneDefinition>();
 
+    /// <summary>Lojas dos NPCs (T-321, <c>data/shops.json</c>). Vazio = sem lojas.</summary>
+    public IReadOnlyDictionary<string, ShopDefinition> Shops { get; init; } = new Dictionary<string, ShopDefinition>();
+
     /// <summary>Regras globais (data/rules.json). Seções ausentes = padrões neutros.</summary>
     public RulesDefinition Rules { get; init; } = new();
 

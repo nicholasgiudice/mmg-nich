@@ -17,6 +17,7 @@ public static class ContentLoading
             Threat = db.Threat,
             Fingerprint = db.Fingerprint,
             Zones = db.Zones,
+            Shops = db.Shops,
         };
 
     /// <summary>Carrega todos os JSON da pasta; lança <see cref="InvalidDataException"/> com todos os erros de validação.</summary>
