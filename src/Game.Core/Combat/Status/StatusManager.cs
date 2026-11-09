@@ -36,6 +36,30 @@ public static class StatusManager
     /// <summary>Tem status com a marca <c>untargetable</c> (T-340): ninguém além dele mesmo o alcança com habilidades.</summary>
     public static bool IsUntargetable(World world, Entity e) => Active(world, e).Any(s => Def(world, s).Flags.Untargetable);
 
+    /// <summary>Produto de <c>modifiers.healingTakenMultiplier</c> dos status ativos (por acúmulo). T-341.</summary>
+    public static double HealingTakenMultiplier(World world, Entity e)
+    {
+        var m = 1.0;
+        foreach (var s in Active(world, e))
+        {
+            m *= Math.Pow(Def(world, s).Modifiers.HealingTakenMultiplier, s.Stacks);
+        }
+
+        return m;
+    }
+
+    /// <summary>Remove os status com <c>breaks.interrupt</c> (T-341). Retorna quantos removeu.</summary>
+    public static int BreakOnInterrupt(World world, Entity target, EntityId by)
+    {
+        var removed = 0;
+        foreach (var s in Active(world, target).Where(s => Def(world, s).Breaks is { Interrupt: true }).ToList())
+        {
+            removed += Remove(world, target, s.StatusId, by) ? 1 : 0;
+        }
+
+        return removed;
+    }
+
     internal static StatusDefinition Def(World world, StatusInstance s) => world.Content.Statuses[s.StatusId];
 
     // ---------- aplicação ----------
@@ -107,6 +131,7 @@ public static class StatusManager
         {
             inst.Source = sourceId;
             inst.ExpiresAtTick = expires;
+            inst.DamageTaken = 0;
             if (def.Stacking == StackingMode.Stack && inst.Stacks < def.MaxStacks)
             {
                 inst.Stacks++;

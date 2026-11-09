@@ -239,6 +239,35 @@ public sealed class Describe
             parts.Add($"duração de controle recebido {Mult(m.ControlDurationMultiplier)}");
         }
 
+        if (m.HealingTakenMultiplier != 1)
+        {
+            parts.Add($"cura recebida {Mult(m.HealingTakenMultiplier)}");
+        }
+
+        if (s.Reflect is { } r)
+        {
+            parts.Add($"devolve {Pct(r.Fraction)} do dano recebido a quem atacou");
+        }
+
+        if (s.Breaks is { } b)
+        {
+            var how = new List<string>();
+            if (b.DamageFraction > 0)
+            {
+                how.Add($"ao receber {Pct(b.DamageFraction)} da vida máxima em dano");
+            }
+
+            if (b.Interrupt)
+            {
+                how.Add("ao ser interrompido");
+            }
+
+            if (how.Count > 0)
+            {
+                parts.Add($"quebra {string.Join(" ou ", how)}");
+            }
+        }
+
         if (s.Flags.Stunned)
         {
             parts.Add("atordoado (não age)");

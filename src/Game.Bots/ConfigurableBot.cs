@@ -120,8 +120,21 @@ public sealed class ConfigurableBot(BotPlan plan) : IBotController
         }
 
         _reactor.Reset("focus");
-        _focus = enemies[0].Id;
-        return enemies[0];
+        var chosen = Preferred(ctx, enemies) ?? enemies[0];
+        _focus = chosen.Id;
+        return chosen;
+    }
+
+    /// <summary>
+    /// T-341: <c>focusFirst</c> = ids de monstro (definição) que o bot escolhe como foco antes dos outros, o mais próximo
+    /// primeiro (ex.: o Sacerdote Morto atrás dos Guardas). Sem a opção, o foco é o inimigo mais próximo.
+    /// </summary>
+    private static Entity? Preferred(BotContext ctx, List<Entity> enemies)
+    {
+        var first = ctx.Options.GetList(ctx.ClassId, "focusFirst");
+        return first.Count == 0
+            ? null
+            : enemies.FirstOrDefault(e => e.TryGet<Game.Core.Combat.UnitInfo>() is { } info && first.Contains(info.DefinitionId));
     }
 
     // ---- habilidades ----

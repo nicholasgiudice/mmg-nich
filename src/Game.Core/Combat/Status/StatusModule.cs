@@ -16,6 +16,48 @@ public static class StatusModule
         s.Gates.Add(new StatusGate());
         s.Modifiers.Add(new StatusModifierSource());
         s.DamageReactions.Add(new FrontalReflectReaction());
+        s.DamageReactions.Add(new ReflectAndBreakReaction());
+    }
+}
+
+/// <summary>
+/// T-341 (Escudo Espectral): status com <c>reflect</c> devolvem a quem atacou <c>fraction</c> do dano direto recebido (mesma
+/// escola, sem multiplicadores); dano vindo de status (veneno, outros reflexos) não volta. Depois, status com
+/// <c>breaks.damageFraction</c> somam o dano recebido e quebram ao chegar a essa fração da vida máxima.
+/// </summary>
+public sealed class ReflectAndBreakReaction : IDamageReaction
+{
+    public void AfterDamage(World world, DamageReport damage)
+    {
+        var target = damage.Target;
+        var active = StatusManager.Active(world, target).ToList();
+        if (active.Count == 0)
+        {
+            return;
+        }
+
+        var direct = damage.Source is { } attacker && attacker != target && !world.Content.Statuses.ContainsKey(damage.SourceId);
+        foreach (var s in active)
+        {
+            var def = StatusManager.Def(world, s);
+            if (direct && def.Reflect is { Fraction: > 0 } r && damage.Source!.IsAlive)
+            {
+                var reflected = Effects.CoreEffects.Round(damage.Amount * r.Fraction);
+                if (reflected > 0)
+                {
+                    Effects.DamageResolver.Deal(world, target, damage.Source, s.StatusId, reflected, damage.School, applyModifiers: false);
+                }
+            }
+
+            if (def.Breaks is { DamageFraction: > 0 } b && target.TryGet<Health>() is { Max: > 0 } h)
+            {
+                s.DamageTaken += damage.Amount;
+                if (s.DamageTaken >= b.DamageFraction * h.Max)
+                {
+                    StatusManager.Remove(world, target, s.StatusId, damage.Source?.Id ?? EntityId.None);
+                }
+            }
+        }
     }
 }
 

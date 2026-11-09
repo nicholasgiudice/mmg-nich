@@ -140,6 +140,9 @@ public sealed record StatModifiers
 
     /// <summary>Multiplica a duração de status com tag <c>control</c> recebidos por quem tem este status (0,5 = metade). T-017.</summary>
     public double ControlDurationMultiplier { get; init; } = 1;
+
+    /// <summary>Multiplica a cura recebida por quem tem este status (0,5 = metade). T-341: Maldição do Sacerdote Morto.</summary>
+    public double HealingTakenMultiplier { get; init; } = 1;
 }
 
 /// <summary>Redução de dano recebido só quando a fonte está dentro de um arco à frente do alvo (Guarda Firme, Guarda Esquelético).</summary>
@@ -163,6 +166,26 @@ public sealed record EmpowerDefinition
 {
     public required IReadOnlyList<string> Abilities { get; init; }
     public required double Multiplier { get; init; }
+}
+
+/// <summary>
+/// Reflexo (T-341, Escudo Espectral): quem tem o status devolve <see cref="Fraction"/> do dano direto que recebe de outra
+/// entidade a quem causou, na mesma escola e sem multiplicadores. Dano de status (veneno, reflexos) não é devolvido.
+/// </summary>
+public sealed record ReflectDefinition
+{
+    public required double Fraction { get; init; }
+}
+
+/// <summary>
+/// Como o status acaba antes do tempo (T-341, Escudo Espectral): quebra quando quem o tem recebe, desde a aplicação,
+/// <see cref="DamageFraction"/> da vida máxima em dano (0 = não quebra por dano), e/ou quando é atingido por um efeito
+/// <c>interrupt</c> (<see cref="Interrupt"/>), mesmo sem estar conjurando.
+/// </summary>
+public sealed record StatusBreakDefinition
+{
+    public double DamageFraction { get; init; }
+    public bool Interrupt { get; init; }
 }
 
 public sealed record StatusFlags
@@ -203,6 +226,12 @@ public sealed record StatusDefinition
 
     /// <summary>Fortalece o próximo uso de certas habilidades e é consumido (T-061).</summary>
     public EmpowerDefinition? Empower { get; init; }
+
+    /// <summary>Devolve parte do dano recebido a quem atacou (T-341).</summary>
+    public ReflectDefinition? Reflect { get; init; }
+
+    /// <summary>Quebra por dano recebido ou por interrupção (T-341).</summary>
+    public StatusBreakDefinition? Breaks { get; init; }
 }
 
 public sealed record AreaDefinition

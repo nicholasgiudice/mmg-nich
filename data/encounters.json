@@ -105,6 +105,36 @@
       ],
       "victory": "all_enemies_dead",
       "defeat": { "condition": "all_players_dead", "timeLimit": 120 }
+    },
+    {
+      "id": "encounter.dead_courtyard",
+      "name": "Pátio dos Mortos",
+      "arena": "map.broken_gate",
+      "players": [
+        { "class": "class.warrior", "position": { "x": 4.5, "y": 9.5 } },
+        { "class": "class.cleric", "position": { "x": 3.5, "y": 10.5 } }
+      ],
+      "enemies": [
+        { "monster": "monster.skeleton_guard", "position": { "x": 17.5, "y": 8.5 }, "level": 9 },
+        { "monster": "monster.skeleton_guard", "position": { "x": 18.5, "y": 10.5 }, "level": 9 },
+        { "monster": "monster.skeleton_guard", "position": { "x": 17.5, "y": 12.5 }, "level": 9 },
+        { "monster": "monster.dead_priest", "position": { "x": 22.5, "y": 10.5 }, "level": 10 }
+      ],
+      "victory": "all_enemies_dead",
+      "defeat": { "condition": "all_players_dead", "timeLimit": 240 }
+    },
+    {
+      "id": "encounter.spectral_knight",
+      "name": "Cavaleiro Espectral na Torre Quebrada",
+      "arena": "map.broken_gate",
+      "players": [
+        { "class": "class.warrior", "position": { "x": 5.5, "y": 9.5 } },
+        { "class": "class.archer", "position": { "x": 3.5, "y": 8.5 } },
+        { "class": "class.cleric", "position": { "x": 3.5, "y": 10.5 } }
+      ],
+      "enemies": [{ "monster": "monster.spectral_knight", "position": { "x": 20.5, "y": 10.5 }, "level": 11 }],
+      "victory": "all_enemies_dead",
+      "defeat": { "condition": "all_players_dead", "timeLimit": 240 }
     }
   ]
 }

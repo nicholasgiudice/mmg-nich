@@ -186,6 +186,64 @@
       "cooldown": 18,
       "targeting": { "type": "self" },
       "effects": [{ "type": "summon", "monster": "monster.spider_small", "count": 2, "radius": 2, "maxAlive": 4 }]
+    },
+    {
+      "id": "dead_priest.mend_dead",
+      "name": "Remendar os Mortos",
+      "tags": ["ai.heal"],
+      "cooldown": 6,
+      "castTime": 2,
+      "targeting": { "type": "unit", "range": 9, "faction": "ally" },
+      "effects": [{ "type": "heal", "base": 105 }]
+    },
+    {
+      "id": "dead_priest.withering_curse",
+      "name": "Maldição Definhante",
+      "cooldown": 12,
+      "targeting": { "type": "unit", "range": 9, "faction": "enemy" },
+      "effects": [
+        { "type": "damage", "school": "arcane", "base": 6 },
+        { "type": "apply_status", "status": "status.withering_curse", "duration": 8 }
+      ]
+    },
+    {
+      "id": "dead_priest.grave_bolt",
+      "name": "Dardo Sepulcral",
+      "cooldown": 2.2,
+      "targeting": { "type": "unit", "range": 9, "faction": "enemy" },
+      "effects": [{ "type": "damage", "school": "arcane", "base": 10 }]
+    },
+    {
+      "id": "spectral_knight.spectral_shield",
+      "name": "Escudo Espectral",
+      "tags": ["ai.buff"],
+      "cooldown": 15,
+      "targeting": { "type": "self" },
+      "effects": [{ "type": "apply_status", "status": "status.spectral_shield", "duration": 6 }]
+    },
+    {
+      "id": "spectral_knight.whirling_strike",
+      "name": "Golpe Giratório",
+      "cooldown": 9,
+      "targeting": { "type": "circle_self", "radius": 2.4 },
+      "telegraph": { "shape": "circle", "radius": 2.4, "delay": 1.0, "anchor": "source", "affects": "enemy" },
+      "effects": [{ "type": "damage", "school": "physical", "base": 130 }]
+    },
+    {
+      "id": "spectral_knight.spectral_blade",
+      "name": "Lâmina Espectral",
+      "cooldown": 1.6,
+      "targeting": { "type": "melee_arc", "range": 1.9, "angle": 100 },
+      "effects": [{ "type": "damage", "school": "physical", "base": 55 }]
+    },
+    {
+      "id": "spectral_knight.spectral_charge",
+      "name": "Investida Espectral",
+      "tags": ["ai.ranged"],
+      "cooldown": 10,
+      "targeting": { "type": "line", "length": 8, "width": 1.4 },
+      "telegraph": { "shape": "line", "length": 8, "width": 1.4, "delay": 1.0, "charge": true },
+      "effects": [{ "type": "damage", "school": "physical", "base": 140 }]
     }
   ]
 }

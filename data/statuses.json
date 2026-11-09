@@ -196,6 +196,23 @@
       "defaultDuration": 2,
       "stacking": "refresh",
       "immuneToTags": ["poison", "curse"]
+    },
+    {
+      "id": "status.withering_curse",
+      "name": "Maldição Definhante",
+      "tags": ["debuff", "curse"],
+      "defaultDuration": 8,
+      "stacking": "refresh",
+      "modifiers": { "healingTakenMultiplier": 0.5 }
+    },
+    {
+      "id": "status.spectral_shield",
+      "name": "Escudo Espectral",
+      "tags": ["buff", "spectral_shield"],
+      "defaultDuration": 6,
+      "stacking": "refresh",
+      "reflect": { "fraction": 0.3 },
+      "breaks": { "damageFraction": 0.08, "interrupt": true }
     }
   ]
 }

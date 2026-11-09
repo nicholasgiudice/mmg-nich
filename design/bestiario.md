@@ -1,6 +1,6 @@
 # Bestiário
 
-Status: **referência gerada a partir dos dados** (2026-11-02; Fada da Névoa e Ent Corrompido em 2026-11-06, T-340). Fonte: `data/monsters.json`, `data/abilities_monsters.json`, `data/statuses.json`, `data/areas.json`, `data/zones.json`, `data/encounters.json`, `data/rules.json` e `data/items.json` (tabelas de queda). Os números saem desses arquivos; quando os dados mudarem, este documento deve ser atualizado.
+Status: **referência gerada a partir dos dados** (2026-11-02; Fada da Névoa e Ent Corrompido em 2026-11-06, T-340; Sacerdote Morto e Cavaleiro Espectral em 2026-11-09, T-341). Fonte: `data/monsters.json`, `data/abilities_monsters.json`, `data/statuses.json`, `data/areas.json`, `data/zones.json`, `data/encounters.json`, `data/rules.json` e `data/items.json` (tabelas de queda). Os números saem desses arquivos; quando os dados mudarem, este documento deve ser atualizado.
 
 As habilidades dos monstros estão detalhadas em `design/habilidades.md` (§ Monstros) e os itens em `design/itens.md`.
 
@@ -30,6 +30,8 @@ As habilidades dos monstros estão detalhadas em `design/habilidades.md` (§ Mon
 | Ent Corrompido | `monster.corrupted_ent` | 7 | normal | 430 | 2,4 | 0,7 | plant, corrupted | `ai.brute` |
 | Matriarca da Floresta | `monster.forest_matriarch` | 8 | **chefe** | 8800 | 3,4 | 0,9 | beast, spider, boss | `ai.boss` |
 | Guarda Esquelético | `monster.skeleton_guard` | 9 | normal | 440 | 3,2 | 0,5 | undead | `ai.guardian` |
+| Sacerdote Morto | `monster.dead_priest` | 10 | normal | 180 | 3,0 | 0,45 | undead | `ai.support` |
+| Cavaleiro Espectral | `monster.spectral_knight` | 11 | **elite** | 4500 | 3,4 | 0,5 | undead | `ai.brute` |
 
 ## Quedas (drops)
 
@@ -75,7 +77,7 @@ As aranhas não têm ponto de nascimento próprio: só aparecem invocadas pela M
 
 ### Encontros de teste (`data/encounters.json`)
 
-Arenas fechadas usadas no protótipo e nos testes. Os cinco do protótipo usam `monsterLevel` 1; os três da Floresta (T-340) definem o nível de cada monstro.
+Arenas fechadas usadas no protótipo e nos testes. Os cinco do protótipo usam `monsterLevel` 1; os da Floresta (T-340) e das Ruínas (T-341) definem o nível de cada monstro.
 
 | Encontro | Arena | Monstros | Jogadores | Limite |
 |---|---|---|---|---|
@@ -87,6 +89,8 @@ Arenas fechadas usadas no protótipo e nos testes. Os cinco do protótipo usam `
 | Duas Fadas da Névoa (`encounter.mist_fairies`) | `map.fields` | 2 Fadas nv6 | Guerreiro (os testes trocam a classe) | 120 s |
 | Ent Corrompido (`encounter.corrupted_ent`) | `map.fields` | 1 Ent nv7 | Guerreiro (os testes trocam a classe) | 120 s |
 | Emboscada na Névoa (`encounter.mist_ambush`) | `map.fields` | 3 Aranhas Menores nv5 + 1 Fada nv6 | Guerreiro, Arqueiro | 120 s |
+| Pátio dos Mortos (`encounter.dead_courtyard`) | `map.broken_gate` | 3 Guardas Esqueléticos nv9 + 1 Sacerdote Morto nv10 | Guerreiro, Clérigo (os testes trocam as classes) | 240 s |
+| Cavaleiro Espectral na Torre Quebrada (`encounter.spectral_knight`) | `map.broken_gate` | 1 Cavaleiro Espectral nv11 | Guerreiro, Arqueiro, Clérigo | 240 s |
 
 ## Monstros
 
@@ -210,8 +214,37 @@ Nível 9, normal. Vida 440, velocidade 3,2, raio 0,5. Tag: undead (recebe +25% d
   - Erguer Escudo (`skeleton_guard.raise_shield`, tag `ai.guard`) — em si, recarga 8 s: **Escudo Erguido** por 3 s (recebe 30% do dano vindo da frente, arco de 140°).
   - Golpe Esmagador (`skeleton_guard.crushing_blow`, tag `ai.heavy`) — cone de 2,4 × 100° com aviso de 1 s; dano físico 30; recarga 8 s.
 - **IA:** `ai.guardian` — ciclo perseguir → guarda → golpe pesado → recuperar. Na guarda fica parado e só se vira para o alvo a cada `faceIntervalSeconds` 1 s (janela para atacar pelo flanco). Parâmetros: `aggroRange` 14, `guardSeconds` 3, `recoverSeconds` 1,5.
-- **Onde aparece:** hoje **não aparece no mundo aberto**; só no encontro de teste Guarda Esquelético no Portão Partido (nv. 1).
+- **Onde aparece:** hoje **não aparece no mundo aberto**; só nos encontros de teste Guarda Esquelético no Portão Partido (nv. 1) e Pátio dos Mortos (nv. 9).
 - **Quedas:** tabela normal.
+
+### Sacerdote Morto — `monster.dead_priest`
+
+Nível 10, normal. Vida 180, velocidade 3,0, raio 0,45. Tag: undead (recebe +25% do dano sagrado do Clérigo). Design: `design/combat-encounters-v0.1.md` § Ruínas.
+
+- **Habilidades:**
+  - Remendar os Mortos (`dead_priest.mend_dead`, tag `ai.heal`): **conjuração de 2 s**, cura 105 num aliado a até 9; recarga 6 s. Interrompível.
+  - Maldição Definhante (`dead_priest.withering_curse`): dano arcano 6 e **Maldição Definhante** (`status.withering_curse`, tags debuff e curse: **cura recebida −50%**) por 8 s, num inimigo a até 9; recarga 12 s. A Purificação do Clérigo remove.
+  - Dardo Sepulcral (`dead_priest.grave_bolt`): dano arcano 10 num inimigo a até 9; recarga 2,2 s.
+- **IA:** `ai.support`. Cura o aliado mais ferido com vida até `healBelow` 0,7 (nunca a si mesmo). Fica `behindDistance` 3 tiles atrás do centro dos protetores (os outros monstros do grupo), do lado oposto ao alvo; sem protetores, a `preferredDistance` 7. Ataca só com as instantâneas, andando ou não. `aggroRange` 14.
+- **Vida pelo nível de nascimento:** nv. 10 = 828.
+- **Onde aparece:** Pátio dos Mortos nas Ruínas (mapa da T-343). Encontro de teste Pátio dos Mortos (nv. 10).
+- **Arte:** sprite humanoide LPC ligado pela T-056 (`client/assets/art/sprites.json`).
+- **Quedas:** tabela normal.
+
+### Cavaleiro Espectral — `monster.spectral_knight`
+
+Nível 11, **elite**. Vida 4500, velocidade 3,4, raio 0,5. Tag: undead. Design: `design/combat-encounters-v0.1.md` § Ruínas.
+
+- **Habilidades:**
+  - Escudo Espectral (`spectral_knight.spectral_shield`, tag `ai.buff`): em si, recarga 15 s. **Escudo Espectral** (`status.spectral_shield`) por 6 s: **devolve 30%** do dano direto recebido a quem atacou (`reflect`); **quebra** ao receber 8% da vida máxima em dano ou com uma interrupção (`breaks`).
+  - Golpe Giratório (`spectral_knight.whirling_strike`): círculo de raio 2,4 em volta dele, com aviso de 1 s; dano físico 130; recarga 9 s.
+  - Lâmina Espectral (`spectral_knight.spectral_blade`): dano físico 55, arco de 100°, alcance 1,9, recarga 1,6 s.
+  - Investida Espectral (`spectral_knight.spectral_charge`, tag `ai.ranged`): linha de 8 × 1,4 com aviso de 1 s; dano físico 140 e o Cavaleiro avança ao longo da linha; recarga 10 s.
+- **IA:** `ai.brute`. Ergue o escudo com o alvo a até `buffDistance` 3; investe com o alvo a `farDistance` 3 ou mais. Persegue até `approachRange` 1,9. `aggroRange` 14.
+- **Vida pelo nível de nascimento:** nv. 11 = 22 500.
+- **Onde aparece:** Torre Quebrada, nas Ruínas (mapa da T-343), opcional. Encontro de teste Cavaleiro Espectral na Torre Quebrada (nv. 11).
+- **Arte:** sprite humanoide LPC ligado pela T-056 (`client/assets/art/sprites.json`).
+- **Quedas:** tabela elite.
 
 ## Pontos em aberto nos dados
 

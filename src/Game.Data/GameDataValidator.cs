@@ -444,6 +444,9 @@ internal static partial class GameDataValidator
         ctx.NonNegative("modifiers.damageTakenMultiplier", x.Modifiers.DamageTakenMultiplier);
         ctx.NonNegative("modifiers.damageDealtMultiplier", x.Modifiers.DamageDealtMultiplier);
         ctx.NonNegative("modifiers.controlDurationMultiplier", x.Modifiers.ControlDurationMultiplier);
+        ctx.NonNegative("modifiers.healingTakenMultiplier", x.Modifiers.HealingTakenMultiplier);
+        if (x.Reflect is { Fraction: < 0 or > 1 }) { ctx.Error("reflect.fraction", "Deve estar em 0..1."); }
+        if (x.Breaks is { DamageFraction: < 0 }) { ctx.Error("breaks.damageFraction", "Não pode ser negativo."); }
         if (x.Frontal is { } fr)
         {
             if (fr.ArcDegrees <= 0 || fr.ArcDegrees > 360) { ctx.Error("frontal.arcDegrees", "Deve estar entre 0 (exclusivo) e 360."); }
