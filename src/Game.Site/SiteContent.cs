@@ -11,6 +11,15 @@ public sealed record ClassText
     public string Weaknesses { get; init; } = "";
 }
 
+/// <summary>Textos da página de download.</summary>
+public sealed record DownloadText
+{
+    public string Lead { get; init; } = "";
+    public IReadOnlyList<string> Requirements { get; init; } = [];
+    public IReadOnlyList<string> Steps { get; init; } = [];
+    public string Unavailable { get; init; } = "O download ainda não está disponível.";
+}
+
 /// <summary>
 /// Textos do site que não são regra de jogo (T-071): apresentação, descrições curtas e nomes que os dados não têm.
 /// Nenhum número de jogo vem daqui.
@@ -24,6 +33,14 @@ public sealed record SiteContent
     public IReadOnlyDictionary<string, string> Monsters { get; init; } = new Dictionary<string, string>();
     public IReadOnlyDictionary<string, string> Phases { get; init; } = new Dictionary<string, string>();
     public IReadOnlyDictionary<string, string> Ai { get; init; } = new Dictionary<string, string>();
+
+    /// <summary>Rótulo em português de cada tag dos dados (tipo de monstro, tipo de status). Tag sem rótulo não aparece.</summary>
+    public IReadOnlyDictionary<string, string> Tags { get; init; } = new Dictionary<string, string>();
+
+    /// <summary>Zonas que não aparecem no site (ex.: a instância de teste).</summary>
+    public IReadOnlyList<string> HiddenZones { get; init; } = [];
+
+    public DownloadText Download { get; init; } = new();
 
     private static readonly JsonSerializerOptions Options = new()
     {

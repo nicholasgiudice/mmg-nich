@@ -72,11 +72,10 @@ internal sealed partial class SiteBuilder
         p.Add("<h2 id=\"rarity\">Raridade e afixos</h2>");
         p.Add(Table(["Raridade", "Afixos"], Enum.GetValues<ItemRarity>().Select(r => new[] { Fmt.Rarity(r), Num(rules.AffixCount.For(r)) })));
         p.Add("<p>Os afixos são sorteados sem repetir no mesmo item. Valor = base + por nível × nível do item.</p>");
-        p.Add(Table(["Afixo", "Id", "Atributo", "Base", "Por nível"],
+        p.Add(Table(["Afixo", "Atributo", "Base", "Por nível"],
             rules.Affixes.Select(a => new[]
             {
                 $"<span id=\"{Esc(a.Id)}\">{Esc(a.Name)}</span>",
-                Code(a.Id),
                 Stat(a.Value.Stat),
                 StatValue(a.Value.Stat, a.Value.Base),
                 StatValue(a.Value.Stat, a.Value.PerLevel),
@@ -88,7 +87,7 @@ internal sealed partial class SiteBuilder
             _db.Classes.Values.SelectMany(c => c.StartingEquipment.Select(s => new[]
             {
                 _d.ClassLink(p, c.Id),
-                _db.Items.TryGetValue(s.Item, out var def) ? Icon(p, s.Item) + p.A(Url.Item(s.Item), def.Name) : Code(s.Item),
+                _db.Items.TryGetValue(s.Item, out var def) ? Icon(p, s.Item) + p.A(Url.Item(s.Item), def.Name) : Esc(s.Item),
                 Num(s.Level),
                 ItemStatsAt(s.Item, s.Level),
             }))));
@@ -128,7 +127,7 @@ internal sealed partial class SiteBuilder
         foreach (var i in items)
         {
             var classes = ItemMath.ClassesOf(rules, i);
-            sb.Append($"<tr id=\"{Esc(i.Id)}\" data-item=\"{Esc(i.Id)}\"><td><span class=\"named\">{Icon(p, i.Id)}<span>{Esc(i.Name)}<br>{Code(i.Id)}</span></span></td><td>{(i.Slot is { } slot ? Slot(slot) : "—")}</td>");
+            sb.Append($"<tr id=\"{Esc(i.Id)}\" data-item=\"{Esc(i.Id)}\"><td><span class=\"named\">{Icon(p, i.Id)}<span>{Esc(i.Name)}</span></span></td><td>{(i.Slot is { } slot ? Slot(slot) : "—")}</td>");
             if (showType)
             {
                 sb.Append($"<td>{(i.ArmorType is { } t ? p.A($"{Url.Items}#armor-types", ArmorType(t)) : "—")}</td>");
