@@ -90,6 +90,28 @@ public static class ItemText
         };
     }
 
+    /// <summary>Consumível cuja habilidade cura vida (a poção da tecla Q, T-323).</summary>
+    public static bool IsHealingConsumable(ContentCatalog content, string id) =>
+        content.Items.TryGetValue(id, out var item) && item.IsConsumable && item.UseAbility is { } use
+        && content.Abilities.TryGetValue(use, out var ability) && ability.Effects.OfType<HealEffect>().Any();
+
+    /// <summary>Ouro com separador de milhar: "1.250 de ouro".</summary>
+    public static string Gold(long amount) => amount.ToString("#,0", Pt) + " de ouro";
+
+    /// <summary>Quantas unidades do item há no inventário, somando as pilhas.</summary>
+    public static int CountOf(Inventory? inventory, string baseId) =>
+        inventory?.Slots.Where(i => i?.BaseId == baseId).Sum(i => i!.Count) ?? 0;
+
+    /// <summary>Efeito e recarga do consumível (a habilidade que ele usa), em linhas de tooltip.</summary>
+    public static IEnumerable<string> ConsumableLines(ContentCatalog content, ItemBaseDefinition def)
+    {
+        if (def.UseAbility is { } use && content.AbilityAt(use, 1) is { } ability)
+        {
+            yield return Hud.Escape(AbilityText.Describe(ability, content));
+            yield return "[color=#aaaaaa]A recarga vale para todas as unidades do mesmo item.[/color]";
+        }
+    }
+
     public static bool CanUse(ContentCatalog content, ItemInstance item, string? classId) =>
         classId is null || !content.Items.TryGetValue(item.BaseId, out var def) || ItemMath.CanUse(content.Rules.Items, def, classId);
 
@@ -97,7 +119,9 @@ public static class ItemText
     /// Tooltip em BBCode: nome na cor da raridade, tipo e nível, estatísticas (base + afixos), quem usa e, se
     /// <paramref name="equipped"/> for dado, a diferença para o que está equipado no mesmo espaço.
     /// </summary>
-    public static string Tooltip(ContentCatalog content, ItemInstance item, string? classId, ItemInstance? equipped, bool isEquipped)
+    /// <param name="sellPrice">T-323: na aba Vender da loja, quanto a loja paga por unidade (null = fora da loja).</param>
+    public static string Tooltip(ContentCatalog content, ItemInstance item, string? classId, ItemInstance? equipped, bool isEquipped,
+        int? sellPrice = null)
     {
         content.Items.TryGetValue(item.BaseId, out var def);
         var lines = new List<string>
@@ -122,6 +146,26 @@ public static class ItemText
                 lines.Add($"[color=#{RarityColor(item.Rarity).ToHtml(false)}]◆ {Hud.Escape(affix.Name)}[/color] "
                     + $"[color=#aaaaaa]({StatName(affix.Value.Stat)} {Value(affix.Value.Stat, ItemMath.ValueAt(affix.Value, item.Level))})[/color]");
             }
+        }
+
+        if (def is { IsConsumable: true })
+        {
+            lines.AddRange(ConsumableLines(content, def));
+        }
+
+        if (sellPrice is { } price)
+        {
+            lines.Add("");
+            lines.Add(item.Count > 1
+                ? $"[color=#ffd966]Vende por {Gold(price)} cada ({Gold((long)price * item.Count)} a pilha)[/color]"
+                : $"[color=#ffd966]Vende por {Gold(price)}[/color]");
+            return string.Join("\n", lines);
+        }
+
+        if (def is { IsConsumable: true })
+        {
+            lines.Add("");
+            lines.Add("[color=#aaaaaa]Duplo clique: usar · arraste para a barra (1 a 6): atalho · botão direito ou arraste para fora: largar no chão[/color]");
         }
 
         if (!CanUse(content, item, classId) && def is not null)
@@ -168,6 +212,21 @@ public static class ItemText
 
         return string.Join("\n", lines);
     }
+
+    /// <summary>Recusa da loja (T-323), texto curto.</summary>
+    public static string ShopRejection(Game.Core.Combat.Shops.ShopRejectReason reason) => reason switch
+    {
+        Game.Core.Combat.Shops.ShopRejectReason.NoShop => "Ninguém para negociar aqui",
+        Game.Core.Combat.Shops.ShopRejectReason.TooFar => "Chegue mais perto",
+        Game.Core.Combat.Shops.ShopRejectReason.InvalidOffer => "Essa oferta não existe mais",
+        Game.Core.Combat.Shops.ShopRejectReason.InvalidQuantity => "Quantidade inválida",
+        Game.Core.Combat.Shops.ShopRejectReason.NotEnoughGold => "Ouro insuficiente",
+        Game.Core.Combat.Shops.ShopRejectReason.InventoryFull => "Sem espaço no inventário",
+        Game.Core.Combat.Shops.ShopRejectReason.NoInventory => "Sem inventário",
+        Game.Core.Combat.Shops.ShopRejectReason.EmptySlot => "Espaço vazio",
+        Game.Core.Combat.Shops.ShopRejectReason.CannotSell => "A loja não compra esse item",
+        _ => reason.ToString(),
+    };
 
     public static string Rejection(ItemRejectReason reason) => reason switch
     {

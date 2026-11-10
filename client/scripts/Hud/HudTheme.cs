@@ -19,6 +19,9 @@ public static class HudTheme
     public static readonly Color Suggested = new(1f, 0.85f, 0.45f);
     public static readonly Color Warning = new(1f, 0.55f, 0.4f);
 
+    /// <summary>Ouro (T-323): valor no inventário, na loja e o "+N" sobre o personagem.</summary>
+    public static readonly Color Gold = new(1f, 0.82f, 0.30f);
+
     /// <summary>Borda dourada das barras nos quadros de pedra (kit pedra e ouro, T-086).</summary>
     public static readonly Color BarBorderGold = new(0.80f, 0.64f, 0.26f);
 
