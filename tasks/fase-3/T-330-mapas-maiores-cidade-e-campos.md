@@ -31,4 +31,73 @@ Depois da T-331, portões, surgimentos e NPCs ficam nos objetos do próprio mapa
 
 ## Resultado
 
-_(preencher ao concluir)_
+**Feito** (Windows, 2026-11-09). Os dois mapas foram aprovados pelo designer.
+
+**Como os mapas foram feitos.** O script da T-055 não estava no repositório, então escrevi um gerador novo (Python, fora do repositório).
+- Ele monta os mapas com as peças dos mapas antigos:
+  - prédios, praça e muralha da Cidade;
+  - cerca e casa da Fazenda, paliçada do Acampamento;
+  - carvalho, pinheiros, pedras e tufos dos Campos.
+- O chão é repintado pelos cantos com o wangset Summer Terrain, como faz o pincel de terreno do Tiled. Por isso as estradas e os pátios se emendam sem costura.
+- Os `.tmj` são a fonte daqui em diante. Imagens em `tasks/reports/mapas-t330/` (`cidade.png` e `campos.png`, mais `*-antes.png` para comparar).
+
+**Cidade (80×60).**
+- Praça central de 26×20 (a antiga esticada), com o nascimento `spawn` no meio.
+- Os seis prédios com NPC (o Templo e o Ferreiro com loja) e duas moradias sem NPC.
+- Ruas de terra: anel em volta da praça, avenidas para os quatro lados e a rua do sul, onde ficam as portas da Estalagem, do Armazém e do Mercado.
+- Gramados com árvores e flores.
+- **Portões:**
+  - Leste aberto (`east_gate`, linhas 28–31; chegada `from_fields`).
+  - **Norte e oeste reservados:** as avenidas chegam até a muralha, que continua inteira, sem `transitions`. A T-342 e a T-343 abrem.
+  - Sul fechado.
+
+**Campos (200×140).**
+- **Borda:**
+  - Pedras em volta, com pinheiros embaixo, como antes.
+  - Na borda oeste fica a muralha da Cidade, em volta do portão (`west_gate`, linhas 68–71; nascimento e `from_city` em (3,5; 69,5)).
+- **Estradas:** a Estrada Leste atravessa o mapa, com ramais para a Fazenda (pela frente do pátio), para o Acampamento e para a Clareira, e uma trilha até o portão do Covil (`east_gate`, linhas 104–107; `from_lair` em (195,5; 105,5)).
+- **Subáreas, maiores e mais espaçadas:**
+  - Estrada Leste: 104×32.
+  - Fazenda Abandonada: com o campo de flores esticado.
+  - Clareira dos Caçadores: 62×46, com pedras.
+  - Acampamento dos Salteadores: pátio esticado.
+- Bosques nas bordas e árvores e pedras espalhadas.
+- **Densidade:** 22 grupos (30 `monster_spawn`), contra 8 antes. As composições são as mesmas, então os grupos típicos dos testes de design não mudaram:
+  - Estrada: 6 grupos (2 ratos nv1).
+  - Fazenda: 3 grupos (2 ratos nv1 + lobo nv2) e 3 grupos (2 lobos nv2).
+  - Clareira: 5 grupos (3 lobos nv3).
+  - Acampamento: 5 grupos (lobo nv4 + salteador nv4).
+- Todo grupo fica a ≥ 14 tiles dos outros e das chegadas. O Covil não mudou: a volta usa o nome da chegada (`from_lair`).
+
+**Ritmo** (req. 4). Medi o caminho a pé, numa busca na grade de colisão, até o grupo mais perto do mesmo nível, a 4,5 tiles/s:
+
+| | antes | agora |
+|---|---|---|
+| entre grupos do mesmo nível | 18,5 tiles = 4,1 s | 19,5 tiles = 4,3 s (máx 6,9 s) |
+| da chegada ao nível 2 / 3 / 4 | 7 / 13 / 17 s | 17 / 25 / 33 s |
+
+A caminhada entre grupos ficou bem abaixo dos ~10 s de deslocamento que entram nos 60 s do modelo. A densidade compensou o mapa maior, e nenhuma meta mudou.
+
+`FieldsDesignTests` e `EconomyDesignTests` passam. `Game.Design.Tests` passa inteiro (121/121). Mais grupos só aliviam o limite do renascimento, e no modelo o limite já era o tempo do jogador.
+
+**Desempenho** (req. 6). Servidor Release `--world --dev-login` e 16 bots `--roam`, **no mesmo PC Windows**, que também tinha outro servidor e o Godot abertos:
+
+| | tick médio (estável) | p99 | KB/s por bot | quedas |
+|---|---|---|---|---|
+| mapas antigos (60 s) | ~3,5 ms | ~24 ms | 11,4 | 0 |
+| mapas novos (120 s) | ~5 ms | ~30–40 ms | 12,7 | 0 |
+
+Os mapas novos custam cerca de 40% a mais de tick: são 52 monstros nos Campos, contra 19 antes. A meta de < 2 ms vale para a VPS e não dá para medir aqui, porque os bots disputam a CPU com o servidor. **Pendente: rodar `tests/Game.NetBots/load.sh` (16 bots `--roam`) na VPS.** Se passar de 2 ms, o primeiro ajuste é a densidade da Estrada (6 grupos) e da Fazenda.
+
+**Testes.**
+- `ZoneMapTests` passa sem mudança: todo surgimento, NPC e portão alcançável a pé.
+- **Desvios (fora das áreas listadas):**
+  - `tests/Game.Sim.Tests/MapConversionTests.cs` e `MapFixtures/ascii-arenas.json`: a Cidade e os Campos saíram da comparação com as grades ASCII da T-214, que deixaram de ser conversão (agora são 5 arenas).
+  - `tests/Game.Data.Tests/ZoneMapEquivalenceTests.cs`: a equivalência da T-331 compara só o que não é posição (destinos dos portões, monstros, nome, arena, descanso, corpo) e os NPCs da Cidade. A posição exata do Ferreiro saiu do teste.
+  - `design/map-conventions-v0.1.md` §10: parágrafo dos mapas da T-330.
+- `./scripts/check.sh` completo passa.
+
+**Pendências:**
+- Medir o desempenho na VPS (acima).
+- Os portões norte e oeste da Cidade continuam fechados (T-342, T-343).
+- O gerador não ficou no repositório. Se for preciso refazer os mapas do zero, ele pode ser guardado numa tarefa própria.

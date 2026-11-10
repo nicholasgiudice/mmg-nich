@@ -152,7 +152,7 @@ public class WorldTests
         Assert.True(hero.IsRemoved);
         var (zone, moved) = w.Where(c);
         Assert.Same(w.Fields, zone);
-        Assert.Equal(new Vector2(3.5f, 31.5f), moved.Get<Transform>().Position);
+        Assert.Equal(new Vector2(3.5f, 69.5f), moved.Get<Transform>().Position);
         Assert.Equal(level, moved.Get<CharacterStats>().Level);
         Assert.Equal(Ring, moved.Get<Inventory>()[2]);
         Assert.Equal(health, moved.Get<Health>().Current, 0.01f);
@@ -162,10 +162,10 @@ public class WorldTests
         w.Tick(2, c);
         Assert.NotNull(c.Entity(c.Me));
 
-        Teleport(moved, 0.5, 31.5);
+        Teleport(moved, 0.5, 69.5);
         w.Tick(1, c);
         Assert.Equal("zone.city", c.Welcome!.EncounterId);
-        Assert.Equal(new Vector2(36.5f, 15.5f), w.Where(c).Entity.Get<Transform>().Position);
+        Assert.Equal(new Vector2(75.5f, 30.5f), w.Where(c).Entity.Get<Transform>().Position);
     }
 
     [Fact]
@@ -202,7 +202,7 @@ public class WorldTests
     {
         using var w = new WorldRig();
         var c = w.Join("aria");
-        Teleport(w.Where(c).Entity, 38.5, 15.5);
+        Teleport(w.Where(c).Entity, 78.5, 29.5);
         w.Tick(1, c); // Cidade → Campos
         w.Tick(30, c); // o tick dos Campos fica diferente do da Cidade
         var (fields, hero) = w.Where(c);
@@ -221,7 +221,7 @@ public class WorldTests
         var remaining = hero.Get<AbilityState>().CooldownRemaining(Potion, fields.World.Tick);
         Assert.True(remaining > 0);
 
-        Teleport(hero, 0.5, 31.5);
+        Teleport(hero, 0.5, 69.5);
         w.Tick(1, c); // Campos → Cidade
         var (city, moved) = w.Where(c);
         Assert.Same(w.City, city);
@@ -279,7 +279,7 @@ public class WorldTests
         Assert.Equal(spawns.Count, fields.World.Entities.Select(e => e.TryGet<Game.Core.Combat.Ai.AiState>()?.GroupId).OfType<int>().Distinct().Count());
         Assert.DoesNotContain(fields.World.Entities, e => e.TryGet<Game.Core.Combat.Ai.AiState>() is { GroupId: 0 });
 
-        var hero = CharacterState.New.Spawn(fields.World, w.Content.Classes["class.warrior"], new Vector2(3.5f, 31.5f));
+        var hero = CharacterState.New.Spawn(fields.World, w.Content.Classes["class.warrior"], new Vector2(3.5f, 69.5f));
         Game.Core.Combat.Threat.ThreatService.Add(fields.World, first[0], hero, 10, Game.Core.Combat.Threat.AggroReason.Damage);
 
         Assert.All(first, e => Assert.True(e.Get<Game.Core.Combat.Threat.ThreatTable>().Entries.ContainsKey(hero.Id.Value)));
@@ -294,7 +294,7 @@ public class WorldTests
     {
         using var w = new WorldRig();
         var c = w.Join("aria", "class.mage");
-        Teleport(w.Where(c).Entity, 38.5, 15.5);
+        Teleport(w.Where(c).Entity, 78.5, 29.5);
         w.Tick(1, c);
         var (zone, hero) = w.Where(c);
         Assert.Same(w.Fields, zone);
@@ -322,8 +322,8 @@ public class WorldTests
         var a = w.Join("a");
         var b = w.Join("b", "class.mage");
         var target = w.Where(b).Entity;
-        Teleport(w.Where(a).Entity, 21.5, 15.5);
-        Teleport(target, 22.3, 15.5);
+        Teleport(w.Where(a).Entity, 41.5, 30.5);
+        Teleport(target, 42.3, 30.5);
 
         Assert.DoesNotContain(w.City.World.Entities, e => e.TryGet<FactionTag>()?.Faction == Faction.Monster);
         for (var i = 0; i < 60; i++)
@@ -361,9 +361,9 @@ public class WorldTests
         {
             var c = w.JoinWithTicket(AccountRig.Ticket(row));
             Assert.Equal("zone.city", c.Welcome!.EncounterId); // API grava zone.city (0, 0) = nascimento
-            Teleport(w.Where(c).Entity, 38.5, 15.5);
+            Teleport(w.Where(c).Entity, 78.5, 29.5);
             w.Tick(1, c);
-            Teleport(w.Where(c).Entity, 10.5, 31.5);
+            Teleport(w.Where(c).Entity, 10.5, 69.5);
             w.Tick(1, c);
             c.Raw.Leave();
             w.Tick(1);
@@ -373,7 +373,7 @@ public class WorldTests
         var saved = store.Row(row.Id);
         Assert.Equal("zone.vigil_fields", saved.ZoneId);
         Assert.Equal(10.5f, saved.PositionX, 0.5f);
-        Assert.Equal(31.5f, saved.PositionY, 0.5f);
+        Assert.Equal(69.5f, saved.PositionY, 0.5f);
 
         using var again = new WorldRig(store, devLogin: false);
         var back = again.JoinWithTicket(AccountRig.Ticket(row));
@@ -436,7 +436,7 @@ public class WorldTests
         var row = store.Add();
         using var w = new WorldRig(store, devLogin: false);
         var c = w.JoinWithTicket(AccountRig.Ticket(row));
-        Teleport(w.Where(c).Entity, 38.5, 15.5);
+        Teleport(w.Where(c).Entity, 78.5, 29.5);
         w.Tick(1, c);
         w.Fields.World.Kill(w.Where(c).Entity);
         w.Tick(1, c);

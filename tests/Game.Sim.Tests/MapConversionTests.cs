@@ -6,7 +6,8 @@ using Game.Data;
 namespace Game.Sim.Tests;
 
 /// <summary>
-/// T-051: as 5 arenas ASCII dos encontros viraram mapas do Tiled (T-055: mais a Cidade e os Campos, 7 ao todo; os Campos depois ganharam o portão leste para o Covil da Matriarca) (<c>data/maps/*.tmj</c>). As originais ficam em
+/// T-051: as 5 arenas ASCII dos encontros viraram mapas do Tiled (<c>data/maps/*.tmj</c>). A Cidade e os Campos também vieram
+/// de arenas ASCII (T-055), mas a T-330 os redesenhou maiores, e saíram desta comparação. As originais ficam em
 /// <c>MapFixtures/ascii-arenas.json</c>; a grade tem de ser a mesma célula a célula e o simulador, o mesmo resultado.
 /// </summary>
 public class MapConversionTests
@@ -58,7 +59,7 @@ public class MapConversionTests
     [Fact]
     public void Maps_have_the_same_grid_as_the_ascii_arenas()
     {
-        Assert.Equal(7, Ascii.Value.Count);
+        Assert.Equal(5, Ascii.Value.Count);
         foreach (var ascii in Ascii.Value)
         {
             var map = Db.Value.Arenas[ascii.Id];
