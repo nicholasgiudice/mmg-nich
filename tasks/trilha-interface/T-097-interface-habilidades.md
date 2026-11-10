@@ -27,4 +27,26 @@ O designer pediu em 2026-11-09 para levar a tela de habilidades (T-081) ao kit p
 
 ## Resultado
 
-_(preencher ao concluir)_
+**Feito** (Windows, 2026-11-09). Aprovado pelo designer (combinação sugerida, sem trocas).
+
+**Opções.** Cinco chamadas de `create_image_pro`, todas com `panel.png` como referência de estilo: célula de habilidade (48×48, 25 candidatas, com `equip_slot.png` como referência), botão + (24×24, 64 candidatas, com `button_normal.png`), marcas de NH cheia e vazia (32×16, 64 pares) e duas de divisória (128×16, 4 candidatas cada). Pranchas em `tasks/reports/interface/habilidades-amostra/` (`prancha-celulas.png`, `prancha-mais.png`, `prancha-marcas.png`, `prancha-divisorias.png`). Escolhidas: **célula 14**, **botão + 36**, **marcas 9** (gema redonda e encaixe vazio) e **divisória 2** (pedra com pontas douradas).
+
+**Peças** (`client/assets/art/ui/`), recortadas nas bordas transparentes e sem as sobras de candidatas vizinhas:
+- `skill_cell.png` (45×46): 9-slice com margem de 10 px.
+- `skill_plus.png` (23×23): o + em 1×, com variação de cor no hover, no clique e desabilitado.
+- `skill_rank_on.png` e `skill_rank_off.png` (14×15): os dois lados da marca 9.
+- `divider.png` (121×5): desenhada na maior escala inteira que cabe na largura da grade (3×).
+
+**No cliente.**
+- `HudTheme`: `UiTexture()`, `SkillCell()`, `StonePlusButton()` e `Divider()`; todas voltam ao visual de antes sem o arquivo.
+- `SkillPanel`: liga a janela de pedra (`StoneWindow`) e a placa do título; a célula é de pedra, e a cor de destaque (azul do ataque básico, dourado da assinatura) virou um contorno fino por dentro; os pontos do NH são gemas no lugar de ●/○; o + é o botão de pedra; a divisória substitui o `HSeparator`; "Redistribuir pontos" usa o botão de pedra (`StoneButton`).
+- Nenhuma regra mudou: o + manda o mesmo `RaiseSkillRankIntent`, e o ícone continua sendo arrastado para a barra.
+
+**Capturas** (`tasks/reports/interface/`): `t097-before.png` (antes), `t097-preview.png` (servidor local `--world --dev-login`, personagem novo com 1 ponto livre e os +), `t097-preview-nh.png` e `t097-preview-nh-zoom.png` (encontro de teste, com as gemas cheias).
+
+**Custo:** 50 gerações da assinatura.
+
+**Decisões e pendências.**
+- As células ficaram um pouco mais largas que antes (a borda de pedra soma à largura de 112 px), e a janela cresceu junto; o designer aprovou assim.
+- Clicar no + e arrastar para a barra não foram testados à mão nesta sessão (só capturas); o código desses dois caminhos não mudou.
+- O `PlusButton` da tela de atributos continua no estilo antigo; a T-098 pode reaproveitar `StonePlusButton()` e `Divider()`.

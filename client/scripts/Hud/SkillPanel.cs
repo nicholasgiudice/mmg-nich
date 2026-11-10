@@ -26,6 +26,9 @@ public partial class SkillPanel : ProgressionPanel
 
     private static readonly Color BasicBorder = new(0.55f, 0.75f, 1f, 0.8f);
 
+    /// <summary>Janela de pedra e ouro (T-097).</summary>
+    protected override bool StoneWindow => true;
+
     protected override string StateKey(EntitySnapshot self)
     {
         var s = self.TryGet<CharacterStats>();
@@ -41,7 +44,7 @@ public partial class SkillPanel : ProgressionPanel
         var stats = self.TryGet<CharacterStats>();
         var progress = self.TryGet<CharacterProgress>();
         var state = self.TryGet<AbilityState>();
-        box.AddChild(Title("Habilidades"));
+        box.AddChild(WindowTitle("Habilidades"));
         if (!Content.Classes.TryGetValue(info?.DefinitionId ?? "", out var cls) || state is null)
         {
             box.AddChild(Small("Sem habilidades para mostrar.", 12));
@@ -91,10 +94,12 @@ public partial class SkillPanel : ProgressionPanel
 
         if (progress is not null && stats is not null)
         {
-            box.AddChild(new HSeparator());
+            box.AddChild(HudTheme.Divider(Columns * CellWidth) ?? new HSeparator());
             var footer = new HBoxContainer();
             footer.AddChild(new Control { SizeFlagsHorizontal = SizeFlags.ExpandFill });
-            footer.AddChild(ResetButton(self, AnySpent(progress, stats, Content)));
+            var reset = ResetButton(self, AnySpent(progress, stats, Content));
+            HudTheme.StoneButton(reset);
+            footer.AddChild(reset);
             box.AddChild(footer);
         }
     }
@@ -122,7 +127,7 @@ public partial class SkillPanel : ProgressionPanel
             tip += $"\n\n{ProgressionText.Reason(b)}";
         }
 
-        var pips = new string('●', rank) + new string('○', Math.Max(0, max - rank));
+        var pips = (Rank: rank, Max: max);
         Button? plus = null;
         if (blocker is null)
         {
@@ -143,28 +148,44 @@ public partial class SkillPanel : ProgressionPanel
         }
 
         return Cell(current ?? ability, IconCatalog.Shared.For(ability.Id), ability.Signature ? HudTheme.Suggested : new Color(1, 1, 1, 0.12f),
-            pips, tip, draggable: rank > 0, plus, req, dim: rank == 0);
+            null, tip, draggable: rank > 0, plus, req, dim: rank == 0, pips);
     }
 
-    /// <summary>Uma célula da grade: ícone (com o + no canto), nome, linha de baixo (pontos do NH ou tipo) e o nível pedido.</summary>
-    private static PanelContainer Cell(AbilityDefinition def, Texture2D? icon, Color border, string below, string tip, bool draggable,
-        Button? plus, Label? req, bool dim = false)
+    /// <summary>
+    /// Uma célula da grade: ícone (com o + no canto), nome, linha de baixo (os pontos do NH em <paramref name="pips"/>, ou um
+    /// texto como "ataque básico") e o nível pedido. Com a peça de pedra (T-097), a célula é de pedra e a cor de destaque
+    /// (básico ou assinatura) vira um contorno fino por dentro dela.
+    /// </summary>
+    private static PanelContainer Cell(AbilityDefinition def, Texture2D? icon, Color border, string? below, string tip, bool draggable,
+        Button? plus, Label? req, bool dim = false, (int Rank, int Max)? pips = null)
     {
         var cell = new PanelContainer { CustomMinimumSize = new Vector2(CellWidth, 0), TooltipText = tip };
-        cell.AddThemeStyleboxOverride("panel", new StyleBoxFlat
-        {
-            BgColor = new Color(1, 1, 1, 0.04f),
-            BorderColor = border,
-            BorderWidthLeft = 1,
-            BorderWidthTop = 1,
-            BorderWidthRight = 1,
-            BorderWidthBottom = 1,
-            ContentMarginTop = 4,
-            ContentMarginBottom = 4,
-        });
         var column = new VBoxContainer { MouseFilter = MouseFilterEnum.Ignore };
+        if (HudTheme.SkillCell() is { } stone)
+        {
+            cell.AddThemeStyleboxOverride("panel", stone);
+            var inner = new PanelContainer { MouseFilter = MouseFilterEnum.Ignore };
+            inner.AddThemeStyleboxOverride("panel", new StyleBoxFlat
+            {
+                BgColor = Colors.Transparent,
+                BorderColor = border.A > 0.5f ? border : Colors.Transparent,
+                BorderWidthLeft = 1,
+                BorderWidthTop = 1,
+                BorderWidthRight = 1,
+                BorderWidthBottom = 1,
+                ContentMarginTop = 3,
+                ContentMarginBottom = 3,
+            });
+            inner.AddChild(column);
+            cell.AddChild(inner);
+        }
+        else
+        {
+            cell.AddThemeStyleboxOverride("panel", FlatCell(border));
+            cell.AddChild(column);
+        }
+
         column.AddThemeConstantOverride("separation", 1);
-        cell.AddChild(column);
 
         var holder = new Control
         {
@@ -185,8 +206,9 @@ public partial class SkillPanel : ProgressionPanel
         {
             plus.CustomMinimumSize = new Vector2(20, 20);
             plus.Size = new Vector2(20, 20);
-            plus.Position = new Vector2(IconSize - 12, -6);
             plus.AddThemeColorOverride("font_color", HudTheme.Removable);
+            HudTheme.StonePlusButton(plus);
+            plus.Position = new Vector2(IconSize - plus.Size.X / 2 - 2, -plus.Size.Y / 2 + 2);
             holder.AddChild(plus);
         }
 
@@ -194,10 +216,7 @@ public partial class SkillPanel : ProgressionPanel
         var name = Small(def.Name, 11, 1f, CellWidth - 8);
         name.HorizontalAlignment = HorizontalAlignment.Center;
         column.AddChild(name);
-        var line = Small(below, 11, 0.85f);
-        line.HorizontalAlignment = HorizontalAlignment.Center;
-        line.AddThemeColorOverride("font_color", HudTheme.Suggested);
-        column.AddChild(line);
+        column.AddChild(pips is { } p ? Pips(p.Rank, p.Max) : BelowLine(below ?? ""));
         if (req is not null)
         {
             req.HorizontalAlignment = HorizontalAlignment.Center;
@@ -205,6 +224,51 @@ public partial class SkillPanel : ProgressionPanel
         }
 
         return cell;
+    }
+
+    private static StyleBoxFlat FlatCell(Color border) => new()
+    {
+        BgColor = new Color(1, 1, 1, 0.04f),
+        BorderColor = border,
+        BorderWidthLeft = 1,
+        BorderWidthTop = 1,
+        BorderWidthRight = 1,
+        BorderWidthBottom = 1,
+        ContentMarginTop = 4,
+        ContentMarginBottom = 4,
+    };
+
+    private static Label BelowLine(string text)
+    {
+        var line = Small(text, 11, 0.85f);
+        line.HorizontalAlignment = HorizontalAlignment.Center;
+        line.AddThemeColorOverride("font_color", HudTheme.Suggested);
+        return line;
+    }
+
+    /// <summary>Pontos do NH: gemas de ouro (cheia e vazia, T-097) ou, sem as peças, ● e ○.</summary>
+    private static Control Pips(int rank, int max)
+    {
+        var on = HudTheme.UiTexture("skill_rank_on.png");
+        var off = HudTheme.UiTexture("skill_rank_off.png");
+        if (on is null || off is null)
+        {
+            return BelowLine(new string('●', rank) + new string('○', Math.Max(0, max - rank)));
+        }
+
+        var row = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ShrinkCenter, MouseFilter = MouseFilterEnum.Ignore };
+        row.AddThemeConstantOverride("separation", 2);
+        for (var i = 0; i < max; i++)
+        {
+            row.AddChild(new TextureRect
+            {
+                Texture = i < rank ? on : off,
+                StretchMode = TextureRect.StretchModeEnum.KeepCentered,
+                MouseFilter = MouseFilterEnum.Ignore,
+            });
+        }
+
+        return row;
     }
 
     /// <summary>Dica: título, alcance, custo e efeitos do NH atual e a prévia do próximo, com as estatísticas do personagem.</summary>
