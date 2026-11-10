@@ -148,6 +148,21 @@ internal static class ZoneComposer
                 continue;
             }
 
+            // T-350: a instância sai pelo primeiro portão, que precisa levar a uma zona aberta (a zona de origem, gravada).
+            if (zone.Kind == ZoneKind.Instance)
+            {
+                if (map.Transitions.Count == 0)
+                {
+                    errors.Add(new LoadError(map.Source!, $"layers[{TiledMapReader.TransitionsLayer}]",
+                        $"Instância '{zone.Id}' sem saída: crie um {TiledMapReader.TransitionClass} em {TiledMapReader.TransitionsLayer} (o primeiro é a saída) para a zona de origem."));
+                }
+                else if (zones.GetValueOrDefault(map.Transitions[0].To) is { Kind: ZoneKind.Instance })
+                {
+                    errors.Add(new LoadError(map.Source!, $"layers[{TiledMapReader.TransitionsLayer}].objects[{map.Transitions[0].Name}]",
+                        $"A saída da instância '{zone.Id}' leva a outra instância ('{map.Transitions[0].To}'): precisa levar a uma zona aberta."));
+                }
+            }
+
             foreach (var t in map.Transitions)
             {
                 var path = $"layers[{TiledMapReader.TransitionsLayer}].objects[{t.Name}]";

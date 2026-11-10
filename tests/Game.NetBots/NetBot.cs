@@ -158,6 +158,23 @@ public sealed class NetBot : IDisposable
     /// <summary>Chegou perto do NPC da loja.</summary>
     public bool ReachedShop { get; private set; }
 
+    /// <summary>
+    /// T-350: zona de instância (<c>zone.*</c> do tipo <c>instance</c>) para onde o bot vai: espera o grupo ter
+    /// <see cref="InstancePartySize"/> membros, segue um caminho (A*) até o portão da zona atual que leva a ela e, lá dentro,
+    /// luta com a estratégia.
+    /// </summary>
+    public string? InstanceZone { get; init; }
+
+    public int InstancePartySize { get; init; } = 1;
+
+    /// <summary>Id da cópia no último <see cref="Welcome"/> (0 = fora de instância).</summary>
+    public int InstanceId { get; private set; }
+
+    /// <summary>Entradas em instância (Welcome com id de cópia vindo de fora).</summary>
+    public int InstanceEntries { get; private set; }
+
+    public int InstanceRejections { get; private set; }
+
     private ZoneDefinition? Zone => Welcome is { } w && _content.Zones.TryGetValue(w.EncounterId, out var z) ? z : null;
 
     /// <summary>Recebe o que chegou e, se há snapshot novo, decide e manda as intenções.</summary>
@@ -206,6 +223,10 @@ public sealed class NetBot : IDisposable
         {
             RoamIntent(here, self);
         }
+        else if (InstanceZone is not null && InstanceId == 0 && Zone is { } outside)
+        {
+            InstanceIntent(outside, self);
+        }
         else
         {
             _controller.Think(new BotContext(_mirror, self, _options, _hazards, (ulong)Welcome.Epoch), _buffer);
@@ -234,6 +255,38 @@ public sealed class NetBot : IDisposable
         var gate = zone.Gates[(_zoneVisits.GetValueOrDefault(zone.Id, 1) - 1) % zone.Gates.Count].Area;
         var target = _reachedSpawn ? new Vector2((float)(gate.X + (gate.Width / 2)), (float)(gate.Y + (gate.Height / 2))) : spawn;
         var to = target - position;
+        _buffer.Add(to.LengthSquared() < 0.01f ? new StopIntent(self.Id) : new MoveIntent(self.Id, Vector2.Normalize(to)));
+    }
+
+    /// <summary>
+    /// T-350: com o grupo completo, segue um caminho (A*) até o portão que leva a <see cref="InstanceZone"/> (ou à zona vizinha
+    /// que tem esse portão).
+    /// </summary>
+    private void InstanceIntent(ZoneDefinition zone, Entity self)
+    {
+        // O portão que leva à instância ou, se não há nesta zona, um que leva a uma zona que tem (ex.: saiu pela saída e
+        // está na zona de origem).
+        var gate = zone.Gates.FirstOrDefault(g => g.To == InstanceZone)
+            ?? zone.Gates.FirstOrDefault(g => _content.Zones.TryGetValue(g.To, out var next) && next.Gates.Any(n => n.To == InstanceZone));
+        if (PartySize < InstancePartySize || gate is null)
+        {
+            _buffer.Add(new StopIntent(self.Id));
+            return;
+        }
+
+        var position = self.Get<Transform>().Position;
+        var target = new Vector2((float)(gate.Area.X + (gate.Area.Width / 2)), (float)(gate.Area.Y + (gate.Area.Height / 2)));
+        if (_shopPath.Count == 0 && _mirror?.Map is { } map)
+        {
+            _shopPath = Game.Core.Spatial.Pathfinder.FindPath(map, position, target, self.TryGet<Collider>()?.Radius ?? 0).ToList();
+        }
+
+        while (_shopPath.Count > 0 && Vector2.Distance(position, _shopPath[0]) < 0.3f)
+        {
+            _shopPath.RemoveAt(0);
+        }
+
+        var to = (_shopPath.Count > 0 ? _shopPath[0] : target) - position;
         _buffer.Add(to.LengthSquared() < 0.01f ? new StopIntent(self.Id) : new MoveIntent(self.Id, Vector2.Normalize(to)));
     }
 
@@ -320,6 +373,8 @@ public sealed class NetBot : IDisposable
                 _respawnPending = false;
                 _reachedSpawn = false;
                 _shopPath = [];
+                InstanceEntries += w.InstanceId > 0 && InstanceId == 0 ? 1 : 0;
+                InstanceId = w.InstanceId;
                 Welcome = w;
                 _zoneVisits[w.EncounterId] = _zoneVisits.GetValueOrDefault(w.EncounterId) + 1;
                 _state.Reset(w.Epoch);
@@ -352,6 +407,9 @@ public sealed class NetBot : IDisposable
                 PartyStates++;
                 PartySize = party.Members.Length;
                 _partyNames = party.Members.Select(m => m.Name).ToArray();
+                break;
+            case InstanceRejected:
+                InstanceRejections++;
                 break;
             case PartyRejected:
                 PartyRejections++;

@@ -30,6 +30,8 @@ namespace Game.Protocol;
 [MemoryPackUnion(17, typeof(PartyState))]
 [MemoryPackUnion(18, typeof(PartyNotice))]
 [MemoryPackUnion(19, typeof(PartyRejected))]
+[MemoryPackUnion(20, typeof(InstanceRejected))]
+[MemoryPackUnion(21, typeof(InstanceNotice))]
 public partial interface INetMessage;
 
 // ---------------- cliente → servidor ----------------
@@ -74,9 +76,10 @@ public sealed partial record Ping(long ClientTimeMs) : INetMessage;
 /// da sala (T-106): ids e ticks recomeçam, então o cliente descarta todo o estado da época anterior.
 /// No mundo aberto (T-214), <paramref name="EncounterId"/> é o id da zona (<c>zone.*</c>) e cada troca de zona (portão,
 /// renascer) chega como um <c>Welcome</c> novo, com a arena da zona e época nova.
+/// <paramref name="InstanceId"/> (T-350): numa instância de dungeon, o id da cópia (≥ 1); 0 = zona aberta ou sala.
 /// </summary>
 [MemoryPackable]
-public sealed partial record Welcome(EntityId ControlledEntity, long Tick, string EncounterId, string ArenaId, int Epoch) : INetMessage;
+public sealed partial record Welcome(EntityId ControlledEntity, long Tick, string EncounterId, string ArenaId, int Epoch, int InstanceId = 0) : INetMessage;
 
 public enum RejectReason : byte
 {

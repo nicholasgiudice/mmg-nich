@@ -8,6 +8,12 @@ public enum ZoneKind
 
     /// <summary>Área externa com monstros que renascem; nunca termina.</summary>
     Field,
+
+    /// <summary>
+    /// Instância (T-350): cópia por grupo, criada sob demanda quando alguém entra pelo portão. Os monstros nascem uma vez e
+    /// não renascem; o primeiro portão do mapa é a saída, de volta para a zona de origem.
+    /// </summary>
+    Instance,
 }
 
 /// <summary>
@@ -38,6 +44,24 @@ public sealed record ZoneDefinition
 
     /// <summary>Faixa de nível mostrada ao jogador (ex.: 1–4); null = sem faixa (Cidade). JSON: <c>levels</c>.</summary>
     public LevelRangeDefinition? Levels { get; init; }
+
+    /// <summary>Instância (T-350): máximo de personagens dentro de uma cópia. JSON: <c>maxPlayers</c>.</summary>
+    public int MaxPlayers { get; init; } = 4;
+
+    /// <summary>
+    /// Instância (T-350): quanto tempo a cópia vazia espera antes de ser destruída (segundos no JSON: <c>emptyTimeout</c>).
+    /// Quem desconectou lá dentro volta para dentro se reconectar antes disso.
+    /// </summary>
+    public int EmptyTimeoutTicks { get; init; } = 6000;
+
+    /// <summary>
+    /// Instância (T-350): quem fica dentro de uma cópia que não é do grupo dele (saiu do grupo) é levado para fora depois
+    /// deste prazo, com aviso (segundos no JSON: <c>outsiderTimeout</c>).
+    /// </summary>
+    public int OutsiderTimeoutTicks { get; init; } = 600;
+
+    /// <summary>Instância (T-350): a saída é o primeiro portão do mapa; null se a zona não é instância ou não tem portão.</summary>
+    public GateDefinition? ExitGate() => Kind == ZoneKind.Instance && Gates.Count > 0 ? Gates[0] : null;
 
     /// <summary>Do mapa: objetos da camada <c>transitions</c>, na ordem do arquivo.</summary>
     public IReadOnlyList<GateDefinition> Gates { get; init; } = [];

@@ -234,6 +234,57 @@ public class ZoneLoaderTests
         AssertError(Load(ZoneA + ", " + ZoneB, a: a), "maps/b.tmj", "objects[west]", "voltaria na hora");
     }
 
+    private const string InstanceB = """{ "id": "zone.b", "name": "B", "arena": "map.b", "kind": "instance", "maxPlayers": 2, "emptyTimeout": 60, "outsiderTimeout": 10 }""";
+
+    [Fact]
+    public void Instance_zone_loads_with_its_limits_and_exits_through_its_first_gate()
+    {
+        var r = Load(ZoneA + ", " + InstanceB);
+        Assert.True(r.Success, Errors(r));
+        var b = r.Database!.Zones["zone.b"];
+
+        Assert.Equal(ZoneKind.Instance, b.Kind);
+        Assert.Equal((2, 1200, 200), (b.MaxPlayers, b.EmptyTimeoutTicks, b.OutsiderTimeoutTicks));
+        var exit = b.ExitGate()!;
+        Assert.Equal("zone.a", exit.To);
+        Assert.Equal(new PositionDefinition(2.5, 2.5), exit.Arrival); // 'from_b' da cidade
+        Assert.Null(r.Database.Zones["zone.a"].ExitGate()); // zona aberta não tem saída
+
+        var defaults = Load(ZoneA + ", " + """{ "id": "zone.b", "name": "B", "arena": "map.b", "kind": "instance" }""").Database!.Zones["zone.b"];
+        Assert.Equal((4, 6000, 600), (defaults.MaxPlayers, defaults.EmptyTimeoutTicks, defaults.OutsiderTimeoutTicks));
+    }
+
+    [Fact]
+    public void Instance_without_an_exit_or_exiting_into_another_instance_is_an_error()
+    {
+        var closed = FieldMap();
+        closed["layers"]!.AsArray().RemoveAt(3);
+        AssertError(Load(ZoneA + ", " + InstanceB, b: closed), "maps/b.tmj", "layers[transitions]", "Instância 'zone.b' sem saída");
+
+        var cityInstance = """{ "id": "zone.a", "name": "A", "arena": "map.a", "kind": "instance" }""";
+        var noNpc = CityMap();
+        noNpc["layers"]![2]!["objects"]!.AsArray().Clear();
+        AssertError(Load(cityInstance + ", " + InstanceB, a: noNpc), "maps/b.tmj", "objects[west]", "leva a outra instância ('zone.a')");
+    }
+
+    [Fact]
+    public void Real_data_has_a_test_instance_that_exits_to_the_fields()
+    {
+        var dir = new DirectoryInfo(AppContext.BaseDirectory);
+        while (!File.Exists(Path.Combine(dir!.FullName, "MmoRpg.sln")))
+        {
+            dir = dir.Parent;
+        }
+
+        var zones = GameDataLoader.LoadDirectory(Path.Combine(dir.FullName, "data")).GetDatabaseOrThrow().Zones;
+        var test = zones["zone.test_instance"];
+
+        Assert.Equal(ZoneKind.Instance, test.Kind);
+        Assert.Equal((4, 300 * 20, 30 * 20), (test.MaxPlayers, test.EmptyTimeoutTicks, test.OutsiderTimeoutTicks));
+        Assert.Equal("zone.vigil_fields", test.ExitGate()!.To);
+        Assert.Single(test.MonsterSpawns, s => s.Monster == "monster.forest_matriarch");
+    }
+
     [Fact]
     public void Npc_needs_a_valid_npc_id()
     {
@@ -251,6 +302,9 @@ public class ZoneLoaderTests
     [InlineData("""{ "id": "zone.b", "name": "B", "arena": "map.b", "restPerSecond": 0.1 }""", "restPerSecond")]
     [InlineData("""{ "id": "zone.b", "name": "B", "arena": "map.b", "levels": { "min": 5, "max": 4 } }""", "levels")]
     [InlineData("""{ "id": "zone.b", "name": "B", "arena": "map.b", "levels": { "min": 0, "max": 4 } }""", "levels")]
+    [InlineData("""{ "id": "zone.b", "name": "B", "arena": "map.b", "kind": "instance", "maxPlayers": 0 }""", "maxPlayers")]
+    [InlineData("""{ "id": "zone.b", "name": "B", "arena": "map.b", "kind": "instance", "emptyTimeout": 0 }""", "emptyTimeout")]
+    [InlineData("""{ "id": "zone.b", "name": "B", "arena": "map.b", "kind": "instance", "outsiderTimeout": 0 }""", "outsiderTimeout")]
     public void Invalid_zone_fields_are_errors(string zoneB, string field)
     {
         var r = Load(ZoneA + ", " + zoneB);

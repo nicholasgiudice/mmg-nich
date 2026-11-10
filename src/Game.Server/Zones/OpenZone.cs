@@ -18,6 +18,8 @@ namespace Game.Server.Zones;
 /// de aggro próprio (<see cref="AiState.GroupId"/> = índice do ponto + 1; o 0 fica para os encontros): puxar um monstro puxa só
 /// os do mesmo ponto e as invocações deles.
 /// Roda na thread do loop do <see cref="WorldServer"/>.
+/// <para>T-350: a mesma classe roda as cópias de instância (<see cref="InstanceId"/> ≥ 1), em que o monstro morto vira corpo,
+/// some e não renasce.</para>
 /// </summary>
 public sealed class OpenZone
 {
@@ -27,9 +29,10 @@ public sealed class OpenZone
     /// <summary>Tick da morte dos monstros sem ponto de surgimento (invocações), até o corpo sumir.</summary>
     private readonly Dictionary<EntityId, long> _looseCorpses = [];
 
-    public OpenZone(ContentCatalog content, ZoneDefinition definition, ulong seed, ServerOptions options)
+    public OpenZone(ContentCatalog content, ZoneDefinition definition, ulong seed, ServerOptions options, int instanceId = 0)
     {
         Definition = definition;
+        InstanceId = instanceId;
         Arena = content.Arenas[definition.Arena];
         World = WorldBuilder.CreateDefault(seed, EntityFactory.BuildMap(Arena), content);
         Grid = new InterestGrid(options.InterestCellSize, options.InterestRadiusCells);
@@ -57,6 +60,12 @@ public sealed class OpenZone
     public ZoneDefinition Definition { get; }
 
     public string Id => Definition.Id;
+
+    /// <summary>Id da cópia, se esta zona é uma instância de dungeon (T-350); 0 = zona aberta.</summary>
+    public int InstanceId { get; }
+
+    /// <summary>Monstros renascem? Não numa instância (T-350): nascem uma vez.</summary>
+    public bool Respawns => Definition.Kind != ZoneKind.Instance;
 
     public ArenaDefinition Arena { get; }
 
@@ -170,7 +179,7 @@ public sealed class OpenZone
 
             _slotEntities.Remove(e.Id);
             slot.Entity = null;
-            slot.RespawnAt = slot.DiedAt + slot.Point.RespawnTicks;
+            slot.RespawnAt = Respawns ? slot.DiedAt + slot.Point.RespawnTicks : null; // T-350: instância não renasce
             slot.DiedAt = null;
         }
 
