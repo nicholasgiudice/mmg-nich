@@ -3,6 +3,7 @@
   "zones": [
     { "id": "zone.city", "name": "Cidade-Fortaleza", "arena": "map.city", "kind": "safe", "restPerSecond": 0.05 },
     { "id": "zone.vigil_fields", "name": "Campos da Vigília", "arena": "map.vigil_fields", "kind": "field", "corpse": 5, "levels": { "min": 1, "max": 4 } },
-    { "id": "zone.matriarch_lair", "name": "Covil da Matriarca", "arena": "map.matriarch_lair", "kind": "field", "corpse": 30, "levels": { "min": 8, "max": 8 } }
+    { "id": "zone.matriarch_lair", "name": "Covil da Matriarca", "arena": "map.matriarch_lair", "kind": "field", "corpse": 30, "levels": { "min": 8, "max": 8 } },
+    { "id": "zone.old_road_ruins", "name": "Ruínas da Estrada Antiga", "arena": "map.old_road_ruins", "kind": "field", "corpse": 10, "levels": { "min": 9, "max": 11 } }
   ]
 }

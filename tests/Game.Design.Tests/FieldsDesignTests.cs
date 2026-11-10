@@ -139,6 +139,9 @@ internal static class FieldGroups
     /// <summary>Um grupo por composição.</summary>
     public static IReadOnlyList<FieldGroup> Typical { get; } = All.GroupBy(g => g.Key).Select(g => g.First()).ToList();
 
+    /// <summary>T-343: os grupos de outra zona do mundo aberto (mesma regra de agrupamento), na ordem dos dados.</summary>
+    public static IReadOnlyList<FieldGroup> Of(string zone) => Build(DesignHarness.Content.Zones[zone]);
+
     private static List<FieldGroup> Build(ZoneDefinition zone)
     {
         var groups = new List<List<MonsterSpawnDefinition>>();
@@ -164,16 +167,23 @@ internal static class FieldGroups
     private static readonly (double X, double Y)[] Front = [(17.5, 8.5), (18.5, 10.5), (17.5, 12.5), (16.5, 10.5)];
     private static readonly (double X, double Y)[] Back = [(20.5, 9.5), (20.5, 11.5), (21.5, 10.5), (21.5, 8.5)];
 
+    // T-343: até três jogadores (o primeiro no lugar do solo).
+    private static readonly (double X, double Y)[] Players = [(5.5, 10.5), (4.5, 9.5), (4.5, 11.5)];
+
     /// <summary>Catálogo com o encontro do grupo contra uma classe (Defeat 120 s, como os solos do protótipo).</summary>
-    public static (ContentCatalog Content, string EncounterId) Encounter(FieldGroup group, string cls)
+    public static (ContentCatalog Content, string EncounterId) Encounter(FieldGroup group, string cls) => Encounter(group, [cls]);
+
+    /// <summary>T-343: o mesmo encontro contra um grupo de jogadores (as classes, na ordem) e com outro limite de tempo.</summary>
+    public static (ContentCatalog Content, string EncounterId) Encounter(FieldGroup group, IReadOnlyList<string> classes, int timeLimitSeconds = 120)
     {
         var c = DesignHarness.Content;
-        var id = $"encounter.test_fields_{Math.Abs(group.Key.GetHashCode(StringComparison.Ordinal))}_{cls[(cls.IndexOf('.') + 1)..]}";
+        var id = $"encounter.test_fields_{Math.Abs(group.Key.GetHashCode(StringComparison.Ordinal))}_{string.Join("_", classes.Select(cls => cls[(cls.IndexOf('.') + 1)..]))}";
         int front = 0, back = 0;
         var enemies = new List<EnemySpawnDefinition>();
         foreach (var p in group.Points)
         {
-            var ranged = c.Monsters[p.Monster].Ai.Id == "ai.ranged_kiter";
+            // Quem ataca de longe ou cura (Sacerdote, T-341) fica atrás.
+            var ranged = c.Monsters[p.Monster].Ai.Id is "ai.ranged_kiter" or "ai.support";
             for (var i = 0; i < p.Count; i++)
             {
                 var (x, y) = ranged ? Back[back++] : Front[front++];
@@ -186,9 +196,9 @@ internal static class FieldGroups
             Id = id,
             Name = group.Key,
             Arena = "map.fields",
-            Players = [new PlayerSpawnDefinition { Class = cls, Position = new PositionDefinition(5.5, 10.5) }],
+            Players = classes.Select((cls, i) => new PlayerSpawnDefinition { Class = cls, Position = new PositionDefinition(Players[i].X, Players[i].Y) }).ToList(),
             Enemies = enemies,
-            Defeat = new DefeatDefinition { TimeLimitTicks = 120 * Core.Simulation.World.TickRate },
+            Defeat = new DefeatDefinition { TimeLimitTicks = timeLimitSeconds * Core.Simulation.World.TickRate },
         };
         var content = new ContentCatalog(c.Classes.Values, c.Abilities.Values, c.Statuses.Values, c.Areas.Values,
             c.Monsters.Values, c.Arenas.Values, c.Encounters.Values.Append(encounter), c.Items.Values)

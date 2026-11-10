@@ -36,4 +36,40 @@ Restos de uma estrada imperial e de uma fortificação antiga: corredores estrei
 
 ## Resultado
 
-_(preencher ao concluir)_
+**Feito.** Mapa aprovado pelo designer. Relatório: `tasks/reports/balance-v0.14.md`; imagens em `tasks/reports/mapas-t343/`.
+
+- **Mapa** `data/maps/old_road_ruins.tmj` (180×140). Uma estrada imperial calçada sai do portão leste, que leva à Cidade, e atravessa as Ruínas até a Cripta, com mata fechada em volta.
+  - **Portão Partido:** muralha com o portão quebrado, um corredor estreito e dois descampados com fundações de casas.
+  - **Pátio dos Mortos:** pátio murado com piso de pedra rachada, colunas e um altar no centro.
+  - **Torre Quebrada:** arena pequena e fechada ao norte do Pátio, ligada a ele por um corredor estreito.
+  - **Estrada para a Cripta:** ruínas com corredores e uma praça no fim, com a escada da Cripta, um medalhão de pedra como placa e lampiões.
+- **Entrada da Cripta:** área `crypt_entrance` com `name` "Cripta do Vigia", `recommended_level` 12 e `warning` "Conteúdo para grupo. Nível recomendado: 12+.". Não tem portão; ele é da T-352.
+- **Zona** `zone.old_road_ruins` (field, nível 9–11) em `data/zones.json`. A distribuição dos grupos está no relatório, §2.
+- **Cidade:** o portão oeste foi aberto, espelhando o leste. Ele tem a transição `west_gate` para as Ruínas e o nascimento `from_ruins`.
+- **Testes:**
+  - percurso: todo surgimento, portão e a entrada da Cripta alcançáveis a pé (`ZoneMapTests`);
+  - dados da zona: subáreas, níveis, portões e distância de 12 tiles entre grupos (`ZoneLoaderTests`);
+  - design: `RuinsZoneDesignTests`.
+- **Resultados:**
+  - os grupos solo vencem 100% nas 4 classes;
+  - no Pátio, os pares vencem 100% e o solo fica em 62–64%;
+  - o ritmo do nível 9 ao 12 é de ≈ 202 min;
+  - online, 4 bots foram da Cidade à entrada da Cripta em 45–51 s, e a volta também funciona;
+  - o `./scripts/check.sh` completo passa.
+
+**Decisões:**
+- Os grupos "mistos" da Estrada são Guardas de nível 10 e 11, sem Sacerdote. Com Sacerdote, o Guerreiro sozinho venceu 5%. Os Sacerdotes ficam no Pátio.
+- O teste de solo do Pátio usa o limite de 240 s do encontro da T-341.
+- O altar com maldição é só cenário.
+- Como na T-330, o gerador do mapa (Python) ficou fora do repositório. O `.tmj` é a fonte daqui em diante.
+
+**Mudanças em testes existentes e em ferramentas** (todas em `tests/`):
+- `ZoneMapEquivalenceTests` agora aceita zonas e portões novos (verifica subconjunto); antes quebrava com qualquer zona nova.
+- `FieldGroups` (em `FieldsDesignTests`) serve a qualquer zona, a grupos de jogadores e a outro limite de tempo. Monstros de apoio começam atrás.
+- `Game.NetBots` ganhou `--route <zona>/<área>`: o bot anda por A* até o portão da zona e depois até a área.
+
+**Pendências:**
+- desempenho com 16 bots na VPS;
+- a maldição do altar;
+- fragmentos de chave da Cripta (fase futura, decisão da T-240);
+- o portão para a instância (T-352).

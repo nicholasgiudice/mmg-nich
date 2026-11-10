@@ -36,9 +36,10 @@ public class ZoneMapEquivalenceTests
         zone.TryGetProperty(field, out var v) ? JsonSerializer.Deserialize<T[]>(v.GetRawText(), GameJson.Options)! : [];
 
     [Fact]
-    public void The_same_zones_exist()
+    public void The_zones_from_before_still_exist()
     {
-        Assert.Equal(Before.Value.Keys.Order(StringComparer.Ordinal), Db.Value.Zones.Keys.Order(StringComparer.Ordinal));
+        // Zonas novas (T-342, T-343) podem entrar; as de antes continuam.
+        Assert.Subset(Db.Value.Zones.Keys.ToHashSet(StringComparer.Ordinal), Before.Value.Keys.ToHashSet(StringComparer.Ordinal));
     }
 
     [Theory]
@@ -48,8 +49,8 @@ public class ZoneMapEquivalenceTests
         var old = Before.Value[zoneId];
         var zone = Db.Value.Zones[zoneId];
 
-        // Os mesmos portões (destinos) e os mesmos monstros, em qualquer quantidade de pontos.
-        Assert.Equal(Read<GateDefinition>(old, "gates").Select(g => g.To).Order(StringComparer.Ordinal), zone.Gates.Select(g => g.To).Order(StringComparer.Ordinal));
+        // Os mesmos portões (destinos; portões para zonas novas podem entrar) e os mesmos monstros, em qualquer quantidade de pontos.
+        Assert.Subset(zone.Gates.Select(g => g.To).ToHashSet(StringComparer.Ordinal), Read<GateDefinition>(old, "gates").Select(g => g.To).ToHashSet(StringComparer.Ordinal));
         Assert.Equal(Read<MonsterSpawnDefinition>(old, "monsterSpawns").Select(s => s.Monster).Distinct().Order(StringComparer.Ordinal),
             zone.MonsterSpawns.Select(s => s.Monster).Distinct().Order(StringComparer.Ordinal));
 
