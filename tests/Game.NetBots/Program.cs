@@ -26,6 +26,8 @@ const string Usage = """
                               (o primeiro de cada bloco convida os outros pelo nome; os outros aceitam)
       --shop                  mundo aberto (T-321): anda até o Templo e compra uma poção de vida; sem ouro, vende antes
                               as poções iniciais. No fim sai a linha LOJA.
+      --route <zona>/<área>   mundo aberto (T-343): anda pelo caminho (A*) até o portão para a zona e, nela, até a área do
+                              mapa (nome ou classe), ex.: zone.old_road_ruins/crypt_entrance. No fim sai a linha ROTA.
     """;
 
 var a = args.ToList();
@@ -69,6 +71,7 @@ var tickets = Opt("--ticket", "").Split(',', StringSplitOptions.RemoveEmptyEntri
 var roam = a.Contains("--roam");
 var party = a.Contains("--party");
 var shop = a.Contains("--shop");
+var route = Opt("--route", "").Split('/', 2);
 var partySize = content.Rules.Party.MaxMembers;
 
 Console.WriteLine($"{count} bots ({strategy}) em {servers.Count} servidor(es), {perRoom} por sala, por até {duration:0} s; conteúdo {content.Fingerprint}");
@@ -82,6 +85,8 @@ for (var i = 0; i < count; i++)
     {
         Roam = roam,
         Shop = shop,
+        RouteZone = route.Length == 2 ? route[0] : null,
+        RouteArea = route.Length == 2 ? route[1] : null,
         PartyInvites = leader ? Enumerable.Range(i + 1, Math.Min(partySize - 1, count - i - 1)).Select(j => $"netbot{j}").ToArray() : [],
         AcceptPartyInvites = party && !leader,
     });
@@ -151,6 +156,13 @@ if (party)
 {
     Console.WriteLine($"GRUPO bots em grupo {bots.Count(b => b.PartySize > 1)}/{count} · tamanhos {string.Join(",", bots.Select(b => b.PartySize))} · "
         + $"estados recebidos {bots.Sum(b => b.PartyStates)} · recusas {bots.Sum(b => b.PartyRejections)}");
+}
+
+if (route.Length == 2)
+{
+    Console.WriteLine($"ROTA {route[0]}/{route[1]}: chegaram {bots.Count(b => b.ReachedRoute)}/{count} · "
+        + $"tempo {string.Join(",", bots.Select(b => b.ReachedRouteAfterSeconds is { } s ? s.ToString("0", CultureInfo.InvariantCulture) + "s" : "-"))} · "
+        + $"renascimentos {bots.Sum(b => b.Respawns)} · trocas de zona {bots.Sum(b => b.ZoneChanges)}");
 }
 
 if (shop)

@@ -54,6 +54,7 @@ public sealed class NetBot : IDisposable
     private string[] _partyNames = [];
     private readonly Dictionary<string, int> _zoneVisits = new(StringComparer.Ordinal);
     private List<Vector2> _shopPath = [];
+    private List<Vector2> _routePath = [];
     private long _nextShopTick;
 
     public NetBot(int index, string host, int port, string? classId, string strategy, ContentCatalog content, BotOptions options, Stopwatch clock, string? ticket = null)
@@ -158,6 +159,22 @@ public sealed class NetBot : IDisposable
     /// <summary>Chegou perto do NPC da loja.</summary>
     public bool ReachedShop { get; private set; }
 
+    // ---------- rota (T-343) ----------
+
+    /// <summary>
+    /// Mundo aberto: zona de destino. Fora dela o bot vai, pelo caminho (A*), ao portão que leva a ela; dentro, ao centro da
+    /// área <see cref="RouteArea"/> do mapa (nome ou classe do objeto da camada <c>areas</c>) e para lá.
+    /// </summary>
+    public string? RouteZone { get; init; }
+
+    public string? RouteArea { get; init; }
+
+    /// <summary>Entrou na área de destino.</summary>
+    public bool ReachedRoute { get; private set; }
+
+    /// <summary>Segundos (relógio do bot) até entrar na área de destino.</summary>
+    public double? ReachedRouteAfterSeconds { get; private set; }
+
     private ZoneDefinition? Zone => Welcome is { } w && _content.Zones.TryGetValue(w.EncounterId, out var z) ? z : null;
 
     /// <summary>Recebe o que chegou e, se há snapshot novo, decide e manda as intenções.</summary>
@@ -202,6 +219,10 @@ public sealed class NetBot : IDisposable
         {
             ShopIntent(shopZone, self, latest.Tick);
         }
+        else if (RouteZone is not null && Zone is { } routeZone)
+        {
+            RouteIntent(routeZone, self);
+        }
         else if (Roam && Zone is { } here)
         {
             RoamIntent(here, self);
@@ -234,6 +255,49 @@ public sealed class NetBot : IDisposable
         var gate = zone.Gates[(_zoneVisits.GetValueOrDefault(zone.Id, 1) - 1) % zone.Gates.Count].Area;
         var target = _reachedSpawn ? new Vector2((float)(gate.X + (gate.Width / 2)), (float)(gate.Y + (gate.Height / 2))) : spawn;
         var to = target - position;
+        _buffer.Add(to.LengthSquared() < 0.01f ? new StopIntent(self.Id) : new MoveIntent(self.Id, Vector2.Normalize(to)));
+    }
+
+    /// <summary>T-343: segue o caminho (A*) até o portão para <see cref="RouteZone"/> ou, já nela, até <see cref="RouteArea"/>.</summary>
+    private void RouteIntent(ZoneDefinition zone, Entity self)
+    {
+        var position = self.Get<Transform>().Position;
+        RectDefinition? goal;
+        if (zone.Id == RouteZone)
+        {
+            goal = _content.Arenas[zone.Arena].Areas.FirstOrDefault(a => a.Name == RouteArea || a.Kind == RouteArea)?.Area;
+        }
+        else
+        {
+            goal = zone.Gates.FirstOrDefault(g => g.To == RouteZone)?.Area;
+        }
+
+        if (goal is not { } area || ReachedRoute)
+        {
+            _buffer.Add(new StopIntent(self.Id));
+            return;
+        }
+
+        if (zone.Id == RouteZone && position.X >= area.X && position.X <= area.X + area.Width && position.Y >= area.Y && position.Y <= area.Y + area.Height)
+        {
+            ReachedRoute = true;
+            ReachedRouteAfterSeconds = _clock.Elapsed.TotalSeconds;
+            _buffer.Add(new StopIntent(self.Id));
+            return;
+        }
+
+        var target = new Vector2((float)(area.X + (area.Width / 2)), (float)(area.Y + (area.Height / 2)));
+        if (_routePath.Count == 0 && _mirror?.Map is { } map)
+        {
+            _routePath = Game.Core.Spatial.Pathfinder.FindPath(map, position, target, self.TryGet<Collider>()?.Radius ?? 0).ToList();
+        }
+
+        while (_routePath.Count > 0 && Vector2.Distance(position, _routePath[0]) < 0.3f)
+        {
+            _routePath.RemoveAt(0);
+        }
+
+        var to = (_routePath.Count > 0 ? _routePath[0] : target) - position;
         _buffer.Add(to.LengthSquared() < 0.01f ? new StopIntent(self.Id) : new MoveIntent(self.Id, Vector2.Normalize(to)));
     }
 
@@ -320,6 +384,7 @@ public sealed class NetBot : IDisposable
                 _respawnPending = false;
                 _reachedSpawn = false;
                 _shopPath = [];
+                _routePath = [];
                 Welcome = w;
                 _zoneVisits[w.EncounterId] = _zoneVisits.GetValueOrDefault(w.EncounterId) + 1;
                 _state.Reset(w.Epoch);

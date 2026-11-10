@@ -312,6 +312,44 @@ public class ZoneLoaderTests
         }
     }
 
+    /// <summary>
+    /// T-343: Ruínas da Estrada Antiga. As quatro subáreas do design têm monstros, os níveis ficam na faixa 9–11 da zona, a
+    /// zona liga com a Cidade nos dois sentidos e grupos diferentes ficam a pelo menos 12 tiles entre si e da chegada, como nos
+    /// Campos (T-215).
+    /// </summary>
+    [Fact]
+    public void Ruins_subareas_exist_and_groups_are_far_enough_apart_to_pull_one_at_a_time()
+    {
+        var dir = new DirectoryInfo(AppContext.BaseDirectory);
+        while (!File.Exists(Path.Combine(dir!.FullName, "MmoRpg.sln")))
+        {
+            dir = dir.Parent;
+        }
+
+        var db = GameDataLoader.LoadDirectory(Path.Combine(dir.FullName, "data")).GetDatabaseOrThrow();
+        var ruins = db.Zones["zone.old_road_ruins"];
+        Assert.Equal(ZoneKind.Field, ruins.Kind);
+        Assert.Equal(new LevelRangeDefinition(9, 11), ruins.Levels);
+        Assert.Contains(ruins.Gates, g => g.To == "zone.city");
+        Assert.Contains(db.Zones["zone.city"].Gates, g => g.To == ruins.Id);
+        Assert.Equal(
+            ["Estrada para a Cripta", "Portão Partido", "Pátio dos Mortos", "Torre Quebrada"],
+            ruins.MonsterSpawns.Select(s => s.Area ?? "").Distinct().Order(StringComparer.Ordinal).ToArray());
+        Assert.All(ruins.MonsterSpawns, s => Assert.InRange(s.Level ?? db.Monsters[s.Monster].Level, 9, 11));
+
+        static double Distance(PositionDefinition a, PositionDefinition b) => Math.Sqrt(((a.X - b.X) * (a.X - b.X)) + ((a.Y - b.Y) * (a.Y - b.Y)));
+        var points = ruins.MonsterSpawns;
+        foreach (var a in points)
+        {
+            foreach (var b in points.Where(b => b != a && Distance(a.Position, b.Position) > 4))
+            {
+                Assert.True(Distance(a.Position, b.Position) >= 12, $"{a.Monster} em ({a.Position.X}, {a.Position.Y}) perto de {b.Monster} em ({b.Position.X}, {b.Position.Y})");
+            }
+
+            Assert.True(Distance(a.Position, ruins.Spawn) >= 12, $"{a.Monster} perto da chegada");
+        }
+    }
+
     // ---------- T-321: NPCs ----------
 
     [Fact]
