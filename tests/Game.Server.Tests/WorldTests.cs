@@ -20,16 +20,16 @@ namespace Game.Server.Tests;
 /// <summary>Mundo aberto em memória (T-214): zonas reais de <c>data/zones.json</c>, transporte em memória.</summary>
 internal sealed class WorldRig : IDisposable
 {
-    public WorldRig(ICharacterStore? store = null, bool devLogin = true)
+    public WorldRig(ICharacterStore? store = null, bool devLogin = true, ContentCatalog? content = null, ServerOptions? options = null)
     {
-        Content = TestRig.RealContent.Value;
+        Content = content ?? TestRig.RealContent.Value;
         if (store is not null)
         {
             Persistence = new CharacterPersistence(store, Logger.None, TimeSpan.FromMilliseconds(10));
         }
 
         var accounts = Persistence is null ? null : new AccountLogin(new Game.Auth.GameTicketReplayGuard(AccountRig.Key, "game.test"), Persistence);
-        Server = new WorldServer(Content, new ServerOptions { World = true, DevLogin = devLogin }, Transport, Logger.None, accounts);
+        Server = new WorldServer(Content, (options ?? new ServerOptions()) with { World = true, DevLogin = devLogin }, Transport, Logger.None, accounts);
         Transport.Start(Server);
     }
 
@@ -84,8 +84,8 @@ internal sealed class WorldRig : IDisposable
     /// <summary>Zona e entidade atuais do cliente.</summary>
     public (OpenZone Zone, Entity Entity) Where(TestClient c)
     {
-        var (zone, id) = Server.Placement[c.Raw.Peer];
-        var z = Server.Zones[zone];
+        var (_, id) = Server.Placement[c.Raw.Peer];
+        var z = Server.ZoneOf(c.Raw.Peer)!; // T-350: também as cópias de instância
         return (z, z.World.Find(id)!);
     }
 

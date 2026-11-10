@@ -38,7 +38,7 @@ public class ZoneMapEquivalenceTests
     [Fact]
     public void The_zones_from_before_still_exist()
     {
-        // Zonas novas (T-342, T-343) podem entrar; as de antes continuam.
+        // Zonas novas (T-342, T-343) e instâncias (T-350) podem entrar; as de antes continuam.
         Assert.Subset(Db.Value.Zones.Keys.ToHashSet(StringComparer.Ordinal), Before.Value.Keys.ToHashSet(StringComparer.Ordinal));
     }
 

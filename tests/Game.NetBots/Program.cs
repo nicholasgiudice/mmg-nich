@@ -28,6 +28,9 @@ const string Usage = """
                               as poções iniciais. No fim sai a linha LOJA.
       --route <zona>/<área>   mundo aberto (T-343): anda pelo caminho (A*) até o portão para a zona e, nela, até a área do
                               mapa (nome ou classe), ex.: zone.old_road_ruins/crypt_entrance. No fim sai a linha ROTA.
+      --party-size <n>        com --party: tamanho dos grupos (padrão rules.party.maxMembers)
+      --instance <zona>       mundo aberto (T-350): com o grupo completo, anda (A*) até o portão da zona atual que leva à
+                              instância e luta lá dentro. No fim sai a linha INSTÂNCIA.
     """;
 
 var a = args.ToList();
@@ -72,7 +75,8 @@ var roam = a.Contains("--roam");
 var party = a.Contains("--party");
 var shop = a.Contains("--shop");
 var route = Opt("--route", "").Split('/', 2);
-var partySize = content.Rules.Party.MaxMembers;
+var instanceZone = Opt("--instance", "");
+var partySize = int.Parse(Opt("--party-size", content.Rules.Party.MaxMembers.ToString(CultureInfo.InvariantCulture)), CultureInfo.InvariantCulture);
 
 Console.WriteLine($"{count} bots ({strategy}) em {servers.Count} servidor(es), {perRoom} por sala, por até {duration:0} s; conteúdo {content.Fingerprint}");
 var bots = new List<NetBot>();
@@ -89,6 +93,8 @@ for (var i = 0; i < count; i++)
         RouteArea = route.Length == 2 ? route[1] : null,
         PartyInvites = leader ? Enumerable.Range(i + 1, Math.Min(partySize - 1, count - i - 1)).Select(j => $"netbot{j}").ToArray() : [],
         AcceptPartyInvites = party && !leader,
+        InstanceZone = instanceZone.Length > 0 ? instanceZone : null,
+        InstancePartySize = party ? Math.Min(partySize, count - (i / partySize * partySize)) : 1,
     });
 }
 
@@ -163,6 +169,12 @@ if (route.Length == 2)
     Console.WriteLine($"ROTA {route[0]}/{route[1]}: chegaram {bots.Count(b => b.ReachedRoute)}/{count} · "
         + $"tempo {string.Join(",", bots.Select(b => b.ReachedRouteAfterSeconds is { } s ? s.ToString("0", CultureInfo.InvariantCulture) + "s" : "-"))} · "
         + $"renascimentos {bots.Sum(b => b.Respawns)} · trocas de zona {bots.Sum(b => b.ZoneChanges)}");
+}
+
+if (instanceZone.Length > 0)
+{
+    Console.WriteLine($"INSTÂNCIA {instanceZone}: bots dentro {bots.Count(b => b.InstanceId > 0)}/{count} · cópias {bots.Where(b => b.InstanceId > 0).Select(b => b.InstanceId).Distinct().Count()} "
+        + $"({string.Join(",", bots.Select(b => b.InstanceId))}) · entradas {bots.Sum(b => b.InstanceEntries)} · recusas {bots.Sum(b => b.InstanceRejections)}");
 }
 
 if (shop)
