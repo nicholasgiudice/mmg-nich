@@ -27,11 +27,14 @@ public abstract partial class ProgressionPanel : PanelContainer
     /// <summary>Para onde vão as intenções (a autoridade); null = não manda.</summary>
     public Action<Intent>? Send { get; set; }
 
+    /// <summary>Usa a moldura de janela de pedra e ouro (T-089) em vez do painel escuro.</summary>
+    protected virtual bool StoneWindow => false;
+
     public override void _Ready()
     {
         Visible = false;
         MouseFilter = MouseFilterEnum.Stop;
-        AddThemeStyleboxOverride("panel", new StyleBoxFlat
+        AddThemeStyleboxOverride("panel", (StoneWindow ? HudTheme.WindowFrame() : null) ?? new StyleBoxFlat
         {
             BgColor = HudTheme.Panel,
             BorderColor = new Color(1, 1, 1, 0.15f),
@@ -126,6 +129,25 @@ public abstract partial class ProgressionPanel : PanelContainer
         label.AddThemeFontSizeOverride("font_size", 18);
         label.AddThemeColorOverride("font_color", HudTheme.Suggested);
         return label;
+    }
+
+    /// <summary>Título da janela: na placa de pedra quando a janela é de pedra e a peça existe; senão, o título de sempre.</summary>
+    protected Control WindowTitle(string text)
+    {
+        if (!StoneWindow || HudTheme.WindowTitlePlate() is not { } plate)
+        {
+            return Title(text);
+        }
+
+        var holder = new PanelContainer { SizeFlagsHorizontal = SizeFlags.ShrinkCenter };
+        holder.AddThemeStyleboxOverride("panel", plate);
+        var label = new Label { Text = text, HorizontalAlignment = HorizontalAlignment.Center };
+        label.AddThemeFontSizeOverride("font_size", 16);
+        label.AddThemeColorOverride("font_color", HudTheme.Suggested);
+        label.AddThemeColorOverride("font_outline_color", Colors.Black);
+        label.AddThemeConstantOverride("outline_size", 4);
+        holder.AddChild(label);
+        return holder;
     }
 
     /// <summary>Texto menor; a cor pode ser trocada depois com <c>font_color</c> (por isso sem <c>LabelSettings</c>).</summary>
