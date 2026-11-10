@@ -90,6 +90,57 @@ public static class HudTheme
     public static Texture2D? DollNiche() =>
         ResourceLoader.Exists(UiDirectory + "doll_niche.png") ? ResourceLoader.Load<Texture2D>(UiDirectory + "doll_niche.png") : null;
 
+    /// <summary>Textura de uma peça do kit (<c>assets/art/ui/&lt;file&gt;</c>), desenhada em 1×; null sem o arquivo.</summary>
+    public static Texture2D? UiTexture(string file) =>
+        ResourceLoader.Exists(UiDirectory + file) ? ResourceLoader.Load<Texture2D>(UiDirectory + file) : null;
+
+    /// <summary>Célula de pedra de uma habilidade (T-097): 9-slice de <c>skill_cell.png</c>; null sem o arquivo.</summary>
+    public static StyleBox? SkillCell() => UiPiece("skill_cell.png", 10, 8, 8);
+
+    /// <summary>
+    /// Botão redondo de pedra com o + dourado (T-097), no lugar do "+" de texto; sem a peça, o botão fica como antes.
+    /// </summary>
+    public static void StonePlusButton(Button button)
+    {
+        if (UiTexture("skill_plus.png") is not { } texture)
+        {
+            return;
+        }
+
+        StyleBoxTexture Style(Color modulate) => new() { Texture = texture, ModulateColor = modulate };
+        button.Text = "";
+        button.AddThemeStyleboxOverride("normal", Style(Colors.White));
+        button.AddThemeStyleboxOverride("hover", Style(new Color(1.2f, 1.2f, 1.1f)));
+        button.AddThemeStyleboxOverride("pressed", Style(new Color(0.8f, 0.8f, 0.8f)));
+        button.AddThemeStyleboxOverride("focus", new StyleBoxEmpty());
+        button.AddThemeStyleboxOverride("disabled", Style(new Color(1, 1, 1, 0.35f)));
+        button.CustomMinimumSize = texture.GetSize();
+        button.Size = texture.GetSize();
+    }
+
+    /// <summary>
+    /// Divisória de pedra e ouro (T-097), na maior escala inteira que cabe em <paramref name="width"/>; null sem o arquivo.
+    /// </summary>
+    public static Control? Divider(float width)
+    {
+        if (UiTexture("divider.png") is not { } texture)
+        {
+            return null;
+        }
+
+        var scale = Math.Max(1, (int)(width / texture.GetWidth()));
+        return new TextureRect
+        {
+            Texture = texture,
+            ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
+            StretchMode = TextureRect.StretchModeEnum.Scale,
+            TextureFilter = CanvasItem.TextureFilterEnum.Nearest,
+            CustomMinimumSize = texture.GetSize() * scale,
+            SizeFlagsHorizontal = Control.SizeFlags.ShrinkCenter,
+            MouseFilter = Control.MouseFilterEnum.Ignore,
+        };
+    }
+
     /// <summary>Moldura fina de pedra (quadro de membro do grupo, T-311).</summary>
     public static StyleBox MemberFrame() =>
         UiPiece("frame_member.png", 9, 10, 7)
