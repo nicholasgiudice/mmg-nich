@@ -3,6 +3,7 @@ using Game.Core.Authority;
 using Game.Core.Combat;
 using Game.Core.Combat.Phases;
 using Game.Core.Combat.Progression;
+using Game.Core.Combat.Shops;
 using Game.Core.Combat.Stats;
 using Game.Core.Combat.Status;
 using Game.Core.Definitions;
@@ -116,6 +117,7 @@ public partial class Hud : Control
     private SkillPanel _skills = null!;
     private Button _inventoryButton = null!;
     private InventoryPanel _inventory = null!;
+    private ShopPanel _shop = null!;
     private double _bannerLeft;
     private double _castFlashLeft;
     private string _castFlashText = "";
@@ -189,6 +191,8 @@ public partial class Hud : Control
         AddChild(_skills);
         _inventory = new InventoryPanel();
         AddChild(_inventory);
+        _shop = new ShopPanel();
+        AddChild(_shop);
 
         _banner = new Label
         {
@@ -209,10 +213,11 @@ public partial class Hud : Control
     /// <summary>Fecha as telas de personagem e de habilidades; true se alguma estava aberta (Esc fecha antes de pausar).</summary>
     public bool ClosePanels()
     {
-        var open = _character.Visible || _skills.Visible || _inventory.Visible;
+        var open = _character.Visible || _skills.Visible || _inventory.Visible || _shop.Visible;
         _character.Visible = false;
         _skills.Visible = false;
         _inventory.Visible = false;
+        _shop.Close();
         return open;
     }
 
@@ -280,6 +285,11 @@ public partial class Hud : Control
         _log.Position = new Vector2(screen.X - _log.Size.X - 8, screen.Y - _log.Size.Y - 8);
         _battle.Position = new Vector2(screen.X - _battle.Size.X - 8, TopRightReserved > 0 ? TopRightReserved + 6 : 8);
         _death.Position = (screen - _death.Size) / 2;
+        // T-323: a loja fica à esquerda do inventário (que abre junto), sem cobrir a mochila.
+        // Sem espaço entre o quadro do personagem e o inventário, desce para a coluna da esquerda, embaixo do grupo.
+        var shopX = _inventory.Visible ? _inventory.Position.X - _shop.Size.X - 8 : (screen.X - _shop.Size.X) / 2;
+        var leftColumnBottom = _party.Position.Y + (PartyEnabled ? _partyPanel.Size.Y : _party.Size.Y) + 8;
+        _shop.Position = shopX >= panelX ? new Vector2(shopX, 64) : new Vector2(8, leftColumnBottom);
         _banner.Position = new Vector2((screen.X - _banner.Size.X) / 2, screen.Y * 0.18f);
     }
 
@@ -290,6 +300,7 @@ public partial class Hud : Control
         _character.SetContent(content);
         _skills.SetContent(content);
         _inventory.SetContent(content);
+        _shop.SetContent(content);
         _partyPanel.SetContent(content);
         _removableTags.Clear();
         foreach (var cls in content.Classes.Values)
@@ -350,6 +361,7 @@ public partial class Hud : Control
             UpdateAbilityBar(self, byId, selected, aimPoint, now);
             UpdateCast(_playerCast, self, now, HudTheme.Cast);
             UpdatePanels(self);
+            UpdateShop(self, byId);
             if (!_playerCast.Visible && _castFlashLeft > 0)
             {
                 _playerCast.Visible = true;
@@ -395,6 +407,7 @@ public partial class Hud : Control
         _character.Send = authority.Send;
         _skills.Send = authority.Send;
         _inventory.Send = authority.Send;
+        _shop.Send = authority.Send;
         if (IsTyping)
         {
             // T-311: digitando o nome do convite, C/K/I/B são letras.
@@ -444,12 +457,71 @@ public partial class Hud : Control
                     when ItemEntity(e) == me:
                     _inventory.SetMessage("");
                     break;
+                case ItemBought bought when bought.Entity == me:
+                    _shop.SetMessage($"Comprou {Quantity(bought.Quantity)}{ItemName(bought.BaseId)} por {ItemText.Gold(bought.Gold)}.", HudTheme.Removable);
+                    break;
+                case ItemSold sold when sold.Entity == me:
+                    _shop.SetMessage($"Vendeu {Quantity(sold.Quantity)}{ItemName(sold.BaseId)} por {ItemText.Gold(sold.Gold)}.", HudTheme.Removable);
+                    break;
+                case ShopRejected refused when refused.Entity == me:
+                    _shop.SetMessage(ItemText.ShopRejection(refused.Reason));
+                    if (!_shop.Visible)
+                    {
+                        Announce(ItemText.ShopRejection(refused.Reason), 2.0);
+                    }
+
+                    break;
                 case AttributeRaised or SkillRankRaised or PointsReset when PointsEntity(e) == me:
                     _character.SetMessage("");
                     _skills.SetMessage("");
                     break;
             }
         }
+    }
+
+    /// <summary>NPC da loja aberta (T-323); null = nenhuma.</summary>
+    public EntityId? ShopNpc => _shop.Npc;
+
+    private static string Quantity(int n) => n > 1 ? $"{n}× " : "";
+
+    private string ItemName(string baseId) => _content.Items.TryGetValue(baseId, out var def) ? def.Name : baseId;
+
+    /// <summary>
+    /// Abre a loja do NPC clicado (T-323), se ele tem loja; false se não tem. Abre o inventário junto, para ver as pilhas e
+    /// arrastar o que comprou para a barra.
+    /// </summary>
+    public bool OpenShop(EntityId npc, NpcInfo info)
+    {
+        if (!_shop.Open(npc, info))
+        {
+            return false;
+        }
+
+        _inventory.Visible = true;
+        _inventory.SetMessage("");
+        return true;
+    }
+
+    /// <summary>Folga além do alcance da loja antes de fechar a janela (o servidor recusa já no alcance exato).</summary>
+    private const double ShopCloseMargin = 1.0;
+
+    /// <summary>A janela da loja fecha quando o personagem se afasta do NPC (ou o NPC some, troca de zona).</summary>
+    private void UpdateShop(EntitySnapshot self, IReadOnlyDictionary<EntityId, EntitySnapshot> byId)
+    {
+        if (_shop.Npc is not { } npc)
+        {
+            return;
+        }
+
+        var range = _content.Rules.Shops.InteractRange + ShopCloseMargin;
+        if (!byId.TryGetValue(npc, out var state) || state.TryGet<Transform>() is not { } at
+            || Vec2.Distance(at.Position, self.Get<Transform>().Position) > range)
+        {
+            _shop.Close();
+            return;
+        }
+
+        _shop.Render(self);
     }
 
     private static EntityId? PointsEntity(GameEvent e) => e switch
@@ -607,8 +679,8 @@ public partial class Hud : Control
             entries.Add((Hotbar[i], (i + 1).ToString(CultureInfo.InvariantCulture), i));
         }
 
-        // T-320: Q usa o primeiro consumível do inventário (a barra e o inventário de verdade ficam para a T-323).
-        if (FirstConsumable(self) is { } q && Hotbar.IndexOf(q) < 0)
+        // T-323: Q usa a primeira poção de vida do inventário; aparece só se ela não está na barra.
+        if (QuickConsumable(self) is { } q && Hotbar.IndexOf(q) < 0)
         {
             entries.Add((q, "Q", -1));
         }
@@ -669,16 +741,14 @@ public partial class Hud : Control
         }
 
         var saved = HotbarKey is { } key ? HotbarStore.Load(key) : null;
-        var consumables = cls.StartingInventory.Select(s => s.Item)
-            .Where(id => _content.Items.TryGetValue(id, out var item) && item.IsConsumable).Take(1).ToList();
-        Hotbar.Load(saved, HotbarLayout.Defaults(cls.Abilities, consumables),
+        Hotbar.Load(saved, HotbarLayout.Defaults(cls.Abilities),
             id => _content.Abilities.ContainsKey(id) || (_content.Items.TryGetValue(id, out var item) && item.IsConsumable));
     }
 
-    /// <summary>T-320: id do primeiro consumível do inventário do jogador (null = nenhum).</summary>
-    private string? FirstConsumable(EntitySnapshot self) =>
+    /// <summary>T-323: id da primeira poção de vida do inventário (a da tecla Q); null = nenhuma.</summary>
+    private string? QuickConsumable(EntitySnapshot self) =>
         self.TryGet<Game.Core.Combat.Items.Inventory>()?.Slots
-            .FirstOrDefault(i => i is not null && _content.Items.TryGetValue(i.BaseId, out var def) && def.IsConsumable)?.BaseId;
+            .FirstOrDefault(i => i is not null && ItemText.IsHealingConsumable(_content, i.BaseId))?.BaseId;
 
     private (AbilitySlotState, string) SlotState(EntitySnapshot self, AbilityState abilities,
         IReadOnlyDictionary<EntityId, EntitySnapshot> byId, EntityId? selected, Vec2 aimPoint, double now, string id, string key)
@@ -696,8 +766,9 @@ public partial class Hud : Control
         var pool = self.TryGet<ResourcePool>();
         var noResource = def?.Cost is { } cost && (pool is null || pool.Type != cost.Resource || pool.Current < cost.Amount);
         var chargesReady = def is { CooldownCharges: > 1 } ? abilities.CooldownChargesReady(def, (long)Math.Floor(now)) : -1;
+        var count = item is null ? 0 : ItemText.CountOf(self.TryGet<Game.Core.Combat.Items.Inventory>(), id);
         var charges = item is not null
-            ? (self.TryGet<Game.Core.Combat.Items.Inventory>()?.Slots.Where(i => i?.BaseId == id).Sum(i => i!.Count) ?? 0).ToString(CultureInfo.InvariantCulture)
+            ? count.ToString(CultureInfo.InvariantCulture)
             : chargesReady >= 0 ? chargesReady.ToString(CultureInfo.InvariantCulture) : null;
         if (chargesReady > 0)
         {
@@ -715,13 +786,20 @@ public partial class Hud : Control
             abilities.Cast?.AbilityId == id,
             charges,
             isBasic || !abilities.Knows(id) ? "" : Match.SkillPlan.Roman(rank),
-            NotLearned: !isBasic && !abilities.Knows(id));
+            NotLearned: !isBasic && !abilities.Knows(id),
+            Depleted: item is not null && count == 0);
 
         var tooltip = name;
         if (def is not null)
         {
             var stats = self.TryGet<CharacterStats>();
-            if (isBasic)
+            if (item is not null)
+            {
+                // T-323: atalho do tipo de consumível; usa a primeira pilha dele no inventário.
+                tooltip += $" — você tem {count}\n" + AbilityText.Describe(def, _content, stats)
+                    + (count == 0 ? "\n\nNenhuma no inventário: compre no Templo da Cidade." : "");
+            }
+            else if (isBasic)
             {
                 tooltip += "\n" + AbilityText.Describe(def, _content, stats);
             }

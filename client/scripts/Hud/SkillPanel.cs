@@ -12,7 +12,8 @@ namespace MmoRpgClient.Hud;
 
 /// <summary>
 /// Tela de habilidades (T-221, tecla K; em grade de ícones na T-081; <c>design/progression-v0.1.md</c> §7): ataque
-/// básico, as habilidades da classe (assinatura em destaque) e a poção, com os pontos do NH embaixo de cada ícone. O plano
+/// básico e as habilidades da classe (assinatura em destaque), com os pontos do NH embaixo de cada ícone (T-323: a poção
+/// saiu daqui; é item do inventário). O plano
 /// vem do estado do servidor (<see cref="SkillPlan.FromState"/>, com <see cref="SkillPlan.Enforce"/>): o + no ícone só
 /// aparece quando há ponto e nível, e manda <see cref="RaiseSkillRankIntent"/>. A dica mostra o NH atual e o próximo com
 /// as estatísticas do personagem. Arrastar um ícone para a barra põe a habilidade numa tecla de 1 a 6.
@@ -24,7 +25,6 @@ public partial class SkillPanel : ProgressionPanel
     private const float IconSize = 44f;
 
     private static readonly Color BasicBorder = new(0.55f, 0.75f, 1f, 0.8f);
-    private static readonly Color ItemBorder = new(0.55f, 0.95f, 0.55f, 0.6f);
 
     protected override string StateKey(EntitySnapshot self)
     {
@@ -84,17 +84,9 @@ public partial class SkillPanel : ProgressionPanel
             grid.AddChild(AbilityCell(self, ability, plan, progress, stats, level));
         }
 
-        // T-320: consumíveis são itens do inventário (T-323 põe o inventário e a barra de itens); aqui só a referência.
-        foreach (var id in cls.StartingInventory.Select(s => s.Item).Distinct())
-        {
-            if (Content.Items.TryGetValue(id, out var it) && it.UseAbility is { } use && Content.AbilityAt(use, 1) is { } item)
-            {
-                grid.AddChild(Cell(item, IconCatalog.Shared.For(id), ItemBorder, "consumível", Tip(it.Name + " — consumível (Q)", item, stats, null),
-                    draggable: false, plus: null, req: null));
-            }
-        }
-
-        box.AddChild(Small("Arraste um ícone para a barra (teclas 1 a 6). Habilidade não aprendida não vai para a barra.", 11, 0.6f,
+        // T-323: as poções são itens do inventário (I), de onde vão para a barra; não aparecem mais aqui.
+        box.AddChild(Small("Arraste um ícone para a barra (teclas 1 a 6). Habilidade não aprendida não vai para a barra. "
+            + "Poções: arraste do inventário (I).", 11, 0.6f,
             Columns * CellWidth));
 
         if (progress is not null && stats is not null)

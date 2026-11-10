@@ -2,6 +2,7 @@ using Game.Core.Authority;
 using Game.Core.Combat;
 using Game.Core.Combat.Areas;
 using Game.Core.Combat.Items;
+using Game.Core.Combat.Shops;
 using Game.Core.Combat.Status;
 using Game.Core.Combat.Telegraphs;
 using Game.Core.Definitions;
@@ -27,6 +28,9 @@ public partial class WorldView : Node2D
 
     /// <summary>Itens no chão desenhados neste frame (T-222): posição na tela, se o jogador tem direito e se alcança.</summary>
     private readonly Dictionary<EntityId, (Godot.Vector2 Pixels, bool Mine, bool InReach)> _items = new();
+
+    /// <summary>NPCs desenhados neste frame (T-323): posição dos pés na tela e o componente (nome, loja).</summary>
+    private readonly Dictionary<EntityId, (Godot.Vector2 Pixels, NpcInfo Info)> _npcs = new();
 
     /// <summary>Distância (tiles) entre itens que caíram no mesmo ponto, espalhados em volta dele.</summary>
     private const float ItemSpread = 0.55f;
@@ -143,6 +147,9 @@ public partial class WorldView : Node2D
                 case ItemRejected itemRejected when itemRejected.Entity == authority.ControlledEntity:
                     ShowText(itemRejected.Entity, Hud.ItemText.Rejection(itemRejected.Reason), RejectionColor);
                     break;
+                case GoldGained gold when gold.Entity == authority.ControlledEntity && gold.Amount > 0:
+                    ShowText(gold.Entity, $"+{gold.Amount} de ouro", Hud.HudTheme.Gold);
+                    break;
                 case ItemPickedUp picked when picked.Entity == authority.ControlledEntity:
                     var pickedName = _content.Items.TryGetValue(picked.BaseId, out var pickedDef) ? pickedDef.Name : picked.BaseId;
                     var rarity = latest?.Entities.FirstOrDefault(s => s.Id == picked.Entity)?.TryGet<Inventory>()?[picked.InventorySlot]?.Rarity;
@@ -202,6 +209,16 @@ public partial class WorldView : Node2D
                 continue;
             }
 
+            if (state.TryGet<NpcInfo>() is { } npc)
+            {
+                // T-323: NPC da cidade (sem vida): sprite parado, nome e, com loja, o anel do mouse.
+                seen.Add(state.Id);
+                var at = Units.ToPixels(transform.Position);
+                _npcs[state.Id] = (at, npc);
+                GetOrCreateGround<NpcView>(state.Id).Apply(npc, at, _sprites, NpcUnder(GetGlobalMousePosition()) == state.Id);
+                continue;
+            }
+
             if (state.TryGet<Health>() is null || state.TryGet<GroundItem>() is not null)
             {
                 continue;
@@ -231,6 +248,7 @@ public partial class WorldView : Node2D
         {
             _ground.Remove(id, out var node);
             _items.Remove(id);
+            _npcs.Remove(id);
             node!.QueueFree();
         }
     }
@@ -281,6 +299,17 @@ public partial class WorldView : Node2D
             }
         }
     }
+
+    /// <summary>NPC sob o ponto (pixels), o mais próximo; null se nenhum (T-323). O alvo do clique é o corpo, não só os pés.</summary>
+    public (EntityId Id, NpcInfo Info)? PickNpcAt(Godot.Vector2 pixels) =>
+        NpcUnder(pixels) is { } id ? (id, _npcs[id].Info) : null;
+
+    private EntityId? NpcUnder(Godot.Vector2 pixels) =>
+        _npcs
+            .Where(kv => (kv.Value.Pixels + new Godot.Vector2(0, -NpcView.PickRadiusPx)).DistanceTo(pixels) <= NpcView.PickRadiusPx + PickMarginPx)
+            .OrderBy(kv => kv.Value.Pixels.DistanceTo(pixels))
+            .Select(kv => (EntityId?)kv.Key)
+            .FirstOrDefault();
 
     /// <summary>Item no chão sob o ponto (pixels), o mais próximo; null se nenhum (T-222).</summary>
     public EntityId? PickGroundItemAt(Godot.Vector2 pixels) =>
@@ -485,6 +514,7 @@ public partial class WorldView : Node2D
         _views.Clear();
         _ground.Clear();
         _items.Clear();
+        _npcs.Clear();
         _previousById.Clear();
         _indexedPrevious = null;
         SelectedEntity = null;

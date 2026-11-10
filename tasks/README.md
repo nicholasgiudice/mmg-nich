@@ -275,13 +275,25 @@ Refaz as telas do cliente com ícones (estilo dos RPGs clássicos, sem copiar ar
 | [T-085](trilha-interface/T-085-ocultar-debug-ctrl-f.md) | Esconder logs e debug; Ctrl+F mostra | Windows | Leve | — |
 | [T-086](trilha-interface/T-086-hud-pedra-ouro.md) | Quadros do personagem e do alvo no tema pedra e ouro (kit PixelLab) | Windows | Leve | kit pedra e ouro |
 | [T-087](trilha-interface/T-087-icones-habilidades-pixellab.md) | Ícones das 25 habilidades de classe refeitos no PixelLab | Windows | Leve | T-086 |
+| [T-088](trilha-interface/T-088-imagem-tela-de-login.md) | Imagem de fundo da tela de login (cena de lado, classes olhando um castelo distante) | Windows | Humano + Leve | T-220 |
+| [T-089](trilha-interface/T-089-interface-equipamentos.md) | Tela de equipamentos no tema pedra e ouro (moldura de janela, boneco e espaços) | Windows | Humano + Leve | T-083, T-086 |
+| [T-097](trilha-interface/T-097-interface-habilidades.md) | Tela de habilidades no tema pedra e ouro | Windows | Humano + Leve | T-081, T-087, T-089 |
+| [T-098](trilha-interface/T-098-interface-atributos.md) | Tela de atributos no tema pedra e ouro | Windows | Humano + Leve | T-082, T-089 |
+| [T-099](trilha-interface/T-099-interface-inventario.md) | Inventário (mochila) no tema pedra e ouro | Windows | Humano + Leve | T-083, T-089, T-320 |
 
 ```text
 Interface:    T-080 ─┬─► T-081
                      ├─► T-083
                      └─► T-084
               T-082, T-085 (independentes)
+              T-086 ─► T-087
+Pedra e ouro: T-088 (login, independente)
+              T-086 ─► T-089 ─┬─► T-097 (habilidades)
+                              ├─► T-098 (atributos)
+                              └─► T-099 (inventário)
 ```
+
+As T-088, T-089 e T-097 a T-099 (pedido de 2026-11-09) usam o PixelLab no modo de maior qualidade, com pelo menos 5 opções por tarefa escolhidas pelo designer e prévia dentro do jogo antes da aprovação. Os ids T-091 a T-096 ficam sem uso (eram da trilha PixelLab removida). Ordem: T-088, T-089, T-097, T-098, T-099, uma de cada vez.
 
 Cuidados de integração: T-081, T-082, T-083 e T-085 mexem no `Hud.cs`; T-081 e T-085 mexem no Input Map (`project.godot`) e em `InputActions`. Integre uma de cada vez e rebase as outras. Ordem sugerida: T-085, T-082, T-080, T-081, T-083, T-084.
 

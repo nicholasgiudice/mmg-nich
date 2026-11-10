@@ -1,8 +1,10 @@
 namespace MmoRpgClient.Input;
 
 /// <summary>
-/// Barra de atalhos 1–6 configurável pelo jogador (T-081): o id da habilidade (ou do ataque básico, ou da poção) em cada
-/// tecla. Só do cliente: o uso continua indo à autoridade pelo id (<c>UseAbilityIntent</c>). Sem Godot, para os testes.
+/// Barra de atalhos 1–6 configurável pelo jogador (T-081): o id da habilidade (ou do ataque básico, ou do consumível) em cada
+/// tecla. Só do cliente: o uso continua indo à autoridade pelo id (<c>UseAbilityIntent</c>). T-323: o tipo do atalho é o do
+/// id (um id de item, <c>consumable.*</c>, é atalho para aquele tipo de consumível e sai como <c>UseItemIntent</c> na primeira
+/// pilha dele; o resto é habilidade). Sem Godot, para os testes.
 /// Um id fica em no máximo um espaço: pôr num espaço tira dos outros.
 /// </summary>
 public sealed class HotbarLayout
@@ -23,18 +25,16 @@ public sealed class HotbarLayout
 
     public IReadOnlyList<string?> Slots => _slots;
 
-    /// <summary>Padrão sem configuração salva: as habilidades na ordem dos dados em 1–5 e o primeiro consumível em 6.</summary>
-    public static string?[] Defaults(IReadOnlyList<string> abilities, IReadOnlyList<string> consumables)
+    /// <summary>
+    /// Padrão sem configuração salva: as habilidades na ordem dos dados, de 1 a 6. T-323: a poção saiu da barra padrão (fica
+    /// na tecla Q, e o jogador pode arrastá-la do inventário para a barra).
+    /// </summary>
+    public static string?[] Defaults(IReadOnlyList<string> abilities)
     {
         var slots = new string?[Size];
-        for (var i = 0; i < Size - 1 && i < abilities.Count; i++)
+        for (var i = 0; i < Size && i < abilities.Count; i++)
         {
             slots[i] = abilities[i];
-        }
-
-        if (consumables.Count > 0)
-        {
-            slots[Size - 1] = consumables[0];
         }
 
         return slots;

@@ -5,23 +5,34 @@ namespace Game.Client.Tests;
 /// <summary>T-081: barra de atalhos 1–6 configurável (padrão, carregar, pôr, trocar, esvaziar e guardar).</summary>
 public class HotbarLayoutTests
 {
-    private static readonly string[] Abilities = ["a.one", "a.two", "a.three", "a.four", "a.five"];
-    private static readonly string[] Potion = ["item.potion"];
+    private static readonly string[] Abilities = ["a.one", "a.two", "a.three", "a.four", "a.five", "a.six", "a.seven"];
 
     private static HotbarLayout Loaded(IReadOnlyList<string?>? saved = null, Func<string, bool>? exists = null)
     {
         var bar = new HotbarLayout();
-        bar.Load(saved, HotbarLayout.Defaults(Abilities, Potion), exists ?? (_ => true));
+        bar.Load(saved, HotbarLayout.Defaults(Abilities), exists ?? (_ => true));
         return bar;
     }
 
     [Fact]
-    public void DefaultsPutTheClassAbilitiesInOneToFiveAndThePotionInSix()
+    public void DefaultsPutTheClassAbilitiesInOneToSixWithoutThePotion()
     {
         var bar = Loaded();
 
         Assert.True(bar.Loaded);
-        Assert.Equal(["a.one", "a.two", "a.three", "a.four", "a.five", "item.potion"], bar.Slots);
+        Assert.Equal(["a.one", "a.two", "a.three", "a.four", "a.five", "a.six"], bar.Slots);
+        Assert.Equal(new string?[] { "a.one", "a.two", null, null, null, null }, HotbarLayout.Defaults(["a.one", "a.two"]));
+    }
+
+    [Fact]
+    public void AConsumableShortcutIsKeptLikeAnAbility()
+    {
+        var bar = Loaded();
+
+        bar.Set(5, "consumable.minor_healing_potion");
+        var again = Loaded(HotbarLayout.Parse(bar.Serialize()));
+
+        Assert.Equal("consumable.minor_healing_potion", again[5]);
     }
 
     [Fact]
@@ -43,7 +54,7 @@ public class HotbarLayoutTests
 
         Assert.Null(bar[0]);
         Assert.Equal("a.one", bar[5]);
-        Assert.Equal(-1, bar.IndexOf("item.potion"));
+        Assert.Equal(-1, bar.IndexOf("a.six"));
         Assert.Equal(1, changes);
     }
 
@@ -55,7 +66,7 @@ public class HotbarLayoutTests
         bar.Swap(0, 3);
         bar.Clear(1);
 
-        Assert.Equal(["a.four", null, "a.three", "a.one", "a.five", "item.potion"], bar.Slots);
+        Assert.Equal(["a.four", null, "a.three", "a.one", "a.five", "a.six"], bar.Slots);
     }
 
     [Fact]
@@ -67,7 +78,7 @@ public class HotbarLayoutTests
         var text = bar.Serialize();
         var again = Loaded(HotbarLayout.Parse(text));
 
-        Assert.Equal("a.one|a.two||a.four|a.five|item.potion", text);
+        Assert.Equal("a.one|a.two||a.four|a.five|a.six", text);
         Assert.Equal(bar.Slots, again.Slots);
         Assert.Null(HotbarLayout.Parse(""));
     }

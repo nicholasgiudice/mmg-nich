@@ -19,6 +19,7 @@ public abstract partial class ProgressionPanel : PanelContainer
     private readonly VBoxContainer _box = new();
     private string _key = "";
     private string _message = "";
+    private Color? _messageColor;
     private double _confirmLeft;
 
     protected ContentCatalog Content { get; private set; } = ContentCatalog.Empty;
@@ -26,11 +27,14 @@ public abstract partial class ProgressionPanel : PanelContainer
     /// <summary>Para onde vão as intenções (a autoridade); null = não manda.</summary>
     public Action<Intent>? Send { get; set; }
 
+    /// <summary>Usa a moldura de janela de pedra e ouro (T-089) em vez do painel escuro.</summary>
+    protected virtual bool StoneWindow => false;
+
     public override void _Ready()
     {
         Visible = false;
         MouseFilter = MouseFilterEnum.Stop;
-        AddThemeStyleboxOverride("panel", new StyleBoxFlat
+        AddThemeStyleboxOverride("panel", (StoneWindow ? HudTheme.WindowFrame() : null) ?? new StyleBoxFlat
         {
             BgColor = HudTheme.Panel,
             BorderColor = new Color(1, 1, 1, 0.15f),
@@ -72,11 +76,15 @@ public abstract partial class ProgressionPanel : PanelContainer
     }
 
     /// <summary>Mensagem curta no rodapé (ex.: motivo de uma recusa); vazio limpa.</summary>
-    public void SetMessage(string message)
+    public void SetMessage(string message, Color? color = null)
     {
         _message = message;
+        _messageColor = color;
         _key = "";
     }
+
+    /// <summary>Força refazer os controles no próximo <see cref="Render"/> (estado só da tela mudou: aba, confirmação).</summary>
+    protected void Refresh() => _key = "";
 
     /// <summary>Atualiza com o estado do jogador (só refaz os controles se algo mostrado mudou).</summary>
     public void Render(EntitySnapshot self)
@@ -103,7 +111,7 @@ public abstract partial class ProgressionPanel : PanelContainer
         if (_message.Length > 0)
         {
             var label = Small(_message, 12);
-            label.AddThemeColorOverride("font_color", HudTheme.Warning);
+            label.AddThemeColorOverride("font_color", _messageColor ?? HudTheme.Warning);
             _box.AddChild(label);
         }
 
@@ -121,6 +129,25 @@ public abstract partial class ProgressionPanel : PanelContainer
         label.AddThemeFontSizeOverride("font_size", 18);
         label.AddThemeColorOverride("font_color", HudTheme.Suggested);
         return label;
+    }
+
+    /// <summary>Título da janela: na placa de pedra quando a janela é de pedra e a peça existe; senão, o título de sempre.</summary>
+    protected Control WindowTitle(string text)
+    {
+        if (!StoneWindow || HudTheme.WindowTitlePlate() is not { } plate)
+        {
+            return Title(text);
+        }
+
+        var holder = new PanelContainer { SizeFlagsHorizontal = SizeFlags.ShrinkCenter };
+        holder.AddThemeStyleboxOverride("panel", plate);
+        var label = new Label { Text = text, HorizontalAlignment = HorizontalAlignment.Center };
+        label.AddThemeFontSizeOverride("font_size", 16);
+        label.AddThemeColorOverride("font_color", HudTheme.Suggested);
+        label.AddThemeColorOverride("font_outline_color", Colors.Black);
+        label.AddThemeConstantOverride("outline_size", 4);
+        holder.AddChild(label);
+        return holder;
     }
 
     /// <summary>Texto menor; a cor pode ser trocada depois com <c>font_color</c> (por isso sem <c>LabelSettings</c>).</summary>

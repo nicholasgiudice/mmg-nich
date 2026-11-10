@@ -1,5 +1,5 @@
 {
-  "$comment": "Sprite de cada classe/monstro (T-053). Só apresentação: o Core não lê este arquivo. Coordenadas em pixels da folha; pivot = ponto entre os pés, que fica no centro do círculo de colisão. Direções: up, left, down, right. 'grid' usa a linha da primeira direção de 'dirOrder' e desce uma linha por direção; 'all' usa o mesmo trecho em todas as direções. Uma animação pode ter 'frame' e 'pivot' próprios: o gerador LPC exporta o golpe das armas grandes (espada, maça) em quadros de 128 ou 192 px abaixo da linha 54 (y = 3456), e a linha padrão sai sem a arma. Créditos em CREDITS.md e em design/art-direction-v0.1.md. 'tint': [r, g, b] ou [r, g, b, a], de 0 a 1, multiplica a cor do sprite (fantasmas, névoa, sombras; T-056). Os monstros da fase 3 (monster.spectral_knight, dead_priest, faceless_watcher, shade, mist_fairy) têm ids provisórios até os dados da fase 3 existirem (T-056); 'preview_fase3' os mostra no lugar dos monstros atuais. 'variants.<nome>' troca sprites só quando o cliente roda com --art=<nome> (mecanismo da T-090; usado para prévias, como na T-056).",
+  "$comment": "Sprite de cada classe/monstro (T-053). Só apresentação: o Core não lê este arquivo. Coordenadas em pixels da folha; pivot = ponto entre os pés, que fica no centro do círculo de colisão. Direções: up, left, down, right. 'grid' usa a linha da primeira direção de 'dirOrder' e desce uma linha por direção; 'all' usa o mesmo trecho em todas as direções. Uma animação pode ter 'frame' e 'pivot' próprios: o gerador LPC exporta o golpe das armas grandes (espada, maça) em quadros de 128 ou 192 px abaixo da linha 54 (y = 3456), e a linha padrão sai sem a arma. Créditos em CREDITS.md e em design/art-direction-v0.1.md. 'tint': [r, g, b] ou [r, g, b, a], de 0 a 1, multiplica a cor do sprite (fantasmas, névoa, sombras; T-056). Os monstros da fase 3 (monster.spectral_knight, dead_priest, faceless_watcher, shade, mist_fairy) têm ids provisórios até os dados da fase 3 existirem (T-056); 'preview_fase3' os mostra no lugar dos monstros atuais. 'variants.<nome>' troca sprites só quando o cliente roda com --art=<nome> (mecanismo da T-090; usado para prévias, como na T-056). Os NPCs da cidade (npc.*, T-323) usam folhas das classes e monstros como provisório, até terem arte própria.",
   "layouts": {
     "ulpc": {
       "frame": [64, 64],
@@ -93,7 +93,13 @@
     "monster.dead_priest": { "layout": "ulpc", "texture": "characters/dead_priest.png", "use": { "attack": "spellcast", "cast": "spellcast" } },
     "monster.faceless_watcher": { "layout": "ulpc", "texture": "characters/faceless_watcher.png", "scale": 2, "use": { "attack": "spellcast", "cast": "spellcast" } },
     "monster.shade": { "layout": "ulpc", "texture": "characters/shade.png", "use": { "attack": "slash", "cast": "spellcast" }, "tint": [0.45, 0.4, 0.6, 0.6] },
-    "monster.mist_fairy": { "layout": "ulpc", "texture": "characters/mist_fairy.png", "use": { "attack": "spellcast", "cast": "spellcast" }, "tint": [0.95, 1.0, 1.1, 0.8] }
+    "monster.mist_fairy": { "layout": "ulpc", "texture": "characters/mist_fairy.png", "use": { "attack": "spellcast", "cast": "spellcast" }, "tint": [0.95, 1.0, 1.1, 0.8] },
+    "npc.priest": { "layout": "ulpc", "texture": "characters/cleric.png" },
+    "npc.smith": { "layout": "ulpc", "texture": "characters/warrior.png" },
+    "npc.merchant": { "layout": "ulpc", "texture": "characters/bandit.png" },
+    "npc.trainer": { "layout": "ulpc", "texture": "characters/archer.png" },
+    "npc.storage": { "layout": "ulpc", "texture": "characters/cleric.png", "tint": [0.85, 0.95, 1.1] },
+    "npc.innkeeper": { "layout": "ulpc", "texture": "characters/mage.png" }
   },
   "variants": {
     "preview_fase3": {

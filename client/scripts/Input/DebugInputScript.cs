@@ -59,6 +59,14 @@ public sealed class DebugInputScript
                 return;
             }
 
+            // T-323: wait:s espera s segundos antes do próximo item (ex.: andar um trecho com press/release).
+            if (action.StartsWith("wait:", StringComparison.Ordinal)
+                && double.TryParse(action["wait:".Length..], System.Globalization.CultureInfo.InvariantCulture, out var wait))
+            {
+                _next = _elapsed + wait;
+                return;
+            }
+
             if (action.StartsWith("release:", StringComparison.Ordinal))
             {
                 var held = action["release:".Length..];

@@ -16,7 +16,8 @@ public readonly record struct AbilitySlotState(
     string? Charges,
     string Rank = "",
     bool NotLearned = false,
-    bool Empty = false);
+    bool Empty = false,
+    bool Depleted = false);
 
 /// <summary>
 /// Um slot: ícone (T-080; sem ícone, a sigla), tecla, custo, NH (T-064), cargas, varredura de recarga e estado indisponível.
@@ -207,6 +208,11 @@ public partial class AbilitySlot : Control
             DrawRect(rect, NotLearnedShade);
             DrawString(font, new Vector2(0, Size.Y / 2 + 4), "não", HorizontalAlignment.Center, Size.X, 10, new Color(1, 1, 1, 0.8f));
             DrawString(font, new Vector2(0, Size.Y / 2 + 15), "aprendida", HorizontalAlignment.Center, Size.X, 9, new Color(1, 1, 1, 0.8f));
+        }
+        else if (_state.Depleted)
+        {
+            // T-323: atalho de consumível sem nenhuma unidade no inventário.
+            DrawRect(rect, NotLearnedShade);
         }
         else if (_state.NoResource)
         {

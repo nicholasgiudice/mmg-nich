@@ -19,6 +19,9 @@ public static class HudTheme
     public static readonly Color Suggested = new(1f, 0.85f, 0.45f);
     public static readonly Color Warning = new(1f, 0.55f, 0.4f);
 
+    /// <summary>Ouro (T-323): valor no inventário, na loja e o "+N" sobre o personagem.</summary>
+    public static readonly Color Gold = new(1f, 0.82f, 0.30f);
+
     /// <summary>Borda dourada das barras nos quadros de pedra (kit pedra e ouro, T-086).</summary>
     public static readonly Color BarBorderGold = new(0.80f, 0.64f, 0.26f);
 
@@ -60,6 +63,32 @@ public static class HudTheme
         UiStyles[key] = style;
         return style;
     }
+
+    /// <summary>
+    /// Moldura de janela de pedra e ouro (T-089): 9-slice de <c>window_frame.png</c> em 1×, com pouca margem em cima para a
+    /// placa do título (<see cref="WindowTitlePlate"/>) ficar por cima da borda. Null sem o arquivo.
+    /// </summary>
+    public static StyleBox? WindowFrame()
+    {
+        if (UiPiece("window_frame.png", 18, 24, 18) is not StyleBoxTexture piece)
+        {
+            return null;
+        }
+
+        var style = (StyleBoxTexture)piece.Duplicate();
+        style.ContentMarginTop = 3;
+        return style;
+    }
+
+    /// <summary>Placa de pedra do título da janela (T-089); null sem o arquivo.</summary>
+    public static StyleBox? WindowTitlePlate() => UiPiece("window_title.png", 6, 18, 2);
+
+    /// <summary>Espaço de equipamento de pedra (T-089): 9-slice de <c>equip_slot.png</c>, borda de 9 px; null sem o arquivo.</summary>
+    public static StyleBox? EquipSlot() => UiPiece("equip_slot.png", 9, 9, 9);
+
+    /// <summary>Nicho de pedra atrás do boneco (T-089); null sem o arquivo.</summary>
+    public static Texture2D? DollNiche() =>
+        ResourceLoader.Exists(UiDirectory + "doll_niche.png") ? ResourceLoader.Load<Texture2D>(UiDirectory + "doll_niche.png") : null;
 
     /// <summary>Moldura fina de pedra (quadro de membro do grupo, T-311).</summary>
     public static StyleBox MemberFrame() =>
