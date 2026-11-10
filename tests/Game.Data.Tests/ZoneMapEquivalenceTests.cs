@@ -4,9 +4,10 @@ using Game.Core.Definitions;
 namespace Game.Data.Tests;
 
 /// <summary>
-/// T-331: a zona montada a partir do mapa do Tiled é igual à que vinha do <c>zones.json</c> antes da migração
-/// (<c>Fixtures/zones-before-t331.json</c>): nascimento, portões (retângulo, destino, chegada) e pontos de surgimento (na
-/// mesma ordem, que é o grupo de aggro de cada ponto), sem nenhuma posição mudada.
+/// T-331: a zona montada a partir do mapa do Tiled tem o que vinha do <c>zones.json</c> antes da migração
+/// (<c>Fixtures/zones-before-t331.json</c>). As posições (nascimento, portões e pontos de surgimento) eram comparadas uma a
+/// uma até a T-330, que redesenhou a Cidade e os Campos maiores; agora só o que não é posição continua igual, e os NPCs da
+/// Cidade são os mesmos.
 /// </summary>
 public class ZoneMapEquivalenceTests
 {
@@ -42,15 +43,15 @@ public class ZoneMapEquivalenceTests
 
     [Theory]
     [MemberData(nameof(Zones))]
-    public void Zone_built_from_the_map_equals_the_old_zones_json(string zoneId)
+    public void Zone_built_from_the_map_keeps_what_is_not_a_position(string zoneId)
     {
         var old = Before.Value[zoneId];
         var zone = Db.Value.Zones[zoneId];
 
-        var spawn = JsonSerializer.Deserialize<PositionDefinition>(old.GetProperty("spawn").GetRawText(), GameJson.Options);
-        Assert.Equal(spawn, zone.Spawn);
-        Assert.Equal(Read<GateDefinition>(old, "gates"), zone.Gates);
-        Assert.Equal(Read<MonsterSpawnDefinition>(old, "monsterSpawns"), zone.MonsterSpawns);
+        // Os mesmos portões (destinos) e os mesmos monstros, em qualquer quantidade de pontos.
+        Assert.Equal(Read<GateDefinition>(old, "gates").Select(g => g.To).Order(StringComparer.Ordinal), zone.Gates.Select(g => g.To).Order(StringComparer.Ordinal));
+        Assert.Equal(Read<MonsterSpawnDefinition>(old, "monsterSpawns").Select(s => s.Monster).Distinct().Order(StringComparer.Ordinal),
+            zone.MonsterSpawns.Select(s => s.Monster).Distinct().Order(StringComparer.Ordinal));
 
         // O que não é posição continua no zones.json, igual.
         Assert.Equal(old.GetProperty("name").GetString(), zone.Name);
@@ -68,7 +69,6 @@ public class ZoneMapEquivalenceTests
             ["npc.innkeeper", "npc.merchant", "npc.priest", "npc.smith", "npc.storage", "npc.trainer"],
             npcs.Select(n => n.Npc).Order(StringComparer.Ordinal));
         var smith = Assert.Single(npcs, n => n.Npc == "npc.smith");
-        Assert.Equal(new PositionDefinition(33, 9.5), smith.Position); // retângulo (1040, 288) 32×32 px: o centro
         Assert.Equal("Ferreiro", smith.Properties["name"]);
         Assert.Equal("shop.smith", smith.Shop); // T-321
         Assert.Equal("shop.temple", Assert.Single(npcs, n => n.Npc == "npc.priest").Shop);
