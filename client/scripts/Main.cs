@@ -200,10 +200,17 @@ public partial class Main : Node2D
                 if (running)
                 {
                     // T-222: clique num item no chão pega (e não ataca); F pega o mais próximo ao alcance.
+                    // T-323: clique num NPC abre a loja (e também não ataca).
                     var itemUnderMouse = _worldView.PickGroundItemAt(mousePx);
+                    var npcUnderMouse = hovered is null ? _worldView.PickNpcAt(mousePx) : null;
                     if (!_hud.IsTyping)
                     {
-                        _input.Update(_authority, aim, hovered, _hud.IsPointerOverUi() || itemUnderMouse is not null);
+                        _input.Update(_authority, aim, hovered, _hud.IsPointerOverUi() || itemUnderMouse is not null || npcUnderMouse is not null);
+                    }
+
+                    if (npcUnderMouse is { } npc && !_hud.IsPointerOverUi() && Godot.Input.IsActionJustPressed(InputActions.Attack))
+                    {
+                        TalkTo(npc.Id, npc.Info);
                     }
 
                     OfferPartyInvite(mousePx, hovered);
@@ -400,6 +407,52 @@ public partial class Main : Node2D
     {
         _paused = false;
         _overlay.Close();
+    }
+
+    /// <summary>
+    /// T-323: clique num NPC. Com loja e ao alcance, abre a janela da loja; longe, avisa "Chegue mais perto" sobre o
+    /// personagem (o personagem não anda sozinho até o NPC). NPC sem loja só diz o nome.
+    /// </summary>
+    private void TalkTo(EntityId npc, Game.Core.Combat.Shops.NpcInfo info)
+    {
+        if (_authority?.ControlledEntity is not { } me || _authority.Latest is not { } latest)
+        {
+            return;
+        }
+
+        var self = latest.Entities.FirstOrDefault(e => e.Id == me)?.TryGet<Game.Core.Simulation.Components.Transform>();
+        var at = latest.Entities.FirstOrDefault(e => e.Id == npc)?.TryGet<Game.Core.Simulation.Components.Transform>();
+        if (info.Shop is null)
+        {
+            _worldView.ShowText(me, $"{info.Name}: não tenho nada para vender.", new Color(0.85f, 0.9f, 1f));
+            return;
+        }
+
+        if (self is null || at is null || System.Numerics.Vector2.Distance(self.Position, at.Position) > _content.Rules.Shops.InteractRange)
+        {
+            _worldView.ShowText(me, "Chegue mais perto", new Color(1f, 0.85f, 0.35f));
+            return;
+        }
+
+        _hud.OpenShop(npc, info);
+    }
+
+    /// <summary>Roteiro (T-323): o mesmo que clicar no NPC com loja mais perto do personagem.</summary>
+    private void DemoShop(EntityId me)
+    {
+        var latest = _authority?.Latest;
+        var self = latest?.Entities.FirstOrDefault(e => e.Id == me)?.TryGet<Game.Core.Simulation.Components.Transform>();
+        var npc = latest?.Entities
+            .Where(e => e.TryGet<Game.Core.Combat.Shops.NpcInfo>()?.Shop is not null && e.TryGet<Game.Core.Simulation.Components.Transform>() is not null)
+            .OrderBy(e => self is null ? 0 : System.Numerics.Vector2.Distance(self.Position, e.Get<Game.Core.Simulation.Components.Transform>().Position))
+            .FirstOrDefault();
+        if (npc is null)
+        {
+            GD.PushWarning("[demo] shop: nenhum NPC com loja à vista");
+            return;
+        }
+
+        TalkTo(npc.Id, npc.Get<Game.Core.Combat.Shops.NpcInfo>());
     }
 
     /// <summary>
@@ -743,8 +796,26 @@ public partial class Main : Node2D
             return;
         }
 
+        // T-323: loja pelo roteiro. shop = clicar no NPC com loja mais perto; buy:oferta;qtd, sell:espaço;qtd e use:espaço
+        // mandam as mesmas intenções dos botões da janela e do duplo clique no inventário.
+        if (verb == "shop")
+        {
+            DemoShop(me);
+            return;
+        }
+
+        var nums = arg.Split(';').Select(p => int.TryParse(p, out var v) ? v : -1).ToArray();
+        if (verb is "buy" or "sell" && _hud.ShopNpc is { } shopNpc && nums.Length == 2)
+        {
+            _authority.Send(verb == "buy"
+                ? new Game.Core.Intents.BuyIntent(me, shopNpc, nums[0], nums[1])
+                : new Game.Core.Intents.SellIntent(me, shopNpc, nums[0], nums[1]));
+            return;
+        }
+
         Game.Core.Intents.Intent? intent = verb switch
         {
+            "use" when int.TryParse(arg, out var useSlot) => new Game.Core.Intents.UseItemIntent(me, useSlot),
             "spend" when Enum.TryParse<AttributeKind>(arg, ignoreCase: true, out var attr) => new Game.Core.Intents.SpendAttributePointIntent(me, attr),
             "raise" => new Game.Core.Intents.RaiseSkillRankIntent(me, arg),
             "reset_points" => new Game.Core.Intents.ResetPointsIntent(me),

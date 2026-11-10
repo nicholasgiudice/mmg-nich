@@ -19,6 +19,7 @@ public abstract partial class ProgressionPanel : PanelContainer
     private readonly VBoxContainer _box = new();
     private string _key = "";
     private string _message = "";
+    private Color? _messageColor;
     private double _confirmLeft;
 
     protected ContentCatalog Content { get; private set; } = ContentCatalog.Empty;
@@ -72,11 +73,15 @@ public abstract partial class ProgressionPanel : PanelContainer
     }
 
     /// <summary>Mensagem curta no rodapé (ex.: motivo de uma recusa); vazio limpa.</summary>
-    public void SetMessage(string message)
+    public void SetMessage(string message, Color? color = null)
     {
         _message = message;
+        _messageColor = color;
         _key = "";
     }
+
+    /// <summary>Força refazer os controles no próximo <see cref="Render"/> (estado só da tela mudou: aba, confirmação).</summary>
+    protected void Refresh() => _key = "";
 
     /// <summary>Atualiza com o estado do jogador (só refaz os controles se algo mostrado mudou).</summary>
     public void Render(EntitySnapshot self)
@@ -103,7 +108,7 @@ public abstract partial class ProgressionPanel : PanelContainer
         if (_message.Length > 0)
         {
             var label = Small(_message, 12);
-            label.AddThemeColorOverride("font_color", HudTheme.Warning);
+            label.AddThemeColorOverride("font_color", _messageColor ?? HudTheme.Warning);
             _box.AddChild(label);
         }
 

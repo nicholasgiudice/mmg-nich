@@ -53,11 +53,11 @@ public partial class InventoryPanel : ProgressionPanel
         return string.Join("|",
             inv is null ? "-" : string.Join(";", inv.Slots.Select(Key)),
             eq is null ? "-" : string.Join(";", Enum.GetValues<EquipSlot>().Select(s => Key(eq[s]))),
-            s?.WeaponDamage, s?.Armor, s?.Resistance);
+            s?.WeaponDamage, s?.Armor, s?.Resistance, self.TryGet<Wallet>()?.Gold);
     }
 
     private static string Key(ItemInstance? item) =>
-        item is null ? "" : $"{item.BaseId}:{item.Level}:{item.Rarity}:{string.Join(",", item.Affixes)}";
+        item is null ? "" : $"{item.BaseId}:{item.Level}:{item.Rarity}:{item.Count}:{string.Join(",", item.Affixes)}";
 
     protected override void Build(VBoxContainer box, EntitySnapshot self)
     {
@@ -98,12 +98,22 @@ public partial class InventoryPanel : ProgressionPanel
                 current = equipment[slot];
             }
 
+            // T-323: consumível usa no duplo clique e vai para a barra como atalho do tipo (o mesmo dado da tela de habilidades).
+            var consumable = item is not null && Content.Items.TryGetValue(item.BaseId, out var itemDef) && itemDef.IsConsumable;
+            var drag = item is null ? null : new Godot.Collections.Dictionary { [DragInventory] = index };
+            if (consumable)
+            {
+                drag![AbilitySlot.DragAbility] = item!.BaseId;
+            }
+
             grid.AddChild(new ItemSlotButton(Content, item, SlotSize, empty: null,
                 item is null ? "" : ItemText.Tooltip(Content, item, classId, current, isEquipped: false))
             {
                 Unusable = item is not null && !ItemText.CanUse(Content, item, classId),
-                DragData = item is null ? null : new Godot.Collections.Dictionary { [DragInventory] = index },
-                DoubleClick = item is null ? null : () => Send?.Invoke(new EquipItemIntent(self.Id, index)),
+                DragData = drag,
+                DoubleClick = item is null ? null
+                    : consumable ? () => Send?.Invoke(new UseItemIntent(self.Id, index))
+                    : () => Send?.Invoke(new EquipItemIntent(self.Id, index)),
                 Right = item is null ? null : () => Send?.Invoke(new DropItemIntent(self.Id, index)),
                 DroppedOutside = item is null ? null : () => Send?.Invoke(new DropItemIntent(self.Id, index)),
                 Accepts = data => data.ContainsKey(DragEquipped),
@@ -113,9 +123,26 @@ public partial class InventoryPanel : ProgressionPanel
         }
 
         bag.AddChild(grid);
-        bag.AddChild(Small("Arraste para o boneco ou duplo clique: equipar · do boneco para a mochila: desequipar · "
-            + "para fora da janela ou botão direito: largar no chão · F pega do chão", 10, 0.6f, Columns * (SlotSize + 3)));
+        bag.AddChild(GoldLine(self.TryGet<Wallet>()?.Gold ?? 0));
+        bag.AddChild(Small("Arraste para o boneco ou duplo clique: equipar · poção: duplo clique usa, arraste para a barra · "
+            + "do boneco para a mochila: desequipar · para fora da janela ou botão direito: largar no chão · F pega do chão",
+            10, 0.6f, Columns * (SlotSize + 3)));
         columns.AddChild(bag);
+    }
+
+    /// <summary>Ouro do personagem (T-323), embaixo da grade: moeda desenhada e o valor em dourado.</summary>
+    private static Control GoldLine(long gold)
+    {
+        var line = new HBoxContainer { MouseFilter = MouseFilterEnum.Ignore };
+        line.AddThemeConstantOverride("separation", 6);
+        line.AddChild(new Control { SizeFlagsHorizontal = SizeFlags.ExpandFill, MouseFilter = MouseFilterEnum.Ignore });
+        line.AddChild(new GoldCoin { CustomMinimumSize = new Vector2(14, 14), SizeFlagsVertical = SizeFlags.ShrinkCenter });
+        var label = Small(ItemText.Gold(gold), 14, 1f);
+        label.AddThemeColorOverride("font_color", HudTheme.Gold);
+        label.TooltipText = "Ouro: cai dos monstros e paga as lojas da Cidade (Templo e Ferreiro).";
+        label.MouseFilter = MouseFilterEnum.Pass;
+        line.AddChild(label);
+        return line;
     }
 
     /// <summary>A figura da classe (parada, de frente) com os 6 espaços em volta: cabeça em cima, peito no meio, mãos e arma de um lado, acessório do outro, pés embaixo.</summary>
@@ -196,6 +223,22 @@ public partial class InventoryPanel : ProgressionPanel
         return line;
     }
 
+    /// <summary>Moeda de ouro desenhada (T-323): círculo dourado com borda escura e brilho.</summary>
+    internal sealed partial class GoldCoin : Control
+    {
+        public override void _Ready() => MouseFilter = MouseFilterEnum.Ignore;
+
+        public override void _Draw()
+        {
+            var r = Mathf.Min(Size.X, Size.Y) / 2;
+            var c = Size / 2;
+            DrawCircle(c, r, new Color(0.35f, 0.24f, 0.05f));
+            DrawCircle(c, r - 1.5f, HudTheme.Gold);
+            DrawCircle(c, r - 4f, new Color(0.85f, 0.62f, 0.15f));
+            DrawCircle(c + new Vector2(-r * 0.3f, -r * 0.3f), r * 0.22f, new Color(1f, 0.97f, 0.75f));
+        }
+    }
+
     /// <summary>Fundo do boneco: a figura da classe, parada e de frente, ampliada com zoom inteiro.</summary>
     private sealed partial class DollFigure : Control
     {
@@ -229,7 +272,7 @@ public partial class InventoryPanel : ProgressionPanel
     /// Quadrado de item: borda na cor da raridade, ícone e tooltip em BBCode. Arrasta <see cref="DragData"/>; aceita o
     /// que <see cref="Accepts"/> aprova (borda dourada enquanto o item está em cima).
     /// </summary>
-    private sealed partial class ItemSlotButton : Button
+    internal sealed partial class ItemSlotButton : Button
     {
         private static readonly Color AcceptColor = new(1f, 0.85f, 0.45f);
 
@@ -377,12 +420,34 @@ public partial class InventoryPanel : ProgressionPanel
                     Unusable ? new Color(1, 1, 1, 0.35f) : Colors.White);
             }
 
-            DrawString(font, new Vector2(3, Size.Y - 4), _item.Level.ToString(System.Globalization.CultureInfo.InvariantCulture),
-                HorizontalAlignment.Left, -1, 9, new Color(1, 1, 1, 0.6f));
+            if (_content.Items.TryGetValue(_item.BaseId, out var def) && def.IsConsumable)
+            {
+                // T-323: pilha com a quantidade no canto (o nível não diz nada de um consumível).
+                DrawCount(this, font, rect, _item.Count);
+            }
+            else
+            {
+                DrawString(font, new Vector2(3, Size.Y - 4), _item.Level.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                    HorizontalAlignment.Left, -1, 9, new Color(1, 1, 1, 0.6f));
+            }
             if (Unusable)
             {
                 DrawLine(new Vector2(6, 6), Size - new Vector2(6, 6), new Color(1f, 0.4f, 0.35f, 0.8f), 2f);
             }
+        }
+
+        /// <summary>Quantidade (só de 2 para cima) no canto de baixo à direita, com contorno para ler sobre o ícone.</summary>
+        public static void DrawCount(CanvasItem canvas, Font font, Rect2 rect, int count)
+        {
+            if (count <= 1)
+            {
+                return;
+            }
+
+            var text = count.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            var at = new Vector2(rect.Position.X, rect.End.Y - 3);
+            canvas.DrawStringOutline(font, at, text, HorizontalAlignment.Right, rect.Size.X - 3, 12, 4, Colors.Black);
+            canvas.DrawString(font, at, text, HorizontalAlignment.Right, rect.Size.X - 3, 12, Colors.White);
         }
 
         private void OnGuiInput(InputEvent e)

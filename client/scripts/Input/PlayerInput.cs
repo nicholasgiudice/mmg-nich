@@ -32,6 +32,9 @@ public sealed class PlayerInput
     private readonly Func<string, bool> _justPressed;
     private readonly Func<string, bool> _pressed;
     private readonly Func<string, bool> _justReleased;
+
+    /// <summary>T-323: consumível que cura vida (o que a tecla Q usa); sem catálogo, qualquer consumível.</summary>
+    private readonly Func<string, bool> _isHealingItem = IsConsumableItem;
     private Vec2 _lastMove;
     private readonly Dictionary<string, (long SentTick, long ReadyAtSend)> _lastSent = new(StringComparer.Ordinal);
 
@@ -59,6 +62,7 @@ public sealed class PlayerInput
         : this(new Dictionary<string, AbilityDefinition>())
     {
         _lookup = (id, state) => content.AbilityAt(id, state?.RankOf(id) ?? 1);
+        _isHealingItem = id => Hud.ItemText.IsHealingConsumable(content, id);
     }
 
     /// <summary>Barra de atalhos 1–6 (T-081); null = as habilidades aprendidas na ordem do estado, como antes.</summary>
@@ -203,7 +207,7 @@ public sealed class PlayerInput
                 // Poção só no aperto: segurar não deve gastar todas. T-320: consumível é item do inventário.
                 if (_justPressed(action))
                 {
-                    UseConsumable(authority, self, id);
+                    UseConsumable(authority, self, item => item == id);
                 }
 
                 continue;
@@ -229,21 +233,25 @@ public sealed class PlayerInput
             }
         }
 
-        // Poção só no aperto: segurar não deve gastar todas. T-320: usa o primeiro consumível do inventário.
+        // Poção só no aperto: segurar não deve gastar todas. T-323: Q usa a primeira poção de vida do inventário.
         if (_justPressed(InputActions.Consumable))
         {
-            UseConsumable(authority, self, null);
+            UseConsumable(authority, self, _isHealingItem);
         }
     }
 
     /// <summary>T-320: ids de item consumível (<c>consumable.*</c>) na barra.</summary>
-    private static bool IsConsumableItem(string id) => id.StartsWith("consumable.", StringComparison.Ordinal);
+    public static bool IsConsumableItem(string id) => id.StartsWith("consumable.", StringComparison.Ordinal);
+
+    /// <summary>Id de item da tecla Q (T-323): a primeira poção de vida do inventário; null = nenhuma.</summary>
+    public string? QuickConsumable(EntitySnapshot self) =>
+        self.TryGet<Game.Core.Combat.Items.Inventory>()?.Slots.FirstOrDefault(i => i is not null && _isHealingItem(i.BaseId))?.BaseId;
 
     /// <summary>
-    /// T-320: usa a primeira pilha do consumível <paramref name="baseId"/> (null = qualquer consumível) com
-    /// <see cref="UseItemIntent"/>. A barra e o painel de verdade ficam para a T-323.
+    /// T-320/T-323: usa a primeira pilha de consumível que <paramref name="accepts"/> aprova, com <see cref="UseItemIntent"/>.
+    /// O atalho é do tipo de consumível, não do espaço: qualquer pilha dele serve.
     /// </summary>
-    private static void UseConsumable(IGameAuthority authority, EntitySnapshot self, string? baseId)
+    private static void UseConsumable(IGameAuthority authority, EntitySnapshot self, Func<string, bool> accepts)
     {
         if (self.TryGet<Game.Core.Combat.Items.Inventory>() is not { } inv)
         {
@@ -252,7 +260,7 @@ public sealed class PlayerInput
 
         for (var i = 0; i < inv.Capacity; i++)
         {
-            if (inv[i] is { } item && IsConsumableItem(item.BaseId) && (baseId is null || item.BaseId == baseId))
+            if (inv[i] is { } item && IsConsumableItem(item.BaseId) && accepts(item.BaseId))
             {
                 authority.Send(new UseItemIntent(self.Id, i));
                 return;
