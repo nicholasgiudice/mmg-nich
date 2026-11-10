@@ -37,7 +37,9 @@ public class ZoneMapEquivalenceTests
     [Fact]
     public void The_same_zones_exist()
     {
-        Assert.Equal(Before.Value.Keys.Order(StringComparer.Ordinal), Db.Value.Zones.Keys.Order(StringComparer.Ordinal));
+        // T-350: zonas novas depois da migração só podem ser instâncias (a de teste e as dungeons).
+        var open = Db.Value.Zones.Values.Where(z => z.Kind != ZoneKind.Instance).Select(z => z.Id);
+        Assert.Equal(Before.Value.Keys.Order(StringComparer.Ordinal), open.Order(StringComparer.Ordinal));
     }
 
     [Theory]

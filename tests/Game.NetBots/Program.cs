@@ -26,6 +26,9 @@ const string Usage = """
                               (o primeiro de cada bloco convida os outros pelo nome; os outros aceitam)
       --shop                  mundo aberto (T-321): anda até o Templo e compra uma poção de vida; sem ouro, vende antes
                               as poções iniciais. No fim sai a linha LOJA.
+      --party-size <n>        com --party: tamanho dos grupos (padrão rules.party.maxMembers)
+      --instance <zona>       mundo aberto (T-350): com o grupo completo, anda (A*) até o portão da zona atual que leva à
+                              instância e luta lá dentro. No fim sai a linha INSTÂNCIA.
     """;
 
 var a = args.ToList();
@@ -69,7 +72,8 @@ var tickets = Opt("--ticket", "").Split(',', StringSplitOptions.RemoveEmptyEntri
 var roam = a.Contains("--roam");
 var party = a.Contains("--party");
 var shop = a.Contains("--shop");
-var partySize = content.Rules.Party.MaxMembers;
+var instanceZone = Opt("--instance", "");
+var partySize = int.Parse(Opt("--party-size", content.Rules.Party.MaxMembers.ToString(CultureInfo.InvariantCulture)), CultureInfo.InvariantCulture);
 
 Console.WriteLine($"{count} bots ({strategy}) em {servers.Count} servidor(es), {perRoom} por sala, por até {duration:0} s; conteúdo {content.Fingerprint}");
 var bots = new List<NetBot>();
@@ -84,6 +88,8 @@ for (var i = 0; i < count; i++)
         Shop = shop,
         PartyInvites = leader ? Enumerable.Range(i + 1, Math.Min(partySize - 1, count - i - 1)).Select(j => $"netbot{j}").ToArray() : [],
         AcceptPartyInvites = party && !leader,
+        InstanceZone = instanceZone.Length > 0 ? instanceZone : null,
+        InstancePartySize = party ? Math.Min(partySize, count - (i / partySize * partySize)) : 1,
     });
 }
 
@@ -151,6 +157,12 @@ if (party)
 {
     Console.WriteLine($"GRUPO bots em grupo {bots.Count(b => b.PartySize > 1)}/{count} · tamanhos {string.Join(",", bots.Select(b => b.PartySize))} · "
         + $"estados recebidos {bots.Sum(b => b.PartyStates)} · recusas {bots.Sum(b => b.PartyRejections)}");
+}
+
+if (instanceZone.Length > 0)
+{
+    Console.WriteLine($"INSTÂNCIA {instanceZone}: bots dentro {bots.Count(b => b.InstanceId > 0)}/{count} · cópias {bots.Where(b => b.InstanceId > 0).Select(b => b.InstanceId).Distinct().Count()} "
+        + $"({string.Join(",", bots.Select(b => b.InstanceId))}) · entradas {bots.Sum(b => b.InstanceEntries)} · recusas {bots.Sum(b => b.InstanceRejections)}");
 }
 
 if (shop)

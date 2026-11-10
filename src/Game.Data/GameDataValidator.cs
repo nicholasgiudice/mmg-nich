@@ -100,6 +100,9 @@ internal static partial class GameDataValidator
         if (x.RestPerSecond < 0 || x.RestPerSecond > 1) { ctx.Error("restPerSecond", "Deve estar entre 0 e 1."); }
         if (x.Kind != ZoneKind.Safe && x.RestPerSecond > 0) { ctx.Error("restPerSecond", "Descanso só em zona segura."); }
         ctx.PositiveTicks("corpse", x.CorpseTicks);
+        ctx.PositiveTicks("emptyTimeout", x.EmptyTimeoutTicks);
+        ctx.PositiveTicks("outsiderTimeout", x.OutsiderTimeoutTicks);
+        if (x.MaxPlayers < 1) { ctx.Error("maxPlayers", "Deve ser ≥ 1."); }
         if (x.Levels is { } levels && (levels.Min < 1 || levels.Max < levels.Min))
         {
             ctx.Error("levels", $"Faixa de nível inválida ({levels.Min}–{levels.Max}): mínimo ≥ 1 e máximo ≥ mínimo.");

@@ -31,6 +31,13 @@ namespace Game.Server.Zones;
 /// <item>Grupo (T-310): <see cref="PartyManager"/> acima das zonas; cada membro tem o <c>PartyMembership</c> na entidade
 /// (refeito a cada troca de zona) e recebe o <see cref="PartyState"/> quando algo muda. Desconectar tira do grupo; o
 /// grupo não é gravado.</item>
+/// <item>Instâncias (T-350): zonas do tipo <see cref="ZoneKind.Instance"/> não existem de saída. Entrar no portão de uma delas
+/// leva à cópia do grupo (ou do personagem, sem grupo), criada na hora se não houver (<see cref="DungeonInstance"/>), até
+/// <see cref="ServerOptions.MaxInstances"/> no processo e <see cref="ZoneDefinition.MaxPlayers"/> por cópia; a recusa chega
+/// como <see cref="InstanceRejected"/>. Lá dentro: morte renasce na entrada da cópia; a gravação usa a zona de origem (a
+/// chegada da saída); quem não é do grupo dono sai depois de <see cref="ZoneDefinition.OutsiderTimeoutTicks"/>, com
+/// <see cref="InstanceNotice"/>; quem desconecta volta para dentro se reconectar enquanto a cópia existir; a cópia vazia some
+/// depois de <see cref="ZoneDefinition.EmptyTimeoutTicks"/>.</item>
 /// </list>
 /// </summary>
 public sealed class WorldServer : ITransportHandler, IGameHost, IPartyHost
@@ -53,6 +60,12 @@ public sealed class WorldServer : ITransportHandler, IGameHost, IPartyHost
     private readonly Dictionary<Guid, int> _online = new();
     private readonly Dictionary<int, long> _closeAt = new();
     private readonly PartyManager _parties;
+    private readonly Dictionary<string, ZoneDefinition> _instanceZones = new(StringComparer.Ordinal);
+    private readonly List<DungeonInstance> _instances = [];
+
+    /// <summary>Quem desconectou dentro de uma instância (chave do personagem) → cópia e posição, enquanto ela existir.</summary>
+    private readonly Dictionary<string, (DungeonInstance Instance, Vector2 Position)> _reservations = new(StringComparer.Ordinal);
+    private int _nextInstanceId = 1;
     private long _tick;
     private long _ticksSinceSave;
 
@@ -67,6 +80,12 @@ public sealed class WorldServer : ITransportHandler, IGameHost, IPartyHost
         var seed = options.Seed;
         foreach (var zone in content.Zones.Values.OrderBy(z => z.Id, StringComparer.Ordinal))
         {
+            if (zone.Kind == ZoneKind.Instance)
+            {
+                _instanceZones[zone.Id] = zone; // T-350: cópias sob demanda
+                continue;
+            }
+
             _zones[zone.Id] = new OpenZone(content, zone, seed++, options);
         }
 
@@ -75,7 +94,14 @@ public sealed class WorldServer : ITransportHandler, IGameHost, IPartyHost
             : throw new ArgumentException($"Zona inicial desconhecida: {options.StartZone} (zonas: {string.Join(", ", _zones.Keys)})");
     }
 
+    /// <summary>Zonas abertas (sem as instâncias).</summary>
     public IReadOnlyDictionary<string, OpenZone> Zones => _zones;
+
+    /// <summary>Instâncias de dungeon abertas agora (T-350), em ordem de criação.</summary>
+    public IReadOnlyList<DungeonInstance> Instances => _instances;
+
+    /// <summary>Zona (aberta ou cópia de instância) em que a conexão está; null se não está em jogo.</summary>
+    public OpenZone? ZoneOf(int peer) => _players.TryGetValue(peer, out var p) && p.Entity is not null ? p.Zone : null;
 
     public PartyManager Parties => _parties;
 
@@ -112,6 +138,13 @@ public sealed class WorldServer : ITransportHandler, IGameHost, IPartyHost
 
         if (p.Entity is { } e)
         {
+            if (InstanceOf(p.Zone!) is { } instance)
+            {
+                // T-350: volta para dentro se reconectar enquanto a cópia existir.
+                var at = e.IsAlive ? e.Get<Transform>().Position : instance.Zone.SpawnPosition;
+                _reservations[CharacterKey(p)] = (instance, at);
+            }
+
             SaveNow(p, "saída");
             p.Zone!.World.Remove(e.Id);
             _log.Information("{Name} saiu de {Zone}", p.Name, p.Zone.Id);
@@ -283,6 +316,15 @@ public sealed class WorldServer : ITransportHandler, IGameHost, IPartyHost
     /// <summary>Entrada no mundo: zona e posição gravadas, se a zona existe; senão o nascimento da zona inicial.</summary>
     private void Enter(Player p, CharacterState state)
     {
+        if (_reservations.Remove(CharacterKey(p), out var back) && _instances.Contains(back.Instance)
+            && PlayersIn(back.Instance.Zone).Count < back.Instance.Definition.MaxPlayers)
+        {
+            Place(p, back.Instance.Zone, state, back.Position, vitals: null);
+            p.EnteredInstanceAt = _tick;
+            _log.Information("{Name} voltou para a instância {Instance} ({Zone})", p.Name, back.Instance.Id, back.Instance.Zone.Id);
+            return;
+        }
+
         var (zone, position) = state.Location is { } at && _zones.TryGetValue(at.ZoneId, out var saved)
             ? (saved, new Vector2(at.X, at.Y))
             : (_start, _start.SpawnPosition);
@@ -303,6 +345,8 @@ public sealed class WorldServer : ITransportHandler, IGameHost, IPartyHost
         p.Pending.Clear();
         p.AckDue = false;
         p.WantsRespawn = false;
+        p.RefusedGate = null;
+        p.OutsiderDeadline = null;
         if (dropped.Count > 0)
         {
             _log.Warning("Itens salvos que o conteúdo não aceita mais foram descartados: {Items}", string.Join(", ", dropped));
@@ -314,7 +358,7 @@ public sealed class WorldServer : ITransportHandler, IGameHost, IPartyHost
             MarkParty(p.Peer);
         }
 
-        Send(p.Peer, new Welcome(p.Entity.Id, zone.World.Tick, zone.Id, zone.Arena.Id, p.Epoch));
+        Send(p.Peer, new Welcome(p.Entity.Id, zone.World.Tick, zone.Id, zone.Arena.Id, p.Epoch, zone.InstanceId));
     }
 
     /// <summary>Tira o personagem da zona atual e põe em <paramref name="to"/>, com o estado capturado agora.</summary>
@@ -373,7 +417,8 @@ public sealed class WorldServer : ITransportHandler, IGameHost, IPartyHost
 
         SaveAfterTick(active);
         MoveThroughGatesAndRespawn();
-        foreach (var zone in _zones.Values)
+        UpdateInstances();
+        foreach (var zone in _zones.Values.Concat(_instances.Select(i => i.Zone)))
         {
             Broadcast(zone);
         }
@@ -390,16 +435,32 @@ public sealed class WorldServer : ITransportHandler, IGameHost, IPartyHost
             {
                 if (p.WantsRespawn)
                 {
-                    Move(p, _start, _start.SpawnPosition, keepVitals: false, "renasceu");
+                    // T-350: numa instância, renasce na entrada da cópia (os monstros continuam como estavam).
+                    var home = p.Zone!.InstanceId > 0 ? p.Zone : _start;
+                    Move(p, home, home.SpawnPosition, keepVitals: false, "renasceu");
                 }
 
                 continue;
             }
 
             p.WantsRespawn = false;
-            if (e.TryGet<Transform>() is { } t && p.Zone!.GateAt(t.Position) is { } gate)
+            if (e.TryGet<Transform>() is not { } t || p.Zone!.GateAt(t.Position) is not { } gate)
             {
-                Move(p, _zones[gate.To], new Vector2((float)gate.Arrival.X, (float)gate.Arrival.Y), keepVitals: true, "portão");
+                p.RefusedGate = null;
+                continue;
+            }
+
+            var arrival = new Vector2((float)gate.Arrival.X, (float)gate.Arrival.Y);
+            if (_instanceZones.TryGetValue(gate.To, out var dungeon))
+            {
+                if (!ReferenceEquals(p.RefusedGate, gate))
+                {
+                    EnterInstance(p, dungeon, gate, arrival);
+                }
+            }
+            else
+            {
+                Move(p, _zones[gate.To], arrival, keepVitals: true, "portão");
             }
         }
     }
@@ -463,7 +524,9 @@ public sealed class WorldServer : ITransportHandler, IGameHost, IPartyHost
         }
 
         var position = e.Get<Transform>().Position;
-        var location = e.IsAlive ? new CharacterLocation(p.Zone!.Id, position.X, position.Y) : new CharacterLocation(_start.Id, 0, 0);
+        var location = p.Zone!.Definition.ExitGate() is { } exit
+            ? new CharacterLocation(exit.To, (float)exit.Arrival.X, (float)exit.Arrival.Y) // T-350: instância grava a zona de origem
+            : e.IsAlive ? new CharacterLocation(p.Zone.Id, position.X, position.Y) : new CharacterLocation(_start.Id, 0, 0);
         p.Saved = state with { Location = location };
         _accounts.Persistence.Save(id, p.Saved, reason);
     }
@@ -626,6 +689,118 @@ public sealed class WorldServer : ITransportHandler, IGameHost, IPartyHost
         return new PartyState(party.PartyId, party.Leader, member, members);
     }
 
+    // ---------------- instâncias (T-350) ----------------
+
+    /// <summary>Personagem: id da conta, ou o nome no <c>--dev-login</c>.</summary>
+    private static string CharacterKey(Player p) => p.CharacterId is { } id ? id.ToString("N") : "dev:" + p.Name.ToLowerInvariant();
+
+    /// <summary>Dono de cópia que o personagem procura: o grupo dele ou, sem grupo, ele mesmo.</summary>
+    private string GroupKey(Player p) => _parties.PartyOf(p.Peer) is var party and not 0 ? $"party:{party}" : "solo:" + CharacterKey(p);
+
+    private DungeonInstance? InstanceOf(OpenZone zone) => zone.InstanceId > 0 ? _instances.FirstOrDefault(i => i.Zone == zone) : null;
+
+    private List<Player> PlayersIn(OpenZone zone) => _players.Values.Where(p => p.Zone == zone && p.Entity is not null).ToList();
+
+    private void EnterInstance(Player p, ZoneDefinition dungeon, GateDefinition gate, Vector2 arrival)
+    {
+        var owner = GroupKey(p);
+        var instance = _instances.FirstOrDefault(i => i.Definition.Id == dungeon.Id && i.Owner == owner);
+        if (instance is null && _instances.Count >= _options.MaxInstances)
+        {
+            RefuseInstance(p, gate, dungeon, InstanceRejectReason.TooManyInstances, $"{_instances.Count} instâncias abertas (máximo {_options.MaxInstances})");
+            return;
+        }
+
+        if (instance is not null && PlayersIn(instance.Zone).Count >= dungeon.MaxPlayers)
+        {
+            RefuseInstance(p, gate, dungeon, InstanceRejectReason.InstanceFull, $"instância {instance.Id} com {dungeon.MaxPlayers} personagens");
+            return;
+        }
+
+        if (instance is null)
+        {
+            var id = _nextInstanceId++;
+            instance = new DungeonInstance(id, new OpenZone(_content, dungeon, DungeonInstance.SeedFor(_options.Seed, id), _options, id), owner, _tick);
+            _instances.Add(instance);
+            _log.Information("Instância {Instance} de {Zone} criada para {Owner} ({Count}/{Max})", id, dungeon.Id, owner, _instances.Count, _options.MaxInstances);
+        }
+
+        Move(p, instance.Zone, arrival, keepVitals: true, $"instância {instance.Id}");
+        p.EnteredInstanceAt = _tick;
+    }
+
+    private void RefuseInstance(Player p, GateDefinition gate, ZoneDefinition dungeon, InstanceRejectReason reason, string detail)
+    {
+        p.RefusedGate = gate;
+        _log.Information("{Name}: entrada em {Zone} recusada: {Reason} ({Detail})", p.Name, dungeon.Id, reason, detail);
+        Send(p.Peer, new InstanceRejected(dungeon.Id, reason, detail));
+    }
+
+    /// <summary>
+    /// Depois dos portões: cópias vazias contam o prazo e somem; cópia sem ninguém do grupo dono passa para o grupo de quem
+    /// entrou primeiro (ex.: o grupo se desfez lá dentro); quem não é do dono recebe aviso e sai no fim do prazo.
+    /// </summary>
+    private void UpdateInstances()
+    {
+        foreach (var instance in _instances.ToList())
+        {
+            var inside = PlayersIn(instance.Zone).OrderBy(p => p.EnteredInstanceAt).ThenBy(p => p.Peer).ToList();
+            if (inside.Count == 0)
+            {
+                instance.EmptySince ??= _tick;
+                if (_tick - instance.EmptySince >= instance.Definition.EmptyTimeoutTicks)
+                {
+                    Destroy(instance);
+                }
+
+                continue;
+            }
+
+            instance.EmptySince = null;
+            if (!inside.Any(p => GroupKey(p) == instance.Owner)
+                && inside.Select(GroupKey).FirstOrDefault(k => !_instances.Any(o => o != instance && o.Definition.Id == instance.Definition.Id && o.Owner == k)) is { } heir)
+            {
+                _log.Information("Instância {Instance}: dono {From} → {To}", instance.Id, instance.Owner, heir);
+                instance.Owner = heir;
+            }
+
+            foreach (var p in inside)
+            {
+                if (GroupKey(p) == instance.Owner)
+                {
+                    if (p.OutsiderDeadline is not null)
+                    {
+                        p.OutsiderDeadline = null;
+                        Send(p.Peer, new InstanceNotice(InstanceNoticeKind.StayCancelled, 0));
+                    }
+                }
+                else if (p.OutsiderDeadline is not { } deadline)
+                {
+                    p.OutsiderDeadline = _tick + instance.Definition.OutsiderTimeoutTicks;
+                    Send(p.Peer, new InstanceNotice(InstanceNoticeKind.LeavingSoon, instance.Definition.OutsiderTimeoutTicks));
+                }
+                else if (_tick >= deadline)
+                {
+                    Send(p.Peer, new InstanceNotice(InstanceNoticeKind.Removed, 0));
+                    var exit = instance.Definition.ExitGate()!;
+                    Move(p, _zones[exit.To], new Vector2((float)exit.Arrival.X, (float)exit.Arrival.Y), keepVitals: p.Entity!.IsAlive, "fora do grupo");
+                }
+            }
+        }
+    }
+
+    private void Destroy(DungeonInstance instance)
+    {
+        _instances.Remove(instance);
+        foreach (var key in _reservations.Where(kv => kv.Value.Instance == instance).Select(kv => kv.Key).ToList())
+        {
+            _reservations.Remove(key);
+        }
+
+        _log.Information("Instância {Instance} de {Zone} destruída (vazia por {Seconds:0} s)", instance.Id, instance.Zone.Id,
+            instance.Definition.EmptyTimeoutTicks / (double)Core.Simulation.World.TickRate);
+    }
+
     // ---------------- console ----------------
 
     public void Restart(string reason) => _log.Information("Mundo aberto não reinicia ({Reason}); use quit e suba de novo", reason);
@@ -634,7 +809,9 @@ public sealed class WorldServer : ITransportHandler, IGameHost, IPartyHost
         $"mundo aberto, {PlayerCount} jogador(es)"
         + (_accounts is { } a ? $", gravações pendentes {a.Persistence.PendingSaves} (feitas {a.Persistence.SavesCompleted}, falhas {a.Persistence.SaveFailures})" : "")
         + "; zonas: "
-        + string.Join("; ", _zones.Values.Select(z => $"{z.Id} tick {z.World.Tick}, {_players.Values.Count(p => p.Zone == z && p.Entity is not null)} jogador(es), {z.LivingMonsters} monstro(s)"));
+        + string.Join("; ", _zones.Values.Select(z => $"{z.Id} tick {z.World.Tick}, {_players.Values.Count(p => p.Zone == z && p.Entity is not null)} jogador(es), {z.LivingMonsters} monstro(s)"))
+        + $"; instâncias {_instances.Count}/{_options.MaxInstances}"
+        + string.Concat(_instances.Select(i => $"; #{i.Id} {i.Zone.Id} ({i.Owner}) tick {i.Zone.World.Tick}, {PlayersIn(i.Zone).Count} jogador(es), {i.Zone.LivingMonsters} monstro(s)"));
 
     private void Send(int peer, INetMessage message) => _transport.Send(peer, ProtocolSerializer.Serialize(message), SendMode.Reliable);
 
@@ -659,6 +836,15 @@ public sealed class WorldServer : ITransportHandler, IGameHost, IPartyHost
         public bool Leaving { get; set; }
 
         public bool PartyDirty { get; set; }
+
+        /// <summary>T-350: portão de instância que recusou a entrada; não tenta de novo até sair da área.</summary>
+        public GateDefinition? RefusedGate { get; set; }
+
+        /// <summary>T-350: tick do servidor em que entrou na cópia atual (ordem para a troca de dono).</summary>
+        public long EnteredInstanceAt { get; set; }
+
+        /// <summary>T-350: dentro de uma cópia que não é do grupo dele: tick do servidor em que será levado para fora.</summary>
+        public long? OutsiderDeadline { get; set; }
 
         /// <summary>Último <see cref="PartyState"/> enviado (null = sem grupo).</summary>
         public byte[]? LastPartyState { get; set; }

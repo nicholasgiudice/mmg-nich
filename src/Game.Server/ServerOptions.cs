@@ -30,6 +30,7 @@ public sealed record ServerOptions
           --world                   mundo aberto (T-214): todas as zonas de data/zones.json em vez de uma sala de encontro
                                     (env MMO_WORLD=true); --encounter, --bots e --restart-after não valem
           --start-zone <id>         zona onde se nasce e renasce no mundo aberto (padrão zone.city)
+          --max-instances <n>       instâncias de dungeon abertas ao mesmo tempo no mundo aberto (padrão 20; T-350)
 
         Contas (T-212): com MMO_DB_CONNECTION, o servidor aceita o token de jogo da API e carrega/grava o personagem.
         Exige MMO_GAME_TICKET_KEY (a mesma da API) e usa MMO_GAME_SERVER_ID (padrão game.dev; o mesmo da API).
@@ -70,6 +71,9 @@ public sealed record ServerOptions
 
     /// <summary>Intervalo das gravações periódicas dos personagens com conta.</summary>
     public double SaveIntervalSeconds { get; init; } = 120;
+
+    /// <summary>Mundo aberto (T-350): máximo de instâncias de dungeon abertas no processo; acima disso a entrada é recusada.</summary>
+    public int MaxInstances { get; init; } = 20;
 
     /// <summary>Estratégia dos bots nas vagas livres (a mesma dos companheiros do cliente: grupo que se move).</summary>
     public string BotStrategy { get; init; } = "kite+dodge";
@@ -124,6 +128,7 @@ public sealed record ServerOptions
                 "--dev-login" => o with { DevLogin = true },
                 "--world" => o with { World = true },
                 "--start-zone" => o with { StartZone = Next() },
+                "--max-instances" => o with { MaxInstances = int.Parse(Next(), CultureInfo.InvariantCulture) },
                 "--save-interval" => o with { SaveIntervalSeconds = double.Parse(Next(), CultureInfo.InvariantCulture) },
                 _ => throw new ArgumentException($"Opção desconhecida: {args[i]}"),
             };
