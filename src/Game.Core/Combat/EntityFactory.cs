@@ -96,7 +96,8 @@ public static class EntityFactory
     }
 
     /// <param name="level">Nível em que o monstro surge (T-206); null = o da definição. A vida cresce com ele.</param>
-    public static Entity SpawnMonster(World world, MonsterDefinition def, Vector2 position, int? level = null)
+    /// <param name="faction">Facção (T-351: objetivos como os selos nascem do lado dos jogadores).</param>
+    public static Entity SpawnMonster(World world, MonsterDefinition def, Vector2 position, int? level = null, Faction faction = Faction.Monster)
     {
         var abilities = new AbilityState();
         abilities.Known.AddRange(def.Abilities.Distinct());
@@ -104,7 +105,7 @@ public static class EntityFactory
         return world.Spawn(
             new Transform { Position = position },
             new Health((float)(def.Health * world.Content.Rules.Monsters.HealthFactor(lvl, def.Rank))),
-            new FactionTag(Faction.Monster),
+            new FactionTag(faction),
             new Movement((float)def.Speed),
             new Collider((float)def.Radius),
             new UnitInfo
@@ -126,7 +127,11 @@ public static class EntityFactory
         GridMap.FromAscii(arena.Lines.Select(l => new string(l.Select(c => c == '#' ? '#' : '.').ToArray())).ToArray());
 }
 
-public sealed record EncounterWorld(World World, IReadOnlyList<Entity> Players, IReadOnlyList<Entity> Enemies);
+public sealed record EncounterWorld(World World, IReadOnlyList<Entity> Players, IReadOnlyList<Entity> Enemies)
+{
+    /// <summary>Objetivos a proteger (T-351, <see cref="EncounterDefinition.Objectives"/>).</summary>
+    public IReadOnlyList<Entity> Objectives { get; init; } = [];
+}
 
 public static class EncounterSetup
 {
@@ -141,7 +146,8 @@ public static class EncounterSetup
         var enemies = encounter.Enemies
             .Select(e => EntityFactory.SpawnMonster(world, content.Monsters[e.Monster], Pos(e.Position), e.Level ?? encounter.MonsterLevel))
             .ToList();
-        return new EncounterWorld(world, players, enemies);
+        var objectives = Objectives.ObjectiveService.SpawnAll(world, encounter);
+        return new EncounterWorld(world, players, enemies) { Objectives = objectives };
     }
 
     private static Vector2 Pos(PositionDefinition p) => new((float)p.X, (float)p.Y);

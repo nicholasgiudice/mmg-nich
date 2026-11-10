@@ -159,7 +159,10 @@ public class ProgressionContentTests
         }
     }
 
-    /// <summary>§2 "Nível por área": Campos 1–4, Floresta 5–8 (chefe 8), Ruínas 9–11.</summary>
+    /// <summary>
+    /// §2 "Nível por área": Campos 1–4, Floresta 5–8 (chefe 8), Ruínas 9–11, Cripta do Vigia 12–14 (chefe 15). O Selo do
+    /// Juramento (T-351) é um objetivo do encontro do Vigia, no nível dele.
+    /// </summary>
     [Theory]
     [InlineData("monster.field_rat", 1, 1, MonsterRank.Normal)]
     [InlineData("monster.grey_wolf", 2, 3, MonsterRank.Normal)]
@@ -172,6 +175,9 @@ public class ProgressionContentTests
     [InlineData("monster.skeleton_guard", 9, 11, MonsterRank.Normal)]
     [InlineData("monster.dead_priest", 10, 10, MonsterRank.Normal)] // T-341
     [InlineData("monster.spectral_knight", 11, 11, MonsterRank.Elite)] // T-341
+    [InlineData("monster.shade", 12, 14, MonsterRank.Normal)] // T-351
+    [InlineData("monster.faceless_watcher", 15, 15, MonsterRank.Boss)] // T-351
+    [InlineData("monster.watcher_seal", 15, 15, MonsterRank.Normal)] // T-351
     public void Monster_levels_and_ranks_follow_the_area_table(string id, int min, int max, MonsterRank rank)
     {
         var m = Db.Monsters[id];
@@ -184,9 +190,9 @@ public class ProgressionContentTests
         Assert.Equal(
             new[]
             {
-                "monster.corrupted_ent", "monster.dead_priest", "monster.field_rat", "monster.forest_matriarch", "monster.grey_wolf",
-                "monster.mist_fairy", "monster.road_bandit", "monster.skeleton_guard", "monster.spectral_knight", "monster.spider_big",
-                "monster.spider_small",
+                "monster.corrupted_ent", "monster.dead_priest", "monster.faceless_watcher", "monster.field_rat",
+                "monster.forest_matriarch", "monster.grey_wolf", "monster.mist_fairy", "monster.road_bandit", "monster.shade",
+                "monster.skeleton_guard", "monster.spectral_knight", "monster.spider_big", "monster.spider_small", "monster.watcher_seal",
             },
             Db.Monsters.Keys.Order(StringComparer.Ordinal));
 }

@@ -30,6 +30,10 @@ public sealed record BatchSummary
     public double ResourceWasted { get; init; }
     public double SecondsAtResourceCap { get; init; }
     public double PlayerDeaths { get; init; }
+
+    /// <summary>T-351: objetivos (selos) destruídos por execução e execuções que falharam por perder todos.</summary>
+    public double ObjectivesLost { get; init; }
+    public int Failures { get; init; }
     public double EnemyDeaths { get; init; }
     public double PhaseChanges { get; init; }
     public double DistanceMoved { get; init; }
@@ -100,6 +104,8 @@ public static class Batch
             ResourceWasted = Avg(r => r.ResourceWasted),
             SecondsAtResourceCap = Avg(r => r.TicksAtResourceCap) / World.TickRate,
             PlayerDeaths = Avg(r => r.PlayerDeaths),
+            ObjectivesLost = Avg(r => r.ObjectivesLost),
+            Failures = results.Count(r => r.Failed),
             EnemyDeaths = Avg(r => r.EnemyDeaths),
             PhaseChanges = Avg(r => r.PhaseChanges),
             DistanceMoved = Avg(r => r.DistanceMoved),

@@ -61,6 +61,7 @@ public sealed class Usage
             foreach (var p in m.Phases)
             {
                 Walk(p.OnEnter, new UseSource("phase", m.Id, p.Id, []));
+                Walk(p.OnEnterObjectives, new UseSource("phase", m.Id, p.Id, []));
             }
         }
 

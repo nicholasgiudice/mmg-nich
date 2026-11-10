@@ -45,6 +45,12 @@ public sealed record AbilityDefinition
     public int CooldownTicks { get; init; }
     public int CastTimeTicks { get; init; }
     public bool CastWhileMoving { get; init; }
+
+    /// <summary>
+    /// Interrompida (efeito <c>interrupt</c>), a habilidade entra na recarga cheia em vez de ficar pronta (T-351: o Último
+    /// Comando do Vigia; sem isso, o boss reconjura no tick seguinte e a interrupção não ganha tempo).
+    /// </summary>
+    public bool CooldownOnInterrupt { get; init; }
     public required TargetingDefinition Targeting { get; init; }
 
     /// <summary>
@@ -143,6 +149,12 @@ public sealed record StatModifiers
 
     /// <summary>Multiplica a cura recebida por quem tem este status (0,5 = metade). T-341: Maldição do Sacerdote Morto.</summary>
     public double HealingTakenMultiplier { get; init; } = 1;
+
+    /// <summary>
+    /// Multiplicador de dano recebido só de uma escola (chave = nome snake_case, ex.: <c>holy</c>; 1,4 = +40%). Vale junto com
+    /// <see cref="DamageTakenMultiplier"/>. T-351: o Rosto Vazio do Vigia fica mais vulnerável a dano sagrado.
+    /// </summary>
+    public IReadOnlyDictionary<string, double> DamageTakenBySchool { get; init; } = new Dictionary<string, double>();
 }
 
 /// <summary>Redução de dano recebido só quando a fonte está dentro de um arco à frente do alvo (Guarda Firme, Guarda Esquelético).</summary>
@@ -199,6 +211,13 @@ public sealed record StatusFlags
     /// atingido por arcos, linhas, círculos, telegráfos, áreas, correntes nem alvos extras. Status que já tem continuam valendo.
     /// </summary>
     public bool Untargetable { get; init; }
+
+    /// <summary>
+    /// Medo (T-351): quem tem o status não age (como atordoado) e corre para longe do ponto de origem do medo (o centro do
+    /// telegráfo/área que o aplicou, ou a posição de quem aplicou), na velocidade normal, ignorando as intenções de movimento.
+    /// Use com a tag <c>control</c> para valerem as regras de controle (rank, retorno decrescente, imunidade).
+    /// </summary>
+    public bool Feared { get; init; }
 }
 
 public sealed record PeriodicEffectDefinition
@@ -271,6 +290,12 @@ public sealed record PhaseDefinition
 
     /// <summary>Proíbe invocar enquanto nesta fase (bloqueia habilidades com efeito summon e o próprio efeito).</summary>
     public bool NoSummons { get; init; }
+
+    /// <summary>
+    /// Efeitos aplicados ao entrar em cada objetivo vivo do encontro (<see cref="EncounterDefinition.Objectives"/>), com o boss
+    /// como fonte (T-351: os selos começam a ruir no Último Comando).
+    /// </summary>
+    public IReadOnlyList<EffectDefinition> OnEnterObjectives { get; init; } = [];
 }
 
 public sealed record MonsterDefinition
@@ -357,4 +382,11 @@ public sealed record EncounterDefinition
 
     /// <summary>Nível de todos os monstros do encontro (T-206; vida e potência pela <see cref="MonsterScalingRules"/>). Null = o de cada definição.</summary>
     public int? MonsterLevel { get; init; }
+
+    /// <summary>
+    /// Objetivos a proteger (T-351: os selos do Vigia). Nascem como unidades aliadas dos jogadores (facção dos jogadores), sem
+    /// IA e sem se mover, a partir de uma definição de monstro; podem receber cura e escudo, e os monstros podem atacá-los.
+    /// Quando todos são destruídos, o encontro falha (<c>EncounterFailed</c>). Vazio = sem objetivos.
+    /// </summary>
+    public IReadOnlyList<EnemySpawnDefinition> Objectives { get; init; } = [];
 }

@@ -6,7 +6,7 @@ namespace Game.Bots;
 /// Opções livres chave=valor das estratégias. Uma chave pode ser escopada por classe
 /// (<c>class.warrior:taunt</c>), que tem prioridade sobre a chave global (<c>taunt</c>).
 /// Chaves usadas: taunt, explosion, heal (seletores), skip, order (listas), healBelow, minAoe, kiteDistance, retreatDistance,
-/// reaction (T-018: faixa em segundos "0.2-0.4", valor fixo ou 0 para desligar; padrão 0.2-0.4), potionBelow (T-018: fração de vida, padrão 0.4, 0 desliga), manaPotionBelow (T-322: fração do recurso para beber a poção de Mana; padrão 0 = desligado), focusFirst (T-341: ids de monstro que viram foco antes do mais próximo).
+/// reaction (T-018: faixa em segundos "0.2-0.4", valor fixo ou 0 para desligar; padrão 0.2-0.4), potionBelow (T-018: fração de vida, padrão 0.4, 0 desliga), manaPotionBelow (T-322: fração do recurso para beber a poção de Mana; padrão 0 = desligado), focusFirst (T-341: ids de monstro que viram foco antes do mais próximo), interrupt (T-351: auto, save ou never; como usar habilidades com interrupção), followInjured (T-351: 1 = o curandeiro anda até o aliado ferido fora do alcance da cura).
 /// Um seletor é uma lista separada por vírgula de ids de habilidade ou <c>tag:xxx</c>.
 /// </summary>
 public sealed class BotOptions

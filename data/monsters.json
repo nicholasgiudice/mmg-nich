@@ -167,6 +167,72 @@
         "spectral_knight.spectral_charge"
       ],
       "ai": { "id": "ai.brute", "parameters": { "aggroRange": 14, "approachRange": 1.9, "farDistance": 3, "buffDistance": 3 } }
+    },
+    {
+      "id": "monster.faceless_watcher",
+      "name": "Vigia Sem Rosto",
+      "level": 15,
+      "rank": "boss",
+      "health": 45000,
+      "speed": 3.4,
+      "radius": 0.9,
+      "tags": ["undead", "boss"],
+      "abilities": [
+        "watcher.last_command",
+        "watcher.call_guards",
+        "watcher.call_shades",
+        "watcher.dread_ground",
+        "watcher.iron_charge",
+        "watcher.oath_cleave",
+        "watcher.iron_strike",
+        "watcher.spectral_strike"
+      ],
+      "ai": { "id": "ai.boss", "parameters": { "aggroRange": 40, "approachRange": 2.3 } },
+      "phases": [
+        {
+          "id": "phase.iron_oath",
+          "healthPercent": 100,
+          "onEnterObjectives": [{ "type": "apply_status", "status": "status.seal_intact" }],
+          "abilities": ["watcher.call_guards", "watcher.iron_charge", "watcher.oath_cleave", "watcher.iron_strike"]
+        },
+        {
+          "id": "phase.empty_face",
+          "healthPercent": 65,
+          "onEnter": [{ "type": "apply_status", "status": "status.empty_face" }],
+          "abilities": ["watcher.call_shades", "watcher.dread_ground", "watcher.oath_cleave", "watcher.spectral_strike"]
+        },
+        {
+          "id": "phase.last_command",
+          "healthPercent": 25,
+          "noSummons": true,
+          "onEnterObjectives": [
+            { "type": "remove_status", "tags": ["seal_intact"], "count": 0 },
+            { "type": "apply_status", "status": "status.seal_crumbling" }
+          ],
+          "abilities": ["watcher.last_command", "watcher.dread_ground", "watcher.oath_cleave", "watcher.spectral_strike"]
+        }
+      ]
+    },
+    {
+      "id": "monster.shade",
+      "name": "Sombra",
+      "level": 14,
+      "health": 150,
+      "speed": 3.6,
+      "radius": 0.4,
+      "tags": ["undead"],
+      "abilities": ["shade.cold_touch"],
+      "ai": { "id": "ai.melee_chaser", "parameters": { "aggroRange": 20 } }
+    },
+    {
+      "id": "monster.watcher_seal",
+      "name": "Selo do Juramento",
+      "level": 15,
+      "health": 380,
+      "speed": 0,
+      "radius": 0.6,
+      "tags": ["seal"],
+      "ai": { "id": "ai.none" }
     }
   ]
 }

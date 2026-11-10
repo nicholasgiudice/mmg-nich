@@ -11,7 +11,7 @@ public static class StatusModule
     public static void Register(CombatServices s)
     {
         s.Effects
-            .Register<ApplyStatusEffect>((c, e) => StatusManager.Apply(c.World, c.Source, c.Target!, e.Status, e.DurationTicks))
+            .Register<ApplyStatusEffect>((c, e) => StatusManager.Apply(c.World, c.Source, c.Target!, e.Status, e.DurationTicks, c.AimPoint))
             .Register<RemoveStatusEffect>((c, e) => StatusManager.RemoveByTags(c.World, c.Target!, e.Tags.Count > 0 ? e.Tags : [e.Tag], e.Count, c.SourceEntityId));
         s.Gates.Add(new StatusGate());
         s.Modifiers.Add(new StatusModifierSource());
@@ -95,7 +95,7 @@ public sealed class FrontalReflectReaction : IDamageReaction
     }
 }
 
-/// <summary>stunned: nada; silenced: só ataque básico.</summary>
+/// <summary>stunned: nada; feared (T-351): nada; silenced: só ataque básico.</summary>
 public sealed class StatusGate : IActionGate
 {
     public AbilityRejectReason? CanUse(World world, Entity actor, string abilityId, AbilityDefinition? ability, bool isBasicAttack)
@@ -103,6 +103,11 @@ public sealed class StatusGate : IActionGate
         if (StatusManager.IsStunned(world, actor))
         {
             return AbilityRejectReason.Stunned;
+        }
+
+        if (StatusManager.Fear(world, actor) is not null)
+        {
+            return AbilityRejectReason.CannotAct;
         }
 
         if (!isBasicAttack && StatusManager.IsSilenced(world, actor))
@@ -120,6 +125,9 @@ public sealed class StatusGate : IActionGate
 /// </summary>
 public sealed class StatusModifierSource : IModifierSource
 {
+    /// <summary>Medo (T-351): foge da origem, ignorando a intenção de movimento.</summary>
+    public Vector2? ForcedDirection(World world, Entity entity) => StatusManager.FleeDirection(world, entity);
+
     public double SpeedMultiplier(World world, Entity entity)
     {
         var m = 1.0;
@@ -171,6 +179,12 @@ public sealed class StatusModifierSource : IModifierSource
         {
             var d = StatusManager.Def(world, s);
             m *= Math.Pow(d.Modifiers.DamageTakenMultiplier, s.Stacks);
+            if (d.Modifiers.DamageTakenBySchool.Count > 0
+                && d.Modifiers.DamageTakenBySchool.TryGetValue(UnitInfo.SchoolName(school), out var bySchool))
+            {
+                m *= Math.Pow(bySchool, s.Stacks);
+            }
+
             if (d.Frontal is { } f && source is not null && IsInFrontArc(target, source, f.ArcDegrees))
             {
                 m *= Math.Pow(f.DamageTakenMultiplier, s.Stacks);

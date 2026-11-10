@@ -102,6 +102,10 @@ public sealed record RunResult
     public int TicksAtResourceCap { get; init; }
 
     public int PlayerDeaths { get; init; }
+
+    /// <summary>Objetivos destruídos (T-351: selos) e se o encontro falhou por isso (<c>EncounterFailed</c>).</summary>
+    public int ObjectivesLost { get; init; }
+    public bool Failed { get; init; }
     public int EnemyDeaths { get; init; }
     public int PhaseChanges { get; init; }
     public IReadOnlyDictionary<string, int> AbilityUses { get; init; } = new Dictionary<string, int>();
@@ -149,6 +153,13 @@ public static class EncounterRunner
             world.Step();
             m.Consume(world, setup.Players, lastPos);
 
+            // T-351: todos os objetivos (selos) destruídos é falha, mesmo com jogadores vivos.
+            if (world.LastTickEvents.Any(e => e is Game.Core.Combat.Objectives.EncounterFailed))
+            {
+                outcome = RunOutcome.Loss;
+                break;
+            }
+
             var playersAlive = setup.Players.Any(p => p.IsAlive);
             var enemiesAlive = world.Entities.Any(e => e.IsAlive && e.TryGet<FactionTag>() is { Faction: Faction.Monster });
             if (!playersAlive)
@@ -178,7 +189,8 @@ public static class EncounterRunner
         var enemies = encounter.Enemies
             .Select(e => EntityFactory.SpawnMonster(world, content.Monsters[e.Monster], Pos(e.Position), e.Level ?? encounter.MonsterLevel))
             .ToList();
-        return new EncounterWorld(world, players, enemies);
+        var objectives = Game.Core.Combat.Objectives.ObjectiveService.SpawnAll(world, encounter);
+        return new EncounterWorld(world, players, enemies) { Objectives = objectives };
     }
 
     /// <summary>Varia as posições iniciais de forma determinística por seed (o simulador não é Core; usa Random com seed explícita).</summary>
@@ -207,7 +219,8 @@ public static class EncounterRunner
     {
         private readonly Dictionary<string, int> _uses = new(StringComparer.Ordinal);
         private double _taken, _dealt, _heal, _overheal, _gained, _spent, _wasted, _moved;
-        private int _atCap, _playerDeaths, _enemyDeaths, _phases, _stationaryUses, _totalUses;
+        private int _atCap, _playerDeaths, _enemyDeaths, _phases, _stationaryUses, _totalUses, _objectivesLost;
+        private bool _failed;
         private readonly Dictionary<(EntityId, string), double> _expectedAbilityGain = new();
         private readonly Dictionary<(EntityId, string), double> _actualAbilityGain = new();
 
@@ -243,10 +256,18 @@ public static class EncounterRunner
                         OnExecuted(world, a);
                         break;
 
+                    case Game.Core.Combat.Objectives.EncounterFailed:
+                        _failed = true;
+                        break;
+
                     case EntityDied died:
                         if (players.Contains(died.Entity))
                         {
                             _playerDeaths++;
+                        }
+                        else if (world.Find(died.Entity)?.Has<Game.Core.Combat.Objectives.EncounterObjective>() == true)
+                        {
+                            _objectivesLost++;
                         }
                         else
                         {
@@ -357,6 +378,8 @@ public static class EncounterRunner
                 ResourceWasted = wasted,
                 TicksAtResourceCap = _atCap,
                 PlayerDeaths = _playerDeaths,
+                ObjectivesLost = _objectivesLost,
+                Failed = _failed,
                 EnemyDeaths = _enemyDeaths,
                 PhaseChanges = _phases,
                 AbilityUses = new SortedDictionary<string, int>(_uses, StringComparer.Ordinal),

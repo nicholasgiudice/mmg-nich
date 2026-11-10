@@ -3,6 +3,7 @@ using Game.Core.Combat;
 using Game.Core.Combat.Areas;
 using Game.Core.Combat.Effects;
 using Game.Core.Combat.Items;
+using Game.Core.Combat.Objectives;
 using Game.Core.Combat.Phases;
 using Game.Core.Combat.Progression;
 using Game.Core.Combat.Resources;
@@ -58,6 +59,8 @@ public static class EventCodecs
         [typeof(AreaExpired)] = 73,
         [typeof(MonsterSummoned)] = 74,
         [typeof(PhaseChanged)] = 80,
+        [typeof(ObjectiveDestroyed)] = 81,
+        [typeof(EncounterFailed)] = 82,
         [typeof(XpGained)] = 90,
         [typeof(LevelUp)] = 91,
         [typeof(AttributeRaised)] = 92,
@@ -160,6 +163,8 @@ public static class EventCodecs
             case PhaseChanged x:
                 w.Id(x.Entity); w.S(x.MonsterId); w.S(x.Phase); w.I(x.Previous); w.I(x.Index); w.F(x.HealthPercent);
                 break;
+            case ObjectiveDestroyed x: w.Id(x.Entity); w.S(x.MonsterId); w.I(x.Remaining); break;
+            case EncounterFailed x: w.E(x.Reason); break;
 
             case XpGained x: w.Id(x.Entity); w.I(x.Amount); w.Id(x.Monster); w.S(x.SourceId); break;
             case LevelUp x: w.Id(x.Entity); w.I(x.Level); w.I(x.AttributePoints); w.I(x.SkillPoints); break;
@@ -235,6 +240,8 @@ public static class EventCodecs
             74 => new MonsterSummoned(r.Id(), r.Id(), r.S(), r.V()),
 
             80 => new PhaseChanged(r.Id(), r.S(), r.S(), r.I(), r.I(), r.F()),
+            81 => new ObjectiveDestroyed(r.Id(), r.S(), r.I()),
+            82 => new EncounterFailed(r.E<EncounterFailReason>()),
 
             90 => new XpGained(r.Id(), r.I(), r.Id(), r.S()),
             91 => new LevelUp(r.Id(), r.I(), r.I(), r.I()),

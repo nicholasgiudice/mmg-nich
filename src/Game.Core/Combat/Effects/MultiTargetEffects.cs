@@ -90,7 +90,8 @@ public static class MultiTargetEffects
             ?? source.Get<Transform>().Position;
         var fallen = c.World.Entities
             .Where(x => !x.IsRemoved && x.TryGet<Health>() is { IsAlive: false }
-                && x.TryGet<FactionTag>()?.Faction == faction.Faction && x.Has<Transform>())
+                && x.TryGet<FactionTag>()?.Faction == faction.Faction && x.Has<Transform>()
+                && !x.Has<Objectives.EncounterObjective>()) // T-351: selo destruído não volta
             .Select(x => (Entity: x, Distance: Vector2.Distance(center, x.Get<Transform>().Position)))
             .Where(x => x.Distance <= e.Radius + (x.Entity.TryGet<Collider>()?.Radius ?? 0f))
             .OrderBy(x => x.Distance)

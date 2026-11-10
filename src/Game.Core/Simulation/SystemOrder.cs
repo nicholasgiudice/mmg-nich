@@ -20,6 +20,7 @@ public static class SystemOrder
     public const int Rest = 4100;       // T-214: descanso na Cidade (regenera vida e Mana)
     public const int Ai = 5000;         // T-011
     public const int Death = 9000;      // converte vida <= 0 em EntityDied; deve ser quase o último
+    public const int Objectives = 9050; // T-351: objetivos destruídos no tick (depois de Death) e falha do encontro
     public const int Progression = 9500; // T-203: XP pelas mortes do tick e intenções de pontos (depois de Death)
     public const int Items = 9600;       // T-204: intenções de itens e prazo dos itens no chão (a queda sai da progressão)
     public const int Shops = 9700;       // T-321: compra e venda com NPCs (depois dos itens)

@@ -244,6 +244,83 @@
       "targeting": { "type": "line", "length": 8, "width": 1.4 },
       "telegraph": { "shape": "line", "length": 8, "width": 1.4, "delay": 1.0, "charge": true },
       "effects": [{ "type": "damage", "school": "physical", "base": 140 }]
+    },
+    {
+      "id": "watcher.iron_strike",
+      "name": "Golpe de Ferro",
+      "cooldown": 1.6,
+      "targeting": { "type": "melee_arc", "range": 2.3, "angle": 100 },
+      "effects": [{ "type": "damage", "school": "physical", "base": 38 }]
+    },
+    {
+      "id": "watcher.spectral_strike",
+      "name": "Golpe Espectral",
+      "cooldown": 1.6,
+      "targeting": { "type": "melee_arc", "range": 2.3, "angle": 100 },
+      "effects": [{ "type": "damage", "school": "arcane", "base": 36 }]
+    },
+    {
+      "id": "watcher.oath_cleave",
+      "name": "Corte do Juramento",
+      "cooldown": 7,
+      "targeting": { "type": "melee_arc", "range": 4, "angle": 90 },
+      "telegraph": { "shape": "cone", "length": 4, "angle": 90, "delay": 1.2, "anchor": "source", "affects": "enemy" },
+      "effects": [{ "type": "damage", "school": "physical", "base": 120 }]
+    },
+    {
+      "id": "watcher.iron_charge",
+      "name": "Investida de Ferro",
+      "cooldown": 12,
+      "targeting": { "type": "line", "length": 8, "width": 1.8 },
+      "telegraph": { "shape": "line", "length": 8, "width": 1.8, "delay": 1.2, "charge": true },
+      "effects": [{ "type": "damage", "school": "physical", "base": 150 }]
+    },
+    {
+      "id": "watcher.call_guards",
+      "name": "Chamado da Guarda",
+      "tags": ["ai.summon"],
+      "cooldown": 24,
+      "castTime": 2.5,
+      "targeting": { "type": "self" },
+      "effects": [{ "type": "summon", "monster": "monster.skeleton_guard", "count": 2, "radius": 2.5, "maxAlive": 2 }]
+    },
+    {
+      "id": "watcher.call_shades",
+      "name": "Sombras do Rosto Vazio",
+      "tags": ["ai.summon"],
+      "cooldown": 20,
+      "castTime": 2,
+      "targeting": { "type": "self" },
+      "effects": [{ "type": "summon", "monster": "monster.shade", "count": 3, "radius": 2.5, "maxAlive": 3 }]
+    },
+    {
+      "id": "watcher.dread_ground",
+      "name": "Chão do Pavor",
+      "tags": ["ai.area"],
+      "cooldown": 8,
+      "targeting": { "type": "circle_at_point", "range": 14, "radius": 2.5 },
+      "telegraph": { "shape": "circle", "radius": 2.5, "delay": 1.2, "anchor": "aim" },
+      "effects": [
+        { "type": "damage", "school": "arcane", "base": 70 },
+        { "type": "apply_status", "status": "status.dread" }
+      ]
+    },
+    {
+      "id": "watcher.last_command",
+      "name": "Último Comando",
+      "tags": ["ai.objective"],
+      "cooldown": 10,
+      "castTime": 4,
+      "cooldownOnInterrupt": true,
+      "targeting": { "type": "unit", "range": 40, "faction": "enemy" },
+      "effects": [{ "type": "damage", "school": "arcane", "base": 2000 }]
+    },
+    {
+      "id": "shade.cold_touch",
+      "name": "Toque Gélido",
+      "cooldown": 1.4,
+      "targeting": { "type": "melee_arc", "range": 1.6, "angle": 90 },
+      "effects": [{ "type": "damage", "school": "arcane", "base": 18 }]
     }
   ]
 }
