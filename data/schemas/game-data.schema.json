@@ -447,6 +447,7 @@
         "cooldown": { "$ref": "#/$defs/seconds" },
         "castTime": { "$ref": "#/$defs/seconds" },
         "castWhileMoving": { "type": "boolean" },
+        "cooldownOnInterrupt": { "type": "boolean", "description": "T-351: interrompida, entra na recarga cheia." },
         "signature": { "type": "boolean", "description": "T-060: assinatura (até 3 níveis em vez de 5)." },
         "hits": { "$ref": "#/$defs/abilityHits" },
         "cooldownCharges": { "type": "integer", "minimum": 1, "description": "T-060: usos guardados que recarregam um a um." },
@@ -482,7 +483,8 @@
         "healthPercent": { "type": "number", "exclusiveMinimum": 0, "maximum": 100 },
         "onEnter": { "$ref": "#/$defs/effects" },
         "abilities": { "$ref": "#/$defs/idList" },
-        "noSummons": { "type": "boolean" }
+        "noSummons": { "type": "boolean" },
+        "onEnterObjectives": { "$ref": "#/$defs/effects", "description": "T-351: efeitos em cada objetivo vivo do encontro (selos), com o boss como fonte." }
       }
     },
     "targeting": {
@@ -617,7 +619,13 @@
             "damageTakenMultiplier": { "type": "number", "minimum": 0 },
             "damageDealtMultiplier": { "type": "number", "minimum": 0 },
             "controlDurationMultiplier": { "type": "number", "minimum": 0 },
-            "healingTakenMultiplier": { "type": "number", "minimum": 0, "description": "T-341: multiplica a cura recebida (0,5 = metade)." }
+            "healingTakenMultiplier": { "type": "number", "minimum": 0, "description": "T-341: multiplica a cura recebida (0,5 = metade)." },
+            "damageTakenBySchool": {
+              "type": "object",
+              "propertyNames": { "enum": ["physical", "arcane", "fire", "frost", "holy", "nature"] },
+              "additionalProperties": { "type": "number", "minimum": 0 },
+              "description": "T-351: multiplicador de dano recebido por escola (1,4 = +40%)."
+            }
           }
         },
         "flags": {
@@ -627,7 +635,8 @@
             "stunned": { "type": "boolean" },
             "rooted": { "type": "boolean" },
             "silenced": { "type": "boolean" },
-            "untargetable": { "type": "boolean", "description": "T-340: não pode ser alvo de habilidades de outros (unidade, área, telegráfo)." }
+            "untargetable": { "type": "boolean", "description": "T-340: não pode ser alvo de habilidades de outros (unidade, área, telegráfo)." },
+            "feared": { "type": "boolean", "description": "T-351: medo; não age e foge do ponto de origem, sem controle do jogador." }
           }
         }
       }
@@ -752,6 +761,20 @@
           }
         },
         "monsterLevel": { "type": "integer", "minimum": 1, "description": "T-206: nível de todos os monstros do encontro." },
+        "objectives": {
+          "type": "array",
+          "description": "T-351: objetivos a proteger (aliados dos jogadores, sem IA, fixos); todos destruídos = falha do encontro.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["monster", "position"],
+            "properties": {
+              "monster": { "$ref": "#/$defs/id" },
+              "position": { "$ref": "#/$defs/position" },
+              "level": { "type": "integer", "minimum": 1 }
+            }
+          }
+        },
         "victory": { "enum": ["all_enemies_dead"] },
         "defeat": {
           "type": "object",

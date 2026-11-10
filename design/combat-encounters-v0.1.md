@@ -431,6 +431,77 @@ O Portão Partido tem um corredor estreito (4 tiles) que abre para um pátio: é
 - o Cavaleiro ser vencido sem ninguém sair de um telegráfo;
 - o solo do Cavaleiro: hoje **não é viável** (veja balance-v0.12 §4).
 
+## Cripta do Vigia — O Vigia Sem Rosto (T-351)
+
+O chefe final do primeiro mapa (`design/first-map-v0.1.md` §6): o antigo comandante da fortificação, **nível 15**, para um grupo de 4 no nível 14–15 com itens raros. Meta (`design/progression-v0.1.md` §8): vitória de 50–80% em 4–6 min. Exige o que `design/class-map-validation-v0.1.md` pede do Vigia: controle de ameaça, sair de ataques frontais e de investidas, interromper, controlar invocações, proteger os três selos e responder a medo e dano espectral. Não se vence parado com o Clérigo curando tudo: os selos e o Último Comando obrigam o grupo a dividir a atenção.
+
+Números nos dados no **nível 1**; entre parênteses, no nível 15 (chefe: vida × (1 + 0,3 × 14) = × 5,2 e potência × (1 + 0,38 × 14) = × 6,32; invocados e selos são normais no nível 15: vida × 6,6 e potência × 3,38), antes da defesa do jogador.
+
+| | |
+|---|---|
+| Vida | 45.000 (234.000) |
+| Velocidade / raio | 3,4 / 0,9 (desenhado em escala ×2, como a Matriarca) |
+| Tags | `undead`, `boss` (o Golpe e a Corrente Sagrados do Clérigo causam +25%) |
+| IA | `ai.boss`, com a tag nova `ai.objective` (Último Comando no selo mais ferido) |
+| Controle | como todo chefe, sofre só 25% da duração de controles (`rules.control`) |
+
+### Fase 1 — Juramento de Ferro (100% a 65%)
+
+Os selos estão intactos: não podem ser alvo nem são atingidos (`status.seal_intact`, `untargetable`).
+
+- **Golpe de Ferro** (`watcher.iron_strike`): corpo a corpo, arco de 100°, alcance 2,3, a cada 1,6 s. Físico 38 (240). O dano contínuo no tanque.
+- **Corte do Juramento** (`watcher.oath_cleave`): **cone frontal** de 90° e 4 tiles, **telegráfo de 1,2 s**. Físico 120 (758). Recarga de 7 s. Pune quem fica na frente do chefe: ele olha para o alvo da ameaça, então **o chefe deve ficar virado para o Guerreiro** e o resto do grupo dos lados ou atrás.
+- **Investida de Ferro** (`watcher.iron_charge`): **linha** de 8 × 1,8, **telegráfo de 1,2 s**, e ele avança por ela. Físico 150 (948). Recarga de 12 s.
+- **Chamado da Guarda** (`watcher.call_guards`): **conjuração de 2,5 s, interrompível**. Invoca 2 Guardas Esqueléticos (`monster.skeleton_guard`, no nível 15: vida 2.904) em volta dele, no máximo 2 vivos. Recarga de 24 s.
+
+### Fase 2 — O Rosto Vazio (65% a 25%)
+
+- Ao entrar: **Rosto Vazio** (`status.empty_face`) no chefe até o fim da luta: **dano sagrado recebido +40%** (mecânica nova: `modifiers.damageTakenBySchool`). O Clérigo vira dano de verdade.
+- **Golpe Espectral** (`watcher.spectral_strike`): substitui o Golpe de Ferro. Corpo a corpo, **arcano** 36 (228): a armadura do Guerreiro não reduz, só a resistência.
+- **Chão do Pavor** (`watcher.dread_ground`): círculo de raio 2,5 no alvo, **telegráfo de 1,2 s**. Arcano 70 (442) e **Pavor** (`status.dread`, 2 s): **medo**. Recarga de 8 s.
+- **Sombras do Rosto Vazio** (`watcher.call_shades`): **conjuração de 2 s, interrompível**. Invoca 3 **Sombras** (`monster.shade`, no máximo 3 vivas). Recarga de 20 s.
+- O Corte do Juramento continua.
+
+**Medo (mecânica nova, `flags.feared`):** quem está com medo não age (como atordoado, cancela a conjuração) e **corre para longe do ponto de origem** (o centro do círculo, ou a posição de quem aplicou), na velocidade normal, ignorando o controle do jogador. O Pavor tem a tag `control`: vale o retorno decrescente (um segundo medo em 15 s dura metade) e a imunidade por tag (`immuneToTags`). Quem sai do círculo antes do telegráfo não sente nada: a fase obriga a reposicionar o tempo todo.
+
+**Sombra** (`monster.shade`, nível 14; humanoide LPC, raio 0,4): vida 150 (990 no nível 15, o de quem invoca), velocidade 3,6, `ai.melee_chaser`. **Toque Gélido** (`shade.cold_touch`): corpo a corpo, arcano 18 (61), a cada 1,4 s. Frágil, rápida e em bando: é o alvo secundário do Arqueiro e do Mago.
+
+### Fase 3 — Último Comando (25% a 0%)
+
+- Sem invocações (`noSummons`).
+- Ao entrar, nos três selos: o Selo Intacto sai e entra **Selo em Ruína** (`status.seal_crumbling`): arcano 4 (25) por segundo até o fim. Sem cura, um selo cai em ~100 s.
+- **Último Comando** (`watcher.last_command`): **conjuração de 4 s** no **selo mais ferido** (alcance 40). Arcano 2.000 (12.640): **destrói o selo**, mesmo cheio e com escudo. **Interrompido, entra na recarga cheia** (mecânica nova: `cooldownOnInterrupt`): sem isso, o chefe recomeçaria no tick seguinte e a interrupção não ganharia tempo. Recarga de 10 s: a cada ~14 s o grupo precisa de uma interrupção.
+- Golpe Espectral, Corte do Juramento e Chão do Pavor continuam.
+
+**Selos (mecânica nova: objetivos do encontro).** O **Selo do Juramento** (`monster.watcher_seal`, nível 15; vida 380, ou 2.508) nasce pelo campo `objectives` do encontro: unidade **aliada dos jogadores**, sem IA, que **não se move nem é empurrada** (velocidade 0). Pode receber **cura e escudo**, mas não puxa aggro por proximidade e **não é revivida**. Os ataques em área do chefe também a atingem na fase 3. **Quando os três selos caem, a luta termina em falha** (evento `EncounterFailed`, com `ObjectiveDestroyed` a cada selo): a expedição falhou, mesmo com o grupo vivo. A luta acaba com o chefe derrotado (vitória) ou com todos os selos destruídos (falha).
+
+### Resposta de cada classe
+
+- **Guerreiro:** segura a ameaça e mantém o chefe virado para si, longe do grupo; sai da investida; **interrompe o Chamado da Guarda e, sobretudo, o Último Comando** (Golpe Pesado: guarda o golpe e a Mana para isso na fase 3). A Muralha Viva protege nos picos da fase 2. Hoje é **a única classe com interrupção**: sem Guerreiro, não há como parar o Último Comando.
+- **Arqueiro:** marca o chefe, mata Guardas e Sombras e fica dos lados do cone. Sai do Chão do Pavor.
+- **Mago:** controla as invocações (Campo de Relâmpagos e Explosão Elemental nos Guardas e nas Sombras) e fica fora do cone e do círculo.
+- **Clérigo:** cura o Guerreiro (o dano espectral da fase 2 é o mais perigoso), aproveita o +40% sagrado e, na fase 3, **cura e protege os selos** sem deixar o Guerreiro cair. O Milagre no NH3 (nível 15) revive o Guerreiro caído.
+
+### Encontro de teste (`data/encounters.json`)
+
+| Encontro | Composição | Arena | Jogadores |
+|---|---|---|---|
+| `encounter.faceless_watcher` (O Vigia Sem Rosto) | Vigia nv15 no centro-leste + 3 Selos (norte, sul e leste, perto das bordas) | `map.watcher_hall` (salão aberto de 40 × 28, provisório até a Cripta da T-352) | Guerreiro + Arqueiro + Mago + Clérigo |
+
+Os testes de design (`WatcherDesignTests`) e o relatório `tasks/reports/balance-v0.13.md` medem, com o perfil esperado e raros, e com a estratégia correta (o Guerreiro guarda o Golpe Pesado para interromper; o Clérigo vai até os selos feridos):
+
+- **grupo de 4 nos níveis 14 e 15:** vitória média entre 50% e 80%, em 4–6 min;
+- **sem Clérigo** e **sem Guerreiro:** a vitória cai de forma clara;
+- **sem interromper o Último Comando:** vitória abaixo de 30%.
+
+### Falhas de design
+
+- vencer parado com o Clérigo curando tudo (os selos e o Último Comando impedem);
+- o Último Comando ser impossível de interromper (conjuração curta, recarga de interrupção) ou irrelevante (selo que aguenta um Comando);
+- o medo jogar o grupo para dentro de outro perigo sem aviso (o medo só vem do círculo telegrafado, e foge do centro dele);
+- os selos caírem antes da fase 3 por ataques em área (por isso ficam intactos até lá);
+- invocações sem fim (máximo de vivas por invocação e nenhuma na fase 3).
+
 ---
 
 ## Matriz de decisões
@@ -446,6 +517,7 @@ O Portão Partido tem um corredor estreito (4 tiles) que abre para um pátio: é
 | Ent Corrompido | Alto | Médio | Médio | Alto | Médio |
 | Pátio dos Mortos | Médio | **Alto** | Médio | Médio | Alto |
 | Cavaleiro Espectral | Alto | Médio | Médio | Alto | Alto |
+| Vigia Sem Rosto | **Alto** | **Alto** | Alto | **Alto** | **Alto** |
 
 ## Critérios gerais de sucesso
 

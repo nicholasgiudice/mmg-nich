@@ -135,6 +135,25 @@
       "enemies": [{ "monster": "monster.spectral_knight", "position": { "x": 20.5, "y": 10.5 }, "level": 11 }],
       "victory": "all_enemies_dead",
       "defeat": { "condition": "all_players_dead", "timeLimit": 240 }
+    },
+    {
+      "id": "encounter.faceless_watcher",
+      "name": "O Vigia Sem Rosto",
+      "arena": "map.watcher_hall",
+      "players": [
+        { "class": "class.warrior", "position": { "x": 14.5, "y": 13.5 } },
+        { "class": "class.archer", "position": { "x": 9.5, "y": 11.5 } },
+        { "class": "class.mage", "position": { "x": 9.5, "y": 15.5 } },
+        { "class": "class.cleric", "position": { "x": 7.5, "y": 13.5 } }
+      ],
+      "enemies": [{ "monster": "monster.faceless_watcher", "position": { "x": 27.5, "y": 13.5 } }],
+      "objectives": [
+        { "monster": "monster.watcher_seal", "position": { "x": 21.5, "y": 4.5 } },
+        { "monster": "monster.watcher_seal", "position": { "x": 21.5, "y": 22.5 } },
+        { "monster": "monster.watcher_seal", "position": { "x": 34.5, "y": 13.5 } }
+      ],
+      "victory": "all_enemies_dead",
+      "defeat": { "condition": "all_players_dead", "timeLimit": 480 }
     }
   ]
 }

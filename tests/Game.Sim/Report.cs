@@ -31,6 +31,10 @@ public static class Report
             Row(sb, "resource gain/spent/waste", $"{s.ResourceGained:0.0} / {s.ResourceSpent:0.0} / {s.ResourceWasted:0.0}  (at cap {s.SecondsAtResourceCap:0.0}s)");
             Row(sb, "deaths player/enemy", $"{s.PlayerDeaths:0.00} / {s.EnemyDeaths:0.00}");
             Row(sb, "boss phase changes", $"{s.PhaseChanges:0.00}");
+            if (s.ObjectivesLost > 0 || s.Failures > 0)
+            {
+                Row(sb, "objectives lost / failed", $"{s.ObjectivesLost:0.00} / {s.Failures} runs");
+            }
             Row(sb, "moved (tiles) / still uses", $"{s.DistanceMoved:0.0} / {s.StationaryUseShare:P0}");
             Row(sb, "distinct abilities used", $"{s.DistinctAbilities:0.0}");
             if (s.AbilityUses.Count > 0)

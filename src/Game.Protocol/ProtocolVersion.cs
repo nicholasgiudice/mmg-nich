@@ -34,6 +34,8 @@ public static class ProtocolVersion
     /// 10 (T-321): componente <c>NpcInfo</c> (definição, nome e loja do NPC), intenções <c>Buy</c> e <c>Sell</c> (campo novo
     /// <c>Quantity</c> no <c>NetIntent</c>) e eventos <c>ItemBought</c>, <c>ItemSold</c> e <c>ShopRejected</c>. As ofertas não vão
     /// pela rede: o cliente lê <c>data/shops.json</c> (o fingerprint garante a mesma versão).
+    /// 11 (T-351): componente <c>EncounterObjective</c> (selos do Vigia), eventos <c>ObjectiveDestroyed</c> e
+    /// <c>EncounterFailed</c>; o status ativo leva o dano recebido (T-341) e o ponto de origem (medo).
     /// </summary>
-    public const int Current = 10;
+    public const int Current = 11;
 }

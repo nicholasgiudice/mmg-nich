@@ -96,6 +96,11 @@ public sealed class Describe
     public static string Cooldown(AbilityDefinition a)
     {
         var text = a.CooldownTicks > 0 ? Seconds(a.CooldownTicks) : "—";
+        if (a.CooldownOnInterrupt && a.CooldownTicks > 0)
+        {
+            text += " (também quando interrompida)";
+        }
+
         if (a.CooldownCharges > 1)
         {
             text += $", {a.CooldownCharges} cargas que recarregam uma a uma";
@@ -244,6 +249,13 @@ public sealed class Describe
             parts.Add($"cura recebida {Mult(m.HealingTakenMultiplier)}");
         }
 
+        foreach (var (school, mult) in m.DamageTakenBySchool.OrderBy(kv => kv.Key, StringComparer.Ordinal))
+        {
+            var name = Enum.GetValues<DamageSchool>().FirstOrDefault(d => Game.Core.Combat.UnitInfo.SchoolName(d) == school) is var d0
+                && Game.Core.Combat.UnitInfo.SchoolName(d0) == school ? School(d0) : school;
+            parts.Add($"dano {name} recebido {Mult(mult)}");
+        }
+
         if (s.Reflect is { } r)
         {
             parts.Add($"devolve {Pct(r.Fraction)} do dano recebido a quem atacou");
@@ -286,6 +298,11 @@ public sealed class Describe
         if (s.Flags.Untargetable)
         {
             parts.Add("não pode ser alvo");
+        }
+
+        if (s.Flags.Feared)
+        {
+            parts.Add("com medo (não age e foge de onde veio o medo)");
         }
 
         if (s.Frontal is { } f)

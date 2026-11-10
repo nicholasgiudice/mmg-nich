@@ -58,7 +58,8 @@ internal sealed partial class SiteBuilder
                 _db.Encounters.Values.Select(e => new[]
                 {
                     $"<span id=\"{Esc(e.Id)}\">{Esc(e.Name)}</span> {Code(e.Id)}",
-                    string.Join(", ", e.Enemies.GroupBy(x => x.Monster).Select(g => $"{g.Count()} × {_d.MonsterLink(p, g.Key)}")),
+                    string.Join(", ", e.Enemies.GroupBy(x => x.Monster).Select(g => $"{g.Count()} × {_d.MonsterLink(p, g.Key)}"))
+                        + (e.Objectives.Count == 0 ? "" : "; a proteger: " + string.Join(", ", e.Objectives.GroupBy(x => x.Monster).Select(g => $"{g.Count()} × {_d.MonsterLink(p, g.Key)}"))),
                     string.Join(", ", e.Players.Select(x => _d.ClassLink(p, x.Class))),
                     e.MonsterLevel is { } l ? Num(l) : "padrão",
                     e.Defeat.TimeLimitTicks is { } t ? Seconds(t) : "—",
@@ -155,7 +156,9 @@ internal sealed partial class SiteBuilder
                 {
                     $"{Esc(_content.Phases.GetValueOrDefault(ph.Id) ?? ph.Id)} {Code(ph.Id)}",
                     Num(ph.HealthPercent) + "%",
-                    (ph.OnEnter.Count == 0 ? "—" : _d.Effects(p, ph.OnEnter)) + (ph.NoSummons ? "<p class=\"muted\">sem invocações nesta fase</p>" : ""),
+                    (ph.OnEnter.Count == 0 && ph.OnEnterObjectives.Count == 0 ? "—" : _d.Effects(p, ph.OnEnter))
+                        + (ph.OnEnterObjectives.Count == 0 ? "" : "<p>Nos objetivos do encontro:</p>" + _d.Effects(p, ph.OnEnterObjectives))
+                        + (ph.NoSummons ? "<p class=\"muted\">sem invocações nesta fase</p>" : ""),
                     ph.Abilities is null ? "todas" : string.Join(", ", ph.Abilities.Select(id => _d.AbilityLink(p, id))),
                 })));
         }
@@ -198,7 +201,7 @@ internal sealed partial class SiteBuilder
             p.Add($"<p>Invocado por {_d.MonsterLink(p, summoner.Id)} {how}.{at}</p>");
         }
 
-        var encounters = _db.Encounters.Values.Where(e => e.Enemies.Any(x => x.Monster == m.Id)).ToList();
+        var encounters = _db.Encounters.Values.Where(e => e.Enemies.Any(x => x.Monster == m.Id) || e.Objectives.Any(x => x.Monster == m.Id)).ToList();
         if (encounters.Count > 0)
         {
             p.Add("<p class=\"muted\">Encontros de teste: " + string.Join(", ", encounters.Select(e => p.A(Url.Encounter(e.Id), e.Name))) + ".</p>");

@@ -1,4 +1,5 @@
 using Game.Core.Combat.Areas;
+using Game.Core.Combat.Objectives;
 using Game.Core.Combat.Phases;
 using Game.Core.Combat.Telegraphs;
 using Game.Core.CombatLog;
@@ -15,7 +16,10 @@ public static class EncounterModule
         s.Gates.Add(new PhaseGate());
     }
 
-    /// <summary>Formatadores de log: TelegraphStarted/Resolved, AreaSpawned/Triggered/Expired, PhaseChanged, MonsterSummoned.</summary>
+    /// <summary>
+    /// Formatadores de log: TelegraphStarted/Resolved, AreaSpawned/Triggered/Expired, PhaseChanged, MonsterSummoned e
+    /// (T-351) ObjectiveDestroyed/EncounterFailed.
+    /// </summary>
     public static CombatLogFormatters RegisterLog(CombatLogFormatters f)
     {
         f.Register<TelegraphStarted>((c, e) => c.Entry(
@@ -74,6 +78,17 @@ public static class EncounterModule
             $"{c.Name(e.Owner)} invocou {c.Name(e.Summon)}",
             e.Owner,
             e.Summon));
+
+        f.Register<ObjectiveDestroyed>((c, e) => c.Entry(
+            e,
+            LogCategory.Fase,
+            $"{c.Name(e.Entity)} foi destruído" + (e.Remaining > 0 ? $" (restam {e.Remaining})" : " (nenhum restou)"),
+            e.Entity));
+
+        f.Register<EncounterFailed>((c, e) => c.Entry(
+            e,
+            LogCategory.Fase,
+            e.Reason == EncounterFailReason.ObjectivesDestroyed ? "Falha: todos os objetivos foram destruídos" : "Falha no encontro"));
 
         return f;
     }

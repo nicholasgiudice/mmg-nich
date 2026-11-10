@@ -445,6 +445,16 @@ internal static partial class GameDataValidator
         ctx.NonNegative("modifiers.damageDealtMultiplier", x.Modifiers.DamageDealtMultiplier);
         ctx.NonNegative("modifiers.controlDurationMultiplier", x.Modifiers.ControlDurationMultiplier);
         ctx.NonNegative("modifiers.healingTakenMultiplier", x.Modifiers.HealingTakenMultiplier);
+        foreach (var (school, mult) in x.Modifiers.DamageTakenBySchool)
+        {
+            if (!Enum.GetValues<DamageSchool>().Any(d => Game.Core.Combat.UnitInfo.SchoolName(d) == school))
+            {
+                ctx.Error($"modifiers.damageTakenBySchool.{school}", $"Escola desconhecida. Use: {string.Join(", ", Enum.GetValues<DamageSchool>().Select(Game.Core.Combat.UnitInfo.SchoolName))}.");
+            }
+
+            ctx.NonNegative($"modifiers.damageTakenBySchool.{school}", mult);
+        }
+
         if (x.Reflect is { Fraction: < 0 or > 1 }) { ctx.Error("reflect.fraction", "Deve estar em 0..1."); }
         if (x.Breaks is { DamageFraction: < 0 }) { ctx.Error("breaks.damageFraction", "Não pode ser negativo."); }
         if (x.Frontal is { } fr)
@@ -613,6 +623,7 @@ internal static partial class GameDataValidator
             else if (p.HealthPercent >= previous) { pc.Error("healthPercent", "Os limiares devem decrescer de uma fase para a seguinte."); }
             previous = p.HealthPercent;
             ValidateEffects(p.OnEnter, pc, "onEnter", refs);
+            ValidateEffects(p.OnEnterObjectives, pc, "onEnterObjectives", refs);
             if (p.Abilities is { } list)
             {
                 for (var j = 0; j < list.Count; j++)
@@ -690,6 +701,13 @@ internal static partial class GameDataValidator
             ctx.Exists($"enemies[{i}].monster", x.Enemies[i].Monster, monsters, "monstro");
             CheckSpawn(ctx, $"enemies[{i}].position", x.Enemies[i].Position, arena);
             if (x.Enemies[i].Level is < 1) { ctx.Error($"enemies[{i}].level", "Nível deve ser pelo menos 1."); }
+        }
+
+        for (var i = 0; i < x.Objectives.Count; i++)
+        {
+            ctx.Exists($"objectives[{i}].monster", x.Objectives[i].Monster, monsters, "monstro");
+            CheckSpawn(ctx, $"objectives[{i}].position", x.Objectives[i].Position, arena);
+            if (x.Objectives[i].Level is < 1) { ctx.Error($"objectives[{i}].level", "Nível deve ser pelo menos 1."); }
         }
     }
 

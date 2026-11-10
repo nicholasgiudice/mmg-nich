@@ -213,6 +213,34 @@
       "stacking": "refresh",
       "reflect": { "fraction": 0.3 },
       "breaks": { "damageFraction": 0.08, "interrupt": true }
+    },
+    {
+      "id": "status.dread",
+      "name": "Pavor",
+      "tags": ["debuff", "control", "fear"],
+      "defaultDuration": 2,
+      "flags": { "feared": true }
+    },
+    {
+      "id": "status.empty_face",
+      "name": "Rosto Vazio",
+      "tags": ["buff"],
+      "defaultDuration": 3600,
+      "modifiers": { "damageTakenBySchool": { "holy": 1.4 } }
+    },
+    {
+      "id": "status.seal_intact",
+      "name": "Selo Intacto",
+      "tags": ["seal_intact"],
+      "defaultDuration": 3600,
+      "flags": { "untargetable": true }
+    },
+    {
+      "id": "status.seal_crumbling",
+      "name": "Selo em Ruína",
+      "tags": ["debuff", "crumbling"],
+      "defaultDuration": 3600,
+      "periodic": [{ "interval": 1, "effects": [{ "type": "damage", "school": "arcane", "base": 4 }] }]
     }
   ]
 }

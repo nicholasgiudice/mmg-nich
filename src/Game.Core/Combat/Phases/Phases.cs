@@ -75,6 +75,7 @@ public sealed class PhaseGate : IActionGate
 /// Troca as fases de boss (ordem <see cref="SystemOrder.Phases"/>). Entra na fase seguinte quando vida% &lt;= limiar, uma vez;
 /// se a vida cruzar vários limiares de uma vez, passa por todas em ordem (cada uma com seus efeitos de entrada).
 /// Os efeitos <c>onEnter</c> usam o boss como fonte e alvo (summon/spawn_area são PerCast; status e dano vão no boss).
+/// Os efeitos <c>onEnterObjectives</c> (T-351) vão em cada objetivo vivo do encontro, com o boss como fonte.
 /// A primeira fase (limiar 100) é entrada no primeiro tick.
 /// </summary>
 public sealed class PhaseSystem : ISimulationSystem
@@ -109,6 +110,12 @@ public sealed class PhaseSystem : ISimulationSystem
                 {
                     var aim = boss.TryGet<Transform>()?.Position;
                     EffectApplier.Apply(world, phase.OnEnter, boss, [boss], $"{def.Id}.{phase.Id}", null, aim);
+                }
+
+                if (phase.OnEnterObjectives.Count > 0 && Objectives.ObjectiveService.Alive(world).ToList() is { Count: > 0 } objectives)
+                {
+                    var aim = boss.TryGet<Transform>()?.Position;
+                    EffectApplier.Apply(world, phase.OnEnterObjectives, boss, objectives, $"{def.Id}.{phase.Id}", null, aim);
                 }
             }
         }

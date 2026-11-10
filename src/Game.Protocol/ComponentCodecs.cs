@@ -2,6 +2,7 @@ using System.Buffers;
 using Game.Core.Combat;
 using Game.Core.Combat.Areas;
 using Game.Core.Combat.Items;
+using Game.Core.Combat.Objectives;
 using Game.Core.Combat.Phases;
 using Game.Core.Combat.Progression;
 using Game.Core.Combat.Shops;
@@ -46,6 +47,7 @@ public static class ComponentCodecs
         [typeof(PartyMembership)] = 19,
         [typeof(Wallet)] = 20,
         [typeof(NpcInfo)] = 21,
+        [typeof(EncounterObjective)] = 22,
     };
 
     internal static void Write<TB>(ref MemoryPackWriter<TB> w, IComponent component)
@@ -131,6 +133,8 @@ public static class ComponentCodecs
                     w.L(st.AppliedAtTick);
                     w.L(st.ExpiresAtTick);
                     w.I(st.Stacks);
+                    w.F(st.DamageTaken);
+                    w.VOpt(st.Origin);
                     w.I(st.NextPeriodicTick.Length);
                     foreach (var n in st.NextPeriodicTick)
                     {
@@ -241,6 +245,9 @@ public static class ComponentCodecs
                 w.S(npc.Name);
                 w.S(npc.Shop);
                 break;
+            case EncounterObjective o:
+                w.B(o.Destroyed);
+                break;
         }
     }
 
@@ -322,6 +329,8 @@ public static class ComponentCodecs
                         st.AppliedAtTick = r.L();
                         st.ExpiresAtTick = r.L();
                         st.Stacks = r.I();
+                        st.DamageTaken = r.F();
+                        st.Origin = r.VOpt();
                         var periodic = new long[Wire.Count(ref r)];
                         for (var k = 0; k < periodic.Length; k++)
                         {
@@ -444,6 +453,9 @@ public static class ComponentCodecs
 
             case 21:
                 return new NpcInfo { DefinitionId = r.S(), Name = r.S(), Shop = r.SOpt() };
+
+            case 22:
+                return new EncounterObjective { Destroyed = r.B() };
 
             default:
                 throw new MemoryPackSerializationException($"Tag de componente desconhecida: {tag}");

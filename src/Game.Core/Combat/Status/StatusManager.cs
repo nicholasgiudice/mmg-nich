@@ -1,3 +1,4 @@
+using System.Numerics;
 using Game.Core.Combat.Effects;
 using Game.Core.Definitions;
 using Game.Core.Simulation;
@@ -32,6 +33,30 @@ public static class StatusManager
     public static bool IsRooted(World world, Entity e) => Active(world, e).Any(s => Def(world, s).Flags.Rooted);
 
     public static bool IsSilenced(World world, Entity e) => Active(world, e).Any(s => Def(world, s).Flags.Silenced);
+
+    /// <summary>O status de medo ativo (T-351) mais recente, ou null.</summary>
+    public static StatusInstance? Fear(World world, Entity e) =>
+        Active(world, e).Where(s => Def(world, s).Flags.Feared).OrderByDescending(s => s.AppliedAtTick).ThenByDescending(s => s.Id).FirstOrDefault();
+
+    /// <summary>
+    /// Direção de fuga de quem tem medo (T-351): para longe da origem do medo. Sem origem, ou em cima dela, foge para trás
+    /// (contra o facing). Null = sem medo.
+    /// </summary>
+    public static Vector2? FleeDirection(World world, Entity e)
+    {
+        if (Fear(world, e) is not { } fear || e.TryGet<Simulation.Components.Transform>() is not { } t)
+        {
+            return null;
+        }
+
+        var away = fear.Origin is { } o ? t.Position - o : Vector2.Zero;
+        if (away.LengthSquared() < 1e-6f)
+        {
+            away = t.Facing.LengthSquared() > 1e-6f ? -t.Facing : new Vector2(1, 0);
+        }
+
+        return Vector2.Normalize(away);
+    }
 
     /// <summary>Tem status com a marca <c>untargetable</c> (T-340): ninguém além dele mesmo o alcança com habilidades.</summary>
     public static bool IsUntargetable(World world, Entity e) => Active(world, e).Any(s => Def(world, s).Flags.Untargetable);
@@ -69,7 +94,8 @@ public static class StatusManager
     /// ou imunidade por tag de outro status — T-061).
     /// <paramref name="durationTicks"/> null = duração padrão da definição. Controle (tag "control") passa pelas regras de rank e retorno decrescente.
     /// </summary>
-    public static StatusInstance? Apply(World world, Entity? source, Entity target, string statusId, int? durationTicks = null)
+    /// <param name="origin">Ponto de origem (T-351, medo); null = a posição da fonte.</param>
+    public static StatusInstance? Apply(World world, Entity? source, Entity target, string statusId, int? durationTicks = null, Vector2? origin = null)
     {
         if (!target.IsAlive)
         {
@@ -111,6 +137,7 @@ public static class StatusManager
         }
 
         var expires = world.Tick + duration;
+        origin ??= source?.TryGet<Simulation.Components.Transform>()?.Position;
         var inst = effects.Active.FirstOrDefault(s => s.StatusId == statusId && IsActive(world, s));
         if (inst is null)
         {
@@ -122,6 +149,7 @@ public static class StatusManager
                 AppliedAtTick = world.Tick,
                 ExpiresAtTick = expires,
                 NextPeriodicTick = def.Periodic.Select(p => world.Tick + p.IntervalTicks).ToArray(),
+                Origin = origin,
             };
             effects.Active.RemoveAll(s => s.StatusId == statusId); // restos expirados ainda não limpos
             effects.Active.Add(inst);
@@ -132,6 +160,7 @@ public static class StatusManager
             inst.Source = sourceId;
             inst.ExpiresAtTick = expires;
             inst.DamageTaken = 0;
+            inst.Origin = origin;
             if (def.Stacking == StackingMode.Stack && inst.Stacks < def.MaxStacks)
             {
                 inst.Stacks++;
@@ -143,7 +172,7 @@ public static class StatusManager
             }
         }
 
-        if (def.Flags.Stunned)
+        if (def.Flags.Stunned || def.Flags.Feared)
         {
             CastControl.Cancel(world, target, CastInterruptReason.Disabled, sourceId);
         }

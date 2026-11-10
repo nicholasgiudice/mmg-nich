@@ -7,6 +7,8 @@ namespace Game.Core.Simulation.Systems;
 /// <summary>
 /// Movimento com colisão: aplica <see cref="Movement"/> (velocidade x dt) com sub-steps, desliza em paredes
 /// (<see cref="World.Map"/>; sem mapa = plano aberto) e depois separa entidades sobrepostas.
+/// Uma direção imposta pelo combate (T-351: medo) substitui a intenção de movimento enquanto durar. Entidades com
+/// <see cref="Movement"/> de velocidade 0 (T-351: os selos) são fixas: a separação empurra só a outra.
 /// </summary>
 public sealed class MovementSystem : ISimulationSystem
 {
@@ -24,12 +26,18 @@ public sealed class MovementSystem : ISimulationSystem
 
             var move = e.TryGet<Movement>();
             var tr = e.TryGet<Transform>();
-            if (move is null || tr is null || move.Direction == Vector2.Zero)
+            if (move is null || tr is null)
             {
                 continue;
             }
 
-            var delta = move.Direction * (move.Speed * (float)world.Combat.SpeedMultiplier(world, e)) * World.TickSeconds;
+            var direction = world.Combat.ForcedDirection(world, e) ?? move.Direction;
+            if (direction == Vector2.Zero)
+            {
+                continue;
+            }
+
+            var delta = direction * (move.Speed * (float)world.Combat.SpeedMultiplier(world, e)) * World.TickSeconds;
             if (world.Map is null)
             {
                 tr.Position += delta;
@@ -41,7 +49,7 @@ public sealed class MovementSystem : ISimulationSystem
 
             if (!move.LockFacing)
             {
-                tr.Facing = Vector2.Normalize(move.Direction);
+                tr.Facing = Vector2.Normalize(direction);
             }
         }
 
@@ -50,7 +58,7 @@ public sealed class MovementSystem : ISimulationSystem
 
     private static void Separate(World world)
     {
-        var bodies = new List<(Entity E, Transform T, float R)>();
+        var bodies = new List<(Entity E, Transform T, float R, bool Fixed)>();
         foreach (var e in world.Entities)
         {
             if (!e.IsAlive)
@@ -62,7 +70,7 @@ public sealed class MovementSystem : ISimulationSystem
             var c = e.TryGet<Collider>();
             if (t is not null && c is not null && c.Radius > 0f)
             {
-                bodies.Add((e, t, c.Radius));
+                bodies.Add((e, t, c.Radius, e.TryGet<Movement>() is { Speed: <= 0f }));
             }
         }
 
@@ -82,9 +90,23 @@ public sealed class MovementSystem : ISimulationSystem
 
                 // Posições idênticas: direção determinística fixa (a vai para -x, b para +x).
                 var n = dist > 1e-6f ? d / dist : new Vector2(1f, 0f);
-                var push = n * (overlap * SeparationStrength * 0.5f);
-                a.T.Position = Nudge(world, a.T.Position, a.R, -push);
-                b.T.Position = Nudge(world, b.T.Position, b.R, push);
+                if (a.Fixed && b.Fixed)
+                {
+                    continue;
+                }
+
+                // Uma fixa: a outra leva o empurrão inteiro (o mesmo total do par).
+                var share = a.Fixed || b.Fixed ? 1f : 0.5f;
+                var push = n * (overlap * SeparationStrength * share);
+                if (!a.Fixed)
+                {
+                    a.T.Position = Nudge(world, a.T.Position, a.R, -push);
+                }
+
+                if (!b.Fixed)
+                {
+                    b.T.Position = Nudge(world, b.T.Position, b.R, push);
+                }
             }
         }
     }

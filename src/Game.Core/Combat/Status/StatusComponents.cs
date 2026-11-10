@@ -1,3 +1,4 @@
+using System.Numerics;
 using Game.Core.Simulation;
 
 namespace Game.Core.Combat.Status;
@@ -21,6 +22,12 @@ public sealed class StatusInstance
     /// <summary>Dano recebido desde a aplicação (para <c>breaks.damageFraction</c>, T-341). Renovar o status zera.</summary>
     public float DamageTaken { get; set; }
 
+    /// <summary>
+    /// Ponto de origem de quem aplicou (T-351, medo: o alvo foge dele): o centro do telegráfo/área ou a posição da fonte na
+    /// aplicação. Renovar o status atualiza. Null = sem origem (sem fonte nem ponto).
+    /// </summary>
+    public Vector2? Origin { get; set; }
+
     public StatusInstance Clone() => new()
     {
         Id = Id,
@@ -31,6 +38,7 @@ public sealed class StatusInstance
         Stacks = Stacks,
         NextPeriodicTick = (long[])NextPeriodicTick.Clone(),
         DamageTaken = DamageTaken,
+        Origin = Origin,
     };
 }
 
@@ -72,6 +80,13 @@ public sealed class StatusEffects : IComponent, IReplicated
             hasher.Add(a.ExpiresAtTick);
             hasher.Add(a.Stacks);
             hasher.Add(a.DamageTaken);
+            hasher.Add(a.Origin is { } o ? 1 : 0);
+            if (a.Origin is { } origin)
+            {
+                hasher.Add(origin.X);
+                hasher.Add(origin.Y);
+            }
+
             foreach (var n in a.NextPeriodicTick)
             {
                 hasher.Add(n);

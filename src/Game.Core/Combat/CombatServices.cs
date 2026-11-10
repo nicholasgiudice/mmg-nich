@@ -1,3 +1,4 @@
+using System.Numerics;
 using Game.Core.Combat.Effects;
 using Game.Core.Definitions;
 using Game.Core.Simulation;
@@ -35,6 +36,12 @@ public interface IModifierSource
     /// pode consumir o que fortaleceu (ex.: remover o status).
     /// </summary>
     double ConsumeAbilityPower(World world, Entity caster, string abilityId) => 1.0;
+
+    /// <summary>
+    /// Direção de movimento imposta (T-351: medo), que substitui a intenção de movimento da entidade; null = nenhuma.
+    /// Consumido pelo MovementSystem; a velocidade continua passando por <see cref="SpeedMultiplier"/>.
+    /// </summary>
+    Vector2? ForcedDirection(World world, Entity entity) => null;
 }
 
 /// <summary>Um dano já aplicado (Amount &gt; 0, antes de escudos), para reações como o reflexo da Guarda Firme (T-061).</summary>
@@ -111,6 +118,20 @@ public sealed class CombatServices
         }
 
         return m;
+    }
+
+    /// <summary>Primeira direção imposta entre as fontes (ordem de registro), ou null. Ver <see cref="IModifierSource.ForcedDirection"/>.</summary>
+    public Vector2? ForcedDirection(World world, Entity entity)
+    {
+        foreach (var s in Modifiers)
+        {
+            if (s.ForcedDirection(world, entity) is { } d)
+            {
+                return d;
+            }
+        }
+
+        return null;
     }
 
     public double SpeedMultiplier(World world, Entity entity)

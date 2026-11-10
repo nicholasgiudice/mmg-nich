@@ -128,13 +128,14 @@ public sealed class AiSystem : ISimulationSystem
         profile.Think(ctx);
     }
 
+    /// <summary>Aggro por proximidade no jogador mais próximo; objetivos (T-351: selos) não puxam aggro, só são alvo de habilidades.</summary>
     private static void ProximityAggro(World world, AiContext ctx, ThreatRules rules)
     {
         var range = (float)ctx.AggroRange;
         var nearest = world.Spatial.Nearest(
             ctx.Position,
             range,
-            e => e.IsAlive && e.TryGet<FactionTag>()?.Faction == Faction.Player);
+            e => e.IsAlive && e.TryGet<FactionTag>()?.Faction == Faction.Player && !Objectives.ObjectiveService.IsObjective(e));
         if (nearest is not null && ctx.HasLineOfSightTo(nearest))
         {
             ThreatService.Add(world, ctx.Self, nearest, rules.ProximityThreat, AggroReason.Proximity);

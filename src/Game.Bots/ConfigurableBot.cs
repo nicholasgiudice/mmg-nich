@@ -94,6 +94,11 @@ public sealed class ConfigurableBot(BotPlan plan) : IBotController
             return;
         }
 
+        if (!fleeing && (FollowInjured(ctx, allowed, output) || ChaseCaster(ctx, allowed, enemies, output)))
+        {
+            return;
+        }
+
         Move(ctx, enemies, focus, fleeing, output);
     }
 
@@ -147,6 +152,11 @@ public sealed class ConfigurableBot(BotPlan plan) : IBotController
         {
             // Fugindo: só instantâneas (conjurar parado faria o bot ser alcançado).
             if (fleeing && !_cornered && info.NeedsStanding)
+            {
+                continue;
+            }
+
+            if (ReservedForInterrupt(ctx, allowed, info))
             {
                 continue;
             }
@@ -269,8 +279,8 @@ public sealed class ConfigurableBot(BotPlan plan) : IBotController
 
             case AbilityRole.Interrupt:
                 {
-                    var casting = enemies.FirstOrDefault(e => e.TryGet<Game.Core.Combat.AbilityState>() is { IsCasting: true });
-                    if (casting is null)
+                    var casting = Casting(enemies);
+                    if (casting is null || InterruptMode(ctx) == "never")
                     {
                         return false;
                     }
@@ -281,6 +291,9 @@ public sealed class ConfigurableBot(BotPlan plan) : IBotController
 
             case AbilityRole.Dash:
                 return PlanDash(ctx, info, nearest, focus, fleeing, force, out aim);
+
+            case AbilityRole.Damage when info.HasInterrupt:
+                return PlanInterruptingDamage(ctx, info, enemies, focus, cls, out target, out aim);
 
             case AbilityRole.Damage:
                 return PlanDamage(ctx, info, enemies, focus, cls, out target, out aim);
@@ -303,6 +316,48 @@ public sealed class ConfigurableBot(BotPlan plan) : IBotController
 
                     return true;
                 }
+        }
+    }
+
+    /// <summary>Primeiro inimigo (mais próximo) conjurando, ou null.</summary>
+    private static Entity? Casting(List<Entity> enemies) =>
+        enemies.FirstOrDefault(e => e.TryGet<Game.Core.Combat.AbilityState>() is { IsCasting: true });
+
+    /// <summary>
+    /// T-351: opção <c>interrupt</c> para habilidades com interrupção: <c>auto</c> (padrão: usa como as outras),
+    /// <c>save</c> (guarda para quando um inimigo conjura e mira nele) ou <c>never</c> (não usa num inimigo que conjura).
+    /// </summary>
+    private static string InterruptMode(BotContext ctx) => ctx.Options.Get(ctx.ClassId, "interrupt") ?? "auto";
+
+    /// <summary>Dano com interrupção (Golpe Pesado), conforme a opção <c>interrupt</c>.</summary>
+    private bool PlanInterruptingDamage(
+        BotContext ctx, AbilityInfo info, List<Entity> enemies, Entity? focus, string cls, out EntityId? target, out Vector2? aim)
+    {
+        switch (InterruptMode(ctx))
+        {
+            case "save":
+                {
+                    // Só com quem conjura ao alcance: errar o golpe gastaria a recarga (o movimento leva o bot até ele).
+                    aim = null;
+                    var caster = Casting(enemies);
+                    target = caster is not null && ctx.EdgeDistanceTo(caster) <= info.Reach ? caster.Id : null;
+                    return target is not null;
+                }
+
+            case "never":
+                if (!PlanDamage(ctx, info, enemies, focus, cls, out target, out aim))
+                {
+                    return false;
+                }
+
+                // Não usa num inimigo que conjura (o arco pega quem está à frente: confere todos ao alcance).
+                var id = target;
+                var hitsCaster = enemies.Any(e => (e.Id == id || (!info.NeedsUnitTarget && ctx.EdgeDistanceTo(e) <= info.Reach))
+                    && e.TryGet<Game.Core.Combat.AbilityState>() is { IsCasting: true });
+                return !hitsCaster;
+
+            default:
+                return PlanDamage(ctx, info, enemies, focus, cls, out target, out aim);
         }
     }
 
@@ -632,6 +687,77 @@ public sealed class ConfigurableBot(BotPlan plan) : IBotController
                 MoveKite(ctx, enemies, focus, fleeing, output);
                 return;
         }
+    }
+
+    /// <summary>
+    /// T-351, <c>interrupt=save</c>: não gasta o recurso que a interrupção precisa (uma habilidade sem interrupção que deixaria o
+    /// recurso abaixo do custo dela fica para depois).
+    /// </summary>
+    private static bool ReservedForInterrupt(BotContext ctx, IReadOnlyList<AbilityInfo> allowed, AbilityInfo info)
+    {
+        if (info.HasInterrupt || info.Definition.Cost is not { Amount: > 0 } cost || InterruptMode(ctx) != "save"
+            || ctx.Self.TryGet<ResourcePool>() is not { } pool)
+        {
+            return false;
+        }
+
+        var reserve = allowed.Where(a => a.HasInterrupt && a.Definition.Cost?.Resource == cost.Resource)
+            .Select(a => a.Definition.Cost!.Amount).DefaultIfEmpty(0).Max();
+        return reserve > 0 && pool.Current - cost.Amount < reserve;
+    }
+
+    /// <summary>
+    /// T-351, <c>interrupt=save</c>: com a interrupção pronta e um inimigo conjurando fora do alcance dela, anda até ele.
+    /// </summary>
+    private bool ChaseCaster(BotContext ctx, IReadOnlyList<AbilityInfo> allowed, List<Entity> enemies, List<Intent> output)
+    {
+        if (InterruptMode(ctx) != "save" || Casting(enemies) is not { } caster)
+        {
+            return false;
+        }
+
+        var ready = allowed.FirstOrDefault(a => a.HasInterrupt
+            && ctx.World.Content.Abilities.TryGetValue(a.Id, out var def)
+            && !ctx.Abilities.IsOnCooldown(def, ctx.World.Tick));
+        if (ready is null || ctx.EdgeDistanceTo(caster) <= ready.Reach * 0.9)
+        {
+            return false;
+        }
+
+        _nav.MoveToward(ctx, BotContext.PositionOf(caster), output);
+        return true;
+    }
+
+    /// <summary>
+    /// T-351: opção <c>followInjured</c> (1 liga; padrão desligado): quem tem cura anda até o aliado mais ferido (até
+    /// <c>healBelow</c>) que está fora do alcance da cura, em vez do movimento da estratégia (ex.: o Clérigo indo aos selos).
+    /// </summary>
+    private bool FollowInjured(BotContext ctx, IReadOnlyList<AbilityInfo> allowed, List<Intent> output)
+    {
+        if (ctx.Options.GetDouble(ctx.ClassId, "followInjured", 0) <= 0)
+        {
+            return false;
+        }
+
+        var reach = allowed.Where(a => a.Role == AbilityRole.Heal && a.NeedsUnitTarget).Select(a => a.Reach).DefaultIfEmpty(0).Max();
+        if (reach <= 0)
+        {
+            return false;
+        }
+
+        var threshold = (float)ctx.Options.GetDouble(ctx.ClassId, "healBelow", 0.75);
+        var needy = ctx.Allies()
+            .Where(a => a.Id != ctx.Self.Id && BotContext.HealthOf(a) <= threshold && !StatusManager.IsUntargetable(ctx.World, a))
+            .OrderBy(BotContext.HealthOf)
+            .ThenBy(a => a.Id.Value)
+            .FirstOrDefault();
+        if (needy is null || ctx.EdgeDistanceTo(needy) <= reach * 0.9)
+        {
+            return false;
+        }
+
+        _nav.MoveToward(ctx, BotContext.PositionOf(needy), output);
+        return true;
     }
 
     private void ChaseTo(BotContext ctx, Entity target, double stopEdge, List<Intent> output)

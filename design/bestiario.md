@@ -1,6 +1,6 @@
 # Bestiário
 
-Status: **referência gerada a partir dos dados** (2026-11-02; Fada da Névoa e Ent Corrompido em 2026-11-06, T-340; Sacerdote Morto e Cavaleiro Espectral em 2026-11-09, T-341). Fonte: `data/monsters.json`, `data/abilities_monsters.json`, `data/statuses.json`, `data/areas.json`, `data/zones.json`, `data/encounters.json`, `data/rules.json` e `data/items.json` (tabelas de queda). Os números saem desses arquivos; quando os dados mudarem, este documento deve ser atualizado.
+Status: **referência gerada a partir dos dados** (2026-11-02; Fada da Névoa e Ent Corrompido em 2026-11-06, T-340; Sacerdote Morto e Cavaleiro Espectral em 2026-11-09, T-341; Vigia Sem Rosto, Sombra e Selo do Juramento em 2026-11-10, T-351). Fonte: `data/monsters.json`, `data/abilities_monsters.json`, `data/statuses.json`, `data/areas.json`, `data/zones.json`, `data/encounters.json`, `data/rules.json` e `data/items.json` (tabelas de queda). Os números saem desses arquivos; quando os dados mudarem, este documento deve ser atualizado.
 
 As habilidades dos monstros estão detalhadas em `design/habilidades.md` (§ Monstros) e os itens em `design/itens.md`.
 
@@ -32,6 +32,9 @@ As habilidades dos monstros estão detalhadas em `design/habilidades.md` (§ Mon
 | Guarda Esquelético | `monster.skeleton_guard` | 9 | normal | 440 | 3,2 | 0,5 | undead | `ai.guardian` |
 | Sacerdote Morto | `monster.dead_priest` | 10 | normal | 180 | 3,0 | 0,45 | undead | `ai.support` |
 | Cavaleiro Espectral | `monster.spectral_knight` | 11 | **elite** | 4500 | 3,4 | 0,5 | undead | `ai.brute` |
+| Sombra | `monster.shade` | 14 | normal | 150 | 3,6 | 0,4 | undead | `ai.melee_chaser` |
+| Vigia Sem Rosto | `monster.faceless_watcher` | 15 | **chefe** | 45000 | 3,4 | 0,9 | undead, boss | `ai.boss` |
+| Selo do Juramento (objetivo) | `monster.watcher_seal` | 15 | normal | 380 | 0 | 0,6 | seal | `ai.none` |
 
 ## Quedas (drops)
 
@@ -77,7 +80,7 @@ As aranhas não têm ponto de nascimento próprio: só aparecem invocadas pela M
 
 ### Encontros de teste (`data/encounters.json`)
 
-Arenas fechadas usadas no protótipo e nos testes. Os cinco do protótipo usam `monsterLevel` 1; os da Floresta (T-340) e das Ruínas (T-341) definem o nível de cada monstro.
+Arenas fechadas usadas no protótipo e nos testes. Os cinco do protótipo usam `monsterLevel` 1; os da Floresta (T-340), das Ruínas (T-341) e o do Vigia (T-351) usam o nível de cada monstro.
 
 | Encontro | Arena | Monstros | Jogadores | Limite |
 |---|---|---|---|---|
@@ -91,6 +94,7 @@ Arenas fechadas usadas no protótipo e nos testes. Os cinco do protótipo usam `
 | Emboscada na Névoa (`encounter.mist_ambush`) | `map.fields` | 3 Aranhas Menores nv5 + 1 Fada nv6 | Guerreiro, Arqueiro | 120 s |
 | Pátio dos Mortos (`encounter.dead_courtyard`) | `map.broken_gate` | 3 Guardas Esqueléticos nv9 + 1 Sacerdote Morto nv10 | Guerreiro, Clérigo (os testes trocam as classes) | 240 s |
 | Cavaleiro Espectral na Torre Quebrada (`encounter.spectral_knight`) | `map.broken_gate` | 1 Cavaleiro Espectral nv11 | Guerreiro, Arqueiro, Clérigo | 240 s |
+| O Vigia Sem Rosto (`encounter.faceless_watcher`) | `map.watcher_hall` | 1 Vigia nv15; a proteger: 3 Selos do Juramento | Guerreiro, Arqueiro, Mago, Clérigo | 480 s |
 
 ## Monstros
 
@@ -245,6 +249,51 @@ Nível 11, **elite**. Vida 4500, velocidade 3,4, raio 0,5. Tag: undead. Design: 
 - **Onde aparece:** Torre Quebrada, nas Ruínas (mapa da T-343), opcional. Encontro de teste Cavaleiro Espectral na Torre Quebrada (nv. 11).
 - **Arte:** sprite humanoide LPC ligado pela T-056 (`client/assets/art/sprites.json`).
 - **Quedas:** tabela elite.
+
+### Sombra — `monster.shade`
+
+Nível 14, normal. Vida 150, velocidade 3,6, raio 0,4. Tag: undead. Design: `design/combat-encounters-v0.1.md` § Cripta do Vigia.
+
+- **Habilidade:** Toque Gélido (`shade.cold_touch`) — dano arcano 18, arco de 90°, alcance 1,6, recarga 1,4 s.
+- **IA:** `ai.melee_chaser`, `aggroRange` 20.
+- **Onde aparece:** só invocada pelo Vigia (Sombras do Rosto Vazio), com o nível dele (15: vida 990).
+- **Arte:** sprite humanoide LPC ligado pela T-056 (`client/assets/art/sprites.json`).
+- **Quedas:** tabela normal.
+
+### Vigia Sem Rosto — `monster.faceless_watcher`
+
+Nível 15, **chefe**. Vida 45 000 no nível 1; no nível 15 = **234 000** (45 000 × 5,2); potência × 6,32. Velocidade 3,4, raio 0,9. Tags: undead, boss. Design: `design/combat-encounters-v0.1.md` § Cripta do Vigia.
+
+- **IA:** `ai.boss`, `aggroRange` 40, `approachRange` 2,3. Antes de atacar tenta, na ordem da lista, o Último Comando no **selo mais ferido** (tag nova `ai.objective`), as invocações (`ai.summon`) e o Chão do Pavor (`ai.area`).
+- **Controle:** efeitos de controle duram um quarto (× 0,25).
+- **Habilidades:**
+
+| Habilidade | Id | Resumo |
+|---|---|---|
+| Último Comando | `watcher.last_command` | **conjuração de 4 s** num selo a até 40; dano arcano 2000 (destrói o selo); recarga 10 s, **também quando interrompida** |
+| Chamado da Guarda | `watcher.call_guards` | conjuração de 2,5 s; invoca 2 Guardas Esqueléticos em raio 2,5 (máximo 2 vivos); recarga 24 s |
+| Sombras do Rosto Vazio | `watcher.call_shades` | conjuração de 2 s; invoca 3 Sombras em raio 2,5 (máximo 3 vivas); recarga 20 s |
+| Chão do Pavor | `watcher.dread_ground` | círculo de raio 2,5 a até 14 com aviso de 1,2 s; dano arcano 70 e **Pavor** (`status.dread`, medo por 2 s); recarga 8 s |
+| Investida de Ferro | `watcher.iron_charge` | linha 8 × 1,8 com aviso de 1,2 s; avança e causa dano físico 150; recarga 12 s |
+| Corte do Juramento | `watcher.oath_cleave` | cone frontal de 90° × 4 com aviso de 1,2 s; dano físico 120; recarga 7 s |
+| Golpe de Ferro | `watcher.iron_strike` | dano físico 38, arco de 100°, alcance 2,3, recarga 1,6 s |
+| Golpe Espectral | `watcher.spectral_strike` | dano arcano 36, arco de 100°, alcance 2,3, recarga 1,6 s |
+
+- **Fases** (`phases`):
+
+| Fase | Id | Vida | Ao entrar | Habilidades |
+|---|---|---|---|---|
+| Juramento de Ferro | `phase.iron_oath` | 100% | nos selos: **Selo Intacto** (`status.seal_intact`, não pode ser alvo) | Chamado da Guarda, Investida de Ferro, Corte do Juramento, Golpe de Ferro |
+| O Rosto Vazio | `phase.empty_face` | 65% | em si: **Rosto Vazio** (`status.empty_face`, dano sagrado recebido × 1,4) | Sombras do Rosto Vazio, Chão do Pavor, Corte do Juramento, Golpe Espectral |
+| Último Comando | `phase.last_command` | 25% | nos selos: tira o Selo Intacto e aplica **Selo em Ruína** (`status.seal_crumbling`, dano arcano 4 por segundo); sem invocações (`noSummons`) | Último Comando, Chão do Pavor, Corte do Juramento, Golpe Espectral |
+
+- **Onde aparece:** Sala do Vigia, na Cripta (dungeon da T-352). Encontro de teste O Vigia Sem Rosto (nv. 15).
+- **Arte:** sprite LPC em escala ×2 ligado pela T-056 (`client/assets/art/sprites.json`).
+- **Quedas:** tabela chefe.
+
+### Selo do Juramento — `monster.watcher_seal` (objetivo)
+
+Nível 15, normal. Vida 380 (2 508 no nível 15), velocidade 0, raio 0,6. Tag: seal. Não é inimigo: nasce pelo campo `objectives` do encontro, **do lado dos jogadores**, sem IA, e não se move nem é empurrado. Pode ser curado e receber escudo; não puxa aggro e não é revivido. **Se os três caem, a luta falha** (`EncounterFailed`). Sem sprite próprio ainda (T-345).
 
 ## Pontos em aberto nos dados
 

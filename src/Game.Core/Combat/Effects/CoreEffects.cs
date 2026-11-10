@@ -234,7 +234,10 @@ public static class DamageResolver
 /// <summary>Cancelamento de conjuração (interrupt, morte, movimento, stun de T-009...).</summary>
 public static class CastControl
 {
-    /// <summary>Cancela a conjuração da entidade (sem custo nem recarga) e publica CastInterrupted. Retorna false se não conjurava.</summary>
+    /// <summary>
+    /// Cancela a conjuração da entidade (sem custo nem recarga, salvo <c>cooldownOnInterrupt</c> numa interrupção) e publica
+    /// CastInterrupted. Retorna false se não conjurava.
+    /// </summary>
     public static bool Cancel(World world, Entity entity, CastInterruptReason reason, EntityId? by = null)
     {
         var st = entity.TryGet<AbilityState>();
@@ -247,6 +250,13 @@ public static class CastControl
         if (cast.LockedFacing && entity.TryGet<Movement>() is { } mv)
         {
             mv.LockFacing = false;
+        }
+
+        // T-351: habilidade com cooldownOnInterrupt entra na recarga cheia quando interrompida.
+        if (reason == CastInterruptReason.Interrupted
+            && world.Content.AbilityAt(cast.AbilityId, st.RankOf(cast.AbilityId)) is { CooldownOnInterrupt: true, CooldownTicks: > 0 } def)
+        {
+            st.ReadyAtTick[cast.AbilityId] = world.Tick + def.CooldownTicks;
         }
 
         world.Events.Publish(new CastInterrupted(entity.Id, cast.AbilityId, reason, by));
