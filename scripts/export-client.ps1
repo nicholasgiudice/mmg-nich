@@ -56,3 +56,4 @@ Compress-Archive -Path (Join-Path $outDir '*') -DestinationPath $zip
 
 $size = '{0:N1} MB' -f ((Get-Item $zip).Length / 1MB)
 Write-Host "==> Pronto: $zip ($size)"
+Write-Host '    Para publicar no site: .\scripts\deploy-download.ps1 -Server root@<vps> [-Version <versão>]'

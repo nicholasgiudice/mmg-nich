@@ -35,7 +35,7 @@ internal sealed partial class SiteBuilder
             index.Add(AbilityList(index, _usage.AbilityMonsters.Where(kv => kv.Value.Contains(m.Id)).Select(kv => kv.Key), null));
         }
 
-        foreach (var a in _db.Abilities.Values)
+        foreach (var a in _db.Abilities.Values.Where(a => _usage.IsUsed(a.Id)))
         {
             BuildAbility(a);
         }
@@ -59,14 +59,8 @@ internal sealed partial class SiteBuilder
 
     private void BuildAbility(AbilityDefinition a)
     {
-        var used = _usage.IsUsed(a.Id);
         var p = NewPage(Url.Ability(a.Id), a.Name, $"{a.Name}: custo, recarga, alvo e efeitos por nível de habilidade.");
-        p.Add($"<div class=\"head\">{Icon(p, a.Id, 2)}<div><h1>{Esc(a.Name)}</h1><p>{Code(a.Id)}{(a.Signature ? " <span class=\"badge\">assinatura</span>" : "")}</p></div></div>");
-        if (!used)
-        {
-            p.Add($"<p class=\"note\">Esta habilidade existe nos dados, mas <strong>nenhuma classe nem monstro a usa hoje</strong>. Não faz parte do jogo atual ({p.A(Url.Open, "em aberto")}).</p>");
-        }
-
+        p.Add($"<div class=\"head\">{Icon(p, a.Id, 2)}<div><h1>{Esc(a.Name)}</h1>{(a.Signature ? "<p><span class=\"badge\">assinatura</span></p>" : "")}</div></div>");
         var users = new List<string>();
         if (_usage.AbilityClasses.TryGetValue(a.Id, out var classes))
         {
@@ -83,11 +77,6 @@ internal sealed partial class SiteBuilder
         if (users.Count > 0)
         {
             head.Add(("Usada por", string.Join(", ", users)));
-        }
-
-        if (a.Tags.Count > 0)
-        {
-            head.Add(("Tags", string.Join(" ", a.Tags.Select(t => Code(t)))));
         }
 
         var items = _db.Items.Values.Where(i => i.UseAbility == a.Id).ToList();

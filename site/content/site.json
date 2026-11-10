@@ -1,12 +1,27 @@
 {
-  "$comment": "Textos do site que não são regra de jogo (T-071). Números, nomes exibidos e ids vêm só de data/*.json; aqui ficam apresentação, descrições curtas e nomes que os dados não têm (fases de chefe). Chaves por id dos dados.",
+  "$comment": "Textos do site que não são regra de jogo (T-071). Números e nomes exibidos vêm só de data/*.json; aqui ficam apresentação, descrições curtas, nomes que os dados não têm (fases de chefe, rótulos de tags) e a página de download. Chaves por id dos dados. Ids nunca aparecem no site.",
   "title": "Valdran",
   "tagline": "MMO RPG 2D medieval, visto de cima, com combate PvE em tempo real.",
   "intro": [
     "Valdran começa atrás dos muros de uma cidade-fortaleza antiga. Além dos portões ficam campos, florestas e ruínas cada vez mais perigosos, e a vida do aventureiro é sair, enfrentar o que encontrar, voltar mais forte e ir um pouco mais longe da próxima vez.",
-    "O combate é em tempo real e com movimentação livre: posicionamento importa, avisos no chão mostram onde um golpe vai cair e os chefes têm mecânicas, não só mais vida. Dá para jogar sozinho, mas o grupo ideal é de quatro jogadores.",
-    "Este site é gerado a partir dos dados do jogo. Todo número que aparece aqui é o mesmo que o servidor usa."
+    "O combate é em tempo real e com movimentação livre: posicionamento importa, avisos no chão mostram onde um golpe vai cair e os chefes têm mecânicas, não só mais vida. Dá para jogar sozinho, mas o grupo ideal é de quatro jogadores."
   ],
+  "download": {
+    "lead": "Baixe o cliente para Windows, crie sua conta na tela de entrada e escolha a sua classe.",
+    "requirements": [
+      "Windows 10 ou 11, 64 bits",
+      "Conexão com a internet (o jogo é online)",
+      "Cerca de 300 MB livres"
+    ],
+    "steps": [
+      "Baixe o arquivo .zip pelo botão acima.",
+      "Extraia o conteúdo para uma pasta (clique com o botão direito no arquivo e escolha \"Extrair tudo\").",
+      "Abra Valdran.exe. Se o Windows mostrar o aviso \"O Windows protegeu o computador\", clique em \"Mais informações\" e depois em \"Executar assim mesmo\": o jogo ainda não tem assinatura digital.",
+      "Na tela de entrada, use \"Criar conta\" com o seu e-mail e uma senha de pelo menos 8 caracteres.",
+      "Crie o personagem, escolha a classe e entre no mundo."
+    ],
+    "unavailable": "O download ainda não está disponível. Volte em breve."
+  },
   "classes": {
     "class.warrior": {
       "summary": "Linha de frente: aguenta o golpe, segura os monstros e protege o grupo.",
@@ -40,12 +55,22 @@
     "monster.spider_small": "Cria da Matriarca, sai do covil em enxames. A picada é venenosa.",
     "monster.spider_big": "Guarda-costas da Matriarca, grande e resistente, com veneno mais forte.",
     "monster.forest_matriarch": "Senhora do covil das aranhas. Investe, cobre o chão de veneno e teia, chama as crias e, ferida, entra em frenesi.",
-    "monster.skeleton_guard": "Sentinela morto-vivo que ainda guarda o seu portão. Ergue o escudo contra quem ataca de frente e responde com um golpe esmagador."
+    "monster.skeleton_guard": "Sentinela morto-vivo que ainda guarda o seu portão. Ergue o escudo contra quem ataca de frente e responde com um golpe esmagador.",
+    "monster.mist_fairy": "Espírito travesso da Clareira da Névoa. Atira dardos gelados de longe e, quando alguém chega perto, some num véu de névoa que nenhum golpe alcança.",
+    "monster.corrupted_ent": "Árvore antiga tomada pela corrupção da floresta. Lenta e de casca grossa, aguenta golpes de arma, mas o fogo a consome depressa.",
+    "monster.dead_priest": "Clérigo morto que ainda reza pelos seus. Fica atrás dos guardas esqueléticos, cura quem estiver mais ferido e amaldiçoa os vivos.",
+    "monster.spectral_knight": "Cavaleiro que jurou guardar a Torre Quebrada e nunca deixou o posto. O escudo espectral devolve parte de cada golpe a quem ataca.",
+    "monster.faceless_watcher": "O guardião da cripta, preso a um juramento mais antigo que a cidade. Os Selos do Juramento o protegem, e quanto mais ferido fica, mais o rosto vazio aparece.",
+    "monster.shade": "Fragmento do Vigia Sem Rosto. Aparece em bando e queima de frio com um simples toque.",
+    "monster.watcher_seal": "Selo de pedra que prende o juramento do Vigia. Proteja os selos: o Vigia tenta destruí-los no fim da luta."
   },
   "phases": {
     "phase.hunt": "Caçada",
     "phase.suffocating_web": "Teia Sufocante",
-    "phase.frenzy": "Frenesi"
+    "phase.frenzy": "Frenesi",
+    "phase.iron_oath": "Juramento de Ferro",
+    "phase.empty_face": "O Rosto Vazio",
+    "phase.last_command": "Último Comando"
   },
   "ai": {
     "ai.swarm": "Os que miram o mesmo alvo se espalham em volta dele e atacam; de vez em quando um troca de alvo.",
@@ -53,6 +78,48 @@
     "ai.ranged_kiter": "Mantém distância e recua quando o alvo se aproxima; encurralado, para e atira.",
     "ai.melee_chaser": "Persegue o alvo e ataca corpo a corpo.",
     "ai.guardian": "Alterna perseguir, guardar atrás do escudo, golpe pesado e recuperação. Na guarda só se vira de tempos em tempos: é a hora de atacar pelo flanco.",
-    "ai.boss": "Persegue o alvo; antes de atacar, tenta invocar e criar áreas. Cada fase muda as habilidades disponíveis."
+    "ai.boss": "Persegue o alvo; antes de atacar, tenta invocar e criar áreas. Cada fase muda as habilidades disponíveis.",
+    "ai.mist_kiter": "Mantém distância e atira; quando o alvo chega perto ou a vida cai, some na névoa por alguns segundos e se afasta.",
+    "ai.brute": "Persegue o alvo e só golpeia quando ele está ao alcance; contra alvos distantes, usa os ataques de longe ou investe.",
+    "ai.support": "Fica atrás dos aliados, do lado oposto ao alvo, e cura o aliado mais ferido; entre uma cura e outra, ataca de longe.",
+    "ai.none": "Não se move nem ataca."
+  },
+  "hiddenZones": [
+    "zone.test_instance"
+  ],
+  "tags": {
+    "beast": "fera",
+    "boss": "chefe",
+    "corrupted": "corrompido",
+    "fey": "feérico",
+    "humanoid": "humanoide",
+    "plant": "planta",
+    "seal": "selo",
+    "spider": "aranha",
+    "undead": "morto-vivo",
+    "vermin": "praga",
+    "bleed": "sangramento",
+    "buff": "benefício",
+    "cleanse": "purificação",
+    "control": "controle",
+    "crumbling": "desmoronamento",
+    "curse": "maldição",
+    "debuff": "penalidade",
+    "dot": "dano contínuo",
+    "fear": "medo",
+    "focus": "foco",
+    "freeze": "congelamento",
+    "frenzy": "frenesi",
+    "guard": "guarda",
+    "mark": "marca",
+    "mist": "névoa",
+    "monster_guard": "guarda",
+    "pack": "matilha",
+    "poison": "veneno",
+    "root": "enraizamento",
+    "seal_intact": "selo",
+    "slow": "lentidão",
+    "spectral_shield": "escudo espectral",
+    "stun": "atordoamento"
   }
 }

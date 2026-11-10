@@ -9,7 +9,7 @@ internal sealed partial class SiteBuilder
     private sealed record Spot(ZoneDefinition Zone, MonsterSpawnDefinition Spawn, int Level);
 
     private IEnumerable<Spot> SpotsOf(string monsterId) =>
-        _db.Zones.Values.SelectMany(z => z.MonsterSpawns.Where(s => s.Monster == monsterId)
+        VisibleZones.SelectMany(z => z.MonsterSpawns.Where(s => s.Monster == monsterId)
             .Select(s => new Spot(z, s, s.Level ?? _db.Monsters[monsterId].Level)));
 
     private void BuildMonsters()
@@ -30,40 +30,28 @@ internal sealed partial class SiteBuilder
         p.Add(ScalingRules());
 
         p.Add("<h2>Onde aparecem</h2>");
-        foreach (var z in _db.Zones.Values)
+        foreach (var z in VisibleZones)
         {
             p.Add($"<h3 id=\"{Esc(z.Id)}\">{Esc(z.Name)}</h3>");
             var info = z.Kind == ZoneKind.Safe ? "Zona segura, sem monstros." : $"Corpos ficam {Seconds(z.CorpseTicks)} no chão.";
-            var gates = z.Gates.Where(g => _db.Zones.ContainsKey(g.To)).Select(g => p.A(Url.Zone(g.To), _db.Zones[g.To].Name)).ToList();
-            p.Add($"<p>{Code(z.Id)} · {info}{(gates.Count > 0 ? " Portões para: " + string.Join(", ", gates) + "." : "")}</p>");
+            var gates = z.Gates.Where(g => _db.Zones.ContainsKey(g.To) && !_content.HiddenZones.Contains(g.To))
+                .Select(g => p.A(Url.Zone(g.To), _db.Zones[g.To].Name)).Distinct().ToList();
+            p.Add($"<p>{info}{(gates.Count > 0 ? " Portões para: " + string.Join(", ", gates) + "." : "")}</p>");
             if (z.MonsterSpawns.Count > 0)
             {
+                // Pontos iguais (mesma subárea, monstro, nível e tempo) viram uma linha só, com a quantidade somada.
                 p.Add(Table(["Subárea", "Monstro", "Quantidade", "Nível", "Renasce em"],
-                    z.MonsterSpawns.Select(s => new[]
-                    {
-                        Esc(s.Area ?? "—"),
-                        _d.MonsterLink(p, s.Monster),
-                        Num(s.Count),
-                        Num(s.Level ?? _db.Monsters[s.Monster].Level),
-                        Seconds(s.RespawnTicks),
-                    })));
+                    z.MonsterSpawns
+                        .GroupBy(s => (s.Area, s.Monster, Level: s.Level ?? _db.Monsters[s.Monster].Level, s.RespawnTicks))
+                        .Select(g => new[]
+                        {
+                            Esc(g.Key.Area ?? "—"),
+                            _d.MonsterLink(p, g.Key.Monster),
+                            Num(g.Sum(s => s.Count)),
+                            Num(g.Key.Level),
+                            Seconds(g.Key.RespawnTicks),
+                        })));
             }
-        }
-
-        if (_db.Encounters.Count > 0)
-        {
-            p.Add("<h2>Encontros de teste</h2>");
-            p.Add("<p class=\"muted\">Arenas fechadas do protótipo, usadas em testes e no simulador; não fazem parte do mundo aberto.</p>");
-            p.Add(Table(["Encontro", "Monstros", "Jogadores", "Nível dos monstros", "Limite"],
-                _db.Encounters.Values.Select(e => new[]
-                {
-                    $"<span id=\"{Esc(e.Id)}\">{Esc(e.Name)}</span> {Code(e.Id)}",
-                    string.Join(", ", e.Enemies.GroupBy(x => x.Monster).Select(g => $"{g.Count()} × {_d.MonsterLink(p, g.Key)}"))
-                        + (e.Objectives.Count == 0 ? "" : "; a proteger: " + string.Join(", ", e.Objectives.GroupBy(x => x.Monster).Select(g => $"{g.Count()} × {_d.MonsterLink(p, g.Key)}"))),
-                    string.Join(", ", e.Players.Select(x => _d.ClassLink(p, x.Class))),
-                    e.MonsterLevel is { } l ? Num(l) : "padrão",
-                    e.Defeat.TimeLimitTicks is { } t ? Seconds(t) : "—",
-                })));
         }
 
         foreach (var m in _db.Monsters.Values)
@@ -88,6 +76,12 @@ internal sealed partial class SiteBuilder
             + Table(["Categoria", "Crescimento", "Duração do controle recebido"], rows);
     }
 
+    /// <summary>Escola de dano pelo nome usado nos dados (<c>fire</c> → fogo).</summary>
+    private static string SchoolName(string key) =>
+        Enum.TryParse<DamageSchool>(key, ignoreCase: true, out var school)
+            ? Fmt.School(school).Replace("de ", "", StringComparison.Ordinal)
+            : "outro";
+
     private string ControlByRank(MonsterRank rank) =>
         _db.Rules.Control is { } c ? Mult(c.DurationByRank.For(rank)) : "× 1";
 
@@ -96,18 +90,17 @@ internal sealed partial class SiteBuilder
         var desc = _content.Monsters.GetValueOrDefault(m.Id) ?? "";
         var p = NewPage(Url.Monster(m.Id), m.Name, $"{m.Name}: nível {m.Level}, {Fmt.Rank(m.Rank)}. {desc}".Trim());
         var scaling = _db.Rules.Monsters;
-        p.Add($"<div class=\"head\">{Sprite(p, m.Id, m.Name, m.Rank == MonsterRank.Boss ? 3 : 2)}<div><h1>{Esc(m.Name)}</h1><p>{Code(m.Id)}</p><p class=\"lead\">{Esc(desc)}</p></div></div>");
+        p.Add($"<div class=\"head\">{Sprite(p, m.Id, m.Name, m.Rank == MonsterRank.Boss ? 3 : 2)}<div><h1>{Esc(m.Name)}</h1><p class=\"lead\">{Esc(desc)}</p></div></div>");
         var rows = new List<(string, string)>
         {
             ("Nível padrão", $"<span data-k=\"level\">{Num(m.Level)}</span>"),
             ("Categoria", Fmt.Rank(m.Rank)),
             ("Vida (nível 1)", $"<span data-k=\"health\">{Num(m.Health)}</span>"),
             ("Velocidade", $"{Num(m.Speed)} tiles por segundo"),
-            ("Raio do corpo", $"{Num(m.Radius)} tiles"),
         };
-        if (m.Tags.Count > 0)
+        if (_d.TagList(m.Tags) is { Length: > 0 } kinds)
         {
-            rows.Add(("Tags", string.Join(" ", m.Tags.Select(t => Code(t)))));
+            rows.Insert(2, ("Tipo", kinds));
         }
 
         if (m.Armor != 0 || m.Resistance != 0)
@@ -117,7 +110,7 @@ internal sealed partial class SiteBuilder
 
         if (m.Resistances.Count > 0)
         {
-            rows.Add(("Resistências", string.Join(", ", m.Resistances.Select(kv => $"{Esc(kv.Key)} {Pct(kv.Value)}"))));
+            rows.Add(("Resistências", string.Join(", ", m.Resistances.Select(kv => $"{SchoolName(kv.Key)} {Pct(kv.Value)}"))));
         }
 
         rows.Add(("Controle recebido", $"duração {ControlByRank(m.Rank)}"));
@@ -128,11 +121,7 @@ internal sealed partial class SiteBuilder
         // IA
         var ai = _content.Ai.GetValueOrDefault(m.Ai.Id);
         p.Add("<h2>Comportamento</h2>");
-        p.Add($"<p>{Code(m.Ai.Id)}{(ai is null ? "" : " — " + Esc(ai))}</p>");
-        if (m.Ai.Parameters.Count > 0)
-        {
-            p.Add("<p class=\"muted\">Parâmetros: " + string.Join(", ", m.Ai.Parameters.Select(kv => $"{Code(kv.Key)} {Num(kv.Value)}")) + "</p>");
-        }
+        p.Add($"<p>{Esc(ai ?? "Persegue o alvo e ataca.")}</p>");
 
         // Habilidades
         p.Add("<h2>Habilidades</h2>");
@@ -154,7 +143,7 @@ internal sealed partial class SiteBuilder
             p.Add(Table(["Fase", "Vida", "Ao entrar", "Habilidades"],
                 m.Phases.Select(ph => new[]
                 {
-                    $"{Esc(_content.Phases.GetValueOrDefault(ph.Id) ?? ph.Id)} {Code(ph.Id)}",
+                    Esc(_content.Phases.GetValueOrDefault(ph.Id) ?? $"Fase {m.Phases.ToList().IndexOf(ph) + 1}"),
                     Num(ph.HealthPercent) + "%",
                     (ph.OnEnter.Count == 0 && ph.OnEnterObjectives.Count == 0 ? "—" : _d.Effects(p, ph.OnEnter))
                         + (ph.OnEnterObjectives.Count == 0 ? "" : "<p>Nos objetivos do encontro:</p>" + _d.Effects(p, ph.OnEnterObjectives))
@@ -170,15 +159,15 @@ internal sealed partial class SiteBuilder
         if (spots.Count > 0)
         {
             p.Add(Table(["Zona", "Subárea", "Quantidade", "Nível", "Renasce em", "Vida no nível", "Potência"],
-                spots.Select(s => new[]
+                spots.GroupBy(s => (s.Zone, s.Spawn.Area, s.Level, s.Spawn.RespawnTicks)).Select(g => new[]
                 {
-                    p.A(Url.Zone(s.Zone.Id), s.Zone.Name),
-                    Esc(s.Spawn.Area ?? "—"),
-                    Num(s.Spawn.Count),
-                    Num(s.Level),
-                    Seconds(s.Spawn.RespawnTicks),
-                    Num(m.Health * scaling.HealthFactor(s.Level, m.Rank)),
-                    Mult(scaling.PowerFactor(s.Level, m.Rank)),
+                    p.A(Url.Zone(g.Key.Zone.Id), g.Key.Zone.Name),
+                    Esc(g.Key.Area ?? "—"),
+                    Num(g.Sum(s => s.Spawn.Count)),
+                    Num(g.Key.Level),
+                    Seconds(g.Key.RespawnTicks),
+                    Num(m.Health * scaling.HealthFactor(g.Key.Level, m.Rank)),
+                    Mult(scaling.PowerFactor(g.Key.Level, m.Rank)),
                 })));
         }
 
@@ -199,12 +188,6 @@ internal sealed partial class SiteBuilder
             var levels = SpotsOf(summoner.Id).Select(s => s.Level).Distinct().ToList();
             var at = levels.Count == 0 ? "" : " No nível de quem invoca: " + string.Join("; ", levels.Select(l => $"nv. {l}, vida {Num(m.Health * scaling.HealthFactor(l, m.Rank))}")) + ".";
             p.Add($"<p>Invocado por {_d.MonsterLink(p, summoner.Id)} {how}.{at}</p>");
-        }
-
-        var encounters = _db.Encounters.Values.Where(e => e.Enemies.Any(x => x.Monster == m.Id) || e.Objectives.Any(x => x.Monster == m.Id)).ToList();
-        if (encounters.Count > 0)
-        {
-            p.Add("<p class=\"muted\">Encontros de teste: " + string.Join(", ", encounters.Select(e => p.A(Url.Encounter(e.Id), e.Name))) + ".</p>");
         }
 
         if (spots.Count == 0 && summoners.Count == 0)

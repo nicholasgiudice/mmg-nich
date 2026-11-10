@@ -29,8 +29,6 @@ public static class Fmt
             .Replace("\"", "&quot;", StringComparison.Ordinal)
             .Replace("'", "&#39;", StringComparison.Ordinal);
 
-    public static string Code(string id) => $"<code>{Esc(id)}</code>";
-
     /// <summary>Valor com escala: base + coeficiente × atributo (ex.: 15 + 1 × ARMA + 2,5 × FOR).</summary>
     public static string Scaled(double baseValue, IReadOnlyDictionary<string, double> scaling)
     {

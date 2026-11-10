@@ -67,10 +67,9 @@ public sealed partial class SiteTests : IClassFixture<SiteFixture>
         Assert.True(File.Exists(Path.Combine(_site.Out, "assets", "style.css")));
     }
 
-    [Fact]
-    public void Every_id_appears_on_some_page()
+    /// <summary>Ids de classes, habilidades, monstros, itens, status, áreas e afixos em <c>data/*.json</c>.</summary>
+    private List<string> DataIds()
     {
-        var all = string.Concat(_site.Html.Values);
         var ids = new List<string>();
         foreach (var file in Directory.EnumerateFiles(Path.Combine(_site.Root, "data"), "*.json"))
         {
@@ -90,8 +89,77 @@ public sealed partial class SiteTests : IClassFixture<SiteFixture>
         }
 
         Assert.True(ids.Count > 50, "esperava ids de todas as seções");
-        var missing = ids.Where(id => !all.Contains($">{id}<", StringComparison.Ordinal) && !all.Contains($"id=\"{id}\"", StringComparison.Ordinal)).ToList();
+        return ids;
+    }
+
+    /// <summary>O que o gerador deixou fora do site por não ser usado (avisa no console).</summary>
+    private bool IsLeftOut(string id) =>
+        _site.Result.Warnings.Any(w => w.Contains($" {id} ", StringComparison.Ordinal) && w.EndsWith("fica fora do site", StringComparison.Ordinal));
+
+    [Fact]
+    public void Every_used_id_has_a_page_or_an_anchor()
+    {
+        var all = string.Concat(_site.Html.Values);
+        var missing = DataIds()
+            .Where(id => !IsLeftOut(id))
+            .Where(id => !all.Contains($"id=\"{id}\"", StringComparison.Ordinal)
+                && !_site.Html.ContainsKey($"habilidades/{id}.html")
+                && !_site.Html.Keys.Any(k => k.EndsWith("/" + Url.Slug(id) + ".html", StringComparison.Ordinal)))
+            .ToList();
         Assert.Empty(missing);
+    }
+
+    [Fact]
+    public void Ids_never_show_up_in_the_text()
+    {
+        var ids = DataIds().Concat(_site.Json("zones.json").GetProperty("zones").EnumerateArray().Select(z => z.GetProperty("id").GetString()!)).ToList();
+        var leaks = new List<string>();
+        foreach (var (page, html) in _site.Html.Where(kv => kv.Key != "creditos.html"))
+        {
+            // Texto visível: sem scripts, sem tags (atributos como href e id podem ter ids).
+            var text = Regex.Replace(Regex.Replace(html, "<script.*?</script>", " ", RegexOptions.Singleline), "<[^>]+>", " ");
+            leaks.AddRange(ids.Where(id => Regex.IsMatch(text, $"(?<![\\w.]){Regex.Escape(id)}(?![\\w.])")).Select(id => $"{page}: {id}"));
+            leaks.AddRange(Regex.Matches(text, "\\b(?:ai|phase|zone|encounter|map|npc)\\.[a-z_]+").Select(m => $"{page}: {m.Value}"));
+        }
+
+        Assert.Empty(leaks);
+    }
+
+    [Fact]
+    public void Hidden_zones_and_test_encounters_stay_out()
+    {
+        var all = string.Concat(_site.Html.Values);
+        Assert.DoesNotContain("Covil de Teste", all, StringComparison.Ordinal);
+        Assert.DoesNotContain("Encontros de teste", all, StringComparison.Ordinal);
+        Assert.Contains("Ruínas da Estrada Antiga", _site.Html["monstros/index.html"], StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Download_page_links_to_the_client_and_reads_latest_json()
+    {
+        var html = _site.Html["download.html"];
+        Assert.Contains($"href=\"{Url.DownloadFile}\"", html, StringComparison.Ordinal);
+        Assert.Contains("assets/download.js", html, StringComparison.Ordinal);
+        Assert.Contains("Valdran.exe", html, StringComparison.Ordinal);
+        Assert.Contains("/downloads/latest.json", File.ReadAllText(Path.Combine(_site.Out, "assets", "download.js")), StringComparison.Ordinal);
+        Assert.All(_site.Html.Values, page => Assert.Contains("download.html\"", page, StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void Interface_art_from_the_game_is_copied_and_used()
+    {
+        foreach (var file in UiArt.Files)
+        {
+            Assert.True(File.Exists(Path.Combine(_site.Out, UiArt.PublishedDir, file)), $"{file} não foi copiado");
+        }
+
+        var css = File.ReadAllText(Path.Combine(_site.Out, "assets", "style.css"));
+        foreach (var file in UiArt.Files.Where(f => f is not "button_hover.png" and not "button_pressed.png"))
+        {
+            Assert.Contains($"url(\"ui/{file}\")", css, StringComparison.Ordinal);
+        }
+
+        Assert.Contains("class=\"hero\"", _site.Html["index.html"], StringComparison.Ordinal);
     }
 
     [Fact]
@@ -139,7 +207,9 @@ public sealed partial class SiteTests : IClassFixture<SiteFixture>
             foreach (Match m in LinkRegex().Matches(html))
             {
                 var target = System.Net.WebUtility.HtmlDecode(m.Groups["u"].Value);
-                if (target.StartsWith("http://", StringComparison.Ordinal) || target.StartsWith("https://", StringComparison.Ordinal) || target.StartsWith("mailto:", StringComparison.Ordinal))
+                // /downloads/ não é gerado com o site: scripts/deploy-download.sh publica lá, e o Caddy serve.
+                if (target.StartsWith("http://", StringComparison.Ordinal) || target.StartsWith("https://", StringComparison.Ordinal) || target.StartsWith("mailto:", StringComparison.Ordinal)
+                    || target.StartsWith("/downloads/", StringComparison.Ordinal))
                 {
                     continue;
                 }
@@ -167,9 +237,9 @@ public sealed partial class SiteTests : IClassFixture<SiteFixture>
     }
 
     [Fact]
-    public void Unused_ability_stays_out_of_class_pages_and_is_reported()
+    public void Unused_ability_stays_out_of_the_site_and_is_reported()
     {
-        // Armadilha de Contenção existe em abilities_archer.json mas não na lista do Arqueiro (ponto em aberto).
+        // Armadilha de Contenção existe em abilities_archer.json mas não na lista do Arqueiro: não é do jogo atual.
         var archer = _site.Json("classes.json").GetProperty("classes").EnumerateArray().First(c => c.GetProperty("id").GetString() == "class.archer");
         var listed = archer.GetProperty("abilities").EnumerateArray().Select(a => a.GetString()).Append(archer.GetProperty("basicAttack").GetString()).ToHashSet();
         var unused = _site.Json("abilities_archer.json").GetProperty("abilities").EnumerateArray()
@@ -181,8 +251,9 @@ public sealed partial class SiteTests : IClassFixture<SiteFixture>
         {
             Assert.DoesNotContain(id, _site.Html["classes/archer.html"], StringComparison.Ordinal);
             Assert.DoesNotContain($"habilidades/{id}.html", _site.Html["habilidades/index.html"], StringComparison.Ordinal);
-            Assert.Contains(id, _site.Html["em-aberto.html"], StringComparison.Ordinal);
-            Assert.Contains(_site.Result.Warnings, w => w.Contains(id, StringComparison.Ordinal));
+            Assert.DoesNotContain($"habilidades/{id}.html", _site.Html.Keys);
+            Assert.DoesNotContain($"habilidades/{id}.html", _site.Html["busca.html"], StringComparison.Ordinal);
+            Assert.True(IsLeftOut(id), $"{id}: esperava o aviso de que fica fora do site");
         }
     }
 

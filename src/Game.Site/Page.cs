@@ -3,7 +3,10 @@ using static Game.Site.Fmt;
 
 namespace Game.Site;
 
-/// <summary>Endereços das páginas, relativos à raiz do site. Um id dos dados vira nome de arquivo ou âncora.</summary>
+/// <summary>
+/// Endereços das páginas, relativos à raiz do site. Um id dos dados vira nome de arquivo ou âncora (só no endereço: o texto
+/// das páginas nunca mostra ids).
+/// </summary>
 public static class Url
 {
     public const string Home = "index.html";
@@ -14,8 +17,14 @@ public static class Url
     public const string Statuses = "referencia/status.html";
     public const string Areas = "referencia/areas.html";
     public const string Credits = "creditos.html";
-    public const string Open = "em-aberto.html";
+    public const string Download = "download.html";
     public const string Search = "busca.html";
+
+    /// <summary>
+    /// Arquivo do cliente para Windows. Não é gerado com o site: <c>scripts/deploy-download.sh</c> o publica em
+    /// <c>MMO_SITE_DIR/downloads/</c>, que o Caddy serve em <c>/downloads/</c> (por isso o caminho é absoluto).
+    /// </summary>
+    public const string DownloadFile = "/downloads/Valdran-windows.zip";
 
     public static string Class(string id) => $"classes/{Slug(id)}.html";
 
@@ -32,8 +41,6 @@ public static class Url
     public static string Area(string id) => $"{Areas}#{id}";
 
     public static string Zone(string id) => $"{Monsters}#{id}";
-
-    public static string Encounter(string id) => $"{Monsters}#{id}";
 
     /// <summary>Parte do id depois do primeiro ponto (<c>class.warrior</c> → <c>warrior</c>).</summary>
     public static string Slug(string id) => id.Contains('.') ? id[(id.IndexOf('.') + 1)..] : id;
@@ -53,6 +60,9 @@ public sealed class Page
     public string Title { get; }
     public string Description { get; }
     public StringBuilder Body { get; } = new();
+
+    /// <summary>Página com a imagem de abertura no topo (a inicial).</summary>
+    public bool Hero { get; set; }
 
     /// <summary>Caminho relativo desta página até <paramref name="target"/> (caminho a partir da raiz).</summary>
     public string Href(string target)
@@ -86,7 +96,7 @@ public sealed class Page
             <meta name="description" content="{Esc(Description)}">
             <link rel="stylesheet" href="{Esc(Href("assets/style.css"))}">
             </head>
-            <body>
+            <body{(Hero ? " class=\"home\"" : "")}>
             <header class="top">
             <a class="brand" href="{Esc(Href(Url.Home))}">{Esc(siteTitle)}</a>
             <nav>
@@ -96,13 +106,14 @@ public sealed class Page
             {Nav(Url.Items, "Itens")}
             {Nav(Url.Statuses, "Referência")}
             {Nav(Url.Search, "Busca")}
+            <a class="nav-download" href="{Esc(Href(Url.Download))}"{(Path == Url.Download ? " aria-current=\"page\"" : "")}>Download</a>
             </nav>
             </header>
             <main>
             {Body}
             </main>
             <footer>
-            <p>Gerado a partir dos dados do jogo (<code>data/*.json</code>). <a href="{Esc(Href(Url.Credits))}">Créditos</a> · <a href="{Esc(Href(Url.Open))}">Em aberto</a></p>
+            <p>{Esc(siteTitle)} · <a href="{Esc(Href(Url.Download))}">Download</a> · <a href="{Esc(Href(Url.Credits))}">Créditos</a></p>
             </footer>
             </body>
             </html>

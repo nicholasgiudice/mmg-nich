@@ -55,7 +55,7 @@ internal sealed partial class SiteBuilder
         var text = _content.Classes.GetValueOrDefault(c.Id) ?? new ClassText();
         var p = NewPage(Url.Class(c.Id), c.Name, $"{c.Name} em Valdran: {text.Role}".TrimEnd(' ', ':'));
         var rules = _db.Rules;
-        p.Add($"<div class=\"head\">{Sprite(p, c.Id, c.Name, 3)}<div><h1>{Esc(c.Name)}</h1><p>{Code(c.Id)}</p><p class=\"lead\">{Esc(text.Summary)}</p></div></div>");
+        p.Add($"<div class=\"head\">{Sprite(p, c.Id, c.Name, 3)}<div><h1>{Esc(c.Name)}</h1><p class=\"lead\">{Esc(text.Summary)}</p></div></div>");
         p.Add(Dl([
             ("Função", Esc(text.Role)),
             ("Forças", Esc(text.Strengths)),
@@ -79,7 +79,6 @@ internal sealed partial class SiteBuilder
         }
 
         rows.Add(("Velocidade", $"{Num(c.Speed)} tiles por segundo"));
-        rows.Add(("Raio do corpo", $"{Num(c.Radius)} tiles"));
         if (s is not null && c.Resource.Type == "mana")
         {
             var regen = c.Resource.RegenPerSecond + StatMath.ManaRegenBonus(s, rules.Stats);

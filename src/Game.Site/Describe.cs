@@ -9,22 +9,56 @@ public sealed class Describe
 {
     private readonly GameDatabase _db;
     private readonly Usage _usage;
+    private readonly IReadOnlyDictionary<string, string> _tags;
 
-    public Describe(GameDatabase db, Usage usage)
+    public Describe(GameDatabase db, Usage usage, IReadOnlyDictionary<string, string>? tags = null)
     {
         _db = db;
         _usage = usage;
+        _tags = tags ?? new Dictionary<string, string>();
     }
+
+    /// <summary>Rótulo em português de uma tag (de <c>site.json</c>); tag sem rótulo = null.</summary>
+    public string? TagLabel(string tag) => _tags.TryGetValue(tag, out var label) ? label : null;
+
+    /// <summary>Rótulos das tags que têm rótulo, sem repetir, separados por vírgula; vazio se nenhuma tem.</summary>
+    public string TagList(IEnumerable<string> tags, string separator = ", ") =>
+        string.Join(separator, tags.Select(TagLabel).OfType<string>().Distinct().Select(Esc));
 
     public string StatusLink(Page p, string id) =>
-        _db.Statuses.TryGetValue(id, out var s) ? p.A(Url.Status(id), StatusLabel(s)) : Code(id);
+        _db.Statuses.TryGetValue(id, out var s) ? p.A(Url.Status(id), StatusLabel(s)) : "status desconhecido";
 
-    /// <summary>Nome do status; variantes com o mesmo nome exibido ganham o sufixo do id para não se confundirem.</summary>
+    /// <summary>
+    /// Nome do status. Variantes com o mesmo nome exibido ganham, entre parênteses, quem as aplica (habilidade e NH), para
+    /// não se confundirem; se ainda assim empatam, um número de variante.
+    /// </summary>
     public string StatusLabel(StatusDefinition s)
     {
-        var same = _db.Statuses.Values.Count(x => x.Name == s.Name);
-        return same > 1 ? $"{s.Name} ({s.Id[(s.Id.IndexOf('.') + 1)..]})" : s.Name;
+        var same = _db.Statuses.Values.Where(x => x.Name == s.Name).ToList();
+        if (same.Count <= 1)
+        {
+            return s.Name;
+        }
+
+        var labels = same.ToDictionary(x => x.Id, SourceLabel, StringComparer.Ordinal);
+        var mine = labels[s.Id];
+        return mine.Length > 0 && labels.Values.Count(l => l == mine) == 1
+            ? $"{s.Name} ({mine})"
+            : $"{s.Name} (variante {same.FindIndex(x => x.Id == s.Id) + 1})";
     }
+
+    /// <summary>Quem aplica o status: nomes das habilidades com os NH, ou das fases de chefe.</summary>
+    private string SourceLabel(StatusDefinition s) =>
+        string.Join(", ", (_usage.StatusSources.GetValueOrDefault(s.Id) ?? [])
+            .Select(src => src.Kind switch
+            {
+                "ability" when _db.Abilities.TryGetValue(src.Id, out var a) => a.Name + (src.Ranks.Count > 0 ? " " + Ranks(src.Ranks) : ""),
+                "phase" when _db.Monsters.TryGetValue(src.Id, out var m) => m.Name,
+                "area" => AreaLabel(src.Id).Replace("Área: ", "", StringComparison.Ordinal),
+                _ => "",
+            })
+            .Where(x => x.Length > 0)
+            .Distinct());
 
     /// <summary>Áreas não têm nome nos dados: usa o nome da habilidade que a cria (ou o id).</summary>
     public string AreaLabel(string id)
@@ -44,20 +78,20 @@ public sealed class Describe
 
         return _db.Abilities.Values.FirstOrDefault(a => a.Effects.OfType<SpawnAreaEffect>().Any(e => e.Area == id)) is { } creator
             ? "Área: " + creator.Name
-            : id;
+            : "Área";
     }
 
     public string AreaLink(Page p, string id) =>
-        _db.Areas.ContainsKey(id) ? p.A(Url.Area(id), AreaLabel(id)) : Code(id);
+        _db.Areas.ContainsKey(id) ? p.A(Url.Area(id), AreaLabel(id)) : "área desconhecida";
 
     public string MonsterLink(Page p, string id) =>
-        _db.Monsters.TryGetValue(id, out var m) ? p.A(Url.Monster(id), m.Name) : Code(id);
+        _db.Monsters.TryGetValue(id, out var m) ? p.A(Url.Monster(id), m.Name) : "monstro desconhecido";
 
     public string AbilityLink(Page p, string id) =>
-        _db.Abilities.TryGetValue(id, out var a) ? p.A(Url.Ability(id), a.Name) : Code(id);
+        _db.Abilities.TryGetValue(id, out var a) ? p.A(Url.Ability(id), a.Name) : "habilidade desconhecida";
 
     public string ClassLink(Page p, string id) =>
-        _db.Classes.TryGetValue(id, out var c) ? p.A(Url.Class(id), c.Name) : Code(id);
+        _db.Classes.TryGetValue(id, out var c) ? p.A(Url.Class(id), c.Name) : "classe desconhecida";
 
     public static string Targeting(TargetingDefinition t) => t switch
     {
@@ -167,16 +201,16 @@ public sealed class Describe
     private string AreaSummary(string id) =>
         _db.Areas.TryGetValue(id, out var a) ? $" (raio {Num(a.Radius)}, {Seconds(a.DurationTicks)})" : "";
 
-    private static string Bonus(IReadOnlyDictionary<string, double> bonus) =>
+    private string Bonus(IReadOnlyDictionary<string, double> bonus) =>
         bonus.Count == 0
             ? ""
-            : " (" + string.Join(", ", bonus.OrderBy(kv => kv.Key, StringComparer.Ordinal).Select(kv => $"+{Pct(kv.Value)} contra {Esc(kv.Key)}")) + ")";
+            : " (" + string.Join(", ", bonus.OrderBy(kv => kv.Key, StringComparer.Ordinal).Select(kv => $"+{Pct(kv.Value)} contra {(TagLabel(kv.Key) is { } t ? "o tipo " + Esc(t) : "alguns monstros")}")) + ")";
 
-    private static string RemoveText(RemoveStatusEffect r)
+    private string RemoveText(RemoveStatusEffect r)
     {
-        var tags = (r.Tags.Count > 0 ? r.Tags : [r.Tag]).Where(t => t.Length > 0).Select(t => Code(t));
+        var tags = TagList((r.Tags.Count > 0 ? r.Tags : [r.Tag]).Where(t => t.Length > 0), " ou ");
         var count = r.Count == 0 ? "todos os status" : r.Count == 1 ? "1 status" : $"{r.Count} status";
-        return $"remove {count} com tag {string.Join(" ou ", tags)}";
+        return tags.Length == 0 ? $"remove {count}" : $"remove {count} de {tags}";
     }
 
     private static string ThreatText(ThreatEffect t)
@@ -313,7 +347,8 @@ public sealed class Describe
 
         if (s.ImmuneToTags.Count > 0)
         {
-            parts.Add($"imune a status com tag {string.Join(" ou ", s.ImmuneToTags.Select(t => Code(t)))}");
+            var immune = TagList(s.ImmuneToTags, " e ");
+            parts.Add(immune.Length == 0 ? "imune a alguns status" : $"imune a {immune}");
         }
 
         if (s.Empower is { } emp)

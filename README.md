@@ -68,10 +68,10 @@ O site público do jogo (monstros, itens, classes e habilidades) está em **http
 python3 -m http.server -d site/dist 8000  # abre em http://localhost:8000
 ```
 
-- **Números, nomes e ids** vêm só de `data/`. Para mudar o site, mude o dado e gere de novo.
-- **Textos que não são regra** (apresentação do jogo, descrição curta de classes e monstros, nomes das fases dos chefes) ficam em `site/content/site.json`.
-- **Imagens**: o primeiro quadro de cada personagem e monstro sai das folhas em `client/assets/art/` (layout em `sprites.json`), e os ícones de habilidades, itens e atributos saem de `client/assets/art/icons/` (`icons.json`, T-080). Id sem ícone próprio fica sem ícone no site. A página de créditos é gerada de `CREDITS.md`, e as licenças das imagens exigem essa página.
-- **Pontos em aberto**: o que está nos dados mas nenhuma classe nem monstro usa (ex.: Armadilha de Contenção) só aparece na página "Em aberto". O gerador avisa no console.
+- **Números e nomes** vêm só de `data/`. Para mudar o site, mude o dado e gere de novo. Os ids dos dados só aparecem nos endereços das páginas, nunca no texto.
+- **Textos que não são regra** ficam em `site/content/site.json`: apresentação do jogo, descrição curta de classes e monstros, comportamento de cada IA, nomes das fases dos chefes, rótulos em português das tags (tipo de monstro e de status), zonas escondidas (ex.: a instância de teste) e os textos da página de download. Tag sem rótulo não aparece, e o gerador avisa.
+- **Imagens**: o primeiro quadro de cada personagem e monstro sai das folhas em `client/assets/art/` (layout em `sprites.json`), e os ícones de habilidades, itens e atributos saem de `client/assets/art/icons/` (`icons.json`, T-080). Id sem ícone próprio fica sem ícone no site. O visual usa a arte de interface do jogo em `client/assets/art/ui/`: o fundo da tela de login no topo da página inicial e o kit pedra e ouro nas molduras, na divisória e nos botões (lista em `src/Game.Site/UiArt.cs`). A página de créditos é gerada de `CREDITS.md`, e as licenças das imagens exigem essa página.
+- **Fora do site**: o que está nos dados mas nenhuma classe nem monstro usa (ex.: Armadilha de Contenção) não gera página. O gerador avisa no console. Os encontros de teste também não aparecem.
 - `site/dist/` não é versionado. Os testes ficam em `tests/Game.Site.Tests`.
 
 ### Publicação na VPS (T-072)
@@ -88,6 +88,23 @@ python3 -m http.server -d site/dist 8000  # abre em http://localhost:8000
 - **Voltar à versão anterior**: `./scripts/build-site.sh --rollback`. Repetir volta mais uma. `--list` mostra as versões guardadas, com `*` na publicada. Uma publicação nova (`--publish`) volta a pôr no ar o que os dados atuais geram.
 - **Cache**: as páginas HTML saem com `no-cache`, então a versão nova aparece na hora; CSS e JS ficam 1 h no cache e as imagens 1 dia.
 - Depois de mudar o `Caddyfile` ou o `compose.yml`, recrie só o Caddy: `docker compose -f deploy/compose.yml up -d --no-deps caddy`.
+
+### Download do cliente
+
+A página `download.html` tem o botão de download do cliente para Windows. O arquivo não faz parte do site gerado. Ele fica em `MMO_SITE_DIR/downloads/`, que o Caddy serve em `/downloads/`. Assim, publicar o site não mexe no download, e publicar o download não gera versão nova do site.
+
+1. No Windows, exporte o cliente: `.\scripts\export-client.ps1` (gera `build\Valdran-windows.zip`).
+2. Publique de uma vez pelo Windows (manda por `scp` e roda o script na VPS por `ssh`):
+
+   ```powershell
+   .\scripts\deploy-download.ps1 -Server root@31.97.162.124 -Version 0.3.0
+   ```
+
+   Ou à mão: `scp build\Valdran-windows.zip root@31.97.162.124:/tmp/` e, na VPS, `./scripts/deploy-download.sh /tmp/Valdran-windows.zip --version 0.3.0`.
+
+O script confere se o arquivo é um `.zip` íntegro com `Valdran.exe` e guarda o arquivo como `Valdran-windows-<versão>.zip`. Depois atualiza o link fixo `Valdran-windows.zip` e o `latest.json` (versão, tamanho, data e SHA-256, que a página mostra) com rename atômico. Sem `--version`, a versão é a data e a hora UTC. Ficam as 3 versões mais recentes (`MMO_DOWNLOAD_KEEP`). `--list` lista as versões e `--rollback` volta à anterior. Enquanto nada foi publicado, a página diz que o download ainda não está disponível.
+
+Cache: `latest.json` e o link fixo saem com `no-cache`. Os arquivos com versão no nome ficam em cache por um ano, porque nunca mudam: uma versão que já existe não pode ser publicada de novo.
 
 ## Infraestrutura (VPS)
 

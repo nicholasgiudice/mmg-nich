@@ -73,7 +73,7 @@ public static class SiteGenerator
 
         var assets = Path.Combine(options.OutDir, "assets");
         Directory.CreateDirectory(assets);
-        foreach (var name in new[] { "style.css", "search.js" })
+        foreach (var name in new[] { "style.css", "search.js", "download.js" })
         {
             using var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(name)
                 ?? throw new InvalidOperationException($"recurso {name} não embutido");
@@ -85,6 +85,7 @@ public static class SiteGenerator
         {
             Sprites.Copy(art, options.OutDir, sprites.Values);
             Icons.Copy(art, options.OutDir, icons.Values);
+            UiArt.Copy(art, options.OutDir, warnings);
         }
 
         return new SiteResult(builder.Pages.Select(p => p.Path).ToList(), warnings, []);
@@ -116,7 +117,7 @@ internal sealed partial class SiteBuilder
         _credits = credits;
         _warnings = warnings;
         _usage = new Usage(db);
-        _d = new Describe(db, _usage);
+        _d = new Describe(db, _usage, content.Tags);
         _catalog = new ContentCatalog(db.Classes.Values, db.Abilities.Values, db.Statuses.Values, db.Areas.Values,
             db.Monsters.Values, db.Arenas.Values, db.Encounters.Values, db.Items.Values)
         {
@@ -130,17 +131,17 @@ internal sealed partial class SiteBuilder
     {
         foreach (var a in _usage.UnusedAbilities)
         {
-            _warnings.Add($"habilidade {a.Id} ({a.Name}) não é usada por nenhuma classe nem monstro: fica só em \"Em aberto\"");
+            _warnings.Add($"habilidade {a.Id} ({a.Name}) não é usada por nenhuma classe nem monstro: fica fora do site");
         }
 
         foreach (var s in _usage.UnusedStatuses)
         {
-            _warnings.Add($"status {s.Id} ({s.Name}) não é aplicado por nada usado no jogo: fica só em \"Em aberto\"");
+            _warnings.Add($"status {s.Id} ({s.Name}) não é aplicado por nada usado no jogo: fica fora do site");
         }
 
         foreach (var a in _usage.UnusedAreas)
         {
-            _warnings.Add($"área {a.Id} não é criada por nada usado no jogo: fica só em \"Em aberto\"");
+            _warnings.Add($"área {a.Id} não é criada por nada usado no jogo: fica fora do site");
         }
 
         foreach (var c in _db.Classes.Keys.Where(k => !_content.Classes.ContainsKey(k)))
@@ -153,6 +154,11 @@ internal sealed partial class SiteBuilder
             _warnings.Add($"monstro {m} sem descrição em site/content/site.json");
         }
 
+        foreach (var t in UsedTags().Where(t => !_content.Tags.ContainsKey(t)))
+        {
+            _warnings.Add($"tag {t} sem rótulo em site/content/site.json: não aparece no site");
+        }
+
         BuildHome();
         BuildClasses();
         BuildAbilities();
@@ -160,7 +166,7 @@ internal sealed partial class SiteBuilder
         BuildItems();
         BuildStatuses();
         BuildAreas();
-        BuildOpen();
+        BuildDownload();
         BuildCredits();
         BuildSearch();
     }
@@ -199,15 +205,33 @@ internal sealed partial class SiteBuilder
         + string.Concat(rows.Select(r => "<tr>" + string.Concat(r.Select(c => $"<td>{c}</td>")) + "</tr>"))
         + "</tbody></table></div>";
 
+    /// <summary>Tags que o site mostra: tipos de monstro, tags de status e as citadas em efeitos.</summary>
+    private IEnumerable<string> UsedTags() =>
+        _db.Monsters.Values.SelectMany(m => m.Tags)
+            .Concat(_db.Statuses.Values.SelectMany(s => s.Tags.Concat(s.ImmuneToTags)))
+            .Distinct(StringComparer.Ordinal)
+            .Order(StringComparer.Ordinal);
+
+    /// <summary>Zonas que aparecem no site (sem as escondidas em <c>site.json</c>).</summary>
+    private IEnumerable<Core.Definitions.ZoneDefinition> VisibleZones =>
+        _db.Zones.Values.Where(z => !_content.HiddenZones.Contains(z.Id));
+
+    private string DownloadButton(Page p, string cls = "") =>
+        $"<a class=\"button{(cls.Length > 0 ? " " + cls : "")}\" href=\"{Esc(p.Href(Url.Download))}\">Baixar o jogo</a>";
+
     private void BuildHome()
     {
         var p = NewPage(Url.Home, _content.Title, _content.Tagline.Length > 0 ? _content.Tagline : "Informações do jogo.");
-        p.Add($"<section class=\"hero\"><h1>{Esc(_content.Title)}</h1><p class=\"lead\">{Esc(_content.Tagline)}</p></section>");
+        p.Hero = true;
+        p.Add($"<section class=\"hero\"><div class=\"hero-text\"><h1>{Esc(_content.Title)}</h1><p class=\"lead\">{Esc(_content.Tagline)}</p>"
+            + $"<p class=\"hero-actions\">{DownloadButton(p, "big")} {p.A(Url.Classes, "Conheça as classes")}</p></div></section>");
+        p.Add("<section class=\"intro panel\">");
         foreach (var para in _content.Intro)
         {
             p.Add($"<p>{Esc(para)}</p>");
         }
 
+        p.Add("</section>");
         p.Add("<h2>Classes</h2><div class=\"cards\">");
         foreach (var c in ClassesInOrder)
         {
@@ -217,30 +241,48 @@ internal sealed partial class SiteBuilder
 
         p.Add("</div>");
         var shownAbilities = _db.Abilities.Keys.Count(_usage.IsUsed);
-        p.Add("<h2>Seções</h2><ul class=\"sections\">");
-        p.Add($"<li>{p.A(Url.Classes, "Classes")} — {_db.Classes.Count} classes, atributos, equipamento e habilidades.</li>");
-        p.Add($"<li>{p.A(Url.Abilities, "Habilidades")} — {shownAbilities} habilidades de personagens e monstros, por nível de habilidade.</li>");
-        p.Add($"<li>{p.A(Url.Monsters, "Monstros")} — {_db.Monsters.Count} monstros, onde aparecem e o que deixam cair.</li>");
-        p.Add($"<li>{p.A(Url.Items, "Itens")} — {_db.Items.Count} itens base, raridades, afixos e quedas.</li>");
-        p.Add($"<li>{p.A(Url.Statuses, "Status")} e {p.A(Url.Areas, "áreas")} — referência dos efeitos.</li>");
-        p.Add($"<li>{p.A(Url.Search, "Busca")} — tudo numa lista só.</li>");
-        p.Add("</ul>");
+        p.Add("<h2>Explore</h2><div class=\"cards sections\">");
+        void Section(string url, string title, string text) =>
+            p.Add($"<a class=\"card\" href=\"{Esc(p.Href(url))}\"><strong>{Esc(title)}</strong><span>{text}</span></a>");
+        Section(Url.Classes, "Classes", $"{_db.Classes.Count} classes, atributos, equipamento e habilidades.");
+        Section(Url.Abilities, "Habilidades", $"{shownAbilities} habilidades de personagens e monstros, por nível de habilidade.");
+        Section(Url.Monsters, "Monstros", $"{_db.Monsters.Count} monstros, onde aparecem e o que deixam cair.");
+        Section(Url.Items, "Itens", $"{_db.Items.Count} itens base, raridades, afixos e quedas.");
+        Section(Url.Statuses, "Status e áreas", "Referência dos efeitos que ficam no personagem e no chão.");
+        Section(Url.Download, "Download", "Baixe o cliente para Windows e entre no mundo.");
+        p.Add("</div>");
     }
 
-    private void BuildOpen()
+    private void BuildDownload()
     {
-        var p = NewPage(Url.Open, "Em aberto", "Conteúdo que existe nos dados mas não está em uso no jogo atual.");
-        p.Add("<h1>Em aberto</h1>");
-        p.Add("<p class=\"note\">Estes itens existem nos dados, mas <strong>nenhum personagem nem monstro os usa hoje</strong>. Eles não fazem parte do jogo atual e podem mudar ou sair.</p>");
-        var abilities = _usage.UnusedAbilities.ToList();
-        p.Add("<h2>Habilidades sem uso</h2>");
-        p.Add(abilities.Count == 0 ? "<p>Nenhuma.</p>" : "<ul>" + string.Concat(abilities.Select(a => $"<li>{p.A(Url.Ability(a.Id), a.Name)} {Code(a.Id)}</li>")) + "</ul>");
-        var statuses = _usage.UnusedStatuses.ToList();
-        p.Add("<h2>Status sem uso</h2>");
-        p.Add(statuses.Count == 0 ? "<p>Nenhum.</p>" : "<ul>" + string.Concat(statuses.Select(s => $"<li>{p.A(Url.Status(s.Id), _d.StatusLabel(s))} {Code(s.Id)}</li>")) + "</ul>");
-        var areas = _usage.UnusedAreas.ToList();
-        p.Add("<h2>Áreas sem uso</h2>");
-        p.Add(areas.Count == 0 ? "<p>Nenhuma.</p>" : "<ul>" + string.Concat(areas.Select(a => $"<li>{p.A(Url.Area(a.Id), _d.AreaLabel(a.Id))} {Code(a.Id)}</li>")) + "</ul>");
+        var d = _content.Download;
+        var p = NewPage(Url.Download, "Download", $"Baixe {_content.Title} para Windows.");
+        p.Add("<h1>Download</h1>");
+        if (d.Lead.Length > 0)
+        {
+            p.Add($"<p class=\"lead\">{Esc(d.Lead)}</p>");
+        }
+
+        // O arquivo não faz parte do site: scripts/deploy-download.sh o publica em /downloads/, ao lado das versões do site.
+        // download.js lê /downloads/latest.json e mostra versão, tamanho e data; sem ele o botão aponta para o nome fixo.
+        p.Add("<section class=\"download panel\" id=\"download\">");
+        p.Add($"<div class=\"download-info\"><h2>{Esc(_content.Title)} para Windows</h2>"
+            + "<p class=\"muted\" data-dl=\"meta\">Cliente para Windows (.zip).</p>"
+            + $"<p class=\"note\" data-dl=\"unavailable\" hidden>{Esc(d.Unavailable)}</p></div>");
+        p.Add($"<a class=\"button big\" data-dl=\"link\" href=\"{Url.DownloadFile}\" download>Baixar para Windows</a>");
+        p.Add("<p class=\"muted small\" data-dl=\"sha\" hidden></p>");
+        p.Add("</section>");
+        if (d.Requirements.Count > 0)
+        {
+            p.Add("<h2>Requisitos</h2><ul>" + string.Concat(d.Requirements.Select(r => $"<li>{Esc(r)}</li>")) + "</ul>");
+        }
+
+        if (d.Steps.Count > 0)
+        {
+            p.Add("<h2>Como instalar</h2><ol class=\"steps\">" + string.Concat(d.Steps.Select(st => $"<li>{Esc(st)}</li>")) + "</ol>");
+        }
+
+        p.Add($"<script src=\"{Esc(p.Href("assets/download.js"))}\"></script>");
     }
 
     private void BuildCredits()
@@ -253,7 +295,7 @@ internal sealed partial class SiteBuilder
             return;
         }
 
-        p.Add("<p>As imagens deste site são quadros das folhas de sprites e ícones do jogo. A atribuição abaixo vem de <code>CREDITS.md</code>.</p>");
+        p.Add("<p>As imagens deste site vêm da arte do jogo. Abaixo, autores e licenças de cada uma.</p>");
         // O título do arquivo ("# Créditos") já é o h1 da página.
         var body = string.Join('\n', _credits.Replace("\r\n", "\n").Split('\n').SkipWhile(l => !l.StartsWith("# ", StringComparison.Ordinal)).Skip(1));
         p.Add(Markdown.ToHtml(body));
@@ -261,22 +303,22 @@ internal sealed partial class SiteBuilder
 
     private void BuildSearch()
     {
-        var p = NewPage(Url.Search, "Busca", "Busca por nome ou id em classes, habilidades, monstros, itens, status e áreas.");
+        var p = NewPage(Url.Search, "Busca", "Busca por nome em classes, habilidades, monstros, itens, status, áreas e zonas.");
         p.Add("<h1>Busca</h1>");
-        p.Add("<p><label for=\"q\">Filtrar por nome ou id:</label> <input id=\"q\" type=\"search\" autocomplete=\"off\" placeholder=\"ex.: lobo, veneno, warrior\"></p>");
+        p.Add("<p><label for=\"q\">Filtrar por nome:</label> <input id=\"q\" type=\"search\" autocomplete=\"off\" placeholder=\"ex.: lobo, veneno, espada\"></p>");
         var entries = new List<(string Kind, string Name, string Id, string Url)>();
         entries.AddRange(_db.Classes.Values.Select(c => ("Classe", c.Name, c.Id, Url.Class(c.Id))));
-        entries.AddRange(_db.Abilities.Values.Select(a => ("Habilidade", a.Name, a.Id, Url.Ability(a.Id))));
+        entries.AddRange(_db.Abilities.Values.Where(a => _usage.IsUsed(a.Id)).Select(a => ("Habilidade", a.Name, a.Id, Url.Ability(a.Id))));
         entries.AddRange(_db.Monsters.Values.Select(m => ("Monstro", m.Name, m.Id, Url.Monster(m.Id))));
         entries.AddRange(_db.Items.Values.Select(i => ("Item", i.Name, i.Id, Url.Item(i.Id))));
         entries.AddRange(_db.Rules.Items.Affixes.Select(a => ("Afixo", a.Name, a.Id, Url.Affix(a.Id))));
-        entries.AddRange(_db.Statuses.Values.Select(s => ("Status", _d.StatusLabel(s), s.Id, Url.Status(s.Id))));
-        entries.AddRange(_db.Areas.Values.Select(a => ("Área", _d.AreaLabel(a.Id), a.Id, Url.Area(a.Id))));
-        entries.AddRange(_db.Zones.Values.Select(z => ("Zona", z.Name, z.Id, Url.Zone(z.Id))));
+        entries.AddRange(_db.Statuses.Values.Where(s => _usage.IsStatusUsed(s.Id)).Select(s => ("Status", _d.StatusLabel(s), s.Id, Url.Status(s.Id))));
+        entries.AddRange(_db.Areas.Values.Where(a => _usage.IsAreaUsed(a.Id)).Select(a => ("Área", _d.AreaLabel(a.Id), a.Id, Url.Area(a.Id))));
+        entries.AddRange(VisibleZones.Select(z => ("Zona", z.Name, z.Id, Url.Zone(z.Id))));
         p.Add("<ul id=\"results\" class=\"search\">");
         foreach (var e in entries.OrderBy(e => e.Name, StringComparer.CurrentCulture))
         {
-            p.Add($"<li data-s=\"{Esc((e.Name + " " + e.Id).ToLowerInvariant())}\">{Icon(p, e.Id)}<a href=\"{Esc(p.Href(e.Url))}\">{Esc(e.Name)}</a> <span class=\"muted\">{e.Kind}</span> {Code(e.Id)}</li>");
+            p.Add($"<li data-s=\"{Esc((e.Name + " " + e.Kind).ToLowerInvariant())}\">{Icon(p, e.Id)}<a href=\"{Esc(p.Href(e.Url))}\">{Esc(e.Name)}</a> <span class=\"muted\">{e.Kind}</span></li>");
         }
 
         p.Add("</ul>");
