@@ -1,6 +1,7 @@
 using Game.Bots;
 using Game.Core.Combat;
 using Game.Core.Definitions;
+using Game.Core.Simulation.Components;
 using MmoRpgClient.Authority;
 using GridMap = Game.Core.Spatial.GridMap;
 
@@ -27,7 +28,15 @@ public static class MatchSetup
         ["class.mage:explosion"] = "mage.elemental_blast",
     });
 
-    public static MatchWorld Create(ContentCatalog content, MatchSettings settings)
+    /// <param name="enemyLevel">
+    /// Depuração (T-345, <c>--enemy-level=n</c>): nível de todos os inimigos e objetivos do encontro, para ver as fases de um
+    /// chefe com o grupo do nível 1. Null = os níveis do encontro.
+    /// </param>
+    /// <param name="enemyHealth">
+    /// Depuração (T-345, <c>--enemy-health=f</c>): os inimigos começam com esta fração da vida (0..1), para ver as fases
+    /// finais de um chefe. Null = vida cheia.
+    /// </param>
+    public static MatchWorld Create(ContentCatalog content, MatchSettings settings, int? enemyLevel = null, float? enemyHealth = null)
     {
         if (!content.Encounters.TryGetValue(settings.EncounterId, out var encounter))
         {
@@ -56,8 +65,26 @@ public static class MatchSetup
         };
         encounter = encounter with { Players = withRanks };
 
+        if (enemyLevel is { } level)
+        {
+            encounter = encounter with
+            {
+                Enemies = encounter.Enemies.Select(e => e with { Level = level }).ToList(),
+                Objectives = encounter.Objectives.Select(o => o with { Level = level }).ToList(),
+            };
+        }
+
         var setup = EncounterSetup.Create(settings.Seed, content, encounter);
         var controlled = setup.Players[controlledIndex];
+        if (enemyHealth is { } fraction)
+        {
+            foreach (var enemy in setup.World.Entities.Where(e => e.TryGet<FactionTag>()?.Faction == Faction.Monster && e.Has<Health>()).ToList())
+            {
+                var health = enemy.Get<Health>();
+                health.Current = Math.Max(1, health.Max * Math.Clamp(fraction, 0f, 1f));
+            }
+        }
+
         var director = new BotDirector(setup.World, new TelegraphHazardSource()) { Seed = settings.Seed };
         foreach (var bot in setup.Players.Where(p => p.Id != controlled.Id))
         {

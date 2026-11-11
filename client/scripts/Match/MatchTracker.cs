@@ -11,6 +11,9 @@ public enum MatchOutcome
     Victory,
     Defeat,
     TimeUp,
+
+    /// <summary>O encontro fracassou com jogadores vivos (T-351: os selos caíram).</summary>
+    Failed,
 }
 
 /// <summary>
@@ -49,15 +52,21 @@ public sealed class MatchTracker(EntityId? player, int? timeLimitTicks)
             return;
         }
 
+        // Os objetivos (selos, T-351) são da facção dos jogadores, mas não são jogadores.
         var players = latest.Entities
-            .Where(e => e.TryGet<FactionTag>()?.Faction == Faction.Player && e.TryGet<Health>() is not null)
+            .Where(e => e.TryGet<FactionTag>()?.Faction == Faction.Player && e.TryGet<Health>() is not null
+                && e.TryGet<Game.Core.Combat.Objectives.EncounterObjective>() is null)
             .Select(e => e.Id)
             .ToHashSet();
 
+        var failed = false;
         foreach (var e in events)
         {
             switch (e)
             {
+                case Game.Core.Combat.Objectives.EncounterFailed:
+                    failed = true;
+                    break;
                 case DamageDealt d:
                     if (d.Source == player)
                     {
@@ -98,7 +107,8 @@ public sealed class MatchTracker(EntityId? player, int? timeLimitTicks)
         var enemiesAlive = latest.Entities.Any(e =>
             e.TryGet<FactionTag>()?.Faction == Faction.Monster && e.TryGet<Health>() is { IsAlive: true });
 
-        Outcome = !playersAlive ? MatchOutcome.Defeat
+        Outcome = failed ? MatchOutcome.Failed
+            : !playersAlive ? MatchOutcome.Defeat
             : !enemiesAlive ? MatchOutcome.Victory
             : timeLimitTicks is { } limit && Ticks >= limit ? MatchOutcome.TimeUp
             : MatchOutcome.InProgress;

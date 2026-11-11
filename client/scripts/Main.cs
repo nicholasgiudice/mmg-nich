@@ -28,8 +28,10 @@ namespace MmoRpgClient;
 /// <c>--demo-input=attack,ability_1,...</c> (aperta ações em sequência mirando o inimigo mais próximo e
 /// imprime as respostas da autoridade; também <c>spend:str</c>, <c>raise:habilidade</c> e <c>reset_points</c>, os botões das
 /// telas de personagem e de habilidades, T-221; <c>equip:n</c>, <c>unequip:weapon</c>, <c>drop:n</c> e <c>pickup</c>, T-222; mouse na interface: <c>click:x;y</c>, <c>hover:x;y</c>, <c>drag:x1;y1;x2;y2</c>..., T-082) e <c>--capture=caminho.png</c> (salva a tela e fecha; após 2 s, ou
-/// <c>--capture-after=segundos</c>, ou ao fim do demo). <c>--circles</c> desenha as unidades como círculos, sem sprites (T-053).
+/// <c>--capture-after=segundos</c>, ou ao fim do demo; com <c>--capture-every=segundos</c>, uma série até <c>--capture-after</c>, T-345). <c>--circles</c> desenha as unidades como círculos, sem sprites (T-053).
 /// Mundo aberto (T-223): <c>--auto-respawn=segundos</c> aperta "Renascer na Cidade" sozinho depois de morrer.
+/// Capturas (T-345): <c>--enemy-level=n</c> põe todos os inimigos e objetivos do encontro local no nível n, e
+/// <c>--enemy-health=f</c> faz os inimigos começarem com a fração f da vida.
 /// Efeitos (T-054): <c>--effects=reduced|normal</c> troca a intensidade só nesta execução; <c>--circles</c> também tira os efeitos.
 /// </summary>
 public partial class Main : Node2D
@@ -46,6 +48,8 @@ public partial class Main : Node2D
     private IGameAuthority? _authority;
     private PlayerInput? _input;
     private DebugInputScript? _demo;
+    private double _nextSeriesShot;
+    private int _seriesIndex;
     private WorldView _worldView = null!;
     private CameraRig _camera = null!;
     private AimPreview _aimPreview = null!;
@@ -306,10 +310,13 @@ public partial class Main : Node2D
                 .ApplyArgs(_args.GetValueOrDefault("ranks"), _args.GetValueOrDefault("rank"));
         }
 
-        var match = MatchSetup.Create(content, settings);
+        var match = MatchSetup.Create(content, settings,
+            int.TryParse(_args.GetValueOrDefault("enemy-level"), out var enemyLevel) ? enemyLevel : null,
+            float.TryParse(_args.GetValueOrDefault("enemy-health"), System.Globalization.CultureInfo.InvariantCulture, out var enemyHealth) ? enemyHealth : null);
         MatchSettings.Current = _settings = settings with { ClassId = match.PlayerClass };
         _encounterName = match.Encounter.Name;
         _tracker = new MatchTracker(match.Authority.ControlledEntity, match.Encounter.Defeat.TimeLimitTicks);
+        _hud.ShowExpeditionFailure = false;
         return (match.Authority, match.Map, content);
     }
 
@@ -538,6 +545,7 @@ public partial class Main : Node2D
             _zone = _content.Zones.GetValueOrDefault(welcome.EncounterId);
             _encounterName = _zone?.Name ?? encounter?.Name ?? welcome.EncounterId;
             _tracker = encounter is null ? null : new MatchTracker(welcome.ControlledEntity, encounter.Defeat.TimeLimitTicks);
+            _hud.ShowExpeditionFailure = _tracker is null;
             _endedAt = -1;
             _diedAt = -1;
             _respawnSent = false;
@@ -705,6 +713,29 @@ public partial class Main : Node2D
     {
         if (!_args.TryGetValue("capture", out var path))
         {
+            return;
+        }
+
+        // T-345: --capture-every=s salva uma série (caminho_001.png, ...) a cada s segundos até --capture-after, e fecha.
+        if (_args.TryGetValue("capture-every", out var every)
+            && double.TryParse(every, System.Globalization.CultureInfo.InvariantCulture, out var step) && step > 0)
+        {
+            if (_elapsed >= _nextSeriesShot)
+            {
+                _nextSeriesShot = _elapsed + step;
+                _seriesIndex++;
+                var shot = $"{System.IO.Path.ChangeExtension(path, null)}_{_seriesIndex:000}.png";
+                GD.Print($"capture {shot}: {GetViewport().GetTexture().GetImage().SavePng(shot)}");
+            }
+
+            var end = _args.TryGetValue("capture-after", out var until)
+                && double.TryParse(until, System.Globalization.CultureInfo.InvariantCulture, out var u) ? u : 30;
+            if (_elapsed >= end)
+            {
+                _args.Remove("capture");
+                GetTree().Quit();
+            }
+
             return;
         }
 

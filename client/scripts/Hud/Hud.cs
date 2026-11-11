@@ -109,6 +109,13 @@ public partial class Hud : Control
     /// <summary>Monstro sob o mouse na lista de batalha (destaque no mapa); null = nenhum.</summary>
     public EntityId? BattleHovered => _battle.Visible ? _battle.Hovered : null;
     private DeathSummaryPanel _death = null!;
+    private BossPanel _boss = null!;
+
+    /// <summary>
+    /// T-345: com o encontro fracassado (os selos caíram), mostra a tela "Expedição fracassada". Desligado nos encontros
+    /// locais, onde a tela de resultado da partida já mostra o fim.
+    /// </summary>
+    public bool ShowExpeditionFailure { get; set; } = true;
     private Label _banner = null!;
     private HBoxContainer _panelButtons = null!;
     private Button _characterButton = null!;
@@ -184,6 +191,9 @@ public partial class Hud : Control
 
         _death = new DeathSummaryPanel { Visible = false, SourceLabel = SourceLabel };
         AddChild(_death);
+
+        _boss = new BossPanel { Visible = false };
+        AddChild(_boss);
 
         _character = new CharacterPanel();
         AddChild(_character);
@@ -269,7 +279,8 @@ public partial class Hud : Control
         var x = freeRight - freeLeft >= bar.X ? freeLeft + (freeRight - freeLeft - bar.X) / 2 : (screen.X - bar.X) / 2;
         _abilityBar.Position = new Vector2(x, screen.Y - bar.Y - 8);
         _playerCast.Position = new Vector2((screen.X - _playerCast.Size.X) / 2, _abilityBar.Position.Y - _playerCast.Size.Y - 6);
-        _target.Position = new Vector2((screen.X - _target.Size.X) / 2, 8);
+        _boss.Position = new Vector2((screen.X - _boss.Size.X) / 2, 8);
+        _target.Position = new Vector2((screen.X - _target.Size.X) / 2, _boss.Visible ? _boss.Position.Y + _boss.Size.Y + 6 : 8);
         _panelButtons.Position = new Vector2(8, _player.Position.Y + _player.Size.Y + 4);
         _party.Position = new Vector2(8, _panelButtons.Position.Y + _panelButtons.Size.Y + 6);
         _partyPanel.Position = _party.Position;
@@ -343,14 +354,20 @@ public partial class Hud : Control
             Announce($"{boss} — Fase {phase.Index + 1}");
         }
 
+        if (ShowExpeditionFailure && events.OfType<Game.Core.Combat.Objectives.EncounterFailed>().Any())
+        {
+            _death.ShowExpeditionFailed();
+        }
+
         HandleProgression(authority, events);
         if (latest is null)
         {
             return;
         }
 
-        Layout();
         var now = authority.CurrentTick + authority.InterpolationFraction;
+        _boss.Update(latest, _content, now);
+        Layout();
         var byId = latest.Entities.ToDictionary(e => e.Id);
         EntitySnapshot? self = authority.ControlledEntity is { } pid && byId.TryGetValue(pid, out var s) ? s : null;
 
