@@ -127,4 +127,10 @@ public sealed record MonsterSpawnDefinition
     public int? Level { get; init; }
 
     public int RespawnTicks { get; init; } = 600;
+
+    /// <summary>
+    /// T-352: objetivo a proteger (os selos do Vigia, como os <c>objectives</c> de um encontro da T-351): nasce aliado dos
+    /// jogadores e sem IA. A queda do último publica <c>EncounterFailed</c>.
+    /// </summary>
+    public bool Objective { get; init; }
 }

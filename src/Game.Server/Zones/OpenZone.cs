@@ -79,7 +79,7 @@ public sealed class OpenZone
     public Vector2 SpawnPosition => new((float)Definition.Spawn.X, (float)Definition.Spawn.Y);
 
     /// <summary>Monstros vivos dos pontos de surgimento.</summary>
-    public int LivingMonsters => _slots.Count(s => s.Entity is { IsAlive: true });
+    public int LivingMonsters => _slots.Count(s => s.Entity is { IsAlive: true } && !s.Point.Objective);
 
     /// <summary>
     /// Põe o personagem na zona com o estado dele, em <paramref name="position"/> (ou no nascimento, se a posição é (0, 0) ou
@@ -205,8 +205,11 @@ public sealed class OpenZone
             }
         }
 
-        var monster = EntityFactory.SpawnMonster(World, slot.Monster, position, slot.Point.Level);
-        if (AiState.Ensure(World, monster) is { } ai)
+        // T-352: objetivo (selo) nasce aliado dos jogadores e sem IA nem grupo de aggro.
+        var monster = slot.Point.Objective
+            ? Core.Combat.Objectives.ObjectiveService.Spawn(World, slot.Monster, position, slot.Point.Level)
+            : EntityFactory.SpawnMonster(World, slot.Monster, position, slot.Point.Level);
+        if (!slot.Point.Objective && AiState.Ensure(World, monster) is { } ai)
         {
             ai.GroupId = slot.GroupId;
         }
