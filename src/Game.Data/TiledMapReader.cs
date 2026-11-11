@@ -312,6 +312,7 @@ public static class TiledMapReader
             var count = 1;
             var radius = 0.0;
             var respawn = TickConversion.SecondsToTicks(30); // padrão, igual ao de MapSpawn e MonsterSpawnDefinition
+            var objective = false;
             if (kind == MapSpawnKind.Monster)
             {
                 monster = props.GetValueOrDefault("monster");
@@ -368,6 +369,19 @@ public static class TiledMapReader
                         Error(path, $"Propriedade 'respawn' (segundos até renascer) deve ser maior que 0 (valor: '{rs}').");
                     }
                 }
+
+                // T-352: objetivo a proteger (os selos do Vigia).
+                if (props.TryGetValue("objective", out var ob))
+                {
+                    if (ob is "true" or "false")
+                    {
+                        objective = ob == "true";
+                    }
+                    else
+                    {
+                        Error(path, $"Propriedade 'objective' deve ser bool (valor: '{ob}').");
+                    }
+                }
             }
 
             output.Add(new MapSpawn
@@ -380,6 +394,7 @@ public static class TiledMapReader
                 Count = count,
                 Radius = radius,
                 RespawnTicks = respawn,
+                Objective = objective,
             });
         }
 
