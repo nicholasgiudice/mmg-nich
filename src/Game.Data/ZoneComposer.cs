@@ -111,6 +111,7 @@ internal static class ZoneComposer
                     Radius = s.Radius,
                     Level = s.Level,
                     RespawnTicks = s.RespawnTicks,
+                    Objective = s.Objective,
                 });
             }
 

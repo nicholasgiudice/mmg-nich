@@ -95,6 +95,7 @@ public partial class MatchOverlay : Control
         {
             MatchOutcome.Victory => ("Vitória", new Color(0.45f, 1f, 0.5f)),
             MatchOutcome.TimeUp => ("Derrota — tempo esgotado", new Color(1f, 0.55f, 0.35f)),
+            MatchOutcome.Failed => ("Expedição fracassada", new Color(0.75f, 0.5f, 1f)),
             _ => ("Derrota", new Color(1f, 0.4f, 0.35f)),
         };
         var absorbed = t.Absorbed > 0 ? $" ({N(t.Absorbed)} absorvido)" : "";

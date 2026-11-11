@@ -231,6 +231,8 @@ public partial class WorldView : Node2D
             view.ApplyShield(_effects.Shield, state.TryGet<ShieldState>() is { Total: > 0 });
             var (chips, marks) = StatusVisuals.From(state.TryGet<StatusEffects>(), _content, now);
             view.ApplyStatus(chips, marks);
+            view.SetVanishWarning(state.TryGet<AbilityState>()?.Cast is { } cast
+                && _content.Abilities.TryGetValue(cast.AbilityId, out var castDef) && castDef.Tags.Contains("ai.vanish"));
 
             var from = _previousById.TryGetValue(state.Id, out var prev) ? prev.TryGet<Transform>() ?? transform : transform;
             var position = System.Numerics.Vector2.Lerp(from.Position, transform.Position, alpha);

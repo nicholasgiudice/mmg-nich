@@ -35,4 +35,37 @@ A T-340 e a T-341 criaram a Fada da Névoa, o Ent Corrompido, o Sacerdote Morto 
 
 ## Resultado
 
-_(preencher ao concluir)_
+**Feito.** As capturas estão em `tasks/reports/cliente-t345/`.
+
+**Sprites** (`client/assets/art/sprites.json`):
+- os ids da T-056 batem com os dados da T-340, T-341 e T-351;
+- a variante `preview_fase3` saiu. O mecanismo `--art` continua, e `variants` ficou vazio;
+- **Ent Corrompido (provisório):** a folha do Esqueleto em ×2, com `tint` de madeira e o golpe `slash_128`, até a encomenda chegar;
+- **selo do Vigia** (`monster.watcher_seal`): o medalhão de pedra do `terrain_summer` (layout `seal`), que escurece quando quebra (animação de morte);
+- o `tint` e o tamanho dos outros monstros não precisaram de ajuste.
+
+**Leitura das mecânicas:**
+- **Fada na névoa** (`status.in_mist`, um status com a tag `mist` e fora de alvo): o sprite fica com 30% de opacidade, sem barra de vida, sem nome e sem status. O aviso antes de sumir são anéis de névoa que sobem dos pés enquanto ela conjura uma habilidade com a tag `ai.vanish` (o Véu de Névoa, 0,6 s).
+- **Medo** (`flags.feared`): balão roxo com "!" acima das plaquetas de status, tremendo, como as estrelas do atordoamento. A plaqueta "Pa" (controle) segue igual às outras. No online, o cliente não prevê o próprio movimento com medo, porque quem move é o servidor (como no atordoamento).
+- **Tela do chefe** (`BossPanel`): no topo da tela, enquanto há um chefe vivo (rank `boss`). Mostra o nome com a fase, a vida e a conjuração, e uma barra para cada objetivo do encontro, com o estado Intacto, em ruína (vida) ou Quebrado. O quadro do alvo desce para baixo dela.
+- **Último Comando:** a conjuração do chefe que mira um objetivo fica vermelha e pulsando, com "INTERROMPA!".
+- **Fim com falha:** o encontro local mostra "Expedição fracassada" na tela de resultado. No mundo aberto (a Cripta), o `EncounterFailed` abre o painel "Expedição fracassada", no lugar do resumo de morte. Os selos não contam mais como jogadores na derrota.
+- **Avisos de instância** (pendência da T-352): `InstanceNotice` e `InstanceRejected` aparecem como mensagens, como as do grupo.
+- **Telegráfos e nomes:** os telegráfos continuam por cima dos efeitos (capturas do Ent e do Vigia). Os nomes no log, na lista de batalha e no site vêm dos dados, sem mudança manual.
+
+**Capturas:** cada monstro novo em combate e o Vigia nas três fases. Para isso, o cliente ganhou três argumentos de depuração, só nos encontros locais:
+- `--capture-every=s`: uma série de capturas;
+- `--enemy-level=n`: inimigos e objetivos no nível n;
+- `--enemy-health=f`: inimigos começando com a fração f da vida.
+
+O grupo do encontro local é de nível 1, e sem esses argumentos a luta do Vigia não sai da fase 1. Os dados não mudam.
+
+**Testes:** `tests/Game.Client.Tests/WatcherReadingTests.cs` cobre a falha na tela de resultado, os selos fora da contagem de jogadores e os textos de instância. É fora das áreas da tarefa: o mínimo para testar o que mudou.
+
+**Decisões:**
+- O aviso de sumiço e a transparência vêm das tags dos dados (`ai.vanish` e `mist`), e não do id da Fada. O "objetivo" do Último Comando é qualquer alvo com `EncounterObjective`.
+- O quadro do alvo continua aparecendo quando o alvo é o chefe. Repete a vida, mas mostra os status dele.
+
+**Pendências:**
+- **Arte:** a encomenda do Ent; um ícone de medo e um selo de verdade, se o designer quiser.
+- **T-380:** avaliar no playtest se o aviso da Fada (0,6 s) dá tempo de reagir.

@@ -33,6 +33,9 @@ public sealed record MapSpawn
 
     /// <summary>T-331: tempo para renascer depois de morrer (propriedade <c>respawn</c> em segundos, padrão 30).</summary>
     public int RespawnTicks { get; init; } = 600;
+
+    /// <summary>T-352: objetivo a proteger (propriedade <c>objective</c>, ex.: os selos do Vigia), aliado dos jogadores e sem IA.</summary>
+    public bool Objective { get; init; }
 }
 
 /// <summary>

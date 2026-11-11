@@ -745,12 +745,27 @@ public sealed class WorldServer : ITransportHandler, IGameHost, IPartyHost
         foreach (var instance in _instances.ToList())
         {
             var inside = PlayersIn(instance.Zone).OrderBy(p => p.EnteredInstanceAt).ThenBy(p => p.Peer).ToList();
+
+            // T-352: o encontro falhou (os selos do Vigia caíram): todos saem pela saída e a cópia acaba; a próxima entrada
+            // cria uma nova, com tudo vivo.
+            if (instance.Zone.World.LastTickEvents.OfType<Core.Combat.Objectives.EncounterFailed>().Any())
+            {
+                var exit = instance.Definition.ExitGate()!;
+                foreach (var p in inside)
+                {
+                    Send(p.Peer, new InstanceNotice(InstanceNoticeKind.Removed, 0));
+                    Move(p, _zones[exit.To], new Vector2((float)exit.Arrival.X, (float)exit.Arrival.Y), keepVitals: p.Entity!.IsAlive, "encontro falhou");
+                }
+
+                Destroy(instance, "encontro falhou");
+                continue;
+            }
             if (inside.Count == 0)
             {
                 instance.EmptySince ??= _tick;
                 if (_tick - instance.EmptySince >= instance.Definition.EmptyTimeoutTicks)
                 {
-                    Destroy(instance);
+                    Destroy(instance, $"vazia por {instance.Definition.EmptyTimeoutTicks / (double)Core.Simulation.World.TickRate:0} s");
                 }
 
                 continue;
@@ -789,7 +804,7 @@ public sealed class WorldServer : ITransportHandler, IGameHost, IPartyHost
         }
     }
 
-    private void Destroy(DungeonInstance instance)
+    private void Destroy(DungeonInstance instance, string reason)
     {
         _instances.Remove(instance);
         foreach (var key in _reservations.Where(kv => kv.Value.Instance == instance).Select(kv => kv.Key).ToList())
@@ -797,8 +812,7 @@ public sealed class WorldServer : ITransportHandler, IGameHost, IPartyHost
             _reservations.Remove(key);
         }
 
-        _log.Information("Instância {Instance} de {Zone} destruída (vazia por {Seconds:0} s)", instance.Id, instance.Zone.Id,
-            instance.Definition.EmptyTimeoutTicks / (double)Core.Simulation.World.TickRate);
+        _log.Information("Instância {Instance} de {Zone} destruída ({Reason})", instance.Id, instance.Zone.Id, reason);
     }
 
     // ---------------- console ----------------

@@ -164,11 +164,12 @@ internal static class FieldGroups
     public static double Distance(PositionDefinition a, PositionDefinition b) => Math.Sqrt(((a.X - b.X) * (a.X - b.X)) + ((a.Y - b.Y) * (a.Y - b.Y)));
 
     // Arena aberta do protótipo: jogador à esquerda, corpo a corpo na frente, quem ataca de longe atrás.
-    private static readonly (double X, double Y)[] Front = [(17.5, 8.5), (18.5, 10.5), (17.5, 12.5), (16.5, 10.5)];
+    // T-352: grupos maiores da Cripta (até 7 na frente e 4 atrás).
+    private static readonly (double X, double Y)[] Front = [(17.5, 8.5), (18.5, 10.5), (17.5, 12.5), (16.5, 10.5), (18.5, 6.5), (18.5, 14.5), (19.5, 12.5)];
     private static readonly (double X, double Y)[] Back = [(20.5, 9.5), (20.5, 11.5), (21.5, 10.5), (21.5, 8.5)];
 
-    // T-343: até três jogadores (o primeiro no lugar do solo).
-    private static readonly (double X, double Y)[] Players = [(5.5, 10.5), (4.5, 9.5), (4.5, 11.5)];
+    // T-343: até três jogadores (o primeiro no lugar do solo); T-352: o quarto, para os grupos de 4 da Cripta.
+    private static readonly (double X, double Y)[] Players = [(5.5, 10.5), (4.5, 9.5), (4.5, 11.5), (3.5, 10.5)];
 
     /// <summary>Catálogo com o encontro do grupo contra uma classe (Defeat 120 s, como os solos do protótipo).</summary>
     public static (ContentCatalog Content, string EncounterId) Encounter(FieldGroup group, string cls) => Encounter(group, [cls]);

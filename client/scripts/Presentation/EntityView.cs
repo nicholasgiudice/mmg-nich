@@ -35,6 +35,11 @@ public partial class EntityView : Node2D
     private static readonly Color RootColor = new(0.55f, 0.38f, 0.20f);
     private static readonly Color FrozenColor = new(0.65f, 0.9f, 1f);
     private static readonly Color SilenceColor = new(0.75f, 0.45f, 1f);
+    private static readonly Color FearColor = new(0.62f, 0.30f, 0.85f);
+    private static readonly Color MistColor = new(0.85f, 0.92f, 1f);
+
+    /// <summary>Transparência da unidade na névoa (T-345): ainda se vê onde está, mas não dá para mirar.</summary>
+    private const float VeiledAlpha = 0.3f;
 
     private const float BarWidth = 36f;
     private const float BarHeight = 4f;
@@ -52,6 +57,7 @@ public partial class EntityView : Node2D
     private bool _highlighted;
     private IReadOnlyList<StatusChip> _chips = Array.Empty<StatusChip>();
     private ControlMarks _marks;
+    private bool _vanishing;
     private double _flash;
     private double _time;
 
@@ -176,6 +182,20 @@ public partial class EntityView : Node2D
         }
     }
 
+    /// <summary>
+    /// Aviso antes de sumir na névoa (T-345): a unidade conjura uma habilidade de sumiço (tag <c>ai.vanish</c>, o Véu de
+    /// Névoa da Fada). Anéis de névoa sobem dos pés até a conjuração acabar.
+    /// </summary>
+    public void SetVanishWarning(bool vanishing)
+    {
+        vanishing &= _alive;
+        if (vanishing != _vanishing)
+        {
+            _vanishing = vanishing;
+            QueueRedraw();
+        }
+    }
+
     /// <summary>Pisca em branco (recebeu dano).</summary>
     public void Flash()
     {
@@ -215,9 +235,9 @@ public partial class EntityView : Node2D
             _flash = Math.Max(0, _flash - delta);
             QueueRedraw();
         }
-        else if ((_marks & ControlMarks.Stunned) != 0)
+        else if ((_marks & (ControlMarks.Stunned | ControlMarks.Feared)) != 0 || _vanishing)
         {
-            QueueRedraw(); // estrelas girando
+            QueueRedraw(); // estrelas girando, medo pulsando, névoa subindo
         }
     }
 
@@ -260,14 +280,21 @@ public partial class EntityView : Node2D
             }
         }
 
+        var veiled = (_marks & ControlMarks.Veiled) != 0;
+        _nameLabel.Visible = !veiled;
+        if (_vanishing)
+        {
+            DrawMistWarning();
+        }
+
         if (_sprite is { } sprite)
         {
-            DrawSprite(sprite);
+            DrawSprite(sprite, veiled ? VeiledAlpha : 1f);
         }
         else
         {
             var body = _flash > 0 ? _color.Lerp(Colors.White, (float)(_flash / FlashSeconds) * 0.8f) : _color;
-            DrawCircle(Godot.Vector2.Zero, _radiusPx, body);
+            DrawCircle(Godot.Vector2.Zero, _radiusPx, veiled ? new Color(body, VeiledAlpha) : body);
             if ((_marks & ControlMarks.Frozen) != 0)
             {
                 DrawCircle(Godot.Vector2.Zero, _radiusPx + 3, new Color(FrozenColor, 0.55f));
@@ -279,6 +306,11 @@ public partial class EntityView : Node2D
             {
                 DrawLine(Godot.Vector2.Zero, _facing * (_radiusPx + 6), Colors.White, 2f);
             }
+        }
+
+        if (veiled)
+        {
+            return; // na névoa: sem barra de vida nem status (não é alvo)
         }
 
         var barPos = new Godot.Vector2(-BarWidth / 2, -HeadPx - 8);
@@ -303,14 +335,46 @@ public partial class EntityView : Node2D
             DrawLine(c + new Godot.Vector2(-3, 3), c + new Godot.Vector2(3, -3), SilenceColor, 1.5f);
         }
 
+        if ((_marks & ControlMarks.Feared) != 0)
+        {
+            // Acima das plaquetas de status (que ficam logo acima da barra de vida).
+            DrawFear(new Godot.Vector2(0, barPos.Y - (_chips.Count > 0 ? ChipHeight + 13 : 10)));
+        }
+
         DrawChips(barPos.Y - 3);
+    }
+
+    /// <summary>Medo (T-345): balão roxo com "!" sobre a cabeça, tremendo, como as estrelas do atordoamento.</summary>
+    private void DrawFear(Godot.Vector2 center)
+    {
+        var shake = new Godot.Vector2(Mathf.Sin((float)_time * 30f) * 1.5f, 0);
+        var c = center + shake;
+        DrawCircle(c, 7f, FearColor);
+        DrawArc(c, 7f, 0, Mathf.Tau, 16, Colors.Black, 1.5f);
+        DrawLine(c + new Godot.Vector2(0, -4), c + new Godot.Vector2(0, 1), Colors.White, 2f);
+        DrawCircle(c + new Godot.Vector2(0, 3.5f), 1.2f, Colors.White);
+    }
+
+    /// <summary>Aviso de sumiço na névoa: anéis claros e translúcidos que crescem a partir dos pés.</summary>
+    private void DrawMistWarning()
+    {
+        DrawSetTransform(Godot.Vector2.Zero, 0, new Godot.Vector2(1, 0.5f));
+        for (var i = 0; i < 3; i++)
+        {
+            var t = (float)((_time * 1.6 + i / 3.0) % 1.0);
+            var r = _radiusPx * (1f + t * 1.8f);
+            DrawCircle(Godot.Vector2.Zero, r, new Color(MistColor, 0.22f * (1 - t)));
+            DrawArc(Godot.Vector2.Zero, r, 0, Mathf.Tau, 24, new Color(MistColor, 0.7f * (1 - t)), 2f);
+        }
+
+        DrawSetTransform(Godot.Vector2.Zero, 0, Godot.Vector2.One);
     }
 
     /// <summary>
     /// Sombra com a cor da facção sob os pés (o círculo de colisão achatado) e o quadro da animação do momento,
     /// com o pivô (pés) na posição da unidade. Prioridade: morte, ataque, conjuração, andar, parado.
     /// </summary>
-    private void DrawSprite(SpriteDefinition sprite)
+    private void DrawSprite(SpriteDefinition sprite, float alpha)
     {
         DrawSetTransform(Godot.Vector2.Zero, 0, new Godot.Vector2(1, 0.5f));
         DrawCircle(Godot.Vector2.Zero, _radiusPx, new Color(_color, _alive ? 0.35f : 0.15f));
@@ -345,7 +409,8 @@ public partial class EntityView : Node2D
             : flash > 0 ? new Color(1 + flash * 2, 1 + flash * 2, 1 + flash * 2)
             : (_marks & ControlMarks.Frozen) != 0 ? new Color(0.75f, 0.9f, 1.2f)
             : Colors.White;
-        DrawTextureRectRegion(sprite.Texture, dest, strip.Frame(index), modulate * sprite.Tint);
+        var color = modulate * sprite.Tint;
+        DrawTextureRectRegion(sprite.Texture, dest, strip.Frame(index), new Color(color, color.A * alpha));
     }
 
     private (SpriteAnimation? Animation, double Time) CurrentAnimation(SpriteDefinition sprite, SpriteDirection direction)

@@ -268,7 +268,7 @@ public class ZoneLoaderTests
     }
 
     [Fact]
-    public void Real_data_has_a_test_instance_that_exits_to_the_fields()
+    public void Real_data_has_a_test_instance_that_exits_to_the_forest()
     {
         var dir = new DirectoryInfo(AppContext.BaseDirectory);
         while (!File.Exists(Path.Combine(dir!.FullName, "MmoRpg.sln")))
@@ -281,7 +281,7 @@ public class ZoneLoaderTests
 
         Assert.Equal(ZoneKind.Instance, test.Kind);
         Assert.Equal((4, 300 * 20, 30 * 20), (test.MaxPlayers, test.EmptyTimeoutTicks, test.OutsiderTimeoutTicks));
-        Assert.Equal("zone.vigil_fields", test.ExitGate()!.To);
+        Assert.Equal("zone.lower_forest", test.ExitGate()!.To); // o mapa do Covil, que desde a T-342 sai na Floresta
         Assert.Single(test.MonsterSpawns, s => s.Monster == "monster.forest_matriarch");
     }
 

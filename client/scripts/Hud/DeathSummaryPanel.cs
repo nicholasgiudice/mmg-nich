@@ -49,6 +49,15 @@ public partial class DeathSummaryPanel : PanelContainer
         box.AddChild(close);
     }
 
+    /// <summary>T-345: o encontro terminou em falha (os selos do Vigia caíram), como o resumo de morte.</summary>
+    public void ShowExpeditionFailed()
+    {
+        _text.Text = "[center][b]Expedição fracassada[/b][/center]\n\n"
+            + "Os selos caíram e o Vigia Sem Rosto venceu.\n"
+            + "O grupo é levado de volta à entrada da masmorra, e a próxima entrada recomeça a masmorra inteira.";
+        Show();
+    }
+
     public void ShowSummary(DeathSummary summary)
     {
         var sb = new StringBuilder();

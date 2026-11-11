@@ -13,6 +13,12 @@ public enum ControlMarks
     Rooted = 2,
     Frozen = 4,
     Silenced = 8,
+
+    /// <summary>Medo (T-351, <c>flags.feared</c>): foge sem controle.</summary>
+    Feared = 16,
+
+    /// <summary>Na névoa (T-340: status com a tag <c>mist</c> que deixa a unidade fora de alvo): semitransparente, sem barra.</summary>
+    Veiled = 32,
 }
 
 /// <summary>Um ícone pequeno de status acima da unidade (sigla + cor no protótipo).</summary>
@@ -51,6 +57,8 @@ public static class StatusVisuals
             {
                 marks |= def.Flags.Stunned ? ControlMarks.Stunned : ControlMarks.None;
                 marks |= def.Flags.Silenced ? ControlMarks.Silenced : ControlMarks.None;
+                marks |= def.Flags.Feared ? ControlMarks.Feared : ControlMarks.None;
+                marks |= def.Flags.Untargetable && tags.Contains("mist") ? ControlMarks.Veiled : ControlMarks.None;
                 marks |= tags.Contains("freeze") ? ControlMarks.Frozen
                     : def.Flags.Rooted ? ControlMarks.Rooted
                     : ControlMarks.None;

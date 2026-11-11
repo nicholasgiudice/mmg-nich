@@ -26,6 +26,8 @@
     <Compile Include="..\..\client\scripts\Input\HotbarLayout.cs" Link="Client\HotbarLayout.cs" />
     <Compile Include="..\..\client\scripts\Hud\BattleList.cs" Link="Client\BattleList.cs" />
     <Compile Include="..\..\client\scripts\Hud\PartyModel.cs" Link="Client\PartyModel.cs" />
+    <Compile Include="..\..\client\scripts\Match\MatchTracker.cs" Link="Client\MatchTracker.cs" />
+    <Compile Include="..\..\client\scripts\Hud\InstanceText.cs" Link="Client\InstanceText.cs" />
   </ItemGroup>
 
   <ItemGroup>

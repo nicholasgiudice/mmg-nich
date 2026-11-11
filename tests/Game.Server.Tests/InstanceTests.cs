@@ -39,6 +39,10 @@ public class InstanceTests
             MaxPlayers = maxPlayers,
         };
         dungeon = dungeon with { MonsterSpawns = dungeon.MonsterSpawns.Select(s => s with { RespawnTicks = Respawn }).ToList() };
+
+        // A saída da instância de teste leva aos Campos, como antes da T-342 (no jogo, o Covil leva à Floresta).
+        var fields = c.Zones["zone.vigil_fields"];
+        dungeon = dungeon with { Gates = dungeon.Gates.Select(g => g with { To = fields.Id, Arrival = fields.Spawn }).ToList() };
         var city = c.Zones["zone.city"];
         city = city with
         {
@@ -102,7 +106,7 @@ public class InstanceTests
         Assert.Equal(instance.Zone.SpawnPosition, w.Where(c).Entity.Get<Transform>().Position);
         Assert.Equal(1, instance.Zone.LivingMonsters);
 
-        // Pela saída volta para a zona de origem (Campos, na chegada do Covil), e o Welcome sai sem instância.
+        // Pela saída volta para a zona de origem (Campos), e o Welcome sai sem instância.
         WalkInto(w, c, ExitGate);
         Assert.Same(w.Fields, w.Where(c).Zone);
         Assert.Equal(0, c.Welcome!.InstanceId);

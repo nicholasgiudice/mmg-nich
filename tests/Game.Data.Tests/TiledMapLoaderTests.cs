@@ -104,6 +104,22 @@ public class TiledMapLoaderTests
         Assert.Contains(r.Errors, e => e.Path.Contains(path, StringComparison.Ordinal) && e.Message.Contains(fragment, StringComparison.Ordinal));
     }
 
+    /// <summary>T-352: a propriedade <c>objective</c> (bool) marca um objetivo a proteger, como os selos do Vigia.</summary>
+    [Fact]
+    public void Objective_property_marks_a_monster_spawn_as_an_objective()
+    {
+        var r = Load(Map(Objects("spawns",
+            Obj("seal", "monster_spawn", 48, 48, point: true, props: [("monster", "monster.rat"), ("objective", true)]),
+            Obj("rat", "monster_spawn", 80, 48, point: true, props: [("monster", "monster.rat")]))));
+        Assert.True(r.Success, Errors(r));
+        var spawns = r.Database!.Arenas["map.test"].Spawns;
+        Assert.True(spawns.Single(s => s.Name == "seal").Objective);
+        Assert.False(spawns.Single(s => s.Name == "rat").Objective);
+
+        var bad = Load(Map(Objects("spawns", Obj("seal", "monster_spawn", 48, 48, point: true, props: [("monster", "monster.rat"), ("objective", "sim")]))));
+        AssertError(bad, "objects[seal]", "'objective' deve ser bool");
+    }
+
     [Fact]
     public void Map_becomes_an_arena_with_collision_spawns_areas_and_transitions()
     {

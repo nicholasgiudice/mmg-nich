@@ -268,7 +268,7 @@
     },
     {
      "id": 2,
-     "name": "from_fields",
+     "name": "from_forest",
      "type": "player_spawn",
      "x": 144.0,
      "y": 528.0,
@@ -361,7 +361,7 @@
       {
        "name": "to",
        "type": "string",
-       "value": "zone.vigil_fields"
+       "value": "zone.lower_forest"
       }
      ]
     }
