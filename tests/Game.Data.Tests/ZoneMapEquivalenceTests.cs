@@ -30,6 +30,13 @@ public class ZoneMapEquivalenceTests
             .ToDictionary(z => z.GetProperty("id").GetString()!, z => z.Clone(), StringComparer.Ordinal);
     });
 
+    /// <summary>T-342: portões que mudaram de destino (null: o portão saiu).</summary>
+    private static readonly Dictionary<(string Zone, string To), string?> Moved = new()
+    {
+        [("zone.vigil_fields", "zone.matriarch_lair")] = null,
+        [("zone.matriarch_lair", "zone.vigil_fields")] = "zone.lower_forest",
+    };
+
     public static TheoryData<string> Zones() => new() { "zone.city", "zone.vigil_fields", "zone.matriarch_lair" };
 
     private static T[] Read<T>(JsonElement zone, string field) =>
@@ -50,7 +57,9 @@ public class ZoneMapEquivalenceTests
         var zone = Db.Value.Zones[zoneId];
 
         // Os mesmos portões (destinos; portões para zonas novas podem entrar) e os mesmos monstros, em qualquer quantidade de pontos.
-        Assert.Subset(zone.Gates.Select(g => g.To).ToHashSet(StringComparer.Ordinal), Read<GateDefinition>(old, "gates").Select(g => g.To).ToHashSet(StringComparer.Ordinal));
+        // T-342: o Covil saiu dos Campos e passou para a Floresta.
+        var before = Read<GateDefinition>(old, "gates").Select(g => Moved.GetValueOrDefault((zoneId, g.To), g.To)).OfType<string>();
+        Assert.Subset(zone.Gates.Select(g => g.To).ToHashSet(StringComparer.Ordinal), before.ToHashSet(StringComparer.Ordinal));
         Assert.Equal(Read<MonsterSpawnDefinition>(old, "monsterSpawns").Select(s => s.Monster).Distinct().Order(StringComparer.Ordinal),
             zone.MonsterSpawns.Select(s => s.Monster).Distinct().Order(StringComparer.Ordinal));
 
