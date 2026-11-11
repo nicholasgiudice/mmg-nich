@@ -7,7 +7,7 @@ namespace Game.Sim.Tests;
 /// <summary>
 /// T-055: Cidade e Campos são mapas do Tiled. Do nascimento de cada zona, um personagem chega andando (células livres,
 /// 4 vizinhos) a todos os pontos de surgimento, chegadas e portões; e os portões da zona batem com as transições do mapa.
-/// Desde a T-331 a zona inteira (nascimento, portões, surgimentos) é montada a partir do mapa. T-343: Ruínas da Estrada Antiga. T-352: Cripta do Vigia.
+/// Desde a T-331 a zona inteira (nascimento, portões, surgimentos) é montada a partir do mapa. T-343: Ruínas da Estrada Antiga. T-352: Cripta do Vigia. T-342: Floresta Baixa.
 /// </summary>
 public class ZoneMapTests
 {
@@ -22,7 +22,7 @@ public class ZoneMapTests
         return GameDataLoader.LoadDirectory(Path.Combine(dir.FullName, "data")).GetDatabaseOrThrow();
     });
 
-    public static TheoryData<string> Zones() => new() { "zone.city", "zone.vigil_fields", "zone.matriarch_lair", "zone.old_road_ruins", "zone.watcher_crypt" };
+    public static TheoryData<string> Zones() => new() { "zone.city", "zone.vigil_fields", "zone.matriarch_lair", "zone.old_road_ruins", "zone.watcher_crypt", "zone.lower_forest" };
 
     [Theory]
     [MemberData(nameof(Zones))]
@@ -96,6 +96,46 @@ public class ZoneMapTests
         Assert.Equal(3, seals.Count);
         Assert.All(seals, s => Assert.Equal("monster.watcher_seal", s.Monster));
         Assert.All(crypt.MonsterSpawns.Where(s => s.Monster != "monster.faceless_watcher" && !s.Objective), s => Assert.InRange(s.Level ?? 0, 12, 14));
+    }
+
+    /// <summary>
+    /// T-342: a Floresta Baixa sai pelo portão norte da Cidade e tem as quatro subáreas, com os monstros nos níveis 5–8.
+    /// O Covil da Matriarca sai dos Campos e passa a ter o portão a partir da Floresta (a caverna do Ninho), ida e volta.
+    /// </summary>
+    [Fact]
+    public void Forest_is_north_of_the_city_with_the_four_subareas_and_the_lair_gate()
+    {
+        var forest = Db.Value.Zones["zone.lower_forest"];
+        Assert.Equal(ZoneKind.Field, forest.Kind);
+        var city = Db.Value.Zones["zone.city"];
+        var north = Assert.Single(city.Gates, g => g.To == "zone.lower_forest");
+        Assert.Equal(0, north.Area.Y);
+        Assert.Contains(forest.Gates, g => g.To == "zone.city");
+
+        Assert.Equal(["Bosque das Teias", "Clareira da Névoa", "Ninho da Matriarca", "Trilha dos Caçadores"],
+            forest.MonsterSpawns.Select(s => s.Area).Distinct().Order(StringComparer.Ordinal));
+        Assert.All(forest.MonsterSpawns, s => Assert.InRange(s.Level ?? 0, 5, 8));
+        Assert.Single(forest.MonsterSpawns, s => s.Monster == "monster.spider_big" && s.Area == "Bosque das Teias");
+        Assert.Contains(forest.MonsterSpawns, s => s.Monster == "monster.corrupted_ent" && s.Area == "Clareira da Névoa");
+
+        Assert.Equal("zone.matriarch_lair", Assert.Single(forest.Gates, g => g.To != "zone.city").To);
+        Assert.Equal(["zone.lower_forest"], Db.Value.Zones["zone.matriarch_lair"].Gates.Select(g => g.To));
+        Assert.DoesNotContain(Db.Value.Zones["zone.vigil_fields"].Gates, g => g.To == "zone.matriarch_lair");
+    }
+
+    /// <summary>T-342: os grupos de monstros da Floresta ficam a pelo menos 12 tiles uns dos outros.</summary>
+    [Fact]
+    public void Forest_groups_are_at_least_12_tiles_apart()
+    {
+        var spawns = Db.Value.Zones["zone.lower_forest"].MonsterSpawns;
+        foreach (var a in spawns)
+        {
+            foreach (var b in spawns.Where(b => !ReferenceEquals(a, b)))
+            {
+                var d = Math.Sqrt(Math.Pow(a.Position.X - b.Position.X, 2) + Math.Pow(a.Position.Y - b.Position.Y, 2));
+                Assert.True(d >= 12, $"{a.Monster} ({a.Position.X}, {a.Position.Y}) a {d:F1} de {b.Monster} ({b.Position.X}, {b.Position.Y})");
+            }
+        }
     }
 
     /// <summary>Células livres alcançáveis a pé (4 vizinhos) a partir do nascimento da zona.</summary>

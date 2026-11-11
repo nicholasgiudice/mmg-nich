@@ -34,4 +34,42 @@ Hoje a Matriarca fica no `zone.matriarch_lair`, com o portão na borda leste dos
 
 ## Resultado
 
-_(preencher ao concluir)_
+**Feito.** Relatório: `tasks/reports/balance-v0.16.md`; imagens em `tasks/reports/mapas-t342/`.
+
+- **Mapa** `data/maps/lower_forest.tmj` (200 × 160): mata fechada (copas na camada `above`), trilhas de 3 a 4 tiles e clareiras.
+  - Subáreas: Trilha dos Caçadores (centro e leste), Bosque das Teias (oeste), Clareira da Névoa (norte) e Ninho da Matriarca (nordeste).
+  - A borda sul é a muralha norte da Cidade, com o portão de 2 tiles (`south_gate`).
+  - A entrada do Ninho é a boca de uma caverna numa encosta de pedra (`nest_gate`, dentro da área `nest_entrance`).
+- **Zona** `zone.lower_forest` (campo, nível 5–8) em `data/zones.json`, com 24 grupos a ≥ 12 tiles entre si:
+  - Trilha: Aranhas nv5–6 e um par de Fadas nv6;
+  - Bosque: Aranhas nv5–6 e a Aranha Grande nv6 (elite, renasce em 3 min);
+  - Clareira: Fadas nv6–7 e o Ent nv7 (renasce em 2 min);
+  - Ninho: Aranhas nv7.
+- **Cidade:** portão norte (`north_gate`, 2 × 4 tiles na muralha, como o oeste) e a chegada `from_forest`.
+- **Matriarca:**
+  - o portão oeste do Covil (`matriarch_lair.tmj`) leva à Floresta, e a chegada `from_fields` passou a se chamar `from_forest`;
+  - nos Campos, o portão leste e a chegada `from_lair` saíram, a estrada acaba antes da borda e a sebe fecha a borda.
+- **Testes:**
+  - percurso e espaçamento (`ZoneMapTests`): tudo alcançável a pé, as quatro subáreas, os níveis 5–8, o portão norte e a ida e volta do Covil;
+  - design (`ForestZoneDesignTests`).
+- **Resultados:**
+  - todos os grupos vencem com 96–100% no perfil esperado, nas 4 classes;
+  - o ritmo solo do nível 5 ao 8 é de cerca de 78 min (20, 24 e 34 min por nível);
+  - online, os bots fizeram Cidade → Ninho → Covil e Covil → Floresta → Cidade;
+  - o `./scripts/check.sh` completo passa.
+
+**Decisões:**
+- **Placas, teias e névoa:** o tileset não tem poste de placa, teia nem névoa. Uma plaqueta sobre um pedaço de cerca ficou ruim, e o único tile translúcido parecia um quadrado marrom. Ficaram de fora. A Clareira tem árvores de copa redonda, e o Bosque tem poças escuras e árvores secas.
+- **Visibilidade reduzida e emboscadas:** vêm do mapa, das árvores que cortam a linha de visão e das trilhas estreitas. A Emboscada na Névoa (3 Aranhas + Fada) da T-340 não entrou como grupo de campo, para a área continuar boa para jogar sozinho.
+- **Covil:** o mapa é o mesmo, só o portão mudou. A `zone.test_instance` usa esse mapa, então a saída dela também passou a levar à Floresta. Os testes do servidor (`InstanceTests`) trocam essa saída para os Campos, como antes.
+- Como na T-330, na T-343 e na T-352, o gerador do mapa ficou fora do repositório. O `.tmj` é a fonte daqui em diante.
+
+Em `tests/`, também mudei:
+- `ZoneMapEquivalenceTests`: o portão do Covil mudou de zona;
+- `ZoneLoaderTests`: a instância de teste sai na Floresta;
+- `InstanceTests`: a saída da instância de teste.
+
+**Pendências:**
+- **Arte:** teia no chão, névoa e poste de placa.
+- **T-380:** avaliar se a Floresta está fácil demais para quem caça sozinho e o ritmo do nível 5 ao 8.
+- **T-345:** mostrar no cliente o portão do Ninho e a área `nest_entrance` (aviso para grupo pequeno, nível 8).
