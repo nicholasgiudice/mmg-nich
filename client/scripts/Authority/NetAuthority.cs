@@ -384,6 +384,12 @@ public sealed class NetAuthority : IGameAuthority, ICombatLogSource, IDisposable
             case PartyRejected rejected:
                 _partyMessages.Add(MmoRpgClient.Hud.PartyText.Rejection(rejected.Reason));
                 break;
+            case InstanceNotice notice:
+                _partyMessages.Add(MmoRpgClient.Hud.InstanceText.Notice(notice.Kind, notice.Ticks));
+                break;
+            case InstanceRejected refused:
+                _partyMessages.Add(MmoRpgClient.Hud.InstanceText.Rejection(refused.Reason));
+                break;
         }
     }
 
@@ -551,7 +557,8 @@ public sealed class NetAuthority : IGameAuthority, ICombatLogSource, IDisposable
                 continue;
             }
 
-            if (def.Flags.Stunned || def.Flags.Rooted)
+            // Com medo (T-351) o servidor move a unidade: o cliente não prevê o próprio movimento.
+            if (def.Flags.Stunned || def.Flags.Rooted || def.Flags.Feared)
             {
                 return 0;
             }
