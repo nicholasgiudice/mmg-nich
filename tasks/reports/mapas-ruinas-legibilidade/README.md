@@ -78,6 +78,22 @@ foram redesenhadas com tilesets do PixelLab, mantendo o traçado, os monstros, a
   Os surgimentos, portões e a entrada da Cripta não mudaram.
 - O teste de percurso, o de frestas sem saída e os de design passam com o mapa novo.
 
+## Cripta do Vigia
+
+A instância da Cripta (`data/maps/watcher_crypt.tmj`) foi refeita do mesmo jeito.
+
+- **Arte:** 1 tileset Pro: chão de lajes escuras e parede de basalto com face de tijolo com runas. Custo: 30 gerações.
+  - Um tileset de entulho com ossos foi gerado, mas ficou claro demais no chão escuro e não foi usado.
+- **Mapa:**
+  - montado no Map Workshop ("Valdran - Cripta do Vigia");
+  - continuam por cima: colunas, lampiões, a escada de saída e as pedras pequenas.
+- **Colisão:** é a mesma de antes, com duas exceções:
+  - os toquinhos de muro de 1 linha entre as salas oeste ganharam mais uma linha (5 células bloqueadas);
+  - um degrau de uma linha na entrada do corredor leste virou chão (3 células livres).
+  
+  O PixelLab não tem tile para nenhum dos dois casos.
+- **Visual:** a borda andável das salas, que antes era desenhada como parede, agora é chão.
+
 ## Fora daqui
 
 A Cripta do Vigia e o lado oeste da Cidade foram conferidos com a colisão por cima e estão coerentes. Não mudaram.
