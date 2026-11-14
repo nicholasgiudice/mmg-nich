@@ -38,6 +38,46 @@ nascimento.
 nenhuma célula livre fora de um portão é ponta de fresta (1 vizinho livre ou menos). O mapa antigo falhava: 112 células
 livres eram inalcançáveis.
 
+## Segunda rodada: arte do PixelLab
+
+O designer achou que ainda não dava para ver o que é parede e o que é chão, e que a arte parecia inacabada. As Ruínas
+foram redesenhadas com tilesets do PixelLab, mantendo o traçado, os monstros, as áreas e os portões. Imagens:
+`ruinas-pixellab-antes-depois.png` e `piloto-pixellab-no-jogo.png` (o piloto do Pátio).
+
+- **Arte:** 9 tilesets Wang Pro de 32 px, com visão *low top-down*:
+  - piso de lajes, entulho, grama no tom da grama LPC (#468232), mata fechada;
+  - muralha com topo de pedra, ameias e face de tijolo;
+  - todos encadeados pelo mesmo piso, pela mesma grama e pela mesma muralha.
+  
+  Custo: 165 gerações.
+- **Mapa:**
+  - montado no Map Workshop do PixelLab ("Valdran - Ruínas da Estrada Antiga"). O designer pode abrir e ajustar lá;
+  - cada célula do mapa antigo virou um terreno (piso, parede, grama, mata ou entulho);
+  - pedras, colunas, lampiões e a fachada da Cripta continuam como objetos LPC por cima.
+- **Conversão:** o export do PixelLab para Godot traz cada tile com sua posição. Ele vira camadas `terrain_*` no `.tmj`.
+  - O PixelLab desenha numa grade dupla: cada tile fica centrado no canto entre quatro células. Por isso essas camadas
+    têm `offsetx`/`offsety` de -16 px.
+  - `TiledVisual` passou a respeitar o deslocamento de camada do Tiled.
+- **Colisão:** sai das células de terreno do PixelLab, e coincide com o desenho:
+  - bloqueiam o topo e a face da muralha e a mata, incluindo a faixa de troncos na borda;
+  - também bloqueiam as pedras e a fachada que eram bloqueadas antes;
+  - piso, grama e entulho são livres.
+  
+  No piloto, o personagem encosta na borda das ameias.
+- **Regras do PixelLab que mudaram o traçado:**
+  - um canto onde três terrenos se encontram vira emenda reta, e fica preto se um deles for a faixa da face;
+  - degraus de uma linha na base de uma parede ou da mata ficam pretos.
+  
+  Para isso:
+  - os cantos diagonais da Torre ficaram retos;
+  - a muralha na borda leste do mapa virou mata, como nas outras bordas;
+  - a faixinha de mata entre o campo oeste e a estrada virou piso;
+  - algumas pontas de muro recuaram para dentro da mata;
+  - o topo do campo nordeste ficou reto.
+  
+  Os surgimentos, portões e a entrada da Cripta não mudaram.
+- O teste de percurso, o de frestas sem saída e os de design passam com o mapa novo.
+
 ## Fora daqui
 
 A Cripta do Vigia e o lado oeste da Cidade foram conferidos com a colisão por cima e estão coerentes. Não mudaram.
