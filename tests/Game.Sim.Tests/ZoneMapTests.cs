@@ -138,6 +138,35 @@ public class ZoneMapTests
         }
     }
 
+    /// <summary>
+    /// Legibilidade das Ruínas: toda célula livre é alcançável a pé (nenhum bolsão fechado, como a borda das muralhas antes
+    /// de ser bloqueada) e nenhuma célula livre fora dos portões é ponta de fresta (no máximo 1 vizinho livre).
+    /// </summary>
+    [Fact]
+    public void Ruins_have_no_sealed_pockets_or_dead_end_slits()
+    {
+        var zone = Db.Value.Zones["zone.old_road_ruins"];
+        var map = EntityFactory.BuildMap(Db.Value.Arenas[zone.Arena]);
+        var reached = Reached(zone);
+        var gates = zone.Gates.SelectMany(g => Enumerable.Range((int)g.Area.X, (int)g.Area.Width)
+            .SelectMany(x => Enumerable.Range((int)g.Area.Y, (int)g.Area.Height).Select(y => (x, y)))).ToHashSet();
+        bool Free(int x, int y) => x >= 0 && y >= 0 && x < map.Width && y < map.Height && !map.IsBlocked(x, y);
+        for (var y = 0; y < map.Height; y++)
+        {
+            for (var x = 0; x < map.Width; x++)
+            {
+                if (!Free(x, y))
+                {
+                    continue;
+                }
+
+                Assert.True(reached.Contains((x, y)), $"célula livre ({x}, {y}) inalcançável");
+                var exits = new[] { Free(x + 1, y), Free(x - 1, y), Free(x, y + 1), Free(x, y - 1) }.Count(f => f);
+                Assert.True(exits >= 2 || gates.Contains((x, y)), $"fresta sem saída em ({x}, {y})");
+            }
+        }
+    }
+
     /// <summary>Células livres alcançáveis a pé (4 vizinhos) a partir do nascimento da zona.</summary>
     private static HashSet<(int, int)> Reached(ZoneDefinition zone)
     {

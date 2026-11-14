@@ -20,7 +20,8 @@ public sealed class TiledVisual
     private const uint FlipV = 0x40000000;
     private const uint FlagMask = 0xE0000000;
 
-    public sealed record Layer(string Name, int Width, int Height, uint[] Data, float Opacity);
+    /// <summary>Camada de tiles; <paramref name="Offset"/> é o deslocamento da camada no Tiled (offsetx/offsety), em pixels.</summary>
+    public sealed record Layer(string Name, int Width, int Height, uint[] Data, float Opacity, Godot.Vector2 Offset);
 
     private sealed record Tileset(int FirstGid, int Columns, int TileCount, int TileWidth, int TileHeight, Texture2D Texture);
 
@@ -80,7 +81,7 @@ public sealed class TiledVisual
                 var local = gid - ts.FirstGid;
                 var source = new Rect2(local % ts.Columns * ts.TileWidth, local / ts.Columns * ts.TileHeight, ts.TileWidth, ts.TileHeight);
                 // Tiles maiores que a grade (árvores de 1 tile de largura e 2 de altura, por ex.) ficam presos pelo canto de baixo.
-                var dest = new Rect2(x * s, (y + 1) * s - ts.TileHeight, ts.TileWidth, ts.TileHeight);
+                var dest = new Rect2(layer.Offset.X + (x * s), layer.Offset.Y + ((y + 1) * s) - ts.TileHeight, ts.TileWidth, ts.TileHeight);
                 var color = new Color(1, 1, 1, layer.Opacity * alpha(new Vector2I(x, y)));
                 var flipH = (raw & FlipH) != 0;
                 var flipV = (raw & FlipV) != 0;
@@ -128,7 +129,8 @@ public sealed class TiledVisual
                 case "tilelayer":
                     var data = node["data"]!.AsArray().Select(v => (uint)(long)v!).ToArray();
                     into.Add(new Layer((string)node["name"]!, (int)node["width"]!, (int)node["height"]!, data,
-                        (float?)node["opacity"] ?? 1f));
+                        (float?)node["opacity"] ?? 1f,
+                        new Godot.Vector2((float?)node["offsetx"] ?? 0f, (float?)node["offsety"] ?? 0f)));
                     break;
             }
         }
