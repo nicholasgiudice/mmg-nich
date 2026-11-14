@@ -78,6 +78,50 @@ foram redesenhadas com tilesets do PixelLab, mantendo o traçado, os monstros, a
   Os surgimentos, portões e a entrada da Cripta não mudaram.
 - O teste de percurso, o de frestas sem saída e os de design passam com o mapa novo.
 
+## Cripta do Vigia
+
+A instância da Cripta (`data/maps/watcher_crypt.tmj`) foi refeita do mesmo jeito.
+
+- **Arte:** 1 tileset Pro: chão de lajes escuras e parede de basalto com face de tijolo com runas. Custo: 30 gerações.
+  - Um tileset de entulho com ossos foi gerado, mas ficou claro demais no chão escuro e não foi usado.
+- **Mapa:**
+  - montado no Map Workshop ("Valdran - Cripta do Vigia");
+  - continuam por cima: colunas, lampiões, a escada de saída e as pedras pequenas.
+- **Colisão:** é a mesma de antes, com duas exceções:
+  - os toquinhos de muro de 1 linha entre as salas oeste ganharam mais uma linha (5 células bloqueadas);
+  - um degrau de uma linha na entrada do corredor leste virou chão (3 células livres).
+  
+  O PixelLab não tem tile para nenhum dos dois casos.
+- **Visual:** a borda andável das salas, que antes era desenhada como parede, agora é chão.
+
+## Cidade, Campos, Floresta e Covil
+
+Os outros quatro mapas foram refeitos com o mesmo processo, aproveitando a grama, a mata, as lajes e a muralha das
+Ruínas.
+
+- **Arte:** 6 tilesets novos (90 gerações):
+  - terra batida↔grama, terra↔mata, terra↔muralha e terra↔lajes;
+  - uma mata sem faixa de troncos (só a borda das copas), com grama e terra.
+  
+  A mata sem troncos é para as bordas irregulares da Floresta e dos Campos. A versão com troncos não tem tile para
+  degraus de uma linha, e a Floresta tinha mais de 200 deles.
+- **Mapas no Map Workshop:**
+  - "Valdran - Cidade-Fortaleza"
+  - "Valdran - Campos da Vigília"
+  - "Valdran - Floresta Baixa"
+  - "Valdran - Covil da Matriarca"
+- **O que continua como objeto LPC por cima, com a colisão de antes:** casas (inclusive a de pedra cinza da Cidade),
+  árvores e moitas soltas, cercas, plantações, pedras e o portão do Covil.
+  - Só massas de moita e árvore com 12 células ou mais viraram mata.
+  - Só a pedra de muralha ligada à borda do mapa virou muralha.
+- **Colisão:** igual à de antes nos Campos, na Floresta e no Covil. Na Cidade, a muralha norte tem 1 linha de altura e
+  a face dela ocupa a primeira linha da rua norte: 74 células bloqueadas, e a rua fica com 3 de largura em vez de 4.
+- **Ferramenta:** o processo inteiro está num script (`mapkit.py`, fora do repositório, como os geradores anteriores):
+  1. classifica as células do mapa antigo;
+  2. confere as regras do PixelLab (cantos com faixa, degraus de uma linha) e corrige sem mudar onde se anda;
+  3. gera os retângulos de pintura em camadas;
+  4. junta o export com os objetos e os pontos do mapa antigo.
+
 ## Fora daqui
 
 A Cripta do Vigia e o lado oeste da Cidade foram conferidos com a colisão por cima e estão coerentes. Não mudaram.
