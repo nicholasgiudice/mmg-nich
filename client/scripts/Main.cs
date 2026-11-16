@@ -33,6 +33,8 @@ namespace MmoRpgClient;
 /// Capturas (T-345): <c>--enemy-level=n</c> põe todos os inimigos e objetivos do encontro local no nível n, e
 /// <c>--enemy-health=f</c> faz os inimigos começarem com a fração f da vida.
 /// Efeitos (T-054): <c>--effects=reduced|normal</c> troca a intensidade só nesta execução; <c>--circles</c> também tira os efeitos.
+/// Mira do roteiro (T-386): com <c>--demo-aim=x;y</c> (tiles), o roteiro não mira sozinho no inimigo mais próximo; o cursor
+/// fica parado nesse ponto do mapa, como um jogador que clica com o mouse longe do alvo.
 /// </summary>
 public partial class Main : Node2D
 {
@@ -112,6 +114,15 @@ public partial class Main : Node2D
             _input = new PlayerInput(content) { Hotbar = _hud.Hotbar };
             var input = _input;
             input.TabCycle = (current, forward) => forward ? _hud.Battle.Next(current) : _hud.Battle.Previous(current);
+
+            // T-386: o ataque básico iria no alvo, mas ele está longe: o mesmo aviso da recusa de alcance das habilidades.
+            input.OutOfReach = () =>
+            {
+                if (_authority?.ControlledEntity is { } me)
+                {
+                    _worldView.ShowRejection(me, RejectionText.For(Game.Core.Combat.AbilityRejectReason.OutOfRange, null));
+                }
+            };
             _hud.TargetChosen += input.Select;
             if (authority is NetAuthority party)
             {
@@ -190,7 +201,12 @@ public partial class Main : Node2D
             var mousePx = GetGlobalMousePosition();
             var aim = Units.ToWorld(mousePx);
             var hovered = _worldView.PickAt(mousePx);
-            if ((_args.ContainsKey("demo-input") || _args.ContainsKey("hold")) && NearestEnemyPosition(_authority) is { } enemy)
+            if (DemoAim() is { } parked)
+            {
+                aim = parked;
+                hovered = _worldView.PickAt(Units.ToPixels(parked));
+            }
+            else if ((_args.ContainsKey("demo-input") || _args.ContainsKey("hold")) && NearestEnemyPosition(_authority) is { } enemy)
             {
                 aim = Units.ToWorld(enemy.Pixels);
                 hovered = enemy.Id;
@@ -759,6 +775,22 @@ public partial class Main : Node2D
         var error = GetViewport().GetTexture().GetImage().SavePng(path);
         GD.Print($"capture {path}: {error}");
         GetTree().Quit();
+    }
+
+    /// <summary><c>--demo-aim=x;y</c> (T-386): ponto fixo da mira do roteiro, em tiles; null = sem o argumento.</summary>
+    private System.Numerics.Vector2? DemoAim()
+    {
+        if (!_args.TryGetValue("demo-aim", out var text))
+        {
+            return null;
+        }
+
+        var parts = text.Split(';');
+        return parts.Length == 2
+            && float.TryParse(parts[0], System.Globalization.CultureInfo.InvariantCulture, out var x)
+            && float.TryParse(parts[1], System.Globalization.CultureInfo.InvariantCulture, out var y)
+            ? new System.Numerics.Vector2(x, y)
+            : null;
     }
 
     private (EntityId Id, Godot.Vector2 Pixels)? NearestEnemyPosition(IGameAuthority authority)

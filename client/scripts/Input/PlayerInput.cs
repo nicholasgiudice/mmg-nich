@@ -49,9 +49,16 @@ public sealed class PlayerInput
         Func<string, bool>? justReleased = null)
     {
         _lookup = (id, _) => abilities.TryGetValue(id, out var def) ? def : null;
+#if GODOT
         _justPressed = justPressed ?? (a => Godot.Input.IsActionJustPressed(a));
         _pressed = pressed ?? (a => Godot.Input.IsActionPressed(a));
         _justReleased = justReleased ?? (a => Godot.Input.IsActionJustReleased(a));
+#else
+        // T-386: fora do Godot (Game.Client.Tests), as teclas vêm sempre do teste.
+        _justPressed = justPressed ?? (_ => false);
+        _pressed = pressed ?? (_ => false);
+        _justReleased = justReleased ?? (_ => false);
+#endif
     }
 
     /// <summary>
@@ -62,7 +69,9 @@ public sealed class PlayerInput
         : this(new Dictionary<string, AbilityDefinition>())
     {
         _lookup = (id, state) => content.AbilityAt(id, state?.RankOf(id) ?? 1);
+#if GODOT
         _isHealingItem = id => Hud.ItemText.IsHealingConsumable(content, id);
+#endif
     }
 
     /// <summary>Barra de atalhos 1–6 (T-081); null = as habilidades aprendidas na ordem do estado, como antes.</summary>
@@ -96,6 +105,12 @@ public sealed class PlayerInput
     /// Ataque básico automático no alvo selecionado (T-033). Ligado por padrão; Esc/limpar o alvo para de atacar.
     /// </summary>
     public bool AutoAttack { get; set; } = true;
+
+    /// <summary>
+    /// T-386: o ataque básico iria para o alvo selecionado, mas ele está fora do alcance (ao escolher o alvo com Tab ou ao
+    /// apertar o ataque). Só aviso: a intenção do aperto sai do mesmo jeito, e quem decide é a autoridade.
+    /// </summary>
+    public Action? OutOfReach { get; set; }
 
     /// <summary>Último ponto de mira no mundo (tiles).</summary>
     public Vec2 AimPoint { get; private set; }
@@ -139,13 +154,16 @@ public sealed class PlayerInput
         }
 
         // Shift+Tab também dispara a ação do Tab (o Input Map não exige modificador): olhar a de trás primeiro.
+        var tabbed = false;
         if (_justPressed(InputActions.TargetPrevious))
         {
             SelectedTarget = TabCycle?.Invoke(SelectedTarget, false) ?? SelectedTarget;
+            tabbed = true;
         }
         else if (_justPressed(InputActions.TargetNext))
         {
             SelectedTarget = TabCycle?.Invoke(SelectedTarget, true) ?? NextEnemy(units.Values, self);
+            tabbed = true;
         }
 
         var abilities = self.TryGet<AbilityState>();
@@ -154,6 +172,13 @@ public sealed class PlayerInput
             return;
         }
 
+        if (tabbed && abilities.BasicAttackId is { } tabBasic)
+        {
+            WarnIfOutOfReach(tabBasic, self, units);
+        }
+
+        // T-386: o ataque básico (clique, clique mantido, Espaço e automático) vai no alvo selecionado enquanto ele está
+        // vivo e visível, mirando nele; o cursor só conta sem seleção. Clicar em outra unidade troca o alvo.
         var tick = authority.CurrentTick;
         var basicSent = false;
         if (!pointerOverUi && _justPressed(InputActions.Attack))
@@ -166,21 +191,27 @@ public sealed class PlayerInput
 
             if (abilities.BasicAttackId is { } basic)
             {
-                UseAbility(authority, self, units, basic, hovered, abilities, tick);
+                WarnIfOutOfReach(basic, self, units);
+                UseAbility(authority, self, units, basic, hovered, abilities, tick, preferSelected: true);
             }
         }
         else if (!pointerOverUi && _pressed(InputActions.Attack) && abilities.BasicAttackId is { } held
             && CanRepeat(held, abilities, tick))
         {
             basicSent = true;
-            UseAbility(authority, self, units, held, hovered, abilities, tick);
+            UseAbility(authority, self, units, held, hovered, abilities, tick, preferSelected: true);
         }
 
-        // Espaço: ataca o alvo selecionado (Tab/clique) mirando nele; o cursor só conta sem seleção.
+        // Espaço: o mesmo ataque básico, pelo teclado.
         if (abilities.BasicAttackId is { } keyAttack
             && (_justPressed(InputActions.AttackKey) || (_pressed(InputActions.AttackKey) && CanRepeat(keyAttack, abilities, tick))))
         {
             basicSent = true;
+            if (_justPressed(InputActions.AttackKey))
+            {
+                WarnIfOutOfReach(keyAttack, self, units);
+            }
+
             UseAbility(authority, self, units, keyAttack, hovered, abilities, tick, preferSelected: true);
         }
 
@@ -325,7 +356,7 @@ public sealed class PlayerInput
     /// <summary>
     /// Mira sempre vai junto (dá a direção de arcos, linhas, áreas e deslocamentos). Para alvo único:
     /// unidade sob o cursor, senão a selecionada, desde que da facção certa; cura sem aliado mirado vai em si mesmo.
-    /// Com <paramref name="preferSelected"/> (ataque pelo teclado) a ordem se inverte e a mira vai no alvo selecionado.
+    /// Com <paramref name="preferSelected"/> (ataque básico, T-386) a ordem se inverte e a mira vai no alvo selecionado.
     /// </summary>
     private void UseAbility(IGameAuthority authority, EntitySnapshot self, IReadOnlyDictionary<EntityId, EntitySnapshot> units,
         string abilityId, EntityId? hovered, AbilityState abilities, long tick, bool preferSelected = false)
@@ -353,6 +384,16 @@ public sealed class PlayerInput
             aim = ClampAim(ability, self.Get<Transform>().Position, aim);
         }
         authority.Send(new UseAbilityIntent(self.Id, abilityId, target, aim));
+    }
+
+    /// <summary>T-386: avisa (<see cref="OutOfReach"/>) se há um inimigo selecionado, vivo, além do alcance de <paramref name="abilityId"/>.</summary>
+    private void WarnIfOutOfReach(string abilityId, EntitySnapshot self, IReadOnlyDictionary<EntityId, EntitySnapshot> units)
+    {
+        if (SelectedTarget is { } id && units.TryGetValue(id, out var target) && IsAlive(target)
+            && MatchesFaction(self, target, FactionFilter.Enemy) && !InReach(abilityId, self, target))
+        {
+            OutOfReach?.Invoke();
+        }
     }
 
     /// <summary>

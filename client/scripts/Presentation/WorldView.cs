@@ -157,14 +157,7 @@ public partial class WorldView : Node2D
                     break;
                 case AbilityRejected rejected when rejected.Source == authority.ControlledEntity:
                     var pool = latest?.Entities.FirstOrDefault(s => s.Id == rejected.Source)?.TryGet<ResourcePool>();
-                    var text = RejectionText.For(rejected.Reason, pool?.Type);
-                    var nowMs = Time.GetTicksMsec();
-                    if (text != _lastRejection.Text || nowMs - _lastRejection.AtMs >= RejectionRepeatMs)
-                    {
-                        _lastRejection = (text, nowMs);
-                        ShowText(rejected.Source, text, RejectionColor);
-                    }
-
+                    ShowRejection(rejected.Source, RejectionText.For(rejected.Reason, pool?.Type));
                     break;
             }
         }
@@ -452,6 +445,20 @@ public partial class WorldView : Node2D
 
     /// <summary>Meio do corpo desenhado (pixels): o pivô fica nos pés.</summary>
     private static Godot.Vector2 BodyCenter(EntityView view) => view.Position + new Godot.Vector2(0, -view.HeadPx * 0.45f);
+
+    /// <summary>
+    /// Aviso de recusa sobre a unidade (ex.: "Fora de alcance"). O mesmo texto não se repete em menos de
+    /// <see cref="RejectionRepeatMs"/>; vale também para avisos do próprio cliente (T-386).
+    /// </summary>
+    public void ShowRejection(EntityId id, string text)
+    {
+        var nowMs = Time.GetTicksMsec();
+        if (text != _lastRejection.Text || nowMs - _lastRejection.AtMs >= RejectionRepeatMs)
+        {
+            _lastRejection = (text, nowMs);
+            ShowText(id, text, RejectionColor);
+        }
+    }
 
     public void ShowText(EntityId id, string text, Color color)
     {
