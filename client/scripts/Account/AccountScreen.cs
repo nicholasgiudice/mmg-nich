@@ -10,7 +10,8 @@ namespace MmoRpgClient.Account;
 /// <summary>
 /// Tela inicial (T-220): login/cadastro na <c>Game.Api</c>, lista de personagens, criação (nome + classe, com descrição
 /// e prévia do sprite) e exclusão com confirmação. "Jogar" pede o token de jogo e conecta no servidor com ele.
-/// O token de sessão fica só em memória (<see cref="ApiClient"/>); senha e tokens nunca vão para disco.
+/// O token de sessão fica só em memória (<see cref="ApiClient"/>); senha e tokens nunca vão para disco. Com "Lembrar
+/// e-mail" marcado, só o e-mail vai para <c>user://settings.cfg</c> (<see cref="LoginMemory"/>, T-381).
 /// Os endereços da API e do servidor do jogo não aparecem na tela: vêm do padrão ou dos argumentos. O jogo é só online; o menu
 /// de encontros locais (T-024) só abre pelos argumentos de partida direta. Argumentos de depuração (depois de <c>--</c>):
 /// <c>--api=url</c>, <c>--game-server=host:porta</c>, <c>--login=email:senha</c> (entra sozinho), <c>--register</c>
@@ -143,17 +144,39 @@ public partial class AccountScreen : Control
         Clear("Entrar");
         var api = s_api?.BaseUrl ?? _args.GetValueOrDefault("api", DefaultApi);
         var game = s_gameServer ?? _args.GetValueOrDefault("game-server", GameServerFrom(api));
-        var email = Field("E-mail", s_email ?? "");
+        var memory = LoginMemory.FromSettingsFile();
+        var known = s_email ?? memory.Email;
+        var email = Field("E-mail", known ?? "");
         var password = Field("Senha", "");
         password.Secret = true;
-        password.TextSubmitted += _ => Forget(Login(api, game, email.Text, password.Text, register: false));
+        var remember = RememberBox(memory.Remember);
+        password.TextSubmitted += _ => Forget(Login(api, game, email.Text, password.Text, register: false, remember.ButtonPressed));
 
         var buttons = Row();
-        buttons.AddChild(ButtonFor("Entrar", () => Forget(Login(api, game, email.Text, password.Text, register: false)), 140));
-        buttons.AddChild(ButtonFor("Criar conta", () => Forget(Login(api, game, email.Text, password.Text, register: true)), 140));
+        buttons.AddChild(ButtonFor("Entrar", () => Forget(Login(api, game, email.Text, password.Text, register: false, remember.ButtonPressed)), 140));
+        buttons.AddChild(ButtonFor("Criar conta", () => Forget(Login(api, game, email.Text, password.Text, register: true, remember.ButtonPressed)), 140));
         _root.AddChild(Hint("Criar conta usa o e-mail e a senha acima (senha de 8 a 128 caracteres) e já entra."));
         AddStatus();
-        (s_email is null ? email : password).GrabFocus();
+        (string.IsNullOrEmpty(known) ? email : password).GrabFocus();    }
+
+    /// <summary>T-381: "Lembrar e-mail", logo abaixo dos campos. A escolha só é gravada ao entrar com sucesso.</summary>
+    private CheckBox RememberBox(bool pressed)
+    {
+        var box = new CheckBox
+        {
+            Text = "Lembrar e-mail",
+            ButtonPressed = pressed,
+            FocusMode = FocusModeEnum.Click,
+            TooltipText = "Guarda só o e-mail neste computador. A senha nunca é guardada.",
+            SizeFlagsHorizontal = SizeFlags.ShrinkBegin,
+        };
+        box.AddThemeFontSizeOverride("font_size", 16);
+        box.AddThemeColorOverride("font_color", HudTheme.StoneText);
+        box.AddThemeColorOverride("font_hover_color", Colors.White);
+        box.AddThemeColorOverride("font_pressed_color", HudTheme.StoneText);
+        box.AddThemeColorOverride("font_hover_pressed_color", Colors.White);
+        _root.AddChild(box);
+        return box;
     }
 
     private async Task ShowCharacters()
@@ -256,7 +279,11 @@ public partial class AccountScreen : Control
         }
     }
 
-    private async Task Login(string apiUrl, string gameServer, string email, string password, bool register)
+    /// <summary>
+    /// Entra (ou cria a conta e entra). <paramref name="remember"/> é a caixa "Lembrar e-mail" (T-381): null = entrada pelo
+    /// argumento <c>--login</c>, que não grava nada.
+    /// </summary>
+    private async Task Login(string apiUrl, string gameServer, string email, string password, bool register, bool? remember = null)
     {
         if (!Uri.TryCreate(apiUrl.Trim(), UriKind.Absolute, out var uri) || uri.Scheme is not ("http" or "https"))
         {
@@ -285,6 +312,11 @@ public partial class AccountScreen : Control
             s_api = api;
             s_gameServer = gameServer.Trim();
             s_email = email.Trim();
+            if (remember is { } keep)
+            {
+                LoginMemory.FromSettingsFile().AfterLogin(keep, email);
+            }
+
             await ShowCharacters();
         }
     }
