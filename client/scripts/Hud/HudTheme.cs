@@ -207,6 +207,77 @@ public static class HudTheme
         return _stonePanel;
     }
 
+    /// <summary>
+    /// Linha de pedra de um atributo na tela de personagem (T-098): 9-slice de <c>attr_row.png</c> em 1×; null sem o
+    /// arquivo (a linha volta ao fundo escuro de antes).
+    /// </summary>
+    /// <remarks>A borda esquerda é a metade da divisória que encosta no encaixe (<see cref="AttributeSocket"/>).</remarks>
+    public static StyleBox? AttributeRow() => UiPiece9("attr_row.png", (4, 7, 7, 8), (11, 5, 11, 5));
+
+    /// <summary>
+    /// Encaixe de pedra do ícone, colado à esquerda da linha do atributo (T-098): 9-slice de <c>attr_socket.png</c>, que
+    /// estica só o fundo escuro, com o ícone de 34 px no meio; null sem o arquivo (o ícone fica dentro da linha).
+    /// </summary>
+    public static StyleBox? AttributeSocket() => UiPiece9("attr_socket.png", (9, 9, 5, 9), (7, 6, 3, 6));
+
+    /// <summary>
+    /// Botão de pedra de somar ponto (+1 e +5 da tela de personagem, T-098): 9-slice de <c>attr_add.png</c>, com o texto do
+    /// Godot por cima; mais claro no hover, mais escuro no clique. Sem a peça, o botão fica como antes.
+    /// </summary>
+    public static void StoneAddButton(Button button)
+    {
+        if (UiPiece9("attr_add.png", (8, 8, 8, 8), (7, 3, 7, 3)) is not StyleBoxTexture piece)
+        {
+            return;
+        }
+
+        StyleBoxTexture Style(Color modulate)
+        {
+            var style = (StyleBoxTexture)piece.Duplicate();
+            style.ModulateColor = modulate;
+            return style;
+        }
+
+        button.AddThemeStyleboxOverride("normal", piece);
+        button.AddThemeStyleboxOverride("hover", Style(new Color(1.25f, 1.25f, 1.15f)));
+        button.AddThemeStyleboxOverride("pressed", Style(new Color(0.8f, 0.8f, 0.8f)));
+        button.AddThemeStyleboxOverride("disabled", Style(new Color(1, 1, 1, 0.35f)));
+        button.AddThemeStyleboxOverride("focus", new StyleBoxEmpty());
+        button.AddThemeColorOverride("font_color", Suggested);
+        button.AddThemeColorOverride("font_hover_color", Colors.White);
+        button.AddThemeColorOverride("font_pressed_color", Suggested);
+        button.AddThemeColorOverride("font_outline_color", Colors.Black);
+        button.AddThemeConstantOverride("outline_size", 4);
+    }
+
+    /// <summary>
+    /// 9-slice de uma peça do kit com bordas diferentes em cada lado (esquerda, cima, direita, baixo), desenhada em 1×;
+    /// null sem o arquivo (T-098).
+    /// </summary>
+    private static StyleBox? UiPiece9(string file, (int L, int T, int R, int B) margin, (float L, float T, float R, float B) content)
+    {
+        var key = $"{file}|{margin}|{content}";
+        if (UiStyles.TryGetValue(key, out var cached))
+        {
+            return cached;
+        }
+
+        StyleBox? style = UiTexture(file) is not { } texture ? null : new StyleBoxTexture
+        {
+            Texture = texture,
+            TextureMarginLeft = margin.L,
+            TextureMarginTop = margin.T,
+            TextureMarginRight = margin.R,
+            TextureMarginBottom = margin.B,
+            ContentMarginLeft = content.L,
+            ContentMarginTop = content.T,
+            ContentMarginRight = content.R,
+            ContentMarginBottom = content.B,
+        };
+        UiStyles[key] = style;
+        return style;
+    }
+
     public static Color Resource(string type) => Key(type) switch
     {
         "vigor" => new Color(0.90f, 0.45f, 0.20f),
