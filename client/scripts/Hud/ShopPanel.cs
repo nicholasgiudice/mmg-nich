@@ -13,13 +13,14 @@ namespace MmoRpgClient.Hud;
 /// <summary>
 /// Janela da loja de um NPC (T-323; regras na T-321). Aba <b>Comprar</b>: as ofertas de <c>data/shops.json</c> (o índice é o
 /// que vai na <see cref="BuyIntent"/>) com ícone, nome, preço e, para consumíveis, a quantidade. Aba <b>Vender</b>: o
-/// inventário, com o preço de venda no tooltip e na linha; item raro ou épico pede um segundo clique. Só manda intenções:
+/// inventário, com o preço de venda no tooltip e na linha; item raro ou épico pede um segundo clique. A quantidade (T-384)
+/// tem − e +, "Máx." e campo digitável (Enter confirma, Esc sai do campo); o preço mostra o total. Só manda intenções:
 /// quem decide é a autoridade, e as recusas voltam como <see cref="ShopRejected"/>. O <c>Hud</c> fecha a janela quando o
 /// personagem se afasta do NPC.
 /// </summary>
 public partial class ShopPanel : ProgressionPanel
 {
-    private const float ListWidth = 440f;
+    private const float ListWidth = 580f;
     private const float ListHeight = 270f;
     private const float IconSize = 40f;
     private const float RowHeight = 46f;
@@ -30,6 +31,14 @@ public partial class ShopPanel : ProgressionPanel
     private int _confirmSlot = -1;
     private double _confirmLeft;
     private float _scroll;
+    private ulong _focusLostFrame = ulong.MaxValue;
+
+    /// <summary>
+    /// T-384: o campo de quantidade está com o foco; as teclas são números, não comandos. Vale também no frame em que o
+    /// campo perde o foco, para o Esc ou o Enter que tirou o foco não fechar a loja nem limpar o alvo.
+    /// </summary>
+    public bool IsTyping => (Visible && GetViewport()?.GuiGetFocusOwner() is LineEdit edit && IsAncestorOf(edit))
+        || Engine.GetProcessFrames() == _focusLostFrame;
 
     /// <summary>NPC da loja aberta; null = fechada.</summary>
     public EntityId? Npc { get; private set; }
@@ -66,6 +75,16 @@ public partial class ShopPanel : ProgressionPanel
         Visible = false;
         Npc = null;
         _confirmSlot = -1;
+    }
+
+    /// <summary>T-384: clicar fora do campo de quantidade tira o foco dele (o clique não vira ataque nesse frame).</summary>
+    public override void _Input(InputEvent e)
+    {
+        if (e is InputEventMouseButton { Pressed: true } click && GetViewport()?.GuiGetFocusOwner() is LineEdit edit
+            && IsAncestorOf(edit) && !edit.GetGlobalRect().HasPoint(click.Position))
+        {
+            edit.ReleaseFocus();
+        }
     }
 
     public override void _Process(double delta)
@@ -179,25 +198,27 @@ public partial class ShopPanel : ProgressionPanel
             var price = Shop.PriceOf(Content, offer);
             var item = def.IsConsumable ? ItemInstance.Stack(def.Id, 1) : ItemInstance.Common(def.Id, offer.Level);
             var key = $"buy:{i}";
-            var quantity = def.IsConsumable ? _quantities.GetValueOrDefault(key, 1) : 1;
+            var inv = self.TryGet<Inventory>();
+            var shopLimit = Content.Rules.Shops.MaxQuantity;
+            var room = ShopQuantity.Room(inv, item, def.MaxStack);
+            var limit = def.IsConsumable ? ShopQuantity.BuyLimit(shopLimit, room) : 1;
+            var quantity = ShopQuantity.Clamp(_quantities.GetValueOrDefault(key, 1), limit);
             var usable = ItemText.CanUse(Content, item, classId);
             var detail = def.IsConsumable
-                ? $"consumível · você tem {ItemText.CountOf(self.TryGet<Inventory>(), def.Id)}"
+                ? $"consumível · você tem {ItemText.CountOf(inv, def.Id)}"
                 : $"{(def.Slot is { } slot ? ItemText.SlotName(slot) : "?")} · nível {offer.Level}" + (usable ? "" : " · sua classe não usa");
             var row = Row(item, ItemText.Tooltip(Content, item, classId, null, isEquipped: true), def.Name, detail, !usable);
 
-            var priceLabel = Small(ItemText.Gold(price), 12, 1f);
-            priceLabel.AddThemeColorOverride("font_color", gold >= (long)price * quantity ? HudTheme.Gold : HudTheme.Warning);
-            priceLabel.CustomMinimumSize = new Vector2(84, 0);
-            priceLabel.HorizontalAlignment = HorizontalAlignment.Right;
-            row.AddChild(priceLabel);
+            var showPrice = PriceColumn(row, price, quantity, q => gold >= ShopQuantity.Total(price, q) ? HudTheme.Gold : HudTheme.Warning);
+            void BuyNow() => Send?.Invoke(new BuyIntent(self.Id, Npc!.Value, index, def.IsConsumable ? CurrentQuantity(key, limit, 1) : 1));
             if (def.IsConsumable)
             {
-                row.AddChild(QuantityBox(key, def.MaxStack, quantity));
+                row.AddChild(QuantityControl(key, limit, quantity, () => ShopQuantity.BuyMax(price, gold, room, shopLimit), showPrice, BuyNow,
+                    "Máximo que cabe no seu ouro, na mochila e no limite da loja"));
             }
 
             var buy = SmallButton("Comprar");
-            buy.Pressed += () => Send?.Invoke(new BuyIntent(self.Id, Npc!.Value, index, def.IsConsumable ? _quantities.GetValueOrDefault(key, 1) : 1));
+            buy.Pressed += BuyNow;
             row.AddChild(buy);
             list.AddChild(row);
         }
@@ -218,22 +239,13 @@ public partial class ShopPanel : ProgressionPanel
             var slot = i;
             var price = Shop.SellPriceOf(Content, item);
             var key = $"sell:{i}:{item.BaseId}";
-            var quantity = Math.Min(item.Count, _quantities.GetValueOrDefault(key, item.Count));
+            var quantity = ShopQuantity.Clamp(_quantities.GetValueOrDefault(key, item.Count), item.Count);
             var detail = def.IsConsumable
                 ? $"consumível · {item.Count} na pilha"
                 : $"{ItemText.RarityName(item.Rarity)} · {(def.Slot is { } s ? ItemText.SlotName(s) : "?")} · nível {item.Level}";
             var row = Row(item, ItemText.Tooltip(Content, item, classId, null, isEquipped: true, sellPrice: price), ItemText.Name(Content, item), detail,
                 dim: false, nameColor: ItemText.RarityColor(item.Rarity));
-            var priceLabel = Small(ItemText.Gold(price) + (item.Count > 1 ? " cada" : ""), 12, 1f);
-            priceLabel.AddThemeColorOverride("font_color", HudTheme.Gold);
-            priceLabel.CustomMinimumSize = new Vector2(96, 0);
-            priceLabel.HorizontalAlignment = HorizontalAlignment.Right;
-            row.AddChild(priceLabel);
-            if (item.Count > 1)
-            {
-                row.AddChild(QuantityBox(key, item.Count, quantity));
-            }
-
+            var showPrice = PriceColumn(row, price, quantity, _ => HudTheme.Gold);
             var precious = item.Rarity >= ItemRarity.Rare;
             var confirming = precious && _confirmSlot == slot;
             var sell = SmallButton(confirming ? "Confirmar?" : "Vender");
@@ -243,7 +255,7 @@ public partial class ShopPanel : ProgressionPanel
                 sell.TooltipText = $"{ItemText.RarityName(item.Rarity)}: clique de novo para vender.";
             }
 
-            sell.Pressed += () =>
+            void SellNow()
             {
                 if (precious && _confirmSlot != slot)
                 {
@@ -254,8 +266,15 @@ public partial class ShopPanel : ProgressionPanel
                 }
 
                 _confirmSlot = -1;
-                Send?.Invoke(new SellIntent(self.Id, Npc!.Value, slot, Math.Min(item.Count, _quantities.GetValueOrDefault(key, item.Count))));
-            };
+                Send?.Invoke(new SellIntent(self.Id, Npc!.Value, slot, CurrentQuantity(key, item.Count, item.Count)));
+            }
+
+            if (item.Count > 1)
+            {
+                row.AddChild(QuantityControl(key, item.Count, quantity, () => item.Count, showPrice, SellNow, "A pilha inteira"));
+            }
+
+            sell.Pressed += SellNow;
             row.AddChild(sell);
             list.AddChild(row);
         }
@@ -293,26 +312,121 @@ public partial class ShopPanel : ProgressionPanel
         return button;
     }
 
-    private SpinBox QuantityBox(string key, int max, int value)
+    /// <summary>Quantidade escolhida para a linha, entre 1 e <paramref name="limit"/>.</summary>
+    private int CurrentQuantity(string key, int limit, int fallback) => ShopQuantity.Clamp(_quantities.GetValueOrDefault(key, fallback), limit);
+
+    /// <summary>
+    /// Coluna do preço (T-384): o total da quantidade escolhida e, embaixo, o preço de uma unidade quando a quantidade passa
+    /// de 1. Devolve a função que redesenha a coluna quando a quantidade muda (sem refazer a lista).
+    /// </summary>
+    private static Action<int> PriceColumn(HBoxContainer row, int price, int quantity, Func<int, Color> color)
     {
-        var box = new SpinBox
+        var column = new VBoxContainer { CustomMinimumSize = new Vector2(92, 0), SizeFlagsVertical = SizeFlags.ShrinkCenter };
+        column.AddThemeConstantOverride("separation", -2);
+        var total = Small("", 13, 1f);
+        total.HorizontalAlignment = HorizontalAlignment.Right;
+        var each = Small(ItemText.Gold(price) + " cada", 10, 0.6f);
+        each.HorizontalAlignment = HorizontalAlignment.Right;
+        column.AddChild(total);
+        column.AddChild(each);
+        row.AddChild(column);
+
+        void Show(int q)
         {
-            MinValue = 1,
-            MaxValue = Math.Max(1, Math.Min(max, Content.Rules.Shops.MaxQuantity)),
-            Value = value,
-            Rounded = true,
-            TooltipText = "Quantidade",
+            total.Text = ItemText.Gold(ShopQuantity.Total(price, q));
+            total.AddThemeColorOverride("font_color", color(q));
+            each.Visible = q > 1;
+        }
+
+        Show(quantity);
+        return Show;
+    }
+
+    /// <summary>
+    /// Quantidade (T-384): − e +, o campo e "Máx.". O campo aceita digitar (só números, até <paramref name="limit"/>);
+    /// com ele em foco o <c>Hud</c> desliga as teclas do jogo (<see cref="IsTyping"/>). Enter confirma
+    /// (<paramref name="submit"/>), Esc só tira o foco.
+    /// </summary>
+    private HBoxContainer QuantityControl(string key, int limit, int value, Func<int> max, Action<int> changed, Action submit, string maxTooltip)
+    {
+        var box = new HBoxContainer { SizeFlagsVertical = SizeFlags.ShrinkCenter };
+        box.AddThemeConstantOverride("separation", 2);
+        var minus = StepButton("−", "Menos um");
+        var field = new LineEdit
+        {
+            Text = value.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            Alignment = HorizontalAlignment.Center,
+            MaxLength = 3,
+            CustomMinimumSize = new Vector2(40, 26),
+            SelectAllOnFocus = true,
+            ContextMenuEnabled = false,
+            TooltipText = $"Quantidade (até {limit}): digite e aperte Enter; Esc sai do campo",
             SizeFlagsVertical = SizeFlags.ShrinkCenter,
         };
-        box.GetLineEdit().AddThemeFontSizeOverride("font_size", 12);
-        box.GetLineEdit().AddThemeConstantOverride("minimum_character_width", 2);
-        // Só as setas: digitar no campo apertaria também as teclas 1 a 6 da barra.
-        box.GetLineEdit().Editable = false;
-        box.GetLineEdit().FocusMode = FocusModeEnum.None;
-        box.ValueChanged += v =>
+        field.AddThemeFontSizeOverride("font_size", 13);
+        var plus = StepButton("+", "Mais um");
+        var maxButton = new Button { Text = "Máx.", FocusMode = FocusModeEnum.None, TooltipText = maxTooltip, SizeFlagsVertical = SizeFlags.ShrinkCenter };
+        maxButton.AddThemeFontSizeOverride("font_size", 11);
+
+        var current = value;
+        void Set(int quantity, bool writeText = true)
         {
-            _quantities[key] = (int)v;
+            current = ShopQuantity.Clamp(quantity, limit);
+            _quantities[key] = current;
+            var text = current.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            if (writeText && field.Text != text)
+            {
+                field.Text = text;
+                field.CaretColumn = text.Length;
+            }
+
+            minus.Disabled = current <= 1;
+            plus.Disabled = current >= limit;
+            changed(current);
+        }
+
+        minus.Pressed += () => Set(current - 1);
+        plus.Pressed += () => Set(current + 1);
+        maxButton.Pressed += () => Set(max());
+        field.TextChanged += text =>
+        {
+            // Vazio: o jogador ainda está digitando; o número anterior continua valendo até sair do campo.
+            if (ShopQuantity.Parse(text, limit) is { } typed)
+            {
+                Set(typed, writeText: typed.ToString(System.Globalization.CultureInfo.InvariantCulture) != text);
+            }
         };
+        field.TextSubmitted += _ =>
+        {
+            field.ReleaseFocus();
+            submit();
+        };
+        field.GuiInput += e =>
+        {
+            if (e.IsActionPressed("ui_cancel"))
+            {
+                field.ReleaseFocus();
+                field.AcceptEvent();
+            }
+        };
+        field.FocusExited += () =>
+        {
+            _focusLostFrame = Engine.GetProcessFrames();
+            Set(current);
+        };
+
+        Set(current);
+        box.AddChild(minus);
+        box.AddChild(field);
+        box.AddChild(plus);
+        box.AddChild(maxButton);
         return box;
+    }
+
+    private static Button StepButton(string text, string tooltip)
+    {
+        var button = new Button { Text = text, TooltipText = tooltip, FocusMode = FocusModeEnum.None, CustomMinimumSize = new Vector2(26, 26), SizeFlagsVertical = SizeFlags.ShrinkCenter };
+        button.AddThemeFontSizeOverride("font_size", 15);
+        return button;
     }
 }
