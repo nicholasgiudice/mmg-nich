@@ -411,6 +411,15 @@ Detalhadas pela T-240 a partir do esboço da seção 7, de `design/first-map-v0.
 | [T-352](fase-3/T-352-cripta-do-vigia.md) | Mapa e instância: Cripta do Vigia | Windows | Humano + Médio | 343, 350, 351 |
 | **Fechamento** | | | | |
 | [T-380](fase-3/T-380-playtest-fase-3.md) | Playtest da fase 3 (4 pessoas, ping de cada uma) | Windows | Humano | 302, 311, 312, 322, 323, 342, 345, 352 |
+| **Correções durante o playtest** (pedido de 2026-11-16) | | | | |
+| [T-381](fase-3/T-381-login-lembrar-email.md) | Login: caixa "Lembrar e-mail" | Windows | Leve | — |
+| [T-382](fase-3/T-382-lista-de-batalha-compacta.md) | Lista de batalha: 5 linhas, miniatura do monstro e ícone de ataque no PixelLab | Windows | Humano + Médio | — |
+| [T-383](fase-3/T-383-tirar-quadro-do-alvo.md) | Tirar a vida do alvo do topo da tela | Windows | Leve | — |
+| [T-384](fase-3/T-384-loja-quantidade.md) | Loja: escolher a quantidade de poções | Windows | Médio | — |
+| [T-385](fase-3/T-385-morte-na-cripta-volta-para-cidade.md) | Morte na Cripta renasce na Cidade | VPS | Médio | — |
+| [T-386](fase-3/T-386-tab-e-ataque-basico.md) | Alvo do Tab às vezes não recebe o ataque básico | Windows | Médio | — |
+| [T-387](fase-3/T-387-guarda-esqueletico-ataque-basico.md) | Guarda Esquelético usa o ataque básico | VPS | Médio | — |
+| [T-388](fase-3/T-388-marca-do-alvo.md) | Marca melhor no monstro selecionado | Windows | Humano + Médio | — |
 | [T-390](fase-3/T-390-planejar-fase-4.md) | Detalhar a fase 4 em tarefas | VPS | **Forte** | 380 |
 
 ### Ondas de execução
@@ -428,7 +437,15 @@ Detalhadas pela T-240 a partir do esboço da seção 7, de `design/first-map-v0.
 
 A T-216 (destino do backup, da fase 2) continua fora das ondas. Convém concluí-la antes de abrir o jogo a jogadores de fora.
 
+**Correções durante o playtest (T-381 a T-388).** O designer pediu em 2026-11-16, no meio da T-380, para fazê-las já, enquanto segue testando. Não dependem umas das outras:
+- **VPS, em paralelo:** T-385 e T-387.
+- **Windows, uma de cada vez, nesta ordem:** T-383, T-386, T-384, T-381, T-382, T-388. As duas últimas pedem escolha do designer entre opções do PixelLab e podem dividir a mesma rodada de geração.
+- Depois de integrar: subir o servidor na VPS (`scripts/deploy-dev.sh`, por causa da T-385 e da T-387) e publicar um cliente novo (`export-client.ps1` e `deploy-download.ps1`).
+- A T-380 continua aberta; o relatório `playtest-v0.3.md` registra essas correções como achados do playtest.
+
 **Cuidados de integração**
+- A T-382, a T-383, a T-384 e a T-386 mexem em `Hud.cs` (e a T-386 em `PlayerInput`, que a T-382 também lê pelo Tab): integre uma de cada vez e rebase as outras.
+- A T-383 e a T-388 mexem em `EntityView`: integre a 383 primeiro.
 - A T-301 e a T-331 mexem no `OpenZone`: integre a 301 primeiro (a 331 depende dela).
 - A T-340 e a T-341 mexem em `monsters.json` e nos perfis de IA: integre a 340 antes da 341.
 - A T-310, a T-320, a T-321 e a T-350 sobem `ProtocolVersion`. A 321 e a 350 rodam na mesma onda: integre a 321 primeiro e ajuste a versão na 350.
