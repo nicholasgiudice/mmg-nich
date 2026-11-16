@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.Numerics;
 using Game.Core.Combat;
 using Game.Core.Combat.Items;
@@ -70,14 +69,7 @@ internal sealed class WorldRig : IDisposable
     {
         var client = new TestClient(Transport.Connect(), Content);
         client.Send(new Hello(ProtocolVersion.Current, Content.Fingerprint, "", null, ticket));
-        var watch = Stopwatch.StartNew();
-        while (client.Welcome is null && client.All<Reject>().Count == 0)
-        {
-            Assert.True(watch.Elapsed < TimeSpan.FromSeconds(10), "tempo esgotado esperando o carregamento");
-            Tick(1, client);
-            Thread.Sleep(1);
-        }
-
+        BackgroundWork.TickUntil(() => client.Welcome is not null || client.All<Reject>().Count > 0, () => Tick(1, client), "o carregamento");
         return client;
     }
 
@@ -89,7 +81,7 @@ internal sealed class WorldRig : IDisposable
         return (z, z.World.Find(id)!);
     }
 
-    public void Flush() => Assert.True(Persistence!.FlushAsync(TimeSpan.FromSeconds(10)).GetAwaiter().GetResult(), "gravações pendentes");
+    public void Flush() => Assert.True(Persistence!.FlushAsync(BackgroundWork.Timeout).GetAwaiter().GetResult(), "gravações pendentes");
 
     public void Dispose() => Persistence?.Dispose();
 }
