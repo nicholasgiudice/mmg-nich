@@ -5,23 +5,30 @@ using Vec2 = System.Numerics.Vector2;
 namespace MmoRpgClient.Hud;
 
 /// <summary>Monstro vivo visível na tela, candidato à lista de batalha.</summary>
-public sealed record BattleCandidate(EntityId Id, Vec2 Position, string Name, int Level, MonsterRank Rank, float HealthFraction);
+/// <param name="DefinitionId">Id da definição do monstro (ex.: "monster.grey_wolf"): escolhe a miniatura (T-382).</param>
+public sealed record BattleCandidate(
+    EntityId Id, Vec2 Position, string Name, int Level, MonsterRank Rank, float HealthFraction, string DefinitionId = "");
 
 /// <summary>Linha da lista de batalha, na ordem de exibição.</summary>
 public sealed record BattleEntry(
-    EntityId Id, string Name, int Level, MonsterRank Rank, float HealthFraction, bool TargetsPlayer, bool Selected);
+    EntityId Id, string Name, int Level, MonsterRank Rank, float HealthFraction, bool TargetsPlayer, bool Selected,
+    string DefinitionId = "");
 
 /// <summary>
 /// Lista de batalha (T-312): os monstros da tela, com o alvo atual primeiro e os outros por distância. Só lógica, sem
 /// Godot. A ordem por distância não "pula": ela é refeita no máximo <see cref="ReordersPerSecond"/> vezes por
 /// segundo, e dois monstros só trocam de lugar quando a diferença de distância passa de <see cref="SwapDistance"/>.
 /// Tab e Shift+Tab percorrem a ordem por distância (sem a promoção do alvo atual, senão o Tab ficaria
-/// alternando entre os dois primeiros).
+/// alternando entre os dois primeiros). O painel mostra só as <see cref="ShownRows"/> primeiras linhas (T-382), mas o
+/// Tab passa por todos.
 /// </summary>
 public sealed class BattleList
 {
     public const double ReordersPerSecond = 4;
     public const float SwapDistance = 1f;
+
+    /// <summary>Linhas mostradas no painel (T-382): a lista não rola, mostra as primeiras.</summary>
+    public const int ShownRows = 5;
 
     /// <summary>Por quanto tempo (ticks, 20 Hz) um monstro conta como "mirando o jogador" depois de mirá-lo.</summary>
     public const long AimMemoryTicks = 60;
@@ -33,6 +40,9 @@ public sealed class BattleList
 
     /// <summary>Linhas na ordem de exibição (alvo atual primeiro).</summary>
     public IReadOnlyList<BattleEntry> Entries => _entries;
+
+    /// <summary>As linhas que o painel mostra: as <see cref="ShownRows"/> primeiras de <see cref="Entries"/>.</summary>
+    public IReadOnlyList<BattleEntry> Shown => _entries.Count <= ShownRows ? _entries : _entries.GetRange(0, ShownRows);
 
     /// <summary>Ordem por distância, com histerese (a mesma que o Tab usa).</summary>
     public IReadOnlyList<EntityId> TabOrder => _byDistance;
@@ -81,7 +91,7 @@ public sealed class BattleList
         {
             var c = byId[id];
             var aiming = _aimedAtPlayer.ContainsKey(id) || (castingAtPlayer?.Contains(id) ?? false);
-            return new BattleEntry(c.Id, c.Name, c.Level, c.Rank, c.HealthFraction, aiming, id == selected);
+            return new BattleEntry(c.Id, c.Name, c.Level, c.Rank, c.HealthFraction, aiming, id == selected, c.DefinitionId);
         }).ToList();
     }
 
@@ -125,5 +135,35 @@ public sealed class BattleList
             }
         }
         while (swapped);
+    }
+}
+
+/// <summary>Trecho da folha desenhado na miniatura e o tamanho dele na tela (pixels inteiros, sem borrar).</summary>
+public readonly record struct ThumbnailCut(int X, int Y, int Width, int Height, int DrawWidth, int DrawHeight);
+
+/// <summary>
+/// Miniatura do monstro na lista de batalha (T-382): o conteúdo do primeiro quadro parado (sem a borda transparente)
+/// num quadrado de <c>box</c> pixels, sempre em escala inteira. Conteúdo que cabe é ampliado pelo maior inteiro que
+/// ainda cabe; conteúdo maior é reduzido por um inteiro (½, ⅓...). Escolha do designer: o monstro inteiro, e não um
+/// recorte do topo do quadro (que nos animais virados para baixo mostra o rabo).
+/// </summary>
+public static class BattleThumbnail
+{
+    public static ThumbnailCut Fit(int x, int y, int width, int height, int box)
+    {
+        if (width <= 0 || height <= 0 || box <= 0)
+        {
+            return new ThumbnailCut(x, y, 0, 0, 0, 0);
+        }
+
+        var largest = Math.Max(width, height);
+        if (largest <= box)
+        {
+            var up = box / largest;
+            return new ThumbnailCut(x, y, width, height, width * up, height * up);
+        }
+
+        var down = (largest + box - 1) / box;
+        return new ThumbnailCut(x, y, width, height, width / down, height / down);
     }
 }

@@ -619,7 +619,8 @@ public partial class Hud : Control
                 continue;
             }
 
-            candidates.Add(new BattleCandidate(e.Id, p, info.Name, info.Level, info.Rank, health.Max > 0 ? health.Current / health.Max : 1f));
+            candidates.Add(new BattleCandidate(
+                e.Id, p, info.Name, info.Level, info.Rank, health.Max > 0 ? health.Current / health.Max : 1f, info.DefinitionId));
             if (me is not null && e.TryGet<AbilityState>()?.Cast?.Target == me)
             {
                 casting.Add(e.Id);
@@ -630,7 +631,7 @@ public partial class Hud : Control
         Battle.Update(candidates, origin, selected, tick, GetProcessDeltaTime(), casting);
         if (_battle.Visible)
         {
-            _battle.Show(Battle.Entries);
+            _battle.Show(Battle.Shown, Battle.Entries.Count);
         }
     }
 
