@@ -38,6 +38,20 @@ public partial class EntityView : Node2D
     private static readonly Color FearColor = new(0.62f, 0.30f, 0.85f);
     private static readonly Color MistColor = new(0.85f, 0.92f, 1f);
 
+    /// <summary>Marca do alvo no chão (T-388, kit pedra e ouro); sem o arquivo, volta o arco dourado.</summary>
+    private const string TargetMarkPath = "res://assets/art/ui/target_mark.png";
+
+    /// <summary>Pulso da marca do alvo: período (s) e transparência mínima.</summary>
+    private const double TargetPulseSeconds = 1.6;
+    private const float TargetPulseMinAlpha = 0.7f;
+
+    /// <summary>Tamanho da marca do alvo: pelo menos este diâmetro (pixels), ou o raio do corpo vezes o fator nos grandes.</summary>
+    private const float TargetMarkMinPx = 60f;
+    private const float TargetMarkPerRadius = 3f;
+
+    private static Texture2D? s_targetMark;
+    private static bool s_targetMarkLoaded;
+
     /// <summary>Transparência da unidade na névoa (T-345): ainda se vê onde está, mas não dá para mirar.</summary>
     private const float VeiledAlpha = 0.3f;
 
@@ -235,9 +249,9 @@ public partial class EntityView : Node2D
             _flash = Math.Max(0, _flash - delta);
             QueueRedraw();
         }
-        else if ((_marks & (ControlMarks.Stunned | ControlMarks.Feared)) != 0 || _vanishing)
+        else if ((_marks & (ControlMarks.Stunned | ControlMarks.Feared)) != 0 || _vanishing || (_selected && TargetMark() is not null))
         {
-            QueueRedraw(); // estrelas girando, medo pulsando, névoa subindo
+            QueueRedraw(); // estrelas girando, medo pulsando, névoa subindo, marca do alvo pulsando
         }
     }
 
@@ -257,11 +271,42 @@ public partial class EntityView : Node2D
         }
     }
 
+    /// <summary>
+    /// Marca do alvo (T-388): a arte no chão, aos pés, atrás do sprite, ampliada pelo inteiro que mais se aproxima do
+    /// tamanho do corpo (sem borrar) e pulsando de leve. Sem a arte, o arco dourado de antes.
+    /// </summary>
+    private void DrawTargetMark()
+    {
+        if (TargetMark() is not { } mark)
+        {
+            DrawArc(Godot.Vector2.Zero, _radiusPx + 5, 0, Mathf.Tau, 32, SelectionColor, 2.5f);
+            return;
+        }
+
+        var diameter = Math.Max(TargetMarkMinPx, TargetMarkPerRadius * _radiusPx);
+        var scale = Math.Max(1, (int)MathF.Round(diameter / mark.GetWidth()));
+        var size = mark.GetSize() * scale;
+        var pulse = 0.5f + 0.5f * MathF.Cos((float)(_time * Mathf.Tau / TargetPulseSeconds));
+        var alpha = TargetPulseMinAlpha + (1 - TargetPulseMinAlpha) * pulse;
+        DrawTextureRect(mark, new Rect2((-size / 2).Floor(), size), tile: false, modulate: new Color(1, 1, 1, alpha));
+    }
+
+    private static Texture2D? TargetMark()
+    {
+        if (!s_targetMarkLoaded)
+        {
+            s_targetMarkLoaded = true;
+            s_targetMark = SpriteCatalog.LoadTexture(TargetMarkPath);
+        }
+
+        return s_targetMark;
+    }
+
     public override void _Draw()
     {
         if (_selected)
         {
-            DrawArc(Godot.Vector2.Zero, _radiusPx + 5, 0, Mathf.Tau, 32, SelectionColor, 2.5f);
+            DrawTargetMark();
         }
 
         if (_highlighted)
