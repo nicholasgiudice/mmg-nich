@@ -83,8 +83,10 @@ public partial class Hud : Control
     /// <summary>"Convidar para o grupo" no menu do botão direito sobre outro jogador.</summary>
     public event Action<EntityId>? InviteEntity;
 
-    /// <summary>A caixa de nome do grupo está com o foco: as teclas são texto, não comandos.</summary>
-    public bool IsTyping => _partyPanel.IsTyping;
+    /// <summary>
+    /// A caixa de nome do grupo ou o campo de quantidade da loja (T-384) está com o foco: as teclas são texto, não comandos.
+    /// </summary>
+    public bool IsTyping => _partyPanel.IsTyping || _shop.IsTyping;
 
     /// <summary>Atualiza o painel e a janela do convite com o estado do grupo (chamado a cada frame, online).</summary>
     public void ShowParty(PartyModel model, double now)

@@ -29,6 +29,7 @@
     <Compile Include="..\..\client\scripts\Match\MatchTracker.cs" Link="Client\MatchTracker.cs" />
     <Compile Include="..\..\client\scripts\Hud\InstanceText.cs" Link="Client\InstanceText.cs" />
     <Compile Include="..\..\client\scripts\Account\LoginMemory.cs" Link="Client\LoginMemory.cs" />
+    <Compile Include="..\..\client\scripts\Hud\ShopQuantity.cs" Link="Client\ShopQuantity.cs" />
   </ItemGroup>
 
   <ItemGroup>
