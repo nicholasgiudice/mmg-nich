@@ -49,4 +49,6 @@ O designer pediu em 2026-11-09 para levar a tela de habilidades (T-081) ao kit p
 **Decisões e pendências.**
 - As células ficaram um pouco mais largas que antes (a borda de pedra soma à largura de 112 px), e a janela cresceu junto; o designer aprovou assim.
 - Clicar no + e arrastar para a barra não foram testados à mão nesta sessão (só capturas); o código desses dois caminhos não mudou.
-- O `PlusButton` da tela de atributos continua no estilo antigo; a T-098 pode reaproveitar `StonePlusButton()` e `Divider()`.
+- O `PlusButton` da tela de atributos continua no estilo antigo; a T-098 pode reaproveitar `StonePlusButton()`.
+
+**Ajuste posterior (2026-11-16, pedido do designer).** A divisória saiu da tela (parecia um pedaço de moldura solto) e o `HudTheme.Divider()` foi removido; o `divider.png` fica, porque o site usa. O + passou para o canto de cima à direita da célula, por dentro da moldura e em posição inteira (antes ficava sobre a quina, em meio pixel, e borrava). A moldura de janela ganhou margem de 26 px embaixo, para o botão "Redistribuir pontos" não encostar no filete dourado (vale também para o inventário). Capturas em `tasks/reports/interface/habilidades-ajustes/`.
