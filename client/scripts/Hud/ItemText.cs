@@ -96,7 +96,10 @@ public static class ItemText
         && content.Abilities.TryGetValue(use, out var ability) && ability.Effects.OfType<HealEffect>().Any();
 
     /// <summary>Ouro com separador de milhar: "1.250 de ouro".</summary>
-    public static string Gold(long amount) => amount.ToString("#,0", Pt) + " de ouro";
+    public static string Gold(long amount) => GoldAmount(amount) + " de ouro";
+
+    /// <summary>Só o valor do ouro, com separador de milhar ("1.250"), para ir ao lado da moeda (T-099).</summary>
+    public static string GoldAmount(long amount) => amount.ToString("#,0", Pt);
 
     /// <summary>Quantas unidades do item há no inventário, somando as pilhas.</summary>
     public static int CountOf(Inventory? inventory, string baseId) =>

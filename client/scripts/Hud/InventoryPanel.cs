@@ -26,6 +26,11 @@ public partial class InventoryPanel : ProgressionPanel
     /// <summary>Espaço do boneco (T-089): borda de pedra de 9 px em volta do ícone de 32 px, em 1×.</summary>
     private const float EquipSlotSize = 50f;
 
+    /// <summary>Espaço da mochila de pedra (T-099): o ícone de 32 px em 1× a 6 px da borda de fora.</summary>
+    private const float BagSlotSize = 44f;
+
+    private const float BagIconInset = 6f;
+
     /// <summary>Zoom inteiro do nicho de pedra atrás do boneco.</summary>
     private const int NicheZoom = 2;
 
@@ -93,9 +98,13 @@ public partial class InventoryPanel : ProgressionPanel
         bag.AddThemeConstantOverride("separation", 4);
         var used = inventory.Slots.Count(i => i is not null);
         bag.AddChild(Small($"Mochila  {used} / {inventory.Capacity}", 13, 1f));
+        var bagStyle = HudTheme.BagSlot();
+        var countTag = bagStyle is null ? null : HudTheme.BagCountTag();
+        var slotSize = bagStyle is null ? SlotSize : BagSlotSize;
+        var gap = bagStyle is null ? 3 : 2;
         var grid = new GridContainer { Columns = Columns };
-        grid.AddThemeConstantOverride("h_separation", 3);
-        grid.AddThemeConstantOverride("v_separation", 3);
+        grid.AddThemeConstantOverride("h_separation", gap);
+        grid.AddThemeConstantOverride("v_separation", gap);
         for (var i = 0; i < inventory.Capacity; i++)
         {
             var item = inventory[i];
@@ -114,9 +123,12 @@ public partial class InventoryPanel : ProgressionPanel
                 drag![AbilitySlot.DragAbility] = item!.BaseId;
             }
 
-            grid.AddChild(new ItemSlotButton(Content, item, SlotSize, empty: null,
+            grid.AddChild(new ItemSlotButton(Content, item, slotSize, empty: null,
                 item is null ? "" : ItemText.Tooltip(Content, item, classId, current, isEquipped: false))
             {
+                Frame = bagStyle,
+                Inset = BagIconInset,
+                CountTag = countTag,
                 Unusable = item is not null && !ItemText.CanUse(Content, item, classId),
                 DragData = drag,
                 DoubleClick = item is null ? null
@@ -134,20 +146,52 @@ public partial class InventoryPanel : ProgressionPanel
         bag.AddChild(GoldLine(self.TryGet<Wallet>()?.Gold ?? 0));
         bag.AddChild(Small("Arraste para o boneco ou duplo clique: equipar · poção: duplo clique usa, arraste para a barra · "
             + "do boneco para a mochila: desequipar · para fora da janela ou botão direito: largar no chão · F pega do chão",
-            10, 0.6f, Columns * (SlotSize + 3)));
+            10, 0.6f, Columns * (slotSize + gap)));
         columns.AddChild(bag);
     }
 
     /// <summary>Ouro do personagem (T-323), embaixo da grade: moeda desenhada e o valor em dourado.</summary>
     private static Control GoldLine(long gold)
     {
+        const string tooltip = "Ouro: cai dos monstros e paga as lojas da Cidade (Templo e Ferreiro).";
         var line = new HBoxContainer { MouseFilter = MouseFilterEnum.Ignore };
         line.AddThemeConstantOverride("separation", 6);
         line.AddChild(new Control { SizeFlagsHorizontal = SizeFlags.ExpandFill, MouseFilter = MouseFilterEnum.Ignore });
+        if (HudTheme.BagGoldPlate() is { } plate && HudTheme.BagCoin() is { } coin)
+        {
+            // T-099: placa de pedra com a moeda e o valor (só o número; o tooltip diz o que é).
+            var panel = new PanelContainer
+            {
+                TooltipText = tooltip,
+                MouseFilter = MouseFilterEnum.Pass,
+                CustomMinimumSize = plate is StyleBoxTexture { Texture: { } texture } ? texture.GetSize() : Vector2.Zero, // 1×, sem encolher
+            };
+            panel.AddThemeStyleboxOverride("panel", plate);
+            var row = new HBoxContainer { MouseFilter = MouseFilterEnum.Ignore, Alignment = BoxContainer.AlignmentMode.Center };
+            row.AddThemeConstantOverride("separation", 5);
+            row.AddChild(new TextureRect
+            {
+                Texture = coin,
+                StretchMode = TextureRect.StretchModeEnum.KeepCentered,
+                TextureFilter = TextureFilterEnum.Nearest,
+                SizeFlagsVertical = SizeFlags.ShrinkCenter,
+                MouseFilter = MouseFilterEnum.Ignore,
+            });
+            var value = Small(ItemText.GoldAmount(gold), 14, 1f);
+            value.AddThemeColorOverride("font_color", HudTheme.Gold);
+            value.AddThemeColorOverride("font_outline_color", Colors.Black);
+            value.AddThemeConstantOverride("outline_size", 4);
+            value.MouseFilter = MouseFilterEnum.Ignore;
+            row.AddChild(value);
+            panel.AddChild(row);
+            line.AddChild(panel);
+            return line;
+        }
+
         line.AddChild(new GoldCoin { CustomMinimumSize = new Vector2(14, 14), SizeFlagsVertical = SizeFlags.ShrinkCenter });
         var label = Small(ItemText.Gold(gold), 14, 1f);
         label.AddThemeColorOverride("font_color", HudTheme.Gold);
-        label.TooltipText = "Ouro: cai dos monstros e paga as lojas da Cidade (Templo e Ferreiro).";
+        label.TooltipText = tooltip;
         label.MouseFilter = MouseFilterEnum.Pass;
         line.AddChild(label);
         return line;
@@ -327,6 +371,12 @@ public partial class InventoryPanel : ProgressionPanel
         /// <summary>Moldura de pedra do espaço (T-089); o ícone vai na área de dentro, em 1×. Null = quadrado de antes.</summary>
         public StyleBox? Frame { get; init; }
 
+        /// <summary>Distância da borda de fora até o ícone, com <see cref="Frame"/> (T-099); null = a margem da moldura.</summary>
+        public float? Inset { get; init; }
+
+        /// <summary>Plaquinha de pedra atrás da quantidade dos empilháveis (T-099); null = só o número com contorno.</summary>
+        public StyleBox? CountTag { get; init; }
+
         /// <summary>Item que a classe não usa: ícone esmaecido e um X.</summary>
         public bool Unusable { get; init; }
 
@@ -489,7 +539,7 @@ public partial class InventoryPanel : ProgressionPanel
         private void DrawFramed(Rect2 rect, Font font)
         {
             Frame!.Draw(GetCanvasItem(), rect);
-            var inner = rect.Grow(-Frame.GetMargin(Side.Left));
+            var inner = rect.Grow(-(Inset ?? Frame.GetMargin(Side.Left)));
             if (_item is null)
             {
                 if (_empty is not null)
@@ -513,12 +563,48 @@ public partial class InventoryPanel : ProgressionPanel
             }
 
             DrawRect(inner.Grow(1), _dropHover ? AcceptColor : color, filled: false, width: _dropHover || IsHovered() ? 2f : 1f);
-            DrawString(font, inner.Position + new Vector2(1, inner.Size.Y - 1),
-                _item.Level.ToString(System.Globalization.CultureInfo.InvariantCulture), HorizontalAlignment.Left, -1, 9, new Color(1, 1, 1, 0.7f));
+            if (_content.Items.TryGetValue(_item.BaseId, out var def) && def.IsConsumable)
+            {
+                DrawCountTag(font, inner, _item.Count);
+            }
+            else
+            {
+                DrawString(font, inner.Position + new Vector2(1, inner.Size.Y - 1),
+                    _item.Level.ToString(System.Globalization.CultureInfo.InvariantCulture), HorizontalAlignment.Left, -1, 9, new Color(1, 1, 1, 0.7f));
+            }
+
             if (Unusable)
             {
                 DrawLine(inner.Position + new Vector2(3, 3), inner.End - new Vector2(3, 3), new Color(1f, 0.4f, 0.35f, 0.8f), 2f);
             }
+        }
+
+        /// <summary>
+        /// Quantidade (só de 2 para cima) numa plaquinha de pedra no canto de baixo à direita do ícone (T-099); sem a
+        /// plaquinha, o número com contorno de antes.
+        /// </summary>
+        private void DrawCountTag(Font font, Rect2 inner, int count)
+        {
+            if (CountTag is null)
+            {
+                DrawCount(this, font, inner.Grow(2), count);
+                return;
+            }
+
+            if (count <= 1)
+            {
+                return;
+            }
+
+            const int fontSize = 11;
+            var text = count.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            var natural = CountTag is StyleBoxTexture { Texture: { } texture } ? texture.GetSize() : new Vector2(12, 12);
+            var width = Mathf.Max(natural.X, Mathf.Ceil(font.GetStringSize(text, HorizontalAlignment.Left, -1, fontSize).X) + 6);
+            var tag = new Rect2((inner.End + new Vector2(3, 3) - new Vector2(width, natural.Y)).Floor(), new Vector2(width, natural.Y));
+            CountTag.Draw(GetCanvasItem(), tag);
+            var at = new Vector2(tag.Position.X, tag.Position.Y + (tag.Size.Y + font.GetAscent(fontSize) - font.GetDescent(fontSize)) / 2);
+            DrawStringOutline(font, at, text, HorizontalAlignment.Center, tag.Size.X, fontSize, 3, Colors.Black);
+            DrawString(font, at, text, HorizontalAlignment.Center, tag.Size.X, fontSize, Colors.White);
         }
 
         private void OnGuiInput(InputEvent e)
