@@ -27,6 +27,9 @@ public partial class CharacterPanel : ProgressionPanel
     /// <summary>Linhas das derivadas: valor de agora e, ao lado, o valor depois do + em foco.</summary>
     private readonly List<(Func<CharacterStats, string> Value, Label Delta)> _derived = new();
 
+    /// <summary>Janela de pedra e ouro da T-089, com o título na placa (T-098).</summary>
+    protected override bool StoneWindow => true;
+
     protected override string StateKey(EntitySnapshot self)
     {
         var s = self.TryGet<CharacterStats>();
@@ -46,7 +49,7 @@ public partial class CharacterPanel : ProgressionPanel
         var stats = self.TryGet<CharacterStats>();
         var progress = self.TryGet<CharacterProgress>();
         var who = info?.Name is { Length: > 0 } n && n != cls?.Name ? $"{n} — {cls?.Name}" : cls?.Name ?? "Personagem";
-        box.AddChild(Title($"{who}, nível {stats?.Level ?? 1}"));
+        box.AddChild(WindowTitle($"{who}, nível {stats?.Level ?? 1}"));
         if (stats is null || cls is null)
         {
             box.AddChild(Small("Sem atributos para mostrar.", 12));
@@ -105,10 +108,17 @@ public partial class CharacterPanel : ProgressionPanel
         if (progress is not null)
         {
             // Longe dos +: no rodapé, à direita, e com confirmação no segundo clique.
-            box.AddChild(new HSeparator());
+            // Com as peças de pedra (T-098), sem divisória acima do botão (pedido do designer); sem elas, a linha de antes.
+            if (HudTheme.AttributeRow() is null)
+            {
+                box.AddChild(new HSeparator());
+            }
+
             var footer = new HBoxContainer();
             footer.AddChild(new Control { SizeFlagsHorizontal = SizeFlags.ExpandFill });
-            footer.AddChild(ResetButton(self, AnySpent(progress, stats, Content)));
+            var reset = ResetButton(self, AnySpent(progress, stats, Content));
+            HudTheme.StoneButton(reset);
+            footer.AddChild(reset);
             box.AddChild(footer);
         }
     }
@@ -117,32 +127,21 @@ public partial class CharacterPanel : ProgressionPanel
     private Control AttributeRow(EntitySnapshot self, ClassDefinition cls, CharacterStats stats, CharacterProgress? progress,
         AttributeKind a, bool isSuggested, int free)
     {
-        var panel = new PanelContainer { CustomMinimumSize = new Vector2(RowWidth, 0) };
-        panel.AddThemeStyleboxOverride("panel", new StyleBoxFlat
-        {
-            BgColor = isSuggested ? new Color(HudTheme.Suggested, 0.10f) : new Color(1, 1, 1, 0.04f),
-            BorderColor = isSuggested ? HudTheme.Suggested : new Color(1, 1, 1, 0.08f),
-            BorderWidthLeft = isSuggested ? 3 : 1,
-            BorderWidthTop = 1,
-            BorderWidthRight = 1,
-            BorderWidthBottom = 1,
-            ContentMarginLeft = 6,
-            ContentMarginRight = 6,
-            ContentMarginTop = 3,
-            ContentMarginBottom = 3,
-        });
         var row = new HBoxContainer();
         row.AddThemeConstantOverride("separation", 8);
-        panel.AddChild(row);
-
-        row.AddChild(new TextureRect
+        var icon = new TextureRect
         {
             Texture = IconCatalog.Shared.For("attribute." + ProgressionText.ScalingKey(a)),
             CustomMinimumSize = new Vector2(34, 34),
             StretchMode = TextureRect.StretchModeEnum.KeepCentered,
             TextureFilter = TextureFilterEnum.Nearest,
             MouseFilter = MouseFilterEnum.Ignore,
-        });
+        };
+        var line = StoneRow(row, icon) ?? FlatRow(row, isSuggested);
+        if (icon.GetParent() is null)
+        {
+            row.AddChild(icon);
+        }
 
         var names = new VBoxContainer { CustomMinimumSize = new Vector2(150, 0) };
         names.AddThemeConstantOverride("separation", 0);
@@ -188,6 +187,55 @@ public partial class CharacterPanel : ProgressionPanel
 
         row.AddChild(buttons);
         row.AddChild(Small("+1: " + Preview(self, cls, stats, a), 11, 0.75f, 230));
+        return line;
+    }
+
+    /// <summary>
+    /// Linha de pedra (T-098): o encaixe do ícone à esquerda, colado na faixa de pedra com o resto da linha. O atributo
+    /// sugerido fica marcado só pelo ★ e pelo texto dourado (o designer pediu sem moldura dourada). Null sem a peça da linha.
+    /// </summary>
+    private static Control? StoneRow(HBoxContainer row, TextureRect icon)
+    {
+        if (HudTheme.AttributeRow() is not { } stone)
+        {
+            return null;
+        }
+
+        var line = new HBoxContainer { CustomMinimumSize = new Vector2(RowWidth, 0) };
+        line.AddThemeConstantOverride("separation", 0);
+        if (HudTheme.AttributeSocket() is { } socketStyle)
+        {
+            var socket = new PanelContainer { MouseFilter = MouseFilterEnum.Ignore };
+            socket.AddThemeStyleboxOverride("panel", socketStyle);
+            socket.AddChild(icon);
+            line.AddChild(socket);
+        }
+
+        var strip = new PanelContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+        strip.AddThemeStyleboxOverride("panel", stone);
+        strip.AddChild(row);
+        line.AddChild(strip);
+        return line;
+    }
+
+    /// <summary>Linha de antes (T-082): fundo escuro, e o sugerido com fundo e borda dourados.</summary>
+    private static Control FlatRow(HBoxContainer row, bool isSuggested)
+    {
+        var panel = new PanelContainer { CustomMinimumSize = new Vector2(RowWidth, 0) };
+        panel.AddThemeStyleboxOverride("panel", new StyleBoxFlat
+        {
+            BgColor = isSuggested ? new Color(HudTheme.Suggested, 0.10f) : new Color(1, 1, 1, 0.04f),
+            BorderColor = isSuggested ? HudTheme.Suggested : new Color(1, 1, 1, 0.08f),
+            BorderWidthLeft = isSuggested ? 3 : 1,
+            BorderWidthTop = 1,
+            BorderWidthRight = 1,
+            BorderWidthBottom = 1,
+            ContentMarginLeft = 6,
+            ContentMarginRight = 6,
+            ContentMarginTop = 3,
+            ContentMarginBottom = 3,
+        });
+        panel.AddChild(row);
         return panel;
     }
 
@@ -203,6 +251,7 @@ public partial class CharacterPanel : ProgressionPanel
         });
         button.Text = text;
         button.CustomMinimumSize = new Vector2(36, 26);
+        HudTheme.StoneAddButton(button);
         var after = ProgressionText.With(stats, a, amount);
         button.MouseEntered += () => ShowDeltas(stats, after);
         button.MouseExited += () => ShowDeltas(stats, null);
