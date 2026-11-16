@@ -28,6 +28,7 @@
     <Compile Include="..\..\client\scripts\Hud\PartyModel.cs" Link="Client\PartyModel.cs" />
     <Compile Include="..\..\client\scripts\Match\MatchTracker.cs" Link="Client\MatchTracker.cs" />
     <Compile Include="..\..\client\scripts\Hud\InstanceText.cs" Link="Client\InstanceText.cs" />
+    <Compile Include="..\..\client\scripts\Hud\SkillDetailText.cs" Link="Client\SkillDetailText.cs" />
   </ItemGroup>
 
   <ItemGroup>
