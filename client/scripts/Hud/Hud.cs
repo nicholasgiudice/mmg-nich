@@ -37,7 +37,6 @@ public partial class Hud : Control
     private ContentCatalog _content = ContentCatalog.Empty;
 
     private UnitFrame _player = null!;
-    private UnitFrame _target = null!;
     private VBoxContainer _party = null!;
     private PartyPanel _partyPanel = null!;
     private PartyInviteDialog _inviteDialog = null!;
@@ -172,8 +171,8 @@ public partial class Hud : Control
         _worldMenu.IdPressed += _ => InviteEntity?.Invoke(_worldMenuTarget);
         AddChild(_worldMenu);
 
-        _target = new UnitFrame(FrameWidth + 40, showResource: false, showCast: true);
-        AddChild(_target);
+        // T-383: sem quadro do alvo no topo da tela. A vida do alvo fica na barra sobre a cabeça dele e a conjuração
+        // numa barra fina logo abaixo (EntityView); o topo fica só para o painel do chefe.
 
         _abilityBar = new HBoxContainer();
         _abilityBar.AddThemeConstantOverride("separation", 4);
@@ -280,7 +279,6 @@ public partial class Hud : Control
         _abilityBar.Position = new Vector2(x, screen.Y - bar.Y - 8);
         _playerCast.Position = new Vector2((screen.X - _playerCast.Size.X) / 2, _abilityBar.Position.Y - _playerCast.Size.Y - 6);
         _boss.Position = new Vector2((screen.X - _boss.Size.X) / 2, 8);
-        _target.Position = new Vector2((screen.X - _target.Size.X) / 2, _boss.Visible ? _boss.Position.Y + _boss.Size.Y + 6 : 8);
         _panelButtons.Position = new Vector2(8, _player.Position.Y + _player.Size.Y + 4);
         _party.Position = new Vector2(8, _panelButtons.Position.Y + _panelButtons.Size.Y + 6);
         _partyPanel.Position = _party.Position;
@@ -390,16 +388,6 @@ public partial class Hud : Control
             _player.Visible = false;
             _playerCast.Visible = false;
             _panelButtons.Visible = false;
-        }
-
-        if (selected is { } tid && byId.TryGetValue(tid, out var target))
-        {
-            _target.Visible = true;
-            _target.Display(target, StatusText(target, now), now, _content);
-        }
-        else
-        {
-            _target.Visible = false;
         }
 
         UpdateParty(latest, self, now);
@@ -918,14 +906,13 @@ public partial class Hud : Control
         private readonly Label _name = new();
         private readonly HudBar _health = new();
         private readonly HudBar? _resource;
-        private readonly HudBar? _cast;
         private readonly HudBar? _xp;
         private readonly RichTextLabel _status = new();
 
-        public UnitFrame(float width, bool showResource, bool showCast = false, bool compact = false, bool showXp = false)
+        public UnitFrame(float width, bool showResource, bool compact = false, bool showXp = false)
         {
             MouseFilter = MouseFilterEnum.Ignore;
-            // T-086: o quadro do personagem e o do alvo usam o painel de pedra; os compactos (aliados) seguem escuros.
+            // T-086: o quadro do personagem usa o painel de pedra; os compactos (aliados) seguem escuros.
             AddThemeStyleboxOverride("panel", compact
                 ? new StyleBoxFlat
                 {
@@ -960,12 +947,6 @@ public partial class Hud : Control
             {
                 _xp = new HudBar { CustomMinimumSize = new Vector2(width, 11), FontSize = 9, MouseFilter = MouseFilterEnum.Ignore, Visible = false, BorderColor = barBorder };
                 box.AddChild(_xp);
-            }
-
-            if (showCast)
-            {
-                _cast = new HudBar { CustomMinimumSize = new Vector2(width, 14), FontSize = 10, MouseFilter = MouseFilterEnum.Ignore, BorderColor = barBorder };
-                box.AddChild(_cast);
             }
 
             _status.BbcodeEnabled = true;
@@ -1028,19 +1009,6 @@ public partial class Hud : Control
                         progress is null ? $"Nível {level}"
                         : toNext > 0 ? $"Nível {level} · XP {progress.Experience} / {toNext}"
                         : $"Nível {level} (máximo)");
-                }
-            }
-
-            if (_cast is not null)
-            {
-                var cast = unit.TryGet<AbilityState>()?.Cast;
-                _cast.Visible = cast is not null && cast.EndTick > cast.StartTick;
-                if (cast is not null && _cast.Visible)
-                {
-                    var abilityName = content.Abilities.TryGetValue(cast.AbilityId, out var def) ? def.Name : cast.AbilityId;
-                    var left = Math.Max(0, (cast.EndTick - now) / World.TickRate);
-                    _cast.Set((float)((now - cast.StartTick) / (cast.EndTick - cast.StartTick)), HudTheme.CastEnemy,
-                        $"Conjurando: {abilityName}  {left.ToString("0.0", Pt)} s");
                 }
             }
 

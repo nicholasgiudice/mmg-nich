@@ -28,6 +28,7 @@ public partial class EntityView : Node2D
     private static readonly Color DeadColor = new(0.45f, 0.45f, 0.45f);
     private static readonly Color BarBack = new(0.10f, 0.10f, 0.10f, 0.85f);
     private static readonly Color BarFill = new(0.35f, 0.85f, 0.35f);
+    private static readonly Color CastFill = new(0.90f, 0.35f, 0.25f);
     private static readonly Color SelectionColor = new(1f, 0.85f, 0.2f);
     private static readonly Color HighlightColor = new(1f, 1f, 1f, 0.9f);
 
@@ -43,6 +44,7 @@ public partial class EntityView : Node2D
 
     private const float BarWidth = 36f;
     private const float BarHeight = 4f;
+    private const float CastHeight = 3f;
     private const float ChipWidth = 15f;
     private const float ChipHeight = 10f;
     private const double FlashSeconds = 0.12;
@@ -55,6 +57,7 @@ public partial class EntityView : Node2D
     private bool _alive = true;
     private bool _selected;
     private bool _highlighted;
+    private float? _castProgress;
     private IReadOnlyList<StatusChip> _chips = Array.Empty<StatusChip>();
     private ControlMarks _marks;
     private bool _vanishing;
@@ -196,6 +199,20 @@ public partial class EntityView : Node2D
         }
     }
 
+    /// <summary>
+    /// Barra fina de conjuração sob a barra de vida (T-383): substitui a do quadro do alvo, que saiu do topo da tela.
+    /// <paramref name="progress"/> de 0 a 1; null = sem barra.
+    /// </summary>
+    public void SetCast(float? progress)
+    {
+        progress = _alive && progress is { } p ? Math.Clamp(p, 0f, 1f) : null;
+        if (progress != _castProgress)
+        {
+            _castProgress = progress;
+            QueueRedraw();
+        }
+    }
+
     /// <summary>Pisca em branco (recebeu dano).</summary>
     public void Flash()
     {
@@ -316,6 +333,12 @@ public partial class EntityView : Node2D
         var barPos = new Godot.Vector2(-BarWidth / 2, -HeadPx - 8);
         DrawRect(new Rect2(barPos, new Godot.Vector2(BarWidth, BarHeight)), BarBack);
         DrawRect(new Rect2(barPos, new Godot.Vector2(BarWidth * _healthFraction, BarHeight)), BarFill);
+        if (_castProgress is { } castProgress)
+        {
+            var castPos = barPos + new Godot.Vector2(0, BarHeight + 1);
+            DrawRect(new Rect2(castPos, new Godot.Vector2(BarWidth, CastHeight)), BarBack);
+            DrawRect(new Rect2(castPos, new Godot.Vector2(BarWidth * castProgress, CastHeight)), CastFill);
+        }
 
         if ((_marks & ControlMarks.Stunned) != 0)
         {

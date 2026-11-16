@@ -233,6 +233,10 @@ public partial class WorldView : Node2D
             view.ApplyStatus(chips, marks);
             view.SetVanishWarning(state.TryGet<AbilityState>()?.Cast is { } cast
                 && _content.Abilities.TryGetValue(cast.AbilityId, out var castDef) && castDef.Tags.Contains("ai.vanish"));
+            view.SetCast(SelectedEntity == state.Id && state.TryGet<AbilityState>()?.Cast is { } selectedCast
+                && selectedCast.EndTick > selectedCast.StartTick
+                ? (float)((now - selectedCast.StartTick) / (selectedCast.EndTick - selectedCast.StartTick))
+                : null);
 
             var from = _previousById.TryGetValue(state.Id, out var prev) ? prev.TryGet<Transform>() ?? transform : transform;
             var position = System.Numerics.Vector2.Lerp(from.Position, transform.Position, alpha);
