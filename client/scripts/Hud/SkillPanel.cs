@@ -94,7 +94,6 @@ public partial class SkillPanel : ProgressionPanel
 
         if (progress is not null && stats is not null)
         {
-            box.AddChild(HudTheme.Divider(Columns * CellWidth) ?? new HSeparator());
             var footer = new HBoxContainer();
             footer.AddChild(new Control { SizeFlagsHorizontal = SizeFlags.ExpandFill });
             var reset = ResetButton(self, AnySpent(progress, stats, Content));
@@ -204,12 +203,7 @@ public partial class SkillPanel : ProgressionPanel
         });
         if (plus is not null)
         {
-            plus.CustomMinimumSize = new Vector2(20, 20);
-            plus.Size = new Vector2(20, 20);
-            plus.AddThemeColorOverride("font_color", HudTheme.Removable);
-            HudTheme.StonePlusButton(plus);
-            plus.Position = new Vector2(IconSize - plus.Size.X / 2 - 2, -plus.Size.Y / 2 + 2);
-            holder.AddChild(plus);
+            cell.AddChild(PlusCorner(plus));
         }
 
         column.AddChild(holder);
@@ -224,6 +218,28 @@ public partial class SkillPanel : ProgressionPanel
         }
 
         return cell;
+    }
+
+    /// <summary>
+    /// Camada por cima da célula com o + no canto de cima à direita, por dentro da moldura e longe do ícone, em posição
+    /// inteira (meio pixel borra a arte).
+    /// </summary>
+    private static Control PlusCorner(Button plus)
+    {
+        plus.CustomMinimumSize = new Vector2(20, 20);
+        plus.AddThemeColorOverride("font_color", HudTheme.Removable);
+        HudTheme.StonePlusButton(plus);
+        var size = plus.CustomMinimumSize;
+        plus.AnchorLeft = 1;
+        plus.AnchorRight = 1;
+        plus.OffsetLeft = -size.X;
+        plus.OffsetRight = 0;
+        plus.OffsetTop = 0;
+        plus.OffsetBottom = size.Y;
+
+        var layer = new Control { MouseFilter = MouseFilterEnum.Ignore };
+        layer.AddChild(plus);
+        return layer;
     }
 
     private static StyleBoxFlat FlatCell(Color border) => new()

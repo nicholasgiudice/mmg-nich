@@ -66,7 +66,8 @@ public static class HudTheme
 
     /// <summary>
     /// Moldura de janela de pedra e ouro (T-089): 9-slice de <c>window_frame.png</c> em 1×, com pouca margem em cima para a
-    /// placa do título (<see cref="WindowTitlePlate"/>) ficar por cima da borda. Null sem o arquivo.
+    /// placa do título (<see cref="WindowTitlePlate"/>) ficar por cima da borda. Embaixo, a margem passa da borda de 18 px
+    /// (pedra e filete dourado) para o conteúdo não encostar no filete. Null sem o arquivo.
     /// </summary>
     public static StyleBox? WindowFrame()
     {
@@ -77,6 +78,7 @@ public static class HudTheme
 
         var style = (StyleBoxTexture)piece.Duplicate();
         style.ContentMarginTop = 3;
+        style.ContentMarginBottom = 26;
         return style;
     }
 
@@ -116,29 +118,6 @@ public static class HudTheme
         button.AddThemeStyleboxOverride("disabled", Style(new Color(1, 1, 1, 0.35f)));
         button.CustomMinimumSize = texture.GetSize();
         button.Size = texture.GetSize();
-    }
-
-    /// <summary>
-    /// Divisória de pedra e ouro (T-097), na maior escala inteira que cabe em <paramref name="width"/>; null sem o arquivo.
-    /// </summary>
-    public static Control? Divider(float width)
-    {
-        if (UiTexture("divider.png") is not { } texture)
-        {
-            return null;
-        }
-
-        var scale = Math.Max(1, (int)(width / texture.GetWidth()));
-        return new TextureRect
-        {
-            Texture = texture,
-            ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
-            StretchMode = TextureRect.StretchModeEnum.Scale,
-            TextureFilter = CanvasItem.TextureFilterEnum.Nearest,
-            CustomMinimumSize = texture.GetSize() * scale,
-            SizeFlagsHorizontal = Control.SizeFlags.ShrinkCenter,
-            MouseFilter = Control.MouseFilterEnum.Ignore,
-        };
     }
 
     /// <summary>Moldura fina de pedra (quadro de membro do grupo, T-311).</summary>
