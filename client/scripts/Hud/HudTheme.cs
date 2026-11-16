@@ -170,6 +170,33 @@ public static class HudTheme
         ResourceLoader.Exists(UiDirectory + "crown.png") ? ResourceLoader.Load<Texture2D>(UiDirectory + "crown.png") : null;
 
     /// <summary>
+    /// Espaço de pedra da mochila (T-099): 9-slice de <c>bag_slot.png</c>, desenhado em 1× no tamanho do espaço; o ícone
+    /// de 32 px vai no meio. Null sem o arquivo (volta ao quadrado de antes).
+    /// </summary>
+    public static StyleBox? BagSlot() => UiPiece("bag_slot.png", 10, 6, 6);
+
+    /// <summary>Plaquinha de pedra atrás da quantidade de um item empilhável (T-099); null sem o arquivo.</summary>
+    public static StyleBox? BagCountTag() => UiPiece("bag_count.png", 4, 3, 0);
+
+    /// <summary>Placa de pedra do mostrador de ouro, embaixo da mochila (T-099); null sem o arquivo.</summary>
+    public static StyleBox? BagGoldPlate()
+    {
+        if (UiPiece("bag_gold.png", 14, 16, 2) is not StyleBoxTexture piece)
+        {
+            return null;
+        }
+
+        var style = (StyleBoxTexture)piece.Duplicate();
+        style.TextureMarginTop = 8;
+        style.TextureMarginBottom = 8;
+        style.ContentMarginBottom = 3;
+        return style;
+    }
+
+    /// <summary>Moeda de ouro desenhada em 1× (T-099), ao lado do valor; null sem o arquivo.</summary>
+    public static Texture2D? BagCoin() => UiTexture("bag_coin.png");
+
+    /// <summary>
     /// Painel de pedra com cantos dourados (kit pedra e ouro, T-086): 9-slice de <c>assets/art/ui/panel.png</c>,
     /// desenhado em 1×. Sem a textura (export sem o arquivo), devolve o painel escuro de sempre.
     /// </summary>
