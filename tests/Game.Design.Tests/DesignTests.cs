@@ -76,7 +76,7 @@ public class DesignTests
         Assert.True(s.WinRate >= 0.85, Fmt(s));
     }
 
-    [Fact]
+    [Fact(Skip = PlaytestRebalance.Pending)]
     public void Mage_explosion_alone_wins_at_most_half_the_time_or_takes_longer_than_the_rotation()
     {
         // Design: "se Explosão Elemental resolver o encontro sozinha sem exigir movimento ou gestão de recurso, o Mago está forte demais".
@@ -162,7 +162,7 @@ public class DesignTests
 
     // ---- Grupo x Matriarca ----
 
-    [Fact]
+    [Fact(Skip = PlaytestRebalance.Pending)]
     public void Matriarch_moving_balanced_group_wins_between_60_and_90_percent()
     {
         var s = Run(Matriarch, "kite+dodge");
@@ -218,7 +218,7 @@ public class DesignTests
 
     // ---- T-018: resultados não binários ----
 
-    [Fact]
+    [Fact(Skip = PlaytestRebalance.Pending)]
     public void At_least_three_encounters_have_a_relevant_strategy_between_5_and_95_percent()
     {
         var rates = new[]

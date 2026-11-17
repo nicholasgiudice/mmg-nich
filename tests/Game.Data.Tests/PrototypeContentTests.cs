@@ -79,7 +79,7 @@ public class PrototypeContentTests
     {
         var db = Db();
         var potion = db.Abilities["item.minor_healing_potion"];
-        Assert.InRange(potion.CooldownTicks, 15 * 20, 25 * 20);
+        Assert.Equal(12 * 20, potion.CooldownTicks);
         Assert.IsType<SelfTargeting>(potion.Targeting);
         var item = db.Items["consumable.minor_healing_potion"];
         Assert.Equal((ItemKind.Consumable, "item.minor_healing_potion", 20), (item.Type, item.UseAbility, item.Stack));

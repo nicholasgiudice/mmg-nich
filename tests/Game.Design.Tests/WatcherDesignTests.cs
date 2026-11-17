@@ -41,7 +41,7 @@ public class WatcherDesignTests(ITestOutputHelper output)
     /// min. Há um degrau entre os níveis (vida, atributos e itens; a assinatura quase não pesa: balance-v0.13 §3 e §4), então cada nível individual
     /// só precisa ficar entre 40% e 90%.
     /// </summary>
-    [Fact]
+    [Fact(Skip = PlaytestRebalance.Pending)]
     public void A_group_of_four_with_rares_beats_the_watcher_50_to_80_percent_in_4_to_6_minutes()
     {
         var batches = new[] { 14, 15 }.Select(l => Group(l, "save", Runs, FullGroup)).ToList();

@@ -5,15 +5,15 @@
       "id": "item.minor_healing_potion",
       "name": "Poção de Cura Menor",
       "tags": ["consumable", "heal"],
-      "cooldown": 20,
+      "cooldown": 12,
       "targeting": { "type": "self" },
-      "effects": [{ "type": "heal", "base": 60 }]
+      "effects": [{ "type": "heal", "base": 60, "scaling": { "vit": 2 } }]
     },
     {
       "id": "item.minor_mana_potion",
       "name": "Poção de Mana Menor",
       "tags": ["consumable", "mana"],
-      "cooldown": 20,
+      "cooldown": 12,
       "targeting": { "type": "self" },
       "effects": [{ "type": "resource", "resource": "mana", "amount": 40 }]
     }

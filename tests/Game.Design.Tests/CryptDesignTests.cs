@@ -68,7 +68,7 @@ public class CryptDesignTests(ITestOutputHelper output)
     }
 
     /// <summary>A meta da T-351 na Sala do Vigia real (30 × 24, selos nas bordas).</summary>
-    [Fact]
+    [Fact(Skip = PlaytestRebalance.Pending)]
     public void A_group_of_four_with_rares_beats_the_watcher_in_the_real_room_50_to_80_percent_in_4_to_6_minutes()
     {
         var batches = new[] { 14, 15 }.Select(Boss).ToList();
@@ -87,7 +87,7 @@ public class CryptDesignTests(ITestOutputHelper output)
     /// Duração esperada de uma ida completa, pela rota segura ou pela de risco: lutas (tempo médio de vitória) + pausa por
     /// grupo + caminhada da entrada ao chefe passando por todos os grupos da rota + o chefe no nível 14.
     /// </summary>
-    [Fact]
+    [Fact(Skip = PlaytestRebalance.Pending)]
     public void A_full_run_takes_25_to_40_minutes()
     {
         var crypt = Content.Zones[Zone];

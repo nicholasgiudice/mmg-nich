@@ -75,8 +75,8 @@ Itens de inventário (`type: consumable` em `items.json`): empilham, e usar gast
 
 | Item | Id | Habilidade | Efeito | Recarga | Pilha | Preço (loja) |
 |---|---|---|---|---|---|---|
-| Poção de Cura Menor | `consumable.minor_healing_potion` | `item.minor_healing_potion` | cura 60 | 20 s | 20 | 15 |
-| Poção de Mana Menor | `consumable.minor_mana_potion` | `item.minor_mana_potion` | +40 de Mana | 20 s | 20 | 15 |
+| Poção de Cura Menor | `consumable.minor_healing_potion` | `item.minor_healing_potion` | cura 60 + 2 × VIT | 12 s | 20 | 15 |
+| Poção de Mana Menor | `consumable.minor_mana_potion` | `item.minor_mana_potion` | +40 de Mana | 12 s | 20 | 15 |
 
 Todo personagem novo começa com **5 Poções de Cura Menor** (`startingInventory` em `classes.json`). Nenhum monstro deixa cair consumível: eles vêm do inventário inicial e do Templo.
 

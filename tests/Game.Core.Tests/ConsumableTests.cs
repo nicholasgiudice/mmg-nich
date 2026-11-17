@@ -154,7 +154,7 @@ public class ConsumableTests
         Assert.Equal(PotionAbility, Assert.Single(used.OfType<AbilityExecuted>()).AbilityId);
         var ev = Assert.Single(used.OfType<ItemUsed>());
         Assert.Equal((0, Potion, PotionAbility, 2), (ev.InventorySlot, ev.BaseId, ev.AbilityId, ev.Remaining));
-        Assert.Equal(70, hp.Current);
+        Assert.Equal(10 + 60 + (2 * hero.Get<Game.Core.Combat.Stats.CharacterStats>().Vit), hp.Current); // 60 + 2 × VIT
         Assert.Equal(2, hero.Get<Inventory>()[0]!.Count);
         Assert.DoesNotContain(PotionAbility, hero.Get<AbilityState>().Known);
 

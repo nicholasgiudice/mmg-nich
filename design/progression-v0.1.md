@@ -58,7 +58,7 @@ Cinco atributos. **Todos os pontos ganhos por nível são livres** (5 por nível
 | **Força (FOR)** | **dano corpo a corpo**: escala as habilidades físicas de perto (Guerreiro, ataque do Clérigo) |
 | **Destreza (DES)** | **dano à distância**: escala as habilidades físicas à distância (Arqueiro) e o bônus da Marca do Caçador |
 | **Agilidade (AGI)** | **velocidade de ataque e crítico, para todas as classes**: recarga do ataque básico ÷ (1 + AGI × 0,005), máx. +50%; crítico +0,25% por ponto (base 5%, máx. 40%). Não aumenta o dano de cada golpe. |
-| **Inteligência (INT)** | **magia, cura e Mana**: escala magias arcanas e elementais (Mago), cura, escudos e dano sagrado (Clérigo); +2 de Mana máxima e +0,05 Mana/s por ponto |
+| **Inteligência (INT)** | **magia, cura e Mana**: escala magias arcanas e elementais (Mago), cura, escudos e dano sagrado (Clérigo); +2 de Mana máxima e +0,1 Mana/s por ponto |
 | **Vitalidade (VIT)** | +10 de vida máxima por ponto |
 
 Qual atributo escala cada habilidade está nos dados de cada efeito (`scaling`), então uma habilidade pode escalar com dois atributos (ex.: Guerreiro com FOR e arma).
@@ -88,7 +88,7 @@ Como a distribuição é livre, a interface mostra o **atributo sugerido** da cl
   | Clérigo | 70 | 10 | 150 |
 
 - **Mana máxima** = 80 + 2 × INT (nível 1: Guerreiro 88, Arqueiro 90, Clérigo 104, Mago 106; hoje é 100 para todas).
-- **Regeneração de Mana** = 5 por segundo para todas as classes + INT × 0,05 (+ afixos de equipamento). **Mana vem só do tempo** (decisão de 2026-10-19, T-032): nenhuma classe ganha Mana ao atacar, apanhar, curar ou proteger.
+- **Regeneração de Mana** = 5 por segundo para todas as classes + INT × 0,1 (+ afixos de equipamento). **Mana vem só do tempo** (decisão de 2026-10-19, T-032): nenhuma classe ganha Mana ao atacar, apanhar, curar ou proteger.
 - **Defesa**: duas estatísticas vindas do equipamento.
   - **Armadura** reduz dano físico; **Resistência** reduz dano mágico (arcano, fogo, gelo, natureza, sagrado).
   - Redução = `D / (D + 40 + 8 × nível do atacante)`, máximo 60%.

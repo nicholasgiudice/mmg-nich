@@ -36,7 +36,7 @@ public class SkillRankTableTests
         { "archer.power_shot", [1, 1, 2, 2, 3], [40, 48, 67, 80, 100] },
         { "archer.rain_of_arrows", [3, 3, 3, 3, 4], [80, 96, 113, 129, 193] },
         { "archer.devastating_arrow", [1, 1, 1], [106, 138, 170] },
-        { "mage.elemental_blast", [1, 1, 2, 2, 3], [44, 53, 74, 88, 111] },
+        { "mage.elemental_blast", [1, 1, 2, 2, 4], [53, 64, 90, 106, 180] },
         { "mage.ice_prison", [1, 1, 1, 1, 1], [9, 11, 12, 14, 16] },
         { "mage.arcane_barrier", [1, 1, 1, 1, 1], [45, 54, 63, 72, 81] },
         { "mage.lightning_field", [1, 1, 1, 1, 1], [51, 59, 95, 105, 123] },

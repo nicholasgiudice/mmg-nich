@@ -9,7 +9,7 @@
       "healthPerVit": 10,
       "manaBase": 80,
       "manaPerInt": 2,
-      "manaRegenPerInt": 0.05,
+      "manaRegenPerInt": 0.1,
       "critBase": 0.05,
       "critPerAgi": 0.0025,
       "critMax": 0.4,

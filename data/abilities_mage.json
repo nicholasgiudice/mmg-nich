@@ -16,19 +16,19 @@
       "cost": { "resource": "mana", "amount": 90 },
       "cooldown": 8,
       "targeting": { "type": "circle_at_point", "range": 9, "radius": 3 },
-      "effects": [{ "type": "damage", "school": "fire", "base": 18, "scaling": { "int": 2 } }],
+      "effects": [{ "type": "damage", "school": "fire", "base": 27, "scaling": { "int": 2 } }],
       "ranks": [
-        { "rank": 2, "effects": [{ "type": "damage", "school": "fire", "base": 22, "scaling": { "int": 2.4 } }] },
+        { "rank": 2, "effects": [{ "type": "damage", "school": "fire", "base": 33, "scaling": { "int": 2.4 } }] },
         {
           "rank": 3,
-          "effects": [{ "type": "damage", "school": "fire", "base": 15, "scaling": { "int": 1.7 } }],
+          "effects": [{ "type": "damage", "school": "fire", "base": 23, "scaling": { "int": 1.7 } }],
           "hits": { "count": 2, "interval": 0.4 }
         },
-        { "rank": 4, "effects": [{ "type": "damage", "school": "fire", "base": 18, "scaling": { "int": 2 } }] },
+        { "rank": 4, "effects": [{ "type": "damage", "school": "fire", "base": 27, "scaling": { "int": 2 } }] },
         {
           "rank": 5,
-          "effects": [{ "type": "damage", "school": "fire", "base": 15, "scaling": { "int": 1.7 } }],
-          "hits": { "count": 3, "interval": 0.4 }
+          "effects": [{ "type": "damage", "school": "fire", "base": 23, "scaling": { "int": 1.7 } }],
+          "hits": { "count": 4, "interval": 0.4 }
         }
       ]
     },

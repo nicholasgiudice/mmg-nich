@@ -146,11 +146,11 @@ Custo 80, recarga 8 s, alcance 9, raio 3. Os acertos extras caem no mesmo ponto 
 
 | NH | Explosões | Valor | Outros efeitos | Perfil nível 1 |
 |---|---|---|---|---|
-| 1 | 1 | dano por explosão 18 + 2 × INT | — | 44 |
-| 2 | 1 | dano por explosão 22 + 2,4 × INT | — | 53 |
-| 3 | 2 | dano por explosão 15 + 1,7 × INT | **2 explosões** | 2 × 37 = **74** |
-| 4 | 2 | dano por explosão 18 + 2 × INT | 2 explosões | 2 × 44 = **88** |
-| 5 | 3 | dano por explosão 15 + 1,7 × INT | **3 explosões** | 3 × 37 = **111** |
+| 1 | 1 | dano por explosão 27 + 2 × INT | — | 53 |
+| 2 | 1 | dano por explosão 33 + 2,4 × INT | — | 64 |
+| 3 | 2 | dano por explosão 23 + 1,7 × INT | **2 explosões** | 2 × 45 = **90** |
+| 4 | 2 | dano por explosão 27 + 2 × INT | 2 explosões | 2 × 53 = **106** |
+| 5 | 4 | dano por explosão 23 + 1,7 × INT | **4 explosões** | 4 × 45 = **180** |
 
 ### Prisão de Gelo — congela um alvo
 

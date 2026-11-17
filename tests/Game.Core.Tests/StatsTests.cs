@@ -253,7 +253,7 @@ public class StatsTests
             w.Step();
         }
 
-        Assert.Equal(56, mage.Get<ResourcePool>().Current); // 10 s × (5 + 13 × 0,05)
+        Assert.Equal(62, mage.Get<ResourcePool>().Current); // 10 s × (5 + 13 × 0,1) = 63, menos o arredondamento por tick
     }
 
     [Fact]
