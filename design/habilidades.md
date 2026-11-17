@@ -171,11 +171,11 @@ Custo 90, recarga 8 s. Círculo no ponto, alcance 9, raio 3. Tags: aoe, ranged.
 
 | NH | Acertos | Dano de fogo por acerto |
 |---|---|---|
-| 1 | 1 | 18 + 2 × INT |
-| 2 | 1 | 22 + 2,4 × INT |
-| 3 | 2 (0,4 s entre eles) | 15 + 1,7 × INT |
-| 4 | 2 (herdado) | 18 + 2 × INT |
-| 5 | 3 (0,4 s) | 15 + 1,7 × INT |
+| 1 | 1 | 27 + 2 × INT |
+| 2 | 1 | 33 + 2,4 × INT |
+| 3 | 2 (0,4 s entre eles) | 23 + 1,7 × INT |
+| 4 | 2 (herdado) | 27 + 2 × INT |
+| 5 | 4 (0,4 s) | 23 + 1,7 × INT |
 
 ### Prisão de Gelo — `mage.ice_prison`
 
@@ -291,7 +291,7 @@ Custo 90, recarga 120 s. Círculo em volta, raio 8. Tags: heal, group, signature
 
 ### Poção de Cura Menor — `item.minor_healing_potion`
 
-Custo —, recarga 20 s, **3 cargas**. Em si mesmo. Tags: consumable, heal. Cura **60** (sem atributo). Todas as classes a têm (`consumables` em `classes.json`). Mais em `design/itens.md`.
+Custo —, recarga 12 s, **3 cargas**. Em si mesmo. Tags: consumable, heal. Cura **60 + 2 × VIT**. Todas as classes a têm (`consumables` em `classes.json`). Mais em `design/itens.md`.
 
 ## Monstros (`abilities_monsters.json`)
 

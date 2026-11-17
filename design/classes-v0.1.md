@@ -64,7 +64,7 @@ As classes são arquétipos iniciais. Evoluções e especializações ficam fora
 
 **Habilidades do MVP:**
 
-- Explosão Elemental — dano em área à distância (2 acertos no nível de habilidade 3, 3 no 5);
+- Explosão Elemental — dano em área à distância (2 acertos no nível de habilidade 3, 4 no 5);
 - Prisão de Gelo — congelamento;
 - Barreira Arcana — proteção temporária;
 - Campo de Relâmpagos — zona de dano à distância;
