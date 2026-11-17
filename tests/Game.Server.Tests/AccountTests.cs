@@ -149,18 +149,9 @@ internal sealed class AccountRig : IDisposable
         return client;
     }
 
-    public void WaitFor(Func<bool> done, params TestClient[] clients)
-    {
-        var watch = Stopwatch.StartNew();
-        while (!done())
-        {
-            Assert.True(watch.Elapsed < TimeSpan.FromSeconds(10), "tempo esgotado esperando a sala");
-            Rig.Tick(1, clients);
-            Thread.Sleep(1);
-        }
-    }
+    public void WaitFor(Func<bool> done, params TestClient[] clients) => BackgroundWork.TickUntil(done, () => Rig.Tick(1, clients), "a sala");
 
-    public void Flush() => Assert.True(Persistence.FlushAsync(TimeSpan.FromSeconds(10)).GetAwaiter().GetResult(), "gravações pendentes");
+    public void Flush() => Assert.True(Persistence.FlushAsync(BackgroundWork.Timeout).GetAwaiter().GetResult(), "gravações pendentes");
 
     public Entity Entity(TestClient c) => Room.World.Find(c.Me)!;
 
