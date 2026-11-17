@@ -54,6 +54,10 @@ public partial class Hud : Control
     public string? HotbarKey { get; set; }
     private CombatLogPanel _log = null!;
     private BattleListPanel _battle = null!;
+    private readonly MiniMapState _mapState = new();
+    private MiniMapPanel _miniMap = null!;
+    private ZoneMapWindow _zoneMap = null!;
+    private string _mapZoneName = "";
 
     /// <summary>Lista de batalha (T-312): ordem dos monstros da tela; o Tab do <c>PlayerInput</c> anda por ela.</summary>
     public BattleList Battle { get; } = new();
@@ -190,6 +194,13 @@ public partial class Hud : Control
         _battle.RowClicked += id => TargetChosen?.Invoke(id);
         AddChild(_battle);
 
+        // T-392: mini mapa no canto superior direito (a lista de batalha fica abaixo dele) e o mapa grande da zona (M).
+        _miniMap = new MiniMapPanel { Visible = false, State = _mapState };
+        _miniMap.Clicked += ToggleZoneMap;
+        AddChild(_miniMap);
+        _zoneMap = new ZoneMapWindow { State = _mapState };
+        AddChild(_zoneMap);
+
         _death = new DeathSummaryPanel { Visible = false, SourceLabel = SourceLabel };
         AddChild(_death);
 
@@ -224,12 +235,63 @@ public partial class Hud : Control
     /// <summary>Fecha as telas de personagem e de habilidades; true se alguma estava aberta (Esc fecha antes de pausar).</summary>
     public bool ClosePanels()
     {
-        var open = _character.Visible || _skills.Visible || _inventory.Visible || _shop.Visible;
+        var open = _character.Visible || _skills.Visible || _inventory.Visible || _shop.Visible || _zoneMap.Visible;
+        _zoneMap.Close();
         _character.Visible = false;
         _skills.Visible = false;
         _inventory.Visible = false;
         _shop.Close();
         return open;
+    }
+
+    /// <summary>
+    /// T-392: mostra o mini mapa da zona que acabou de abrir (chamar a cada entrada ou troca de zona). O terreno é gerado
+    /// aqui, uma vez, a partir do mapa do Core e do desenho do Tiled.
+    /// </summary>
+    public void ShowZoneMap(string zoneName, Game.Core.Spatial.GridMap map, Presentation.TiledVisual? visual, IReadOnlyList<RectDefinition> gates)
+    {
+        _mapZoneName = zoneName;
+        _mapState.Terrain = MiniMapTerrain.Build(map, visual);
+        _mapState.Width = map.Width;
+        _mapState.Height = map.Height;
+        _mapState.Gates = gates;
+        _mapState.Player = null;
+        _mapState.Members = [];
+        _miniMap.Visible = true;
+        if (_zoneMap.Visible)
+        {
+            _zoneMap.Open(_mapZoneName, GetViewportRect().Size);
+        }
+    }
+
+    /// <summary>T-392: fora de uma zona (sala de encontro, jogo local), sem mini mapa.</summary>
+    public void HideZoneMap()
+    {
+        _miniMap.Visible = false;
+        _zoneMap.Close();
+        _mapState.Terrain = null;
+    }
+
+    /// <summary>T-392: posição do jogador e dos membros do grupo (tiles), a cada frame.</summary>
+    public void UpdateZoneMap(System.Numerics.Vector2? player, IReadOnlyList<MapMark> members)
+    {
+        _mapState.Player = player;
+        _mapState.Members = members;
+    }
+
+    /// <summary>O mapa grande da zona está aberto.</summary>
+    public bool ZoneMapOpen => _zoneMap.Visible;
+
+    private void ToggleZoneMap()
+    {
+        if (_zoneMap.Visible)
+        {
+            _zoneMap.Close();
+        }
+        else if (_miniMap.Visible)
+        {
+            _zoneMap.Open(_mapZoneName, GetViewportRect().Size);
+        }
     }
 
     private static void TogglePanel(ProgressionPanel panel)
@@ -294,7 +356,15 @@ public partial class Hud : Control
         // Inventário: canto direito, acima do log; cabe ao lado da tela de personagem em 1280 px (equipar e ver os números).
         _inventory.Position = new Vector2(screen.X - _inventory.Size.X - 8, Mathf.Max(8, _log.Position.Y - _inventory.Size.Y - 8));
         _log.Position = new Vector2(screen.X - _log.Size.X - 8, screen.Y - _log.Size.Y - 8);
-        _battle.Position = new Vector2(screen.X - _battle.Size.X - 8, TopRightReserved > 0 ? TopRightReserved + 6 : 8);
+        var topRight = TopRightReserved > 0 ? TopRightReserved + 6 : 8;
+        _miniMap.Position = new Vector2(screen.X - _miniMap.Size.X - 8, topRight);
+        if (_miniMap.Visible)
+        {
+            topRight = _miniMap.Position.Y + _miniMap.Size.Y + 6;
+        }
+
+        _battle.Position = new Vector2(screen.X - _battle.Size.X - 8, topRight);
+        _zoneMap.Position = (screen - _zoneMap.Size) / 2;
         _death.Position = (screen - _death.Size) / 2;
         // T-323: a loja fica à esquerda do inventário (que abre junto), sem cobrir a mochila.
         // Sem espaço entre o quadro do personagem e o inventário, desce para a coluna da esquerda, embaixo do grupo.
@@ -437,6 +507,11 @@ public partial class Hud : Control
         if (!IsTyping && Godot.Input.IsActionJustPressed(Input.InputActions.BattleList))
         {
             _battle.Visible = BattleListSettings.Visible = !_battle.Visible;
+        }
+
+        if (!IsTyping && Godot.Input.IsActionJustPressed(Input.InputActions.ZoneMap))
+        {
+            ToggleZoneMap();
         }
 
         var me = authority.ControlledEntity;

@@ -420,6 +420,10 @@ Detalhadas pela T-240 a partir do esboço da seção 7, de `design/first-map-v0.
 | [T-386](fase-3/T-386-tab-e-ataque-basico.md) | Alvo do Tab às vezes não recebe o ataque básico | Windows | Médio | — |
 | [T-387](fase-3/T-387-guarda-esqueletico-ataque-basico.md) | Guarda Esquelético usa o ataque básico | VPS | Médio | — |
 | [T-388](fase-3/T-388-marca-do-alvo.md) | Marca melhor no monstro selecionado | Windows | Humano + Médio | — |
+| **Mini mapa** (pedido de 2026-11-17) | | | | |
+| [T-392](fase-3/T-392-mini-mapa.md) | Cliente: mini mapa (jogador e membros por perto) | Windows | Humano + Médio | — |
+| [T-391](fase-3/T-391-posicao-do-grupo.md) | Servidor: posição dos membros distantes do grupo (pode esperar) | VPS | Médio | — |
+| [T-393](fase-3/T-393-mini-mapa-membros-distantes.md) | Cliente: membros distantes do grupo no mini mapa | Windows | Médio | 391, 392 |
 | [T-390](fase-3/T-390-planejar-fase-4.md) | Detalhar a fase 4 em tarefas | VPS | **Forte** | 380 |
 
 ### Ondas de execução
@@ -442,6 +446,11 @@ A T-216 (destino do backup, da fase 2) continua fora das ondas. Convém concluí
 - **Windows, uma de cada vez, nesta ordem:** T-383, T-386, T-384, T-381, T-382, T-388. As duas últimas pedem escolha do designer entre opções do PixelLab e podem dividir a mesma rodada de geração.
 - Depois de integrar: subir o servidor na VPS (`scripts/deploy-dev.sh`, por causa da T-385 e da T-387) e publicar um cliente novo (`export-client.ps1` e `deploy-download.ps1`).
 - A T-380 continua aberta; o relatório `playtest-v0.3.md` registra essas correções como achados do playtest.
+
+**Mini mapa (T-391 a T-393).** O designer pediu em 2026-11-17, ainda durante a T-380, um mini mapa com a posição dos membros do grupo; o essencial é o mini mapa com a posição do jogador. A área de interesse do servidor só alcança uns 40 tiles e os mapas chegam a 200 × 160, por isso o pedido foi dividido:
+- **T-392 (Windows), primeiro:** o mini mapa e o mapa grande da zona, com o jogador e os membros que o cliente já vê. Não mexe em servidor nem protocolo; sai sozinha, com um cliente novo.
+- **T-391 (VPS) e T-393 (Windows), depois e opcionais:** o servidor manda a posição dos membros distantes, e o cliente os mostra. A T-391 sobe `ProtocolVersion` para 13: **não integre a T-391 na `main` sozinha**, porque o próximo `deploy-dev.sh` subiria um servidor que o cliente publicado não aceita. A T-393 sai da branch da T-391; integre as duas juntas e, na mesma rodada, rode o `deploy-dev.sh` e publique o cliente novo.
+- A T-391 e a T-385 mexem no `WorldServer`: integre uma de cada vez.
 
 **Cuidados de integração**
 - A T-382, a T-383, a T-384 e a T-386 mexem em `Hud.cs` (e a T-386 em `PlayerInput`, que a T-382 também lê pelo Tab): integre uma de cada vez e rebase as outras.

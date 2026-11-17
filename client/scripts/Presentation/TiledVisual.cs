@@ -99,6 +99,72 @@ public sealed class TiledVisual
         }
     }
 
+    /// <summary>
+    /// Cor média dos pixels visíveis do tile <paramref name="raw"/> (gid com as marcas de espelhamento) e quanto do tile
+    /// eles cobrem (0 a 1), para o mini mapa (T-392). Null para célula vazia ou tile sem imagem. Guardada por gid.
+    /// </summary>
+    public (Color Color, float Coverage)? AverageColor(uint raw)
+    {
+        var gid = (int)(raw & ~FlagMask);
+        if (gid == 0)
+        {
+            return null;
+        }
+
+        if (_averages.TryGetValue(gid, out var cached))
+        {
+            return cached;
+        }
+
+        (Color, float)? result = null;
+        if (Find(gid) is { } ts && ImageOf(ts) is { } image)
+        {
+            var local = gid - ts.FirstGid;
+            int x0 = local % ts.Columns * ts.TileWidth, y0 = local / ts.Columns * ts.TileHeight;
+            float r = 0, g = 0, b = 0, weight = 0;
+            var count = 0;
+            for (var y = y0; y < Math.Min(y0 + ts.TileHeight, image.GetHeight()); y++)
+            {
+                for (var x = x0; x < Math.Min(x0 + ts.TileWidth, image.GetWidth()); x++)
+                {
+                    var c = image.GetPixel(x, y);
+                    count++;
+                    r += c.R * c.A;
+                    g += c.G * c.A;
+                    b += c.B * c.A;
+                    weight += c.A;
+                }
+            }
+
+            if (weight > 0)
+            {
+                result = (new Color(r / weight, g / weight, b / weight), weight / count);
+            }
+        }
+
+        _averages[gid] = result;
+        return result;
+    }
+
+    private readonly Dictionary<int, (Color, float)?> _averages = new();
+    private readonly Dictionary<Texture2D, Image?> _images = new();
+
+    private Image? ImageOf(Tileset ts)
+    {
+        if (!_images.TryGetValue(ts.Texture, out var image))
+        {
+            image = ts.Texture.GetImage();
+            if (image is not null && image.IsCompressed())
+            {
+                image.Decompress();
+            }
+
+            _images[ts.Texture] = image;
+        }
+
+        return image;
+    }
+
     private Tileset? Find(int gid)
     {
         foreach (var ts in _tilesets)
