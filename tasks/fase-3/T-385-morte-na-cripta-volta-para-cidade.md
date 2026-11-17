@@ -31,4 +31,11 @@ var home = p.Zone!.InstanceId > 0 ? p.Zone : _start;
 
 ## Resultado
 
-_(preencher ao concluir)_
+Concluída em 2026-11-17 (VPS), branch `task/T-385-morte-na-cripta-cidade`.
+
+- `WorldServer.MoveThroughGatesAndRespawn`: o morto que pede para renascer vai sempre para o nascimento da zona inicial (`_start`), cheio, sem perder nada, inclusive vindo de uma instância. A saída da instância usa o mesmo `Move` de antes, então a cópia continua para o resto do grupo e segue a regra de `emptyTimeout` se ficar vazia. A volta pelo portão não mudou: o dono da cópia é o grupo (ou o personagem), e o portão leva para a mesma cópia enquanto ela existir.
+- Gravação: o `Move` grava ao renascer, agora na Cidade; quem está dentro continua gravado na zona de origem (sem mudança).
+- Documentação: comentário do `WorldServer`, `src/Game.Server/README.md` e nota no requisito 5 da T-350 (mudança do designer em 2026-11-16). A nota na T-350 está fora das "Áreas que pode alterar", mas é pedida pelo requisito 5 desta tarefa.
+- Teste: `InstanceTests.Death_respawns_at_the_instance_entrance_with_the_monsters_as_they_were` virou `Death_in_an_instance_respawns_in_the_city_and_the_gate_leads_back_to_the_same_copy` (dois personagens com conta no mesmo grupo): o primeiro morre na cópia, pede para renascer e aparece no nascimento da Cidade, com vida cheia e `InstanceId` 0; o segundo continua na cópia; a gravação do primeiro é a Cidade e a do segundo é a zona de origem; o primeiro volta pelo portão e cai na mesma cópia, com a Matriarca ainda ferida. Conferi que o teste falha com a regra antiga.
+- Sem pendências. O relatório `tasks/reports/balance-v0.15.md` ainda cita a regra antiga, mas é um registro histórico e ficou como está.
+
