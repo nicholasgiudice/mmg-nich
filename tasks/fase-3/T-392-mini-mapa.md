@@ -43,12 +43,12 @@ O terreno sai do mesmo `.tmj` que o cliente já desenha (`client/scripts/Present
 
 ## Resultado
 
-**Feito**, com a aprovação do designer pendente (cores e tamanho; ver Pendências).
+**Feito.** O designer pediu o mini mapa "um pouco menor" (2026-11-17): passou de 192 para 168 px, mantendo 3 px por tile.
 
 **Mini mapa** (`Hud/MiniMapPanel.cs`, desenho em `Hud/MiniMapCanvas.cs`):
 - **Onde fica:** canto superior direito, abaixo do nome da zona (`TopRightReserved`). A lista de batalha desce para baixo dele. Moldura fina de pedra do kit (`HudTheme.MemberFrame`), sem arte nova.
-- **Tamanho:** 192 × 192 px na tela de 1280 × 720 do jogo. Nos mapas grandes, mostra 64 × 64 tiles a 3 px por tile. O recorte segue o jogador e para nas bordas do mapa.
-- **Mapas menores que o recorte:** aparecem inteiros, na maior escala inteira que caiba (32 × 20 sai a 6 px por tile, centralizado). A Cidade (80 × 60) mostra 64 tiles na largura e a altura inteira.
+- **Tamanho:** 168 × 168 px na tela de 1280 × 720 do jogo (era 192; o designer pediu um pouco menor). Nos mapas grandes, mostra 56 × 56 tiles a 3 px por tile, para o pixel continuar nítido. O recorte segue o jogador e para nas bordas do mapa.
+- **Mapas menores que o recorte:** aparecem inteiros, na maior escala inteira que caiba (32 × 20 sai a 5 px por tile, centralizado). A Cidade (80 × 60) mostra um recorte de 56 × 56.
 - **Só no mundo aberto:** fora de uma zona (sala de encontro, jogo local), o mini mapa some.
 - **Clique no mini mapa:** abre o mapa grande.
 
@@ -78,6 +78,7 @@ O terreno sai do mesmo `.tmj` que o cliente já desenha (`client/scripts/Present
 - `floresta-grupo.png` e `floresta-mapa-grande.png`: dois clientes no mesmo grupo na Floresta Baixa, com a Ana subindo a trilha e o Beto no nascimento;
 - `floresta-membro-fora.png` e `floresta-membro-caido.png`: cada um subiu por um lado da trilha. O Beto ficou a mais de 32 tiles e virou seta na borda esquerda; depois os monstros o mataram e a seta ficou cinza;
 - `campos.png`, `cidade.png`, `cripta.png` e `cripta-mapa-grande.png`: um cliente sozinho.
+- **Tamanho final (168 px):** `comparacao-192-168.png` põe lado a lado o antes e o depois nos Campos, na Cidade e na Floresta. As capturas acima, com o mini mapa de 192 px, ficaram como registro da primeira prévia. Novas: `tamanho-168-campos.png`, `tamanho-168-cidade.png`, `tamanho-168-floresta-dica.png` (mouse sobre a marca, dica "Você") e `tamanho-168-tecla-m.png` (mapa grande aberto pela ação `zone_map`).
 
 **Ajustes provisórios só para as capturas, fora do commit:**
 - `--test-invite`, `--test-accept` e `--test-map` no `Main`, para formar o grupo e abrir o mapa grande sem clicar.
@@ -95,8 +96,11 @@ O terreno sai do mesmo `.tmj` que o cliente já desenha (`client/scripts/Present
 - **`.uid`:** o Godot gerou os `.uid` dos scripts novos e também os de `LoginMemory.cs` e `ShopQuantity.cs`, que faltavam na `main`. Foram todos para o commit.
 - **"Campos" de 32 × 20:** o mapa citado na tarefa (`fields.tmj`) não é usado por nenhuma zona aberta. Os Campos do jogo são os da Vigília (200 × 140). O caso de mapa pequeno inteiro ficou coberto pelos testes, sem captura.
 
+**Escolha do designer:** mini mapa um pouco menor (168 px, 56 tiles). Cores sem pedido de mudança: você amarelo, grupo azul, morto cinza, bloqueios escurecidos.
+
+**Testado no jogo pelo roteiro do cliente (`--demo-input`):** a dica "Você" com o mouse sobre a marca (`hover`), o clique no mini mapa abrindo o mapa grande (`click`) e a ação `zone_map` (tecla M) abrindo e, apertada de novo, fechando o mapa grande. Esc fechando não foi exercitado no jogo.
+
 **Pendências:**
-- **Aprovação do designer:** cores (você amarelo, grupo azul, morto cinza), tamanho (192 px, 64 tiles) e o escurecimento dos bloqueios.
 - **Contraste na Cripta:** chão e parede são cinzas próximos. Se o designer achar fraco, dá para clarear o chão nos mapas escuros.
-- **Não exercitados no jogo, só no código:** a dica com o nome ao passar o mouse, o clique no mini mapa e a tecla M. Nas capturas, o mapa grande abriu pelo mesmo método que a tecla e o clique chamam.
+- **Dica sobre um membro do grupo:** testada só sobre a própria marca; a de membro usa o mesmo código.
 - **Membros distantes:** só aparecem os que o cliente já recebe (uns 40 tiles). Os distantes ficam para a T-391 e a T-393.

@@ -7,15 +7,15 @@ namespace Game.Client.Tests;
 public class MiniMapViewTests
 {
     [Fact]
-    public void Big_map_shows_64_tiles_around_the_player_at_3_pixels_per_tile()
+    public void Big_map_shows_56_tiles_around_the_player_at_3_pixels_per_tile()
     {
         // Floresta Baixa (200 × 160), jogador no meio.
         var frame = MiniMapView.Mini(200, 160, new Vector2(100, 80));
 
         Assert.Equal(3, frame.Scale);
-        Assert.Equal(new Vector2(64, 64), frame.Size);
-        Assert.Equal(new Vector2(68, 48), frame.Origin);
-        Assert.Equal(new Vector2(96, 96), frame.ToPixels(new Vector2(100, 80))); // jogador no centro do painel
+        Assert.Equal(new Vector2(56, 56), frame.Size);
+        Assert.Equal(new Vector2(72, 52), frame.Origin);
+        Assert.Equal(new Vector2(84, 84), frame.ToPixels(new Vector2(100, 80))); // jogador no centro do painel
     }
 
     [Fact]
@@ -25,31 +25,31 @@ public class MiniMapViewTests
         Assert.Equal(Vector2.Zero, corner.Origin);
 
         var farCorner = MiniMapView.Mini(200, 160, new Vector2(199, 159));
-        Assert.Equal(new Vector2(136, 96), farCorner.Origin);
-        Assert.Equal(new Vector2(189, 189), farCorner.ToPixels(new Vector2(199, 159))); // jogador fora do centro, perto da borda
+        Assert.Equal(new Vector2(144, 104), farCorner.Origin);
+        Assert.Equal(new Vector2(165, 165), farCorner.ToPixels(new Vector2(199, 159))); // jogador fora do centro, perto da borda
     }
 
     [Fact]
     public void Small_map_appears_whole_and_enlarged()
     {
-        // Campos (32 × 20): 192 / 32 = 6 pixels por tile, mapa inteiro.
+        // Campos (32 × 20): 168 / 32 = 5 pixels por tile, mapa inteiro.
         var frame = MiniMapView.Mini(32, 20, new Vector2(16, 10));
 
-        Assert.Equal(6, frame.Scale);
+        Assert.Equal(5, frame.Scale);
         Assert.Equal(Vector2.Zero, frame.Origin);
         Assert.Equal(new Vector2(32, 20), frame.Size);
-        Assert.Equal(new Vector2(0, 36), MiniMapView.CenterOffset(frame, new Vector2(192, 192)));
+        Assert.Equal(new Vector2(4, 34), MiniMapView.CenterOffset(frame, new Vector2(168, 168)));
     }
 
     [Fact]
-    public void Map_wider_than_the_window_but_short_keeps_its_full_height()
+    public void Medium_map_keeps_the_3_pixel_scale_and_stops_at_its_edges()
     {
-        // Cidade (80 × 60): recorte de 64 tiles na largura, altura inteira.
+        // Cidade (80 × 60): recorte de 56 × 56, sem ampliar, parando nas bordas.
         var frame = MiniMapView.Mini(80, 60, new Vector2(70, 30));
 
         Assert.Equal(3, frame.Scale);
-        Assert.Equal(new Vector2(64, 60), frame.Size);
-        Assert.Equal(new Vector2(16, 0), frame.Origin);
+        Assert.Equal(new Vector2(56, 56), frame.Size);
+        Assert.Equal(new Vector2(24, 2), frame.Origin);
     }
 
     [Theory]
