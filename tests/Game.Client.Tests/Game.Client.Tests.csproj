@@ -32,6 +32,7 @@
     <Compile Include="..\..\client\scripts\Hud\InstanceText.cs" Link="Client\InstanceText.cs" />
     <Compile Include="..\..\client\scripts\Account\LoginMemory.cs" Link="Client\LoginMemory.cs" />
     <Compile Include="..\..\client\scripts\Hud\ShopQuantity.cs" Link="Client\ShopQuantity.cs" />
+    <Compile Include="..\..\client\scripts\Hud\SkillDetailText.cs" Link="Client\SkillDetailText.cs" />
   </ItemGroup>
 
   <ItemGroup>
