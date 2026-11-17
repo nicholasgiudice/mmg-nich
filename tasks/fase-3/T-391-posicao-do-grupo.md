@@ -3,12 +3,12 @@
 - **Ambiente:** VPS
 - **Modelo:** Médio
 - **Depende de:** —
-- **Libera:** T-392
+- **Libera:** T-393
 - **Áreas que pode alterar:** `src/Game.Protocol/`, `src/Game.Server/`, `tests/Game.Protocol.Tests/`, `tests/Game.Server.Tests/`, `src/Game.Server/README.md`
 
 ## Contexto
 
-Pedido do designer durante o playtest da fase 3 (T-380), em 2026-11-17: um mini mapa que mostre onde estão os membros do grupo. A T-392 faz o mini mapa no cliente; esta tarefa dá ao cliente as posições de que ele precisa.
+Pedido do designer durante o playtest da fase 3 (T-380), em 2026-11-17: um mini mapa que mostre onde estão os membros do grupo. A T-392 faz o mini mapa no cliente com o jogador e os membros que estão perto; esta tarefa dá ao cliente a posição dos membros distantes, e a T-393 os mostra no mini mapa. É a parte que pode esperar: o mini mapa sai antes, sem ela.
 
 Hoje o cliente só conhece a posição de quem está na sua área de interesse (`src/Game.Server/Interest/`, células de 16 tiles e raio de 2 células). Os mapas chegam a 200 × 160 tiles (`lower_forest.tmj`, `vigil_fields.tmj`), então um membro do grupo do outro lado da Floresta não aparece no snapshot. O `PartyState` (`src/Game.Protocol/PartyMessages.cs`) traz zona, vida e Mana de cada membro, mas não a posição, e só é mandado quando algo muda.
 
@@ -35,7 +35,7 @@ Hoje o cliente só conhece a posição de quem está na sua área de interesse (
 ## Cuidados de integração
 
 - A T-385 também mexe no `WorldServer` (renascer fora da Cripta): integre uma de cada vez.
-- Com `ProtocolVersion` novo, o cliente publicado deixa de entrar no servidor até sair um cliente com a T-392. **Não integre esta tarefa na `main` sozinha**, porque o próximo `deploy-dev.sh` (o da T-385 ou da T-387, por exemplo) subiria o protocolo 13 sem cliente compatível. Ao terminar, faça o commit e deixe a branch para a T-392, que sai dela; as duas entram juntas na `main`.
+- Com `ProtocolVersion` novo, o cliente publicado deixa de entrar no servidor até sair um cliente com a T-393. **Não integre esta tarefa na `main` sozinha**, porque o próximo `deploy-dev.sh` (o da T-385 ou da T-387, por exemplo) subiria o protocolo 13 sem cliente compatível. Ao terminar, faça o commit e deixe a branch para a T-393, que sai dela; as duas entram juntas na `main`.
 
 ## Resultado
 
