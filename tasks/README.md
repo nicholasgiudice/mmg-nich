@@ -420,6 +420,9 @@ Detalhadas pela T-240 a partir do esboço da seção 7, de `design/first-map-v0.
 | [T-386](fase-3/T-386-tab-e-ataque-basico.md) | Alvo do Tab às vezes não recebe o ataque básico | Windows | Médio | — |
 | [T-387](fase-3/T-387-guarda-esqueletico-ataque-basico.md) | Guarda Esquelético usa o ataque básico | VPS | Médio | — |
 | [T-388](fase-3/T-388-marca-do-alvo.md) | Marca melhor no monstro selecionado | Windows | Humano + Médio | — |
+| **Mini mapa** (pedido de 2026-11-17) | | | | |
+| [T-391](fase-3/T-391-posicao-do-grupo.md) | Servidor: posição dos membros do grupo para o mini mapa | VPS | Médio | — |
+| [T-392](fase-3/T-392-mini-mapa.md) | Cliente: mini mapa com a posição do grupo | Windows | Humano + Médio | 391 |
 | [T-390](fase-3/T-390-planejar-fase-4.md) | Detalhar a fase 4 em tarefas | VPS | **Forte** | 380 |
 
 ### Ondas de execução
@@ -442,6 +445,11 @@ A T-216 (destino do backup, da fase 2) continua fora das ondas. Convém concluí
 - **Windows, uma de cada vez, nesta ordem:** T-383, T-386, T-384, T-381, T-382, T-388. As duas últimas pedem escolha do designer entre opções do PixelLab e podem dividir a mesma rodada de geração.
 - Depois de integrar: subir o servidor na VPS (`scripts/deploy-dev.sh`, por causa da T-385 e da T-387) e publicar um cliente novo (`export-client.ps1` e `deploy-download.ps1`).
 - A T-380 continua aberta; o relatório `playtest-v0.3.md` registra essas correções como achados do playtest.
+
+**Mini mapa (T-391 e T-392).** O designer pediu em 2026-11-17, ainda durante a T-380, um mini mapa com a posição dos membros do grupo. A área de interesse do servidor só alcança uns 40 tiles e os mapas chegam a 200 × 160, então a T-391 (VPS) passa a mandar a posição dos membros na mesma zona, e a T-392 (Windows) desenha o mini mapa e o mapa grande da zona.
+- A T-391 roda em paralelo com a T-385 e a T-387. A T-392 sai da branch da T-391 (`task/T-391-...`), sem esperar a `main`.
+- A T-391 sobe `ProtocolVersion` para 13. **Não integre a T-391 na `main` sozinha**, porque o próximo `deploy-dev.sh` subiria um servidor que o cliente publicado não aceita. Integre a T-391 e a T-392 juntas e, na mesma rodada, rode o `deploy-dev.sh` e publique o cliente novo. A T-385 e a T-387 podem ir antes, sozinhas.
+- A T-391 e a T-385 mexem no `WorldServer`: integre uma de cada vez.
 
 **Cuidados de integração**
 - A T-382, a T-383, a T-384 e a T-386 mexem em `Hud.cs` (e a T-386 em `PlayerInput`, que a T-382 também lê pelo Tab): integre uma de cada vez e rebase as outras.
