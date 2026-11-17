@@ -460,6 +460,35 @@ public class AiThreatTests
         Assert.Contains(ev, e => e is DamageDealt d && d.Source == m.Id && d.Target == p.Id);
     }
 
+    [Fact]
+    public void Guardian_uses_its_basic_strike_between_two_heavy_strikes()
+    {
+        // T-387: com o golpe pesado em recarga, o guarda ataca com o golpe comum em vez de ficar em guarda.
+        var slash = Ab("m.slash", new MeleeArcTargeting { Range = 1.5, Angle = 90 }, [new DamageEffect { Base = 1 }], cooldown: 20);
+        var guard = Ab("m.guard", new SelfTargeting(), [Frenzy], 0, 0, "ai.guard");
+        var heavy = Ab(
+            "m.heavy", new MeleeArcTargeting { Range = 2, Angle = 120 }, [new DamageEffect { Base = 10 }], 100, 10, "ai.heavy");
+        var guardian = Mob(
+            "monster.guardian", "ai.guardian", 2, 0.5, ["m.slash", "m.guard", "m.heavy"],
+            ("aggroRange", 8), ("guardSeconds", 1), ("recoverSeconds", 0.5), ("faceIntervalSeconds", 0.5));
+        var w = NewWorld(new GridMap(20, 20), [guardian], slash, guard, heavy);
+        var p = Player(w, new Vector2(10, 10));
+        var m = Mon(w, guardian, new Vector2(12.5f, 10));
+
+        var ev = Run(w, 400);
+        var seq = ev.OfType<AbilityStarted>().Where(a => a.Source == m.Id).Select(a => a.AbilityId).ToList();
+        var heavies = seq.Select((id, i) => (id, i)).Where(x => x.id == "m.heavy").Select(x => x.i).ToList();
+        Assert.True(heavies.Count >= 2, string.Join(",", seq));
+
+        // golpes comuns entre dois golpes pesados
+        Assert.Contains("m.slash", seq.Skip(heavies[0] + 1).Take(heavies[1] - heavies[0] - 1));
+
+        // cada golpe pesado continua precedido da guarda, sem golpe comum no meio (janela de flanco preservada)
+        Assert.All(heavies, i => Assert.Equal("m.guard", seq[i - 1]));
+        Assert.Contains(ev, e => e is AbilityExecuted x && x.AbilityId == "m.slash" && x.Source == m.Id);
+        Assert.Contains(ev, e => e is DamageDealt d && d.Source == m.Id && d.Target == p.Id);
+    }
+
     // ---------- determinismo e registro ----------
 
     private static ulong RunScenarioHash()
