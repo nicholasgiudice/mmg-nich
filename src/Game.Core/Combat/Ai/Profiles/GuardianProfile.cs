@@ -8,6 +8,8 @@ namespace Game.Core.Combat.Ai.Profiles;
 /// com tag <c>ai.heavy</c> (conjuração longa = telegráfo visível). Durante a guarda o monstro fica parado e só reorienta
 /// para o alvo a cada <c>faceIntervalSeconds</c> (padrão 1), o que abre janela para atacar pelo flanco.
 /// Fases em <see cref="AiState.Phase"/>: 0 perseguir, 1 guarda, 2 golpe, 3 recuperar.
+/// Na fase perseguir, só entra em guarda com o golpe pesado pronto; com ele em recarga, ataca como o
+/// <c>ai.melee_chaser</c> com as habilidades comuns (ex.: o golpe de lâmina, T-387) e persegue até o alcance delas.
 /// Parâmetros: <c>guardSeconds</c> (3), <c>recoverSeconds</c> (1), <c>faceIntervalSeconds</c> (1).
 /// </summary>
 public sealed class GuardianProfile : MeleeChaserProfile
@@ -31,7 +33,11 @@ public sealed class GuardianProfile : MeleeChaserProfile
         switch (state.Phase)
         {
             case 0:
-                if (inReach)
+                if (ctx.Abilities.IsOnCooldown(heavy, ctx.Tick))
+                {
+                    base.Think(ctx); // entre dois golpes pesados: ataque comum
+                }
+                else if (inReach)
                 {
                     state.Phase = 1;
                     state.PhaseUntilTick = ctx.Tick + Math.Max(1, ctx.ParamTicks("guardSeconds", 3));
