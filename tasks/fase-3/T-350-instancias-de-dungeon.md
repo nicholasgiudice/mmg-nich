@@ -22,6 +22,7 @@ Hoje o servidor no modo mundo (`--world`, T-214) só tem **zonas abertas compart
 3. **Limites:** no máximo `maxPlayers` por instância (4), e um número máximo de instâncias por processo (proposta: 20; quando lota, a entrada é recusada com motivo).
 4. **Fim da instância:** a instância vazia é destruída depois de `emptyTimeout` (proposta: 5 min). Quem desconecta dentro dela volta para dentro se reconectar antes disso, e depois disso volta para a entrada (posição gravada = portão de origem). Quem sai do grupo dentro da instância é levado para fora ao fim de 30 s, com aviso.
 5. **Morte na instância:** o personagem renasce na **entrada da instância**, e não na Cidade, enquanto houver alguém do grupo vivo lá dentro. Se todos caírem, renascem na entrada da instância, com os monstros vivos como estavam (não há "wipe" que reinicia). Registre se o designer preferir outra regra.
+   > **Mudança em 2026-11-16 (T-385):** o designer preferiu outra regra depois do playtest da fase 3: morte na instância renasce na Cidade (nascimento da zona inicial); a cópia continua para o grupo e o portão leva de volta a ela.
 6. **Gravação:** a zona gravada de quem está numa instância é a **zona de origem** (entrada), nunca a instância.
 7. **Protocolo:** o `Welcome` já leva arena e época. Se precisar, adicione o id da instância e o motivo de recusa (instâncias lotadas, sem grupo...).
 8. **Desempenho:** as instâncias seguem a regra das zonas, e só avançam com jogadores. Medir com bots: 10 instâncias com 2 bots cada, por 60 s.

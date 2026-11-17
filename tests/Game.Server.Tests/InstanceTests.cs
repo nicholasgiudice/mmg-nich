@@ -273,44 +273,50 @@ public class InstanceTests
     }
 
     [Fact]
-    public void Death_respawns_at_the_instance_entrance_with_the_monsters_as_they_were()
+    public void Death_in_an_instance_respawns_in_the_city_and_the_gate_leads_back_to_the_same_copy()
     {
-        using var w = Rig();
-        var a = w.Join("aria");
-        var b = w.Join("bruno", "class.cleric");
+        var store = new FakeStore();
+        var rowA = store.Add();
+        var rowB = store.Add();
+        using var w = Rig(store: store);
+        var a = w.JoinWithTicket(AccountRig.Ticket(rowA));
+        var b = w.JoinWithTicket(AccountRig.Ticket(rowB));
         TestClient[] all = [a, b];
-        Group(w, a, "bruno", b, all);
+        Group(w, a, rowB.Name, b, all);
         WalkInto(w, a, CityGate, all);
         WalkInto(w, b, CityGate, all);
         var zone = w.Where(a).Zone;
+        var instanceId = zone.InstanceId;
+        Assert.Same(zone, w.Where(b).Zone);
         var boss = Matriarch(zone);
         var health = boss.Get<Health>();
         health.Current = health.Max / 2;
 
-        // Um cai com o outro vivo; depois o outro cai também (todos caídos): os dois renascem na entrada da mesma cópia.
+        // T-385: quem cai pede para renascer e aparece no nascimento da Cidade, cheio; o outro continua na cópia.
         zone.World.Kill(w.Where(a).Entity);
         w.Tick(5, all);
         a.Send(new RespawnRequest());
         w.Tick(1, all);
+
+        var (where, hero) = w.Where(a);
+        Assert.Same(w.City, where);
+        Assert.Equal(0, a.Welcome!.InstanceId);
+        Assert.True(hero.IsAlive);
+        Assert.Equal(hero.Get<Health>().Max, hero.Get<Health>().Current);
+        Assert.Equal(w.City.SpawnPosition, hero.Get<Transform>().Position);
+        Assert.Same(zone, w.Where(b).Zone);
+        Assert.Single(w.Server.Instances);
+
+        // A gravação é a da zona de origem, nunca a instância.
+        w.Flush();
+        Assert.Equal("zone.city", store.Row(rowA.Id).ZoneId);
+        Assert.Equal("zone.vigil_fields", store.Row(rowB.Id).ZoneId); // a saída da instância de teste leva aos Campos
+
+        // Volta pelo portão: mesma cópia, com a Matriarca ainda ferida.
+        WalkInto(w, a, CityGate, all);
         Assert.Same(zone, w.Where(a).Zone);
-
-        zone.World.Kill(w.Where(a).Entity);
-        zone.World.Kill(w.Where(b).Entity);
-        w.Tick(5, all);
-        a.Send(new RespawnRequest());
-        b.Send(new RespawnRequest());
-        w.Tick(1, all);
-
-        foreach (var c in all)
-        {
-            var (where, hero) = w.Where(c);
-            Assert.Same(zone, where);
-            Assert.Equal(zone.InstanceId, c.Welcome!.InstanceId);
-            Assert.True(hero.IsAlive);
-            Assert.Equal(zone.SpawnPosition, hero.Get<Transform>().Position);
-        }
-
-        Assert.Same(boss, Matriarch(zone)); // não reinicia: mesma Matriarca, ainda ferida
+        Assert.Equal(instanceId, a.Welcome!.InstanceId);
+        Assert.Same(boss, Matriarch(zone));
         Assert.True(boss.Get<Health>().Current < boss.Get<Health>().Max);
         Assert.Single(w.Server.Instances);
     }

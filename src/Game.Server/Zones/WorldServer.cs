@@ -34,7 +34,8 @@ namespace Game.Server.Zones;
 /// <item>Instâncias (T-350): zonas do tipo <see cref="ZoneKind.Instance"/> não existem de saída. Entrar no portão de uma delas
 /// leva à cópia do grupo (ou do personagem, sem grupo), criada na hora se não houver (<see cref="DungeonInstance"/>), até
 /// <see cref="ServerOptions.MaxInstances"/> no processo e <see cref="ZoneDefinition.MaxPlayers"/> por cópia; a recusa chega
-/// como <see cref="InstanceRejected"/>. Lá dentro: morte renasce na entrada da cópia; a gravação usa a zona de origem (a
+/// como <see cref="InstanceRejected"/>. Lá dentro: morte renasce na zona inicial, como em qualquer zona (T-385), e o portão leva de volta à mesma cópia
+/// enquanto ela existir; a gravação usa a zona de origem (a
 /// chegada da saída); quem não é do grupo dono sai depois de <see cref="ZoneDefinition.OutsiderTimeoutTicks"/>, com
 /// <see cref="InstanceNotice"/>; quem desconecta volta para dentro se reconectar enquanto a cópia existir; a cópia vazia some
 /// depois de <see cref="ZoneDefinition.EmptyTimeoutTicks"/>.</item>
@@ -435,9 +436,9 @@ public sealed class WorldServer : ITransportHandler, IGameHost, IPartyHost
             {
                 if (p.WantsRespawn)
                 {
-                    // T-350: numa instância, renasce na entrada da cópia (os monstros continuam como estavam).
-                    var home = p.Zone!.InstanceId > 0 ? p.Zone : _start;
-                    Move(p, home, home.SpawnPosition, keepVitals: false, "renasceu");
+                    // T-385: renasce sempre no nascimento da zona inicial, inclusive vindo de uma instância (a cópia
+                    // continua para o resto do grupo, e o portão leva de volta à mesma cópia enquanto ela existir).
+                    Move(p, _start, _start.SpawnPosition, keepVitals: false, "renasceu");
                 }
 
                 continue;
