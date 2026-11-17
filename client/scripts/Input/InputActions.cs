@@ -44,9 +44,12 @@ public static class InputActions
     /// <summary>B: mostra/esconde a lista de batalha (T-312).</summary>
     public const string BattleList = "battle_list";
 
+    /// <summary>M: abre/fecha o mapa grande da zona (T-392).</summary>
+    public const string ZoneMap = "zone_map";
+
     /// <summary>Teclas 1 a 6 da barra de atalhos (T-081): o que cada uma usa é o jogador quem escolhe (<see cref="HotbarLayout"/>).</summary>
     public static readonly string[] AbilitySlots = ["ability_1", "ability_2", "ability_3", "ability_4", "ability_5", "ability_6"];
 
     public static IEnumerable<string> All =>
-        new[] { MoveUp, MoveDown, MoveLeft, MoveRight, Attack, AttackKey, TargetNext, TargetPrevious, TargetClear, Consumable, Pause, Restart, CharacterPanel, SkillsPanel, InventoryPanel, PickUp, ToggleDebug, BattleList }.Concat(AbilitySlots);
+        new[] { MoveUp, MoveDown, MoveLeft, MoveRight, Attack, AttackKey, TargetNext, TargetPrevious, TargetClear, Consumable, Pause, Restart, CharacterPanel, SkillsPanel, InventoryPanel, PickUp, ToggleDebug, BattleList, ZoneMap }.Concat(AbilitySlots);
 }

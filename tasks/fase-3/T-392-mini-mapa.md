@@ -43,4 +43,60 @@ O terreno sai do mesmo `.tmj` que o cliente já desenha (`client/scripts/Present
 
 ## Resultado
 
-_(preencher ao concluir)_
+**Feito**, com a aprovação do designer pendente (cores e tamanho; ver Pendências).
+
+**Mini mapa** (`Hud/MiniMapPanel.cs`, desenho em `Hud/MiniMapCanvas.cs`):
+- **Onde fica:** canto superior direito, abaixo do nome da zona (`TopRightReserved`). A lista de batalha desce para baixo dele. Moldura fina de pedra do kit (`HudTheme.MemberFrame`), sem arte nova.
+- **Tamanho:** 192 × 192 px na tela de 1280 × 720 do jogo. Nos mapas grandes, mostra 64 × 64 tiles a 3 px por tile. O recorte segue o jogador e para nas bordas do mapa.
+- **Mapas menores que o recorte:** aparecem inteiros, na maior escala inteira que caiba (32 × 20 sai a 6 px por tile, centralizado). A Cidade (80 × 60) mostra 64 tiles na largura e a altura inteira.
+- **Só no mundo aberto:** fora de uma zona (sala de encontro, jogo local), o mini mapa some.
+- **Clique no mini mapa:** abre o mapa grande.
+
+**Terreno** (`Hud/MiniMapTerrain.cs`): gerado uma vez por zona, ao entrar, com 1 pixel por tile.
+- **Cor de cada tile:** a média dos pixels visíveis do tile, camada por camada como o jogo desenha, menos a de colisão. A média sai de `TiledVisual.AverageColor` e fica guardada por gid.
+- **Bloqueios:** tiles bloqueados no `GridMap` do Core escurecem 45%, então a trilha se destaca da mata e o chão das paredes.
+- **Portões:** retângulo dourado.
+- **Arena ASCII:** sem mapa do Tiled, chão e parede saem em duas cores.
+
+**Marcas:**
+- **Você:** ponto amarelo claro.
+- **Membro do grupo:** ponto azul claro; morto, cinza com um X.
+- **Membro fora do recorte:** seta presa na borda, na direção dele (azul vivo, cinza morto).
+- **Mouse sobre a marca:** mostra o nome ("Você", o nome do membro, "(morto)").
+- **Direção do olhar:** não foi desenhada, porque o snapshot não traz para onde a unidade olha.
+- **De onde vêm os membros:** os do `PartyState` na mesma zona cuja entidade está no snapshot e tem o mesmo nome. Na Cripta, outra cópia pode ter uma entidade com o mesmo id; por isso o nome também precisa bater.
+- **Uma fonte só:** as marcas vêm da lista de `MapMark` que o `Main` monta a cada frame (`UpdateZoneMap`). A T-393 só troca a origem dessa lista.
+
+**Mapa grande** (`Hud/ZoneMapWindow.cs`):
+- **Tecla:** M (ação `zone_map`). M ou Esc fecha. M não age enquanto se digita no grupo ou na loja.
+- **Janela:** a zona inteira no centro, numa janela de pedra e ouro com a placa "Mapa: <zona>", na maior escala inteira que caiba em 80% da tela (teto de 10 px por tile). Abre por cima do painel do chefe.
+
+**Contas sem Godot** (`Hud/MiniMapView.cs`): recorte, escala inteira, centralização e marca presa na borda. 10 testes em `tests/Game.Client.Tests/MiniMapViewTests.cs`.
+
+**Prévia no jogo**, contra o servidor local (`--world --dev-login --start-zone <zona>`), em `tasks/reports/interface/mini-mapa/`:
+- `prancha-mini-mapa.png`: o mini mapa nos Campos da Vigília, na Cidade, na Floresta (grupo perto, membro fora do recorte e membro caído) e na Cripta;
+- `floresta-grupo.png` e `floresta-mapa-grande.png`: dois clientes no mesmo grupo na Floresta Baixa, com a Ana subindo a trilha e o Beto no nascimento;
+- `floresta-membro-fora.png` e `floresta-membro-caido.png`: cada um subiu por um lado da trilha. O Beto ficou a mais de 32 tiles e virou seta na borda esquerda; depois os monstros o mataram e a seta ficou cinza;
+- `campos.png`, `cidade.png`, `cripta.png` e `cripta-mapa-grande.png`: um cliente sozinho.
+
+**Ajustes provisórios só para as capturas, fora do commit:**
+- `--test-invite`, `--test-accept` e `--test-map` no `Main`, para formar o grupo e abrir o mapa grande sem clicar.
+- **Cripta:** o `kind` da `zone.watcher_crypt` em `data/zones.json` virou `field`, porque o servidor só aceita nascer em zona aberta (como na T-388). Por isso o painel do Vigia aparece nas capturas da Cripta.
+- **Correção que essas capturas renderam:** na Cripta, o painel do chefe cobria o título do mapa grande. O mapa grande agora vai para a frente ao abrir (`MoveToFront`).
+
+`dotnet build client/` sem avisos e `./scripts/check.sh` completo passa.
+
+**Desvios:**
+- **Branch:** criada a partir de `docs/tarefa-mini-mapa`, onde está o arquivo desta tarefa, e não de `main`.
+- **Fora das áreas da tarefa, o mínimo:**
+  - `Presentation/TiledVisual.cs` ganhou `AverageColor`, a cor média de um tile;
+  - `Presentation/ArenaView.cs` ganhou `Visual`, para o mini mapa reaproveitar o mapa do Tiled já carregado;
+  - `Input/InputActions.cs` ganhou a ação `zone_map`.
+- **`.uid`:** o Godot gerou os `.uid` dos scripts novos e também os de `LoginMemory.cs` e `ShopQuantity.cs`, que faltavam na `main`. Foram todos para o commit.
+- **"Campos" de 32 × 20:** o mapa citado na tarefa (`fields.tmj`) não é usado por nenhuma zona aberta. Os Campos do jogo são os da Vigília (200 × 140). O caso de mapa pequeno inteiro ficou coberto pelos testes, sem captura.
+
+**Pendências:**
+- **Aprovação do designer:** cores (você amarelo, grupo azul, morto cinza), tamanho (192 px, 64 tiles) e o escurecimento dos bloqueios.
+- **Contraste na Cripta:** chão e parede são cinzas próximos. Se o designer achar fraco, dá para clarear o chão nos mapas escuros.
+- **Não exercitados no jogo, só no código:** a dica com o nome ao passar o mouse, o clique no mini mapa e a tecla M. Nas capturas, o mapa grande abriu pelo mesmo método que a tecla e o clique chamam.
+- **Membros distantes:** só aparecem os que o cliente já recebe (uns 40 tiles). Os distantes ficam para a T-391 e a T-393.

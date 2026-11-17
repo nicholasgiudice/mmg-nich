@@ -33,6 +33,7 @@
     <Compile Include="..\..\client\scripts\Account\LoginMemory.cs" Link="Client\LoginMemory.cs" />
     <Compile Include="..\..\client\scripts\Hud\ShopQuantity.cs" Link="Client\ShopQuantity.cs" />
     <Compile Include="..\..\client\scripts\Hud\SkillDetailText.cs" Link="Client\SkillDetailText.cs" />
+    <Compile Include="..\..\client\scripts\Hud\MiniMapView.cs" Link="Client\MiniMapView.cs" />
   </ItemGroup>
 
   <ItemGroup>

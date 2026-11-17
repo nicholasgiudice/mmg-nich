@@ -265,6 +265,7 @@ public partial class Main : Node2D
             _hud.TopRightReserved = _zoneScreen.CornerBottom;
             _worldView.Render(_authority, events);
             _hud.Render(_authority, _input.SelectedTarget, aim, events);
+            UpdateZoneMap(_authority);
             if (_authority is NetAuthority statsNet && _args.ContainsKey("net-stats"))
             {
                 NetStats(statsNet);
@@ -573,16 +574,48 @@ public partial class Main : Node2D
                     .Select(g => (g.Area, $"Portão: {_content.Zones.GetValueOrDefault(g.To)?.Name ?? g.To}"))
                     .ToList());
                 _zoneScreen.Enter(_zone, _content);
+                _hud.ShowZoneMap(_zone.Name, map, arenaView.Visual, _zone.Gates.Select(g => g.Area).ToList());
             }
             else
             {
                 _zoneScreen.Leave();
+                _hud.HideZoneMap();
             }
 
             GD.Print($"[net] na sala {welcome.EncounterId} como {welcome.ControlledEntity} (época {welcome.Epoch})");
         }
 
         return true;
+    }
+
+    /// <summary>
+    /// Mini mapa (T-392): o jogador e os membros do grupo que o cliente já vê (estão no snapshot, na mesma zona). A entidade
+    /// do membro só vale na zona dele; na Cripta, outra cópia pode ter o mesmo id, por isso o nome também tem de bater.
+    /// </summary>
+    private void UpdateZoneMap(IGameAuthority authority)
+    {
+        if (_zone is null || authority.Latest is not { } latest)
+        {
+            return;
+        }
+
+        System.Numerics.Vector2? player = authority.ControlledEntity is { } me && _worldView.TryGetDrawnPosition(me, out var px)
+            ? Units.ToWorld(px)
+            : null;
+        var members = new List<MmoRpgClient.Hud.MapMark>();
+        if (authority is NetAuthority net && net.Party.InParty)
+        {
+            foreach (var member in net.Party.Others.Where(net.Party.SameZone))
+            {
+                var unit = latest.Entities.FirstOrDefault(e => e.Id == member.Entity)?.TryGet<Game.Core.Combat.UnitInfo>();
+                if (unit?.Name == member.Name && _worldView.TryGetDrawnPosition(member.Entity, out var at))
+                {
+                    members.Add(new MmoRpgClient.Hud.MapMark(member.MemberId, member.Name, Units.ToWorld(at), member.Alive));
+                }
+            }
+        }
+
+        _hud.UpdateZoneMap(player, members);
     }
 
     /// <summary>Mundo aberto (T-223): morto, mostra o aviso com "Renascer na Cidade"; o servidor espera o pedido.</summary>

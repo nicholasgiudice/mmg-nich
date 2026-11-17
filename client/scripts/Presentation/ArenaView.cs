@@ -50,6 +50,9 @@ public partial class ArenaView : Node2D
 
     public GridMap? Map => _map;
 
+    /// <summary>Desenho do Tiled da arena mostrada; null em arena ASCII ou com a grade de depuração. O mini mapa usa (T-392).</summary>
+    public TiledVisual? Visual => _visual;
+
     public override void _Ready()
     {
         TextureFilter = TextureFilterEnum.Nearest;
