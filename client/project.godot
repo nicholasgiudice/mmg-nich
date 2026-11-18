@@ -13,6 +13,8 @@ config_version=5
 config/name="Valdran"
 run/main_scene="res://scenes/Account.tscn"
 config/features=PackedStringArray("4.7", "C#", "GL Compatibility")
+config/icon="res://assets/art/ui/icon.png"
+config/windows_native_icon="res://assets/art/ui/icon.ico"
 
 [display]
 

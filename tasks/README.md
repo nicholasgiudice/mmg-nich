@@ -256,11 +256,12 @@ O jogo passa a se chamar **Valdran** (decisão de 2026-11-02) e ganha um site p�
 | [T-071](trilha-valdran/T-071-site-gerador.md) | Site: gerador estático com monstros, itens, classes e habilidades | VPS | Médio | — |
 | [T-072](trilha-valdran/T-072-site-publicacao.md) | Publicar o site em `valdran.nich.click` (Caddy) | VPS | Humano + Leve | 071, DNS |
 | [T-073](trilha-valdran/T-073-logo-valdran.md) | Logo do Valdran no PixelLab (tela de login e página inicial do site) | Windows | Humano + Leve | 070, 088 |
+| [T-074](trilha-valdran/T-074-selecao-e-icone.md) | Tela de seleção de personagem em cartões e ícone do executável (PixelLab) | Windows | Humano + Leve | 073, 220 |
 
 ```text
 Valdran:      T-070 (independente)
               T-071 ─► T-072 ◄── DNS valdran.nich.click (humano)
-              T-073 (logo; depois da T-088)
+              T-073 (logo; depois da T-088) ─► T-074 (seleção e ícone)
 ```
 
 ### Trilha de interface (`tasks/trilha-interface/`)
