@@ -255,7 +255,7 @@ public partial class WorldView : Node2D
     /// <summary>
     /// Itens no chão (T-222). A queda deixa todos no ponto do monstro (T-204); aqui eles são espalhados em volta dele,
     /// em ordem de id, só no desenho. Forte e com "[F]" quando o jogador tem direito e está ao alcance de pegar. O direito
-    /// segue a regra do Core no tick do snapshot (T-394): dono sorteado primeiro, depois os participantes; item largado, todos.
+    /// segue a regra do Core no tick do snapshot (T-394): só o dono no começo, depois todos; item largado, todos.
     /// </summary>
     private void RenderGroundItems(WorldSnapshot latest, EntityId? controlled, HashSet<EntityId> seen)
     {

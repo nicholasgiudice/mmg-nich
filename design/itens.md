@@ -131,7 +131,7 @@ Todos os 21 itens base (as 7 armas, as 12 armaduras e os 2 acessórios) estão n
 Item épico só cai da Matriarca. Os itens caem para quem participou da morte e ficam 120 s no chão.
 
 **Quem pega o item no chão** (T-394):
-- **Item que cai de monstro:** cada item tem um dono, escolhido entre os participantes da morte (quem recebe a XP). O dono do primeiro item muda de morte para morte (a conta usa o monstro e o momento da morte); os itens seguintes da mesma queda vão para os próximos participantes, em rodízio. Nos primeiros **30 s** (`ownerDuration`), só o dono pega. Depois, qualquer participante da morte pega. Quem não participou nunca pega.
+- **Item que cai de monstro:** cada item tem um dono, escolhido entre os participantes da morte (quem recebe a XP). O dono do primeiro item muda de morte para morte (a conta usa o monstro e o momento da morte); os itens seguintes da mesma queda vão para os próximos participantes, em rodízio. Nos primeiros **30 s** (`ownerDuration`), só o dono pega. Depois, qualquer jogador pega, tenha participado da morte ou não.
 - **Item largado por um jogador:** não tem dono. Qualquer jogador pega, a qualquer momento.
 
 ## Economia (T-320–T-322)

@@ -38,7 +38,7 @@ As habilidades dos monstros estão detalhadas em `design/habilidades.md` (§ Mon
 
 ## Quedas (drops)
 
-Nenhum monstro tem tabela própria: a queda depende só da categoria (`data/items.json` → `rules.items.drops`). As três tabelas usam a mesma lista de 21 itens base (todas as armas, armaduras e acessórios de `design/itens.md`), sorteados com o mesmo peso. O **nível do item** é o nível do monstro e os itens só caem para quem participou da morte. Cada item tem um dono escolhido entre os participantes, que pega sozinho nos primeiros 30 s; depois, qualquer participante pega (`design/itens.md`, T-394).
+Nenhum monstro tem tabela própria: a queda depende só da categoria (`data/items.json` → `rules.items.drops`). As três tabelas usam a mesma lista de 21 itens base (todas as armas, armaduras e acessórios de `design/itens.md`), sorteados com o mesmo peso. O **nível do item** é o nível do monstro e os itens só caem para quem participou da morte. Cada item tem um dono escolhido entre os participantes, que pega sozinho nos primeiros 30 s; depois, qualquer jogador pega (`design/itens.md`, T-394).
 
 | Categoria | Chance de queda | Itens | Raridade (comum / incomum / raro / épico) | Garantia |
 |---|---|---|---|---|

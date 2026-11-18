@@ -147,7 +147,7 @@ public class PartyTests
     }
 
     [Fact]
-    public void Only_the_drawn_owner_picks_up_until_the_owner_window_ends_then_any_participant()
+    public void Only_the_owner_picks_up_until_the_owner_window_ends_then_anyone()
     {
         var w = WorldBuilder.CreateDefault(11, null, AlwaysDrops());
         var killer = Hero(w, 1, party: 1);
@@ -168,10 +168,10 @@ public class PartyTests
             w.Step();
         }
 
-        Assert.Equal(ItemRejectReason.NotOwner, Reject(w, stranger, ground));
-        w.Enqueue(new PickUpItemIntent(other.Id, ground.Id));
+        Assert.True(loot.CanPickUp(other.Id, w.Tick));
+        w.Enqueue(new PickUpItemIntent(stranger.Id, ground.Id)); // não participou, mas o prazo do dono acabou
         w.Step();
-        Assert.Contains(w.LastTickEvents, e => e is ItemPickedUp p && p.Entity == other.Id);
+        Assert.Contains(w.LastTickEvents, e => e is ItemPickedUp p && p.Entity == stranger.Id);
         Assert.True(ground.IsRemoved);
     }
 

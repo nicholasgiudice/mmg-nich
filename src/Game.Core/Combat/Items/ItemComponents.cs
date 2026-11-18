@@ -173,10 +173,11 @@ public sealed class Wallet : IComponent, IReplicated
 /// Item no chão (T-204): entidade com <see cref="Simulation.Components.Transform"/> e este componente; some em
 /// <see cref="ExpiresAtTick"/>. Quem pode pegar (T-394):
 /// <list type="bullet">
-/// <item>antes de <see cref="FreeAtTick"/>, só o <see cref="Owner"/> (o dono sorteado entre os participantes);</item>
-/// <item>a partir de <see cref="FreeAtTick"/>, qualquer um de <see cref="Owners"/> (os participantes, ids de entidade em ordem);</item>
+/// <item>antes de <see cref="FreeAtTick"/>, só o <see cref="Owner"/> (o dono escolhido entre os participantes);</item>
+/// <item>a partir de <see cref="FreeAtTick"/>, qualquer um, tenha participado da morte ou não;</item>
 /// <item><see cref="Owners"/> vazio (item largado por um jogador): qualquer um, a qualquer momento.</item>
 /// </list>
+/// <see cref="Owners"/> guarda os participantes da morte (ids de entidade, em ordem), entre os quais o dono foi escolhido.
 /// </summary>
 public sealed class GroundItem : IComponent, IReplicated
 {
@@ -194,7 +195,7 @@ public sealed class GroundItem : IComponent, IReplicated
 
     /// <summary>Se <paramref name="id"/> pode pegar o item no tick <paramref name="tick"/> (sem contar distância e espaço).</summary>
     public bool CanPickUp(EntityId id, long tick) =>
-        IsPublic || (tick < FreeAtTick ? Owner == id.Value : Owners.Contains(id.Value));
+        IsPublic || tick >= FreeAtTick || Owner == id.Value;
 
     public IComponent Clone() => new GroundItem { Item = Item, Owners = Owners, Owner = Owner, FreeAtTick = FreeAtTick, ExpiresAtTick = ExpiresAtTick };
 

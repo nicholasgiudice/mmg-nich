@@ -12,7 +12,7 @@ Pedido do designer em 2026-11-18. Até agora, cada item que caía de um monstro 
 
 ## Requisitos
 
-1. **Item que cai de monstro:** cada item tem um dono, escolhido entre os participantes da morte (os mesmos que recebem a XP, T-310). Durante um prazo configurável, só o dono pega; depois, qualquer participante pega. Quem não participou nunca pega.
+1. **Item que cai de monstro:** cada item tem um dono, escolhido entre os participantes da morte (os mesmos que recebem a XP, T-310). Durante um prazo configurável, só o dono pega; depois, qualquer jogador pega, tenha participado da morte ou não (ajuste do designer, 2026-11-18).
 2. A escolha do dono é determinística (nada de relógio nem `Random` fora da simulação). Numa queda com vários itens, os donos se alternam entre os participantes.
 3. **Item largado por um jogador:** sem dono; qualquer jogador pega, a qualquer momento.
 4. O prazo vem de `data/items.json` (`rules.items.ownerDuration`, em segundos), validado.
@@ -33,11 +33,11 @@ Pedido do designer em 2026-11-18. Até agora, cada item que caía de um monstro 
 **Feito** em 2026-11-18, na branch `task/T-394-dono-do-saque`.
 
 **Regra no Core** (`GroundItem`, `Gear`):
-- `GroundItem` ganhou `Owner` (id do dono escolhido; 0 = ninguém) e `FreeAtTick` (a partir de quando os participantes pegam), além de `Owners` (os participantes) e `ExpiresAtTick`.
+- `GroundItem` ganhou `Owner` (id do dono escolhido; 0 = ninguém) e `FreeAtTick` (a partir de quando qualquer um pega), além de `Owners` (os participantes, entre os quais o dono é escolhido) e `ExpiresAtTick`.
 - `GroundItem.CanPickUp(id, tick)` decide quem pega e é usado pelo Core (`Gear.PickUp`) e pelo cliente. A regra:
   - `Owners` vazio: qualquer um pega;
   - antes de `FreeAtTick`: só o `Owner`;
-  - depois: qualquer um de `Owners`.
+  - depois: qualquer um, mesmo quem não participou da morte.
   - O `IsOwner` antigo saiu.
 - `Gear.DropLoot`: os participantes ficam em ordem de id.
   - O dono do primeiro item é o de índice (id do monstro + tick da morte) mod participantes, e os itens seguintes da mesma queda vão para os próximos da lista (rodízio). O chefe derruba 2 itens, que vão para 2 pessoas diferentes.
@@ -47,7 +47,7 @@ Pedido do designer em 2026-11-18. Até agora, cada item que caía de um monstro 
 
 **Dados:**
 - `rules.items.ownerDuration` = **30 s** em `data/items.json` (`ItemRules.OwnerDurationTicks`, padrão 30 s).
-- O validador exige o valor entre 0 e `groundDuration` (120 s). Com 0, o item fica livre para os participantes desde o início.
+- O validador exige o valor entre 0 e `groundDuration` (120 s). Com 0, o item fica livre para todos desde o início.
 
 **Protocolo 14:** o codec do `GroundItem` leva `Owner` e `FreeAtTick`.
 
@@ -66,7 +66,7 @@ Pedido do designer em 2026-11-18. Até agora, cada item que caía de um monstro 
   - item largado que expira (separado do teste anterior).
 - `PartyTests`:
   - o dono pertence aos participantes;
-  - só o dono pega durante o prazo; depois dele, o outro membro do grupo pega e quem não participou continua sem poder pegar.
+  - só o dono pega durante o prazo (o outro membro do grupo e quem não participou são recusados); depois dele, qualquer um pode, e quem não participou pega.
 - `ItemLoaderTests`: leitura de `ownerDuration` e os dois erros de validação (negativo e maior que `groundDuration`).
 - `ProtocolTests`: ida e volta de `Owner` e `FreeAtTick`.
 

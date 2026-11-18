@@ -214,8 +214,8 @@ public static class Gear
 
     /// <summary>
     /// Cria o item no chão e publica <see cref="ItemDropped"/>. <paramref name="owners"/> vazio = qualquer um pega. Com
-    /// <paramref name="owner"/> (T-394), só ele pega durante <see cref="ItemRules.OwnerDurationTicks"/>; depois, qualquer um de
-    /// <paramref name="owners"/>. Some depois de <see cref="ItemRules.GroundDurationTicks"/>.
+    /// <paramref name="owner"/> (T-394), só ele pega durante <see cref="ItemRules.OwnerDurationTicks"/>; depois, qualquer um.
+    /// Some depois de <see cref="ItemRules.GroundDurationTicks"/>.
     /// </summary>
     public static Entity SpawnGround(World world, Vector2 position, ItemInstance item, IEnumerable<int> owners, EntityId source, int owner = 0)
     {
