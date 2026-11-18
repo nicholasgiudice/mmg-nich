@@ -26,7 +26,7 @@ O designer pediu em 2026-11-17 um logo para o jogo, feito no PixelLab. Até agor
 
 ## Resultado
 
-**Feito** (Windows, 2026-11-17). O designer escolheu a opção 2.
+**Feito** (Windows, 2026-11-17). O designer escolheu a opção 2 e aprovou a prévia no jogo (`t073-login.png`).
 
 **Opções.** Gerei as opções com `create_image_pro` em 192×64, com fundo transparente e o painel do kit (`panel.png`) como referência de estilo. Cada chamada custou 10 gerações e deu 1 candidata. Em todas, "VALDRAN" saiu escrito certo.
 - Rodada 1: 1 pedra entalhada, 2 ouro com espada, 3 ouro simples, 4 gótico com coroa. Prancha em `tasks/reports/interface/logo-amostra/rodada-1/prancha.png`.
