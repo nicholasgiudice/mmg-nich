@@ -37,6 +37,7 @@ public static class ProtocolVersion
     /// 11 (T-351): componente <c>EncounterObjective</c> (selos do Vigia), eventos <c>ObjectiveDestroyed</c> e
     /// <c>EncounterFailed</c>; o status ativo leva o dano recebido (T-341) e o ponto de origem (medo).
     /// 12 (T-350): id da instância no <c>Welcome</c> (0 = zona aberta) e mensagens <c>InstanceRejected</c> e <c>InstanceNotice</c>.
+    /// 13 (T-391): mensagem <c>PartyPositions</c> (posição dos membros do grupo na mesma zona, para o mini mapa).
     /// </summary>
-    public const int Current = 12;
+    public const int Current = 13;
 }

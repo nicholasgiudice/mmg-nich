@@ -30,7 +30,8 @@ namespace Game.Server.Zones;
 /// <item>Personagens com conta são gravados como na sala (T-212) e também ao trocar de zona; a gravação leva zona e posição.</item>
 /// <item>Grupo (T-310): <see cref="PartyManager"/> acima das zonas; cada membro tem o <c>PartyMembership</c> na entidade
 /// (refeito a cada troca de zona) e recebe o <see cref="PartyState"/> quando algo muda. Desconectar tira do grupo; o
-/// grupo não é gravado.</item>
+/// grupo não é gravado. A cada <see cref="PartyPositionIntervalTicks"/> vai o <see cref="PartyPositions"/> com a posição
+/// dos outros membros na mesma zona (T-391).</item>
 /// <item>Instâncias (T-350): zonas do tipo <see cref="ZoneKind.Instance"/> não existem de saída. Entrar no portão de uma delas
 /// leva à cópia do grupo (ou do personagem, sem grupo), criada na hora se não houver (<see cref="DungeonInstance"/>), até
 /// <see cref="ServerOptions.MaxInstances"/> no processo e <see cref="ZoneDefinition.MaxPlayers"/> por cópia; a recusa chega
@@ -45,6 +46,9 @@ public sealed class WorldServer : ITransportHandler, IGameHost, IPartyHost
 {
     /// <summary>De quantos em quantos ticks o estado do grupo (vida, Mana, zona) é conferido e reenviado se mudou.</summary>
     public const int PartyStateIntervalTicks = 5;
+
+    /// <summary>Ritmo do <see cref="PartyPositions"/> (T-391): a cada 10 ticks, 2 por segundo.</summary>
+    public const int PartyPositionIntervalTicks = 10;
 
     public const int MaxIntentsPerTick = 16;
     private const int RejectCloseDelayTicks = 10;
@@ -425,6 +429,7 @@ public sealed class WorldServer : ITransportHandler, IGameHost, IPartyHost
         }
 
         SendPartyStates();
+        SendPartyPositions();
     }
 
     private void MoveThroughGatesAndRespawn()
@@ -660,6 +665,56 @@ public sealed class WorldServer : ITransportHandler, IGameHost, IPartyHost
         }
     }
 
+    /// <summary>
+    /// T-391: a cada <see cref="PartyPositionIntervalTicks"/>, cada membro recebe a posição dos outros membros na mesma
+    /// zona (a mesma <see cref="OpenZone"/>, então a mesma cópia de instância). Sem ninguém na zona não vai nada; a
+    /// primeira vez que fica sem ninguém, vai a lista vazia.
+    /// </summary>
+    private void SendPartyPositions()
+    {
+        if (_tick % PartyPositionIntervalTicks != 0)
+        {
+            return;
+        }
+
+        foreach (var p in _players.Values)
+        {
+            if (p.Entity is null || p.Leaving)
+            {
+                continue;
+            }
+
+            var positions = PartyPositionsFor(p.Peer);
+            if (positions.Members.Length == 0 && !p.SentPartyPositions)
+            {
+                continue;
+            }
+
+            p.SentPartyPositions = positions.Members.Length > 0;
+            Send(p.Peer, positions);
+        }
+    }
+
+    /// <summary>Posição dos outros membros do grupo na mesma zona (e cópia) do membro, em ordem de entrada.</summary>
+    public PartyPositions PartyPositionsFor(int member)
+    {
+        if (!_players.TryGetValue(member, out var me) || me.Zone is null || _parties.Describe(member) is not { } party)
+        {
+            return new PartyPositions([]);
+        }
+
+        var list = new List<PartyMemberPosition>();
+        foreach (var m in party.Members)
+        {
+            if (m != member && _players.TryGetValue(m, out var q) && q.Zone == me.Zone && q.Entity?.TryGet<Transform>() is { } t)
+            {
+                list.Add(new PartyMemberPosition(m, t.Position.X, t.Position.Y));
+            }
+        }
+
+        return new PartyPositions([.. list]);
+    }
+
     /// <summary>Estado do grupo como o membro vê (sem grupo: id 0 e lista vazia).</summary>
     public PartyState PartyStateFor(int member)
     {
@@ -863,5 +918,8 @@ public sealed class WorldServer : ITransportHandler, IGameHost, IPartyHost
 
         /// <summary>Último <see cref="PartyState"/> enviado (null = sem grupo).</summary>
         public byte[]? LastPartyState { get; set; }
+
+        /// <summary>O último <see cref="PartyPositions"/> enviado tinha alguém (o próximo vazio ainda precisa ir, T-391).</summary>
+        public bool SentPartyPositions { get; set; }
     }
 }

@@ -59,6 +59,20 @@ public sealed partial record PartyMemberInfo(
 [MemoryPackable]
 public sealed partial record PartyState(int PartyId, int LeaderId, int YouId, PartyMemberInfo[] Members) : INetMessage;
 
+/// <summary>Posição de um membro do grupo, em tiles. <paramref name="MemberId"/> é o mesmo do <see cref="PartyMemberInfo"/>.</summary>
+[MemoryPackable]
+public sealed partial record PartyMemberPosition(int MemberId, float X, float Y);
+
+/// <summary>
+/// Posição dos outros membros do grupo na mesma zona e na mesma cópia de instância de quem recebe (T-391), para o mini
+/// mapa. Mandada a cada <c>WorldServer.PartyPositionIntervalTicks</c> (10 ticks) só enquanto houver alguém na mesma zona;
+/// quando não houver mais (o último saiu da zona, quem recebe trocou de zona ou o grupo acabou), chega uma vez com a
+/// lista vazia. Membro morto continua, na posição em que caiu, até renascer. Quem fica de fora está em outra zona (ver
+/// <see cref="PartyMemberInfo.ZoneId"/>).
+/// </summary>
+[MemoryPackable]
+public sealed partial record PartyPositions(PartyMemberPosition[] Members) : INetMessage;
+
 public enum PartyNoticeKind : byte
 {
     /// <summary>Alguém entrou no grupo.</summary>
