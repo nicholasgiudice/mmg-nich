@@ -113,6 +113,12 @@ h3 { font-size: 1.15rem; margin-top: 1.5rem; }
 }
 .hero-text { position: relative; z-index: 1; width: 100%; max-width: 72rem; margin: 0 auto; padding: 2rem 1rem 2.5rem; }
 .hero h1 { font-size: clamp(2.6rem, 8vw, 4.5rem); letter-spacing: 0.1em; text-transform: uppercase; margin: 0; text-shadow: 0 3px 0 #000, 0 0 24px rgba(0, 0, 0, 0.6); }
+/* Logo do jogo (T-073) no lugar do título; o texto fica para leitores de tela e busca. 188×43 em 3×. */
+.hero h1 {
+  width: min(100%, 564px); aspect-ratio: 188 / 43; overflow: hidden;
+  background: url("ui/logo.png") left center / contain no-repeat; image-rendering: pixelated;
+  color: transparent; text-shadow: none; filter: drop-shadow(0 3px 0 #000);
+}
 .hero .lead { color: var(--text); font-size: 1.2rem; max-width: 36rem; text-shadow: 0 2px 4px #000; }
 .hero-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem 1.5rem; margin-top: 1.25rem; }
 .hero-actions a:not(.button) { color: var(--text); text-shadow: 0 2px 4px #000; }

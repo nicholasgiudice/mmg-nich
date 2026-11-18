@@ -35,6 +35,9 @@ public partial class AccountScreen : Control
 
     private readonly Dictionary<string, string> _args = new(StringComparer.Ordinal);
     private const string BackgroundPath = "res://assets/art/ui/login_background.png";
+    private const string LogoPath = "res://assets/art/ui/logo.png";
+    private const int LogoScale = 2;
+    private bool _hasLogo;
 
     private readonly VBoxContainer _root = new() { CustomMinimumSize = new Godot.Vector2(420, 0) };
     private readonly Label _status = new() { AutowrapMode = TextServer.AutowrapMode.WordSmart };
@@ -64,12 +67,13 @@ public partial class AccountScreen : Control
         _root.AddThemeConstantOverride("separation", 10);
         var frame = new PanelContainer();
         frame.AddThemeStyleboxOverride("panel", HudTheme.StonePanel());
-        // Entre o castelo (à esquerda) e o grupo (à direita) da imagem de fundo.
-        frame.AnchorLeft = frame.AnchorRight = 0.4f;
-        frame.GrowHorizontal = GrowDirection.Both;
-        frame.OffsetTop = 24;
         frame.AddChild(_root);
-        AddChild(frame);
+        // Entre o castelo (à esquerda) e o grupo (à direita) da imagem de fundo; o logo (T-073) fica acima do painel.
+        var column = new VBoxContainer { AnchorLeft = 0.4f, AnchorRight = 0.4f, GrowHorizontal = GrowDirection.Both, OffsetTop = 24 };
+        column.AddThemeConstantOverride("separation", 12);
+        _hasLogo = AddLogo(column);
+        column.AddChild(frame);
+        AddChild(column);
         try
         {
             _content = ContentLoader.Load();
@@ -135,6 +139,31 @@ public partial class AccountScreen : Control
             AnchorBottom = 1,
             MouseFilter = MouseFilterEnum.Ignore,
         });
+    }
+
+    /// <summary>
+    /// Logo do jogo (T-073) acima do painel, centralizado, em 2× exato e pixels nítidos. Sem o arquivo, a tela segue
+    /// com o nome em texto no painel, como antes.
+    /// </summary>
+    private static bool AddLogo(Container parent)
+    {
+        if (!ResourceLoader.Exists(LogoPath))
+        {
+            return false;
+        }
+
+        var texture = ResourceLoader.Load<Texture2D>(LogoPath);
+        parent.AddChild(new TextureRect
+        {
+            Texture = texture,
+            ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
+            StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
+            CustomMinimumSize = texture.GetSize() * LogoScale,
+            SizeFlagsHorizontal = SizeFlags.ShrinkCenter,
+            TextureFilter = TextureFilterEnum.Nearest,
+            MouseFilter = MouseFilterEnum.Ignore,
+        });
+        return true;
     }
 
     // ---------------- telas ----------------
@@ -463,9 +492,12 @@ public partial class AccountScreen : Control
             }
         }
 
-        var game = new Label { Text = "Valdran", Modulate = new Color(1, 1, 1, 0.7f) };
-        game.AddThemeFontSizeOverride("font_size", 18);
-        _root.AddChild(game);
+        if (!_hasLogo)
+        {
+            var game = new Label { Text = "Valdran", Modulate = new Color(1, 1, 1, 0.7f) };
+            game.AddThemeFontSizeOverride("font_size", 18);
+            _root.AddChild(game);
+        }
 
         var label = new Label { Text = title };
         label.AddThemeFontSizeOverride("font_size", 30);
