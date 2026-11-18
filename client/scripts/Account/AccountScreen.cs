@@ -16,7 +16,8 @@ namespace MmoRpgClient.Account;
 /// de encontros locais (T-024) só abre pelos argumentos de partida direta. Argumentos de depuração (depois de <c>--</c>):
 /// <c>--api=url</c>, <c>--game-server=host:porta</c>, <c>--login=email:senha</c> (entra sozinho), <c>--register</c>
 /// (cria a conta antes), <c>--create=Nome:class.id</c>, <c>--play=Nome</c>, <c>--account-view=create</c> e
-/// <c>--capture=caminho.png</c> (salva a tela após 2,5 s e fecha).
+/// <c>--capture=caminho.png</c> (salva a tela após 2,5 s e fecha) e <c>--account-sample[=n]</c> (seleção de personagem com n
+/// personagens de exemplo, sem conta, T-074).
 /// Os argumentos de partida direta (<c>--encounter</c>, <c>--server</c>...) seguem para o menu, como antes.
 /// </summary>
 public partial class AccountScreen : Control
@@ -44,6 +45,8 @@ public partial class AccountScreen : Control
     private ContentCatalog _content = ContentCatalog.Empty;
     private SpriteCatalog _sprites = SpriteCatalog.Empty;
     private IReadOnlyList<CharacterSummary> _characters = [];
+    private readonly List<CharacterCard> _cards = [];
+    private int _selected = -1;
     private bool _busy;
     private double _elapsed;
 
@@ -92,7 +95,7 @@ public partial class AccountScreen : Control
             SetStatus(error, ErrorColor);
         }
 
-        if (s_api is { LoggedIn: true })
+        if (s_api is { LoggedIn: true } || _args.ContainsKey("account-sample"))
         {
             Forget(ShowCharacters());
         }
@@ -186,7 +189,8 @@ public partial class AccountScreen : Control
         buttons.AddChild(ButtonFor("Criar conta", () => Forget(Login(api, game, email.Text, password.Text, register: true, remember.ButtonPressed)), 140));
         _root.AddChild(Hint("Criar conta usa o e-mail e a senha acima (senha de 8 a 128 caracteres) e já entra."));
         AddStatus();
-        (string.IsNullOrEmpty(known) ? email : password).GrabFocus();    }
+        (string.IsNullOrEmpty(known) ? email : password).GrabFocus();
+    }
 
     /// <summary>T-381: "Lembrar e-mail", logo abaixo dos campos. A escolha só é gravada ao entrar com sucesso.</summary>
     private CheckBox RememberBox(bool pressed)
@@ -208,42 +212,114 @@ public partial class AccountScreen : Control
         return box;
     }
 
+    /// <summary>
+    /// Seleção de personagem (T-074): um cartão por personagem, lado a lado, e o cartão de criar no fim. Clique seleciona,
+    /// clique duplo ou Enter joga, setas trocam. Com <c>--account-sample[=n]</c> e sem conta, mostra n personagens de exemplo
+    /// (padrão 3, até 5) para prévias e capturas.
+    /// </summary>
     private async Task ShowCharacters()
     {
         Clear("Personagens");
-        _root.AddChild(Hint($"Conta: {s_api?.Email}"));
-        var list = new ItemList { CustomMinimumSize = new Godot.Vector2(700, 200) };
-        _root.AddChild(list);
+        _root.AddChild(Hint(s_api is null ? "Prévia, sem conta" : $"Conta: {s_api.Email}"));
+        var row = new HBoxContainer { Alignment = BoxContainer.AlignmentMode.Center };
+        row.AddThemeConstantOverride("separation", 10);
+        _root.AddChild(row);
         var buttons = Row();
-        var play = ButtonFor("Jogar", () => Forget(Play(list)), 140);
-        var delete = ButtonFor("Apagar", () => ConfirmDelete(list), 120);
+        var play = ButtonFor("Jogar", () => Forget(PlaySelected()), 140);
+        var delete = ButtonFor("Apagar", ConfirmDelete, 120);
+        play.Disabled = delete.Disabled = true;
         buttons.AddChild(play);
-        buttons.AddChild(ButtonFor("Criar personagem", ShowCreate, 180));
         buttons.AddChild(delete);
+        buttons.AddChild(new Control { SizeFlagsHorizontal = SizeFlags.ExpandFill });
         buttons.AddChild(ButtonFor("Sair da conta", Logout, 140));
-        list.ItemActivated += _ => Forget(Play(list));
         AddStatus();
 
         await Run(async () =>
         {
-            _characters = await s_api!.Characters();
-            list.Clear();
-            foreach (var c in _characters)
-            {
-                list.AddItem($"{c.Name}  —  {ClassName(c.ClassId)}, nível {c.Level}  ·  {ZoneName(c.ZoneId)}");
-            }
-
-            if (_characters.Count > 0)
-            {
-                list.Select(0);
-            }
-            else
-            {
-                SetStatus("Nenhum personagem ainda. Crie o primeiro.", InfoColor);
-            }
-
-            play.Disabled = delete.Disabled = _characters.Count == 0;
+            _characters = s_api is null ? SampleCharacters() : await s_api.Characters();
+            FillCards(row, play, delete);
         });
+    }
+
+    private void FillCards(HBoxContainer row, Button play, Button delete)
+    {
+        _cards.Clear();
+        for (var i = 0; i < _characters.Count; i++)
+        {
+            var c = _characters[i];
+            var index = i;
+            var card = CharacterCard.ForCharacter(_sprites.For(c.ClassId), c.Name, ClassName(c.ClassId), c.Level, ZoneName(c.ZoneId));
+            card.Chosen += () => Select(index);
+            card.Activated += () =>
+            {
+                Select(index);
+                Forget(PlaySelected());
+            };
+            row.AddChild(card);
+            _cards.Add(card);
+        }
+
+        var create = CharacterCard.ForCreate();
+        create.Chosen += ShowCreate;
+        row.AddChild(create);
+        play.Disabled = delete.Disabled = _characters.Count == 0;
+        if (_characters.Count > 0)
+        {
+            Select(0);
+        }
+        else
+        {
+            SetStatus("Nenhum personagem ainda. Crie o primeiro.", InfoColor);
+        }
+    }
+
+    private void Select(int index)
+    {
+        _selected = Math.Clamp(index, 0, Math.Max(0, _characters.Count - 1));
+        for (var i = 0; i < _cards.Count; i++)
+        {
+            _cards[i].SetSelected(i == _selected);
+        }
+    }
+
+    public override void _UnhandledKeyInput(InputEvent @event)
+    {
+        if (_cards.Count == 0 || !_cards[0].IsInsideTree() || _busy)
+        {
+            return;
+        }
+
+        if (@event.IsActionPressed("ui_left"))
+        {
+            Select(_selected - 1);
+        }
+        else if (@event.IsActionPressed("ui_right"))
+        {
+            Select(_selected + 1);
+        }
+        else if (@event.IsActionPressed("ui_accept"))
+        {
+            Forget(PlaySelected());
+        }
+        else
+        {
+            return;
+        }
+
+        GetViewport().SetInputAsHandled();
+    }
+
+    /// <summary>Personagens de exemplo de <c>--account-sample</c> (T-074), um de cada classe na ordem do menu.</summary>
+    private List<CharacterSummary> SampleCharacters()
+    {
+        var count = int.TryParse(_args.GetValueOrDefault("account-sample"), out var n) ? Math.Clamp(n, 0, 5) : 3;
+        var classes = _content.Classes.Keys.OrderBy(ClassOrder).ToList();
+        var zones = _content.Zones.Keys.Where(z => !z.Contains("test", StringComparison.Ordinal)).Order(StringComparer.Ordinal).ToList();
+        string[] names = ["Aldric", "Mira", "Teodoro", "Brann", "Sela"];
+        int[] levels = [12, 4, 1, 7, 20];
+        return Enumerable.Range(0, count)
+            .Select(i => new CharacterSummary(Guid.Empty, names[i], classes[i % classes.Count], levels[i], zones.Count == 0 ? "" : zones[i % zones.Count]))
+            .ToList();
     }
 
     private void ShowCreate()
@@ -352,16 +428,16 @@ public partial class AccountScreen : Control
 
     private async Task Create(string name, string classId)
     {
-        if (await Run(() => s_api!.Create(name.Trim(), classId), "Criando..."))
+        if (HasAccount() && await Run(() => s_api!.Create(name.Trim(), classId), "Criando..."))
         {
             await ShowCharacters();
             SetStatus($"{name.Trim()} criado.", InfoColor);
         }
     }
 
-    private void ConfirmDelete(ItemList list)
+    private void ConfirmDelete()
     {
-        if (Selected(list) is not { } character)
+        if (Selected() is not { } character || !HasAccount())
         {
             return;
         }
@@ -385,12 +461,24 @@ public partial class AccountScreen : Control
         dialog.PopupCentered();
     }
 
-    private async Task Play(ItemList list)
+    private async Task PlaySelected()
     {
-        if (Selected(list) is { } character)
+        if (Selected() is { } character && HasAccount())
         {
             await Play(character);
         }
+    }
+
+    /// <summary>Na prévia de <c>--account-sample</c> não há conta: as ações que falam com a API só avisam.</summary>
+    private bool HasAccount()
+    {
+        if (s_api is not null)
+        {
+            return true;
+        }
+
+        SetStatus("Prévia sem conta: entre para jogar, criar ou apagar.", InfoColor);
+        return false;
     }
 
     private async Task Play(CharacterSummary character)
@@ -554,8 +642,7 @@ public partial class AccountScreen : Control
         AutowrapMode = TextServer.AutowrapMode.WordSmart,
     };
 
-    private CharacterSummary? Selected(ItemList list) =>
-        list.GetSelectedItems() is [var index, ..] && index < _characters.Count ? _characters[index] : null;
+    private CharacterSummary? Selected() => _selected >= 0 && _selected < _characters.Count ? _characters[_selected] : null;
 
     private string ClassName(string id) => _content.Classes.TryGetValue(id, out var c) ? c.Name : id;
 
