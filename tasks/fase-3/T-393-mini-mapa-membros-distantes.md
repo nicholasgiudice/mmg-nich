@@ -15,7 +15,8 @@ Segunda parte do pedido do designer de 2026-11-17. A T-392 fez o mini mapa com o
 1. Receber a mensagem da T-391 no cliente e usá-la como fonte das marcas de membros do mini mapa e do mapa grande, no lugar do snapshot. Quando o membro está no snapshot, a posição do snapshot (mais fluida) pode continuar valendo.
 2. Membro fora do recorte do mini mapa fica preso na borda, apontando a direção (a conta já existe da T-392).
 3. A lista vazia da T-391 limpa as marcas de membros.
-4. Testes no `Game.Client.Tests` para a troca de fonte (snapshot e mensagem) e para a lista vazia.
+4. **Só o jogador e os membros do grupo aparecem no mini mapa e no mapa grande** (decisão do humano, 2026-11-18). O snapshot traz todos os jogadores da zona (o `InterestGrid` manda toda a facção `Player`), mas jogador de fora do grupo nunca vira marca. Sem grupo, só a marca do próprio jogador.
+5. Testes no `Game.Client.Tests` para a troca de fonte (snapshot e mensagem), para a lista vazia e para jogador de fora do grupo não virar marca.
 
 ## Critérios de aceite
 
