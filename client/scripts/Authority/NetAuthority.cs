@@ -375,6 +375,9 @@ public sealed class NetAuthority : IGameAuthority, ICombatLogSource, IDisposable
             case PartyState ps:
                 Party.Apply(ps);
                 break;
+            case PartyPositions positions:
+                Party.ApplyPositions(positions);
+                break;
             case PartyInviteReceived inv:
                 Party.Receive(inv, ClockSeconds);
                 break;
@@ -397,6 +400,7 @@ public sealed class NetAuthority : IGameAuthority, ICombatLogSource, IDisposable
     {
         Welcome = w;
         WelcomeCount++;
+        Party.ClearPositions(); // zona nova: as posições do grupo da zona anterior não valem (T-393)
         Status = NetStatus.Playing;
         _state.Reset(w.Epoch);
         _buffer.Clear();
