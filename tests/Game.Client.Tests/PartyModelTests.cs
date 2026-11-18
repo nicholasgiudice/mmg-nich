@@ -130,3 +130,140 @@ public class PartyModelTests
         Assert.False(PartyText.GoesToLog(PartyNoticeKind.InviteDeclined));
     }
 }
+
+/// <summary>T-393: marcas de membros do mini mapa a partir da <see cref="PartyPositions"/> (T-391) e do snapshot.</summary>
+public class PartyMapMarksTests
+{
+    private static PartyMemberInfo Member(int id, string name, string zone = "zone.lower_forest", bool alive = true) =>
+        new(id, new EntityId(id + 100), name, "class.warrior", 3, 80, 100, 20, 40, zone, alive);
+
+    private static PartyModel InParty(params PartyMemberInfo[] others)
+    {
+        var model = new PartyModel();
+        model.Apply(new PartyState(7, 1, 1, [Member(1, "Ana"), .. others]));
+        return model;
+    }
+
+    private static PartyPositions Positions(params (int Id, float X, float Y)[] rows) =>
+        new(rows.Select(r => new PartyMemberPosition(r.Id, r.X, r.Y)).ToArray());
+
+    private static readonly Func<PartyMemberInfo, System.Numerics.Vector2?> NotInSnapshot = _ => null;
+
+    [Fact]
+    public void Far_member_uses_the_position_from_the_message()
+    {
+        var model = InParty(Member(2, "Beto"));
+        model.ApplyPositions(Positions((2, 150.5f, 20f)));
+
+        var mark = Assert.Single(model.MapMarks(NotInSnapshot));
+        Assert.Equal(new MapMark(2, "Beto", new(150.5f, 20f), true), mark);
+    }
+
+    [Fact]
+    public void Member_in_the_snapshot_keeps_the_snapshot_position()
+    {
+        var model = InParty(Member(2, "Beto"));
+        model.ApplyPositions(Positions((2, 150f, 20f)));
+
+        var mark = Assert.Single(model.MapMarks(m => m.MemberId == 2 ? new System.Numerics.Vector2(151.25f, 19.5f) : null));
+        Assert.Equal(new System.Numerics.Vector2(151.25f, 19.5f), mark.Position);
+    }
+
+    [Fact]
+    public void Source_switches_between_snapshot_and_message_per_frame()
+    {
+        var model = InParty(Member(2, "Beto"));
+        model.ApplyPositions(Positions((2, 150f, 20f)));
+        System.Numerics.Vector2? drawn = new(149f, 21f);
+
+        Assert.Equal(new System.Numerics.Vector2(149f, 21f), Assert.Single(model.MapMarks(_ => drawn)).Position);
+        drawn = null; // saiu do snapshot
+        Assert.Equal(new System.Numerics.Vector2(150f, 20f), Assert.Single(model.MapMarks(_ => drawn)).Position);
+    }
+
+    [Fact]
+    public void Member_only_in_the_snapshot_is_not_marked_before_the_message()
+    {
+        var model = InParty(Member(2, "Beto"));
+        Assert.Empty(model.MapMarks(_ => new System.Numerics.Vector2(10f, 10f)));
+    }
+
+    [Fact]
+    public void Empty_list_clears_the_marks()
+    {
+        var model = InParty(Member(2, "Beto"), Member(3, "Caio"));
+        model.ApplyPositions(Positions((2, 150f, 20f), (3, 10f, 5f)));
+        Assert.Equal(2, model.MapMarks(NotInSnapshot).Count);
+
+        model.ApplyPositions(Positions());
+
+        Assert.Empty(model.Positions);
+        Assert.Empty(model.MapMarks(_ => new System.Numerics.Vector2(1f, 1f)));
+    }
+
+    [Fact]
+    public void New_list_replaces_the_previous_one()
+    {
+        var model = InParty(Member(2, "Beto"), Member(3, "Caio"));
+        model.ApplyPositions(Positions((2, 150f, 20f), (3, 10f, 5f)));
+        model.ApplyPositions(Positions((3, 12f, 6f)));
+
+        var mark = Assert.Single(model.MapMarks(NotInSnapshot));
+        Assert.Equal(3, mark.Id);
+        Assert.Equal(new System.Numerics.Vector2(12f, 6f), mark.Position);
+    }
+
+    [Fact]
+    public void Player_outside_the_party_never_becomes_a_mark()
+    {
+        var model = InParty(Member(2, "Beto"));
+        // Id 9 não está no grupo (o servidor não manda, mas o cliente não confia nisso); o snapshot tem todo mundo.
+        model.ApplyPositions(Positions((2, 150f, 20f), (9, 30f, 30f)));
+
+        var mark = Assert.Single(model.MapMarks(_ => new System.Numerics.Vector2(5f, 5f)));
+        Assert.Equal("Beto", mark.Name);
+    }
+
+    [Fact]
+    public void Without_party_there_are_no_member_marks()
+    {
+        var model = new PartyModel();
+        model.ApplyPositions(Positions((2, 150f, 20f)));
+        Assert.Empty(model.MapMarks(_ => new System.Numerics.Vector2(5f, 5f)));
+    }
+
+    [Fact]
+    public void Leaving_the_party_clears_the_positions()
+    {
+        var model = InParty(Member(2, "Beto"));
+        model.ApplyPositions(Positions((2, 150f, 20f)));
+
+        model.Apply(new PartyState(0, 0, 1, []));
+
+        Assert.Empty(model.Positions);
+        Assert.Empty(model.MapMarks(NotInSnapshot));
+    }
+
+    [Fact]
+    public void Member_that_changed_zone_disappears_before_the_next_list()
+    {
+        var model = InParty(Member(2, "Beto"));
+        model.ApplyPositions(Positions((2, 150f, 20f)));
+
+        model.Apply(new PartyState(7, 1, 1, [Member(1, "Ana"), Member(2, "Beto", "zone.city")]));
+
+        Assert.Empty(model.MapMarks(NotInSnapshot));
+    }
+
+    [Fact]
+    public void Zone_change_clears_the_positions_and_dead_members_stay_marked()
+    {
+        var model = InParty(Member(2, "Beto", alive: false));
+        model.ApplyPositions(Positions((2, 150f, 20f)));
+        Assert.False(Assert.Single(model.MapMarks(NotInSnapshot)).Alive);
+
+        model.ClearPositions();
+
+        Assert.Empty(model.MapMarks(NotInSnapshot));
+    }
+}

@@ -62,6 +62,15 @@ public class ProtocolTests(ITestOutputHelper output)
     }
 
     [Fact]
+    public void Party_positions_round_trip()
+    {
+        PartyMemberPosition[] rows = [new(2, 150.25f, 98.5f), new(5, 3f, 0.75f)];
+        Assert.Equal(rows, RoundTrip(new PartyPositions(rows)).Members);
+        Assert.Empty(RoundTrip(new PartyPositions([])).Members);
+        Assert.Equal(22, ProtocolSerializer.Serialize(new PartyPositions([]))[0]); // tag da união (T-391)
+    }
+
+    [Fact]
     public void Intents_round_trip_and_always_use_the_connection_entity()
     {
         var me = new EntityId(3);

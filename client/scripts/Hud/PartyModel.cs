@@ -1,3 +1,4 @@
+using System.Numerics;
 using Game.Core.Simulation;
 using Game.Protocol;
 
@@ -11,6 +12,7 @@ namespace MmoRpgClient.Hud;
 public sealed class PartyModel
 {
     private readonly List<PendingInvite> _invites = new();
+    private readonly Dictionary<int, Vector2> _positions = new();
 
     /// <summary>Último estado do servidor; null ou sem membros = sem grupo.</summary>
     public PartyState? State { get; private set; }
@@ -43,6 +45,52 @@ public sealed class PartyModel
             // Quem entrou num grupo não responde mais a convites antigos (o servidor recusaria com "já em grupo").
             _invites.Clear();
         }
+        else
+        {
+            _positions.Clear();
+        }
+    }
+
+    /// <summary>
+    /// Última posição (em tiles) de cada outro membro na mesma zona e cópia (T-391/T-393), pelo id de membro. A lista
+    /// do servidor substitui a anterior inteira; a lista vazia limpa tudo.
+    /// </summary>
+    public IReadOnlyDictionary<int, Vector2> Positions => _positions;
+
+    public void ApplyPositions(PartyPositions positions)
+    {
+        _positions.Clear();
+        foreach (var p in positions.Members)
+        {
+            _positions[p.MemberId] = new Vector2(p.X, p.Y);
+        }
+    }
+
+    /// <summary>Troca de zona (<see cref="Welcome"/> novo): as posições da zona anterior não valem mais.</summary>
+    public void ClearPositions() => _positions.Clear();
+
+    /// <summary>
+    /// Marcas de membros do mini mapa e do mapa grande (T-393). Quem aparece vem da <see cref="PartyPositions"/>: só
+    /// membros do grupo, na mesma zona e cópia (jogador de fora do grupo nunca vira marca). A posição é a do snapshot
+    /// quando <paramref name="drawn"/> a tem (mais fluida); senão, a da mensagem (2 por segundo).
+    /// </summary>
+    public IReadOnlyList<MapMark> MapMarks(Func<PartyMemberInfo, Vector2?> drawn)
+    {
+        if (!InParty || _positions.Count == 0)
+        {
+            return Array.Empty<MapMark>();
+        }
+
+        var marks = new List<MapMark>();
+        foreach (var member in Others)
+        {
+            if (SameZone(member) && _positions.TryGetValue(member.MemberId, out var sent))
+            {
+                marks.Add(new MapMark(member.MemberId, member.Name, drawn(member) ?? sent, member.Alive));
+            }
+        }
+
+        return marks;
     }
 
     /// <summary>Guarda um convite; <paramref name="now"/> é o relógio do cliente em segundos.</summary>
@@ -68,6 +116,7 @@ public sealed class PartyModel
     {
         State = null;
         _invites.Clear();
+        _positions.Clear();
     }
 }
 

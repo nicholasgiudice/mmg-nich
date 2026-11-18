@@ -589,8 +589,10 @@ public partial class Main : Node2D
     }
 
     /// <summary>
-    /// Mini mapa (T-392): o jogador e os membros do grupo que o cliente já vê (estão no snapshot, na mesma zona). A entidade
-    /// do membro só vale na zona dele; na Cripta, outra cópia pode ter o mesmo id, por isso o nome também tem de bater.
+    /// Mini mapa (T-392/T-393): o jogador e os membros do grupo. Quem aparece vem da <see cref="PartyPositions"/> (mesma
+    /// zona e cópia, mesmo longe); a posição é a do snapshot quando o membro está nele, por ser mais fluida. A entidade do
+    /// membro só vale na zona dele; na Cripta, outra cópia pode ter o mesmo id, por isso o nome também tem de bater.
+    /// Jogador de fora do grupo nunca vira marca.
     /// </summary>
     private void UpdateZoneMap(IGameAuthority authority)
     {
@@ -602,18 +604,15 @@ public partial class Main : Node2D
         System.Numerics.Vector2? player = authority.ControlledEntity is { } me && _worldView.TryGetDrawnPosition(me, out var px)
             ? Units.ToWorld(px)
             : null;
-        var members = new List<MmoRpgClient.Hud.MapMark>();
-        if (authority is NetAuthority net && net.Party.InParty)
-        {
-            foreach (var member in net.Party.Others.Where(net.Party.SameZone))
+        var members = authority is NetAuthority net
+            ? net.Party.MapMarks(member =>
             {
                 var unit = latest.Entities.FirstOrDefault(e => e.Id == member.Entity)?.TryGet<Game.Core.Combat.UnitInfo>();
-                if (unit?.Name == member.Name && _worldView.TryGetDrawnPosition(member.Entity, out var at))
-                {
-                    members.Add(new MmoRpgClient.Hud.MapMark(member.MemberId, member.Name, Units.ToWorld(at), member.Alive));
-                }
-            }
-        }
+                return unit?.Name == member.Name && _worldView.TryGetDrawnPosition(member.Entity, out var at)
+                    ? Units.ToWorld(at)
+                    : null;
+            })
+            : [];
 
         _hud.UpdateZoneMap(player, members);
     }
