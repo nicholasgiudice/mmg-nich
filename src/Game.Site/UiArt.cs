@@ -20,6 +20,7 @@ public static class UiArt
         "button_hover.png",
         "button_pressed.png",
         "crown.png", // marca ao lado do nome do jogo
+        "logo.png", // logo do jogo no topo da página inicial (T-073)
     ];
 
     public static void Copy(string artDir, string outDir, List<string> warnings)
