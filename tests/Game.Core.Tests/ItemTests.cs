@@ -298,8 +298,10 @@ public class ItemTests
         Assert.Contains(g.Item.BaseId, Content.Rules.Items.Drops.Normal.Items);
         Assert.Equal((int)Content.Rules.Items.AffixCount.For(g.Item.Rarity), g.Item.Affixes.Count);
         Assert.Equal(new[] { hero.Id.Value }, g.Owners);
+        Assert.Equal(hero.Id.Value, g.Owner); // T-394: sozinho, o dono é ele
         Assert.Equal(wolf.Get<Transform>().Position, loot.Get<Transform>().Position);
         Assert.Equal(w.Tick + Content.Rules.Items.GroundDurationTicks, g.ExpiresAtTick);
+        Assert.Equal(w.Tick + Content.Rules.Items.OwnerDurationTicks, g.FreeAtTick);
     }
 
     [Fact]
@@ -372,6 +374,45 @@ public class ItemTests
         Assert.Empty(Gear.DropLoot(w, rat, []));
     }
 
+    [Fact]
+    public void Each_item_gets_one_owner_rotated_among_the_participants()
+    {
+        var w = NewWorld();
+        var a = Hero(w);
+        var b = Hero(w, "class.archer");
+        var c = Hero(w, "class.mage");
+        var boss = EntityFactory.SpawnMonster(w, Content.Monsters["monster.forest_matriarch"], new Vector2(2, 1));
+        var ids = new[] { a.Id.Value, b.Id.Value, c.Id.Value };
+        var firsts = new HashSet<int>();
+        for (var i = 0; i < 6; i++)
+        {
+            w.Step();
+            var loot = Gear.DropLoot(w, boss, [c, a, b]).Select(l => l.Get<GroundItem>()).ToList();
+            Assert.Equal(2, loot.Count);
+            Assert.All(loot, g => Assert.Equal(ids, g.Owners));
+            var first = Array.IndexOf(ids, loot[0].Owner);
+            Assert.Equal(ids[(first + 1) % ids.Length], loot[1].Owner); // rodízio em ordem de id
+            firsts.Add(loot[0].Owner);
+        }
+
+        Assert.Equal(ids.ToHashSet(), firsts); // o primeiro dono muda de morte para morte
+    }
+
+    [Fact]
+    public void Choosing_the_owner_does_not_use_the_simulation_rng()
+    {
+        List<(string, ItemRarity)> Run(int participants)
+        {
+            var w = NewWorld(seed: 5);
+            var party = new[] { Hero(w), Hero(w, "class.archer"), Hero(w, "class.mage") };
+            var boss = EntityFactory.SpawnMonster(w, Content.Monsters["monster.forest_matriarch"], new Vector2(2, 1));
+            return Enumerable.Range(0, 30).SelectMany(_ => Gear.DropLoot(w, boss, party.Take(participants).ToList()))
+                .Select(l => (l.Get<GroundItem>().Item.BaseId, l.Get<GroundItem>().Item.Rarity)).ToList();
+        }
+
+        Assert.Equal(Run(1), Run(3)); // T-394: as quedas sorteadas são as mesmas com 1 ou 3 participantes
+    }
+
     // ---------- saque ----------
 
     [Fact]
@@ -422,7 +463,7 @@ public class ItemTests
     }
 
     [Fact]
-    public void Dropped_items_belong_to_who_dropped_them_and_expire()
+    public void Dropped_items_can_be_picked_up_by_anyone()
     {
         var w = NewWorld();
         var hero = Hero(w);
@@ -434,8 +475,22 @@ public class ItemTests
         Assert.Null(hero.Get<Inventory>()[slot]);
         var loot = w.Find(dropped.Item)!;
         Assert.Equal((hero.Id, "accessory.ring", ItemRarity.Uncommon), (dropped.Source, dropped.BaseId, dropped.Rarity));
-        Assert.Equal(new[] { hero.Id.Value }, loot.Get<GroundItem>().Owners);
-        Assert.Equal(ItemRejectReason.NotOwner, Assert.Single(Step(w, new PickUpItemIntent(other.Id, loot.Id)).OfType<ItemRejected>()).Reason);
+        Assert.True(loot.Get<GroundItem>().IsPublic);
+        Assert.Equal((0, 0), (loot.Get<GroundItem>().Owner, loot.Get<GroundItem>().Owners.Count));
+
+        var picked = Assert.Single(Step(w, new PickUpItemIntent(other.Id, loot.Id)).OfType<ItemPickedUp>());
+        Assert.Equal(other.Id, picked.Entity);
+        Assert.Equal("accessory.ring", other.Get<Inventory>()[picked.InventorySlot]!.BaseId);
+    }
+
+    [Fact]
+    public void Dropped_items_expire()
+    {
+        var w = NewWorld();
+        var hero = Hero(w);
+        var slot = Give(w, hero, "accessory.ring", 3);
+        var dropped = Assert.Single(Step(w, new DropItemIntent(hero.Id, slot)).OfType<ItemDropped>());
+        var loot = w.Find(dropped.Item)!;
 
         var expiry = loot.Get<GroundItem>().ExpiresAtTick;
         var expired = new List<GroundItemExpired>();

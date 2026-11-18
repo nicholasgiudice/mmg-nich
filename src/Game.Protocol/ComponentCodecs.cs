@@ -232,6 +232,8 @@ public static class ComponentCodecs
                     w.I(o);
                 }
 
+                w.I(g.Owner);
+                w.L(g.FreeAtTick);
                 w.L(g.ExpiresAtTick);
                 break;
             case PartyMembership pm:
@@ -442,7 +444,9 @@ public static class ComponentCodecs
                         owners[i] = r.I();
                     }
 
-                    return new GroundItem { Item = item, Owners = owners, ExpiresAtTick = r.L() };
+                    var owner = r.I();
+                    var freeAt = r.L();
+                    return new GroundItem { Item = item, Owners = owners, Owner = owner, FreeAtTick = freeAt, ExpiresAtTick = r.L() };
                 }
 
             case 19:

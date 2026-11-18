@@ -172,6 +172,12 @@ public sealed record ItemRules
     /// <summary>Quanto tempo o item fica no chão antes de sumir. JSON: "groundDuration" (segundos).</summary>
     public int GroundDurationTicks { get; init; } = 120 * 20;
 
+    /// <summary>
+    /// T-394: quanto tempo o item que cai de um monstro fica só com o dono escolhido; depois, qualquer um pega, tenha
+    /// participado da morte ou não. JSON: "ownerDuration" (segundos; 0 = livre para todos desde o início).
+    /// </summary>
+    public int OwnerDurationTicks { get; init; } = 30 * 20;
+
     public ArmorTypes ArmorTypes { get; init; } = new();
 
     /// <summary>Quantos afixos cada raridade sorteia (inteiros).</summary>

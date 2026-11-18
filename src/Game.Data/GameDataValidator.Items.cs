@@ -152,6 +152,10 @@ internal static partial class GameDataValidator
         if (r.InventorySize < 1) { c.Error("inventorySize", "Deve ser pelo menos 1."); }
         c.Positive("pickupRange", r.PickupRange);
         c.PositiveTicks("groundDuration", r.GroundDurationTicks);
+        if (r.OwnerDurationTicks < 0 || r.OwnerDurationTicks > r.GroundDurationTicks)
+        {
+            c.Error("ownerDuration", "Deve ficar entre 0 e groundDuration.");
+        }
 
         foreach (var type in Enum.GetValues<ArmorType>())
         {

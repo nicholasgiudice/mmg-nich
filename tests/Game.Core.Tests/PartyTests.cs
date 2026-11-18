@@ -142,6 +142,43 @@ public class PartyTests
 
         var loot = Assert.Single(w.Entities, e => e.Has<GroundItem>()).Get<GroundItem>();
         Assert.Equal(new[] { killer.Id.Value, friend.Id.Value }, loot.Owners);
-        Assert.False(loot.IsOwner(far.Id));
+        Assert.DoesNotContain(far.Id.Value, loot.Owners);
+        Assert.Contains(loot.Owner, loot.Owners);
+    }
+
+    [Fact]
+    public void Only_the_owner_picks_up_until_the_owner_window_ends_then_anyone()
+    {
+        var w = WorldBuilder.CreateDefault(11, null, AlwaysDrops());
+        var killer = Hero(w, 1, party: 1);
+        var friend = Hero(w, 3, party: 1);
+        var stranger = Hero(w, 2.5f);
+        Kill(w, killer, Wolf(w));
+        var ground = Assert.Single(w.Entities, e => e.Has<GroundItem>());
+        var loot = ground.Get<GroundItem>();
+        var (owner, other) = loot.Owner == killer.Id.Value ? (killer, friend) : (friend, killer);
+        Assert.Equal(w.Tick + Content.Rules.Items.OwnerDurationTicks, loot.FreeAtTick);
+
+        Assert.Equal(ItemRejectReason.NotOwner, Reject(w, other, ground));
+        Assert.Equal(ItemRejectReason.NotOwner, Reject(w, stranger, ground));
+        Assert.True(loot.CanPickUp(owner.Id, w.Tick));
+
+        while (w.Tick < loot.FreeAtTick)
+        {
+            w.Step();
+        }
+
+        Assert.True(loot.CanPickUp(other.Id, w.Tick));
+        w.Enqueue(new PickUpItemIntent(stranger.Id, ground.Id)); // não participou, mas o prazo do dono acabou
+        w.Step();
+        Assert.Contains(w.LastTickEvents, e => e is ItemPickedUp p && p.Entity == stranger.Id);
+        Assert.True(ground.IsRemoved);
+    }
+
+    private static ItemRejectReason? Reject(World w, Entity who, Entity ground)
+    {
+        w.Enqueue(new PickUpItemIntent(who.Id, ground.Id));
+        w.Step();
+        return w.LastTickEvents.OfType<ItemRejected>().SingleOrDefault(r => r.Entity == who.Id)?.Reason;
     }
 }

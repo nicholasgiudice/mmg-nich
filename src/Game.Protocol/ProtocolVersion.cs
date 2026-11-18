@@ -38,6 +38,8 @@ public static class ProtocolVersion
     /// <c>EncounterFailed</c>; o status ativo leva o dano recebido (T-341) e o ponto de origem (medo).
     /// 12 (T-350): id da instância no <c>Welcome</c> (0 = zona aberta) e mensagens <c>InstanceRejected</c> e <c>InstanceNotice</c>.
     /// 13 (T-391): mensagem <c>PartyPositions</c> (posição dos membros do grupo na mesma zona, para o mini mapa).
+    /// 14 (T-394): <c>GroundItem</c> leva o dono sorteado (<c>Owner</c>) e o tick em que o item fica livre para os
+    /// participantes (<c>FreeAtTick</c>).
     /// </summary>
-    public const int Current = 13;
+    public const int Current = 14;
 }

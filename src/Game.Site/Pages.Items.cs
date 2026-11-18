@@ -24,6 +24,7 @@ internal sealed partial class SiteBuilder
             ("Espaços no inventário", Num(rules.InventorySize)),
             ("Distância para pegar do chão", $"{Num(rules.PickupRange)} tiles"),
             ("Tempo do item no chão", Seconds(rules.GroundDurationTicks)),
+            ("Tempo só do dono do item que cai", Seconds(rules.OwnerDurationTicks)),
         ]));
 
         var levels = ItemLevels();

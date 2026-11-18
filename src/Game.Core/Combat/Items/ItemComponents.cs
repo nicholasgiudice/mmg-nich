@@ -170,18 +170,34 @@ public sealed class Wallet : IComponent, IReplicated
 }
 
 /// <summary>
-/// Item no chão (T-204): entidade com <see cref="Simulation.Components.Transform"/> e este componente. Só quem está em
-/// <see cref="Owners"/> (ids de entidade, em ordem) pode pegar; some em <see cref="ExpiresAtTick"/>.
+/// Item no chão (T-204): entidade com <see cref="Simulation.Components.Transform"/> e este componente; some em
+/// <see cref="ExpiresAtTick"/>. Quem pode pegar (T-394):
+/// <list type="bullet">
+/// <item>antes de <see cref="FreeAtTick"/>, só o <see cref="Owner"/> (o dono escolhido entre os participantes);</item>
+/// <item>a partir de <see cref="FreeAtTick"/>, qualquer um, tenha participado da morte ou não;</item>
+/// <item><see cref="Owners"/> vazio (item largado por um jogador): qualquer um, a qualquer momento.</item>
+/// </list>
+/// <see cref="Owners"/> guarda os participantes da morte (ids de entidade, em ordem), entre os quais o dono foi escolhido.
 /// </summary>
 public sealed class GroundItem : IComponent, IReplicated
 {
     public required ItemInstance Item { get; init; }
     public required IReadOnlyList<int> Owners { get; init; }
+
+    /// <summary>Id da entidade com prioridade até <see cref="FreeAtTick"/>; 0 = ninguém.</summary>
+    public int Owner { get; init; }
+
+    public long FreeAtTick { get; init; }
     public long ExpiresAtTick { get; init; }
 
-    public bool IsOwner(EntityId id) => Owners.Contains(id.Value);
+    /// <summary>Item sem dono: qualquer um pega.</summary>
+    public bool IsPublic => Owners.Count == 0;
 
-    public IComponent Clone() => new GroundItem { Item = Item, Owners = Owners, ExpiresAtTick = ExpiresAtTick };
+    /// <summary>Se <paramref name="id"/> pode pegar o item no tick <paramref name="tick"/> (sem contar distância e espaço).</summary>
+    public bool CanPickUp(EntityId id, long tick) =>
+        IsPublic || tick >= FreeAtTick || Owner == id.Value;
+
+    public IComponent Clone() => new GroundItem { Item = Item, Owners = Owners, Owner = Owner, FreeAtTick = FreeAtTick, ExpiresAtTick = ExpiresAtTick };
 
     public void WriteHash(StateHasher hasher)
     {
@@ -192,6 +208,8 @@ public sealed class GroundItem : IComponent, IReplicated
             hasher.Add(o);
         }
 
+        hasher.Add(Owner);
+        hasher.Add(FreeAtTick);
         hasher.Add(ExpiresAtTick);
     }
 }
