@@ -145,7 +145,7 @@ public class ProtocolTests(ITestOutputHelper output)
         hero.Get<Game.Core.Combat.Items.Inventory>()[29] = Game.Core.Combat.Items.ItemInstance.Common("armor.light_feet", 2);
         hero.Get<Game.Core.Combat.Items.Wallet>().Gold = 98765; // T-320
         Assert.Null(Game.Core.Combat.Items.Gear.Equip(world, hero, 3));
-        Game.Core.Combat.Items.Gear.SpawnGround(world, new Vector2(4, 2), ring with { Level = 8 }, [hero.Id.Value, 9], EntityId.None);
+        Game.Core.Combat.Items.Gear.SpawnGround(world, new Vector2(4, 2), ring with { Level = 8 }, [hero.Id.Value, 9], EntityId.None, owner: 9);
 
         var snap = world.Snapshot(SnapshotScope.Replicated);
         var msg = RoundTrip(SnapshotMessage.From(snap));
@@ -166,6 +166,7 @@ public class ProtocolTests(ITestOutputHelper output)
         var ground = msg.Entities[1].Components.OfType<Game.Core.Combat.Items.GroundItem>().Single();
         Assert.Equal(8, ground.Item.Level);
         Assert.Equal(new[] { hero.Id.Value, 9 }, ground.Owners);
+        Assert.Equal((9, world.Tick + content.Rules.Items.OwnerDurationTicks), (ground.Owner, ground.FreeAtTick)); // T-394
     }
 
     [Fact]

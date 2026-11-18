@@ -18,6 +18,7 @@ Monstros e onde cada um aparece em `design/bestiario.md`; habilidades em `design
 | Espaços no inventário | 30 |
 | Distância para pegar item do chão | 2 tiles |
 | Tempo do item no chão | 120 s |
+| Tempo só do dono do item que cai (`ownerDuration`) | 30 s |
 
 ## Armas
 
@@ -128,6 +129,10 @@ Todos os 21 itens base (as 7 armas, as 12 armaduras e os 2 acessórios) estão n
 | Chefe | Matriarca da Floresta | 100% | 2 | 0 / 60 / 35 / 5 | o primeiro sai pelo menos incomum |
 
 Item épico só cai da Matriarca. Os itens caem para quem participou da morte e ficam 120 s no chão.
+
+**Quem pega o item no chão** (T-394):
+- **Item que cai de monstro:** cada item tem um dono, escolhido entre os participantes da morte (quem recebe a XP). O dono do primeiro item muda de morte para morte (a conta usa o monstro e o momento da morte); os itens seguintes da mesma queda vão para os próximos participantes, em rodízio. Nos primeiros **30 s** (`ownerDuration`), só o dono pega. Depois, qualquer participante da morte pega. Quem não participou nunca pega.
+- **Item largado por um jogador:** não tem dono. Qualquer jogador pega, a qualquer momento.
 
 ## Economia (T-320–T-322)
 

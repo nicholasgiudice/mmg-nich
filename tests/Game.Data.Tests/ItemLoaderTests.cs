@@ -27,7 +27,7 @@ public class ItemLoaderTests
     public void Items_and_rules_load()
     {
         var rules = """
-            { "inventorySize": 20, "pickupRange": 3, "groundDuration": 60,
+            { "inventorySize": 20, "pickupRange": 3, "groundDuration": 60, "ownerDuration": 15,
               "armorTypes": { "heavy": { "classes": ["class.hero"], "armorMultiplier": 1.5 } },
               "affixCount": { "uncommon": 1, "rare": 2 },
               "affixes": [ { "id": "affix.crit", "name": "Crítico", "value": { "stat": "crit", "base": 0.005, "perLevel": 0.001 } } ],
@@ -41,7 +41,7 @@ public class ItemLoaderTests
         Assert.Equal((EquipSlot.Chest, ArmorType.Heavy), (plate.Slot, plate.ArmorType));
         Assert.Equal(26, Assert.Single(plate.Stats).At(10));
         var ir = db.Rules.Items;
-        Assert.Equal((20, 3.0, 1200), (ir.InventorySize, ir.PickupRange, ir.GroundDurationTicks));
+        Assert.Equal((20, 3.0, 1200, 300), (ir.InventorySize, ir.PickupRange, ir.GroundDurationTicks, ir.OwnerDurationTicks));
         Assert.Equal(new[] { "class.hero" }, ir.ArmorTypes.Heavy.Classes);
         Assert.Equal(0.6, ir.ArmorTypes.Light.ArmorMultiplier); // padrão do design
         Assert.Equal(ItemStat.Crit, Assert.Single(ir.Affixes).Value.Stat);
@@ -68,6 +68,8 @@ public class ItemLoaderTests
     [Theory]
     [InlineData("""{ "inventorySize": 0 }""", "inventorySize")]
     [InlineData("""{ "pickupRange": 0 }""", "pickupRange")]
+    [InlineData("""{ "ownerDuration": -1 }""", "ownerDuration")]
+    [InlineData("""{ "groundDuration": 60, "ownerDuration": 61 }""", "ownerDuration")]
     [InlineData("""{ "affixCount": { "rare": 1.5 } }""", "affixCount.rare")]
     [InlineData("""{ "affixes": [ { "id": "affix.a", "name": "A", "value": { "stat": "str" } }, { "id": "affix.a", "name": "A", "value": { "stat": "dex" } } ] }""", "affixes[1].id")]
     [InlineData("""{ "drops": { "normal": { "chance": 1.5, "items": ["weapon.blade"] } } }""", "drops.normal.chance")]

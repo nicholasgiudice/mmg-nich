@@ -174,6 +174,7 @@
       "inventorySize": 30,
       "pickupRange": 2,
       "groundDuration": 120,
+      "ownerDuration": 30,
       "armorTypes": {
         "heavy": { "classes": ["class.warrior"], "armorMultiplier": 1.5, "resistanceFromArmor": 0 },
         "medium": { "classes": ["class.warrior", "class.archer", "class.cleric"], "armorMultiplier": 1.0, "resistanceFromArmor": 0 },

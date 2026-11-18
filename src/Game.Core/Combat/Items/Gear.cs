@@ -92,7 +92,7 @@ public static class Gear
             return ItemRejectReason.NotFound;
         }
 
-        if (!g.IsOwner(e.Id))
+        if (!g.CanPickUp(e.Id, world.Tick))
         {
             return ItemRejectReason.NotOwner;
         }
@@ -115,8 +115,8 @@ public static class Gear
     }
 
     /// <summary>
-    /// Larga o item do espaço do inventário no chão, aos pés do personagem (só ele pode pegar de volta). Pilha (T-320): larga
-    /// a pilha inteira. Null = feito.
+    /// Larga o item do espaço do inventário no chão, aos pés do personagem. Item largado não tem dono (T-394): qualquer um
+    /// pega. Pilha (T-320): larga a pilha inteira. Null = feito.
     /// </summary>
     public static ItemRejectReason? Drop(World world, Entity e, int inventorySlot)
     {
@@ -131,7 +131,7 @@ public static class Gear
         }
 
         inv[inventorySlot] = null;
-        SpawnGround(world, Position(e), item, [e.Id.Value], e.Id);
+        SpawnGround(world, Position(e), item, [], e.Id);
         return null;
     }
 
@@ -212,16 +212,23 @@ public static class Gear
     private static bool SameStack(ItemInstance a, ItemInstance b) =>
         a.BaseId == b.BaseId && a.Level == b.Level && a.Rarity == b.Rarity && a.Affixes.SequenceEqual(b.Affixes);
 
-    /// <summary>Cria o item no chão com dono e prazo (<see cref="ItemRules.GroundDurationTicks"/>) e publica <see cref="ItemDropped"/>.</summary>
-    public static Entity SpawnGround(World world, Vector2 position, ItemInstance item, IEnumerable<int> owners, EntityId source)
+    /// <summary>
+    /// Cria o item no chão e publica <see cref="ItemDropped"/>. <paramref name="owners"/> vazio = qualquer um pega. Com
+    /// <paramref name="owner"/> (T-394), só ele pega durante <see cref="ItemRules.OwnerDurationTicks"/>; depois, qualquer um de
+    /// <paramref name="owners"/>. Some depois de <see cref="ItemRules.GroundDurationTicks"/>.
+    /// </summary>
+    public static Entity SpawnGround(World world, Vector2 position, ItemInstance item, IEnumerable<int> owners, EntityId source, int owner = 0)
     {
+        var rules = world.Content.Rules.Items;
         var ground = world.Spawn(
             new Transform { Position = position },
             new GroundItem
             {
                 Item = item,
                 Owners = owners.Distinct().Order().ToArray(),
-                ExpiresAtTick = world.Tick + world.Content.Rules.Items.GroundDurationTicks,
+                Owner = owner,
+                FreeAtTick = world.Tick + (owner != 0 ? rules.OwnerDurationTicks : 0),
+                ExpiresAtTick = world.Tick + rules.GroundDurationTicks,
             });
         world.Events.Publish(new ItemDropped(ground.Id, source, item.BaseId, item.Level, item.Rarity));
         return ground;
@@ -230,6 +237,10 @@ public static class Gear
     /// <summary>
     /// Queda do monstro morto para <paramref name="owners"/> (quem participou da morte; sem ninguém, nada cai nem consome o
     /// RNG). Tabela pela categoria do monstro, nível do item = nível do monstro. Retorna os itens no chão.
+    /// T-394: cada item tem um dono, que pega sozinho durante <see cref="ItemRules.OwnerDurationTicks"/>. Os participantes
+    /// ficam em ordem de id; o dono do primeiro item é o de índice (id do monstro + tick da morte) mod participantes, e os
+    /// seguintes vão para os próximos (rodízio). Sem RNG de propósito: a escolha muda de morte para morte, é determinística
+    /// e não altera a sequência do RNG (as simulações de balanceamento ficam iguais).
     /// </summary>
     public static IReadOnlyList<Entity> DropLoot(World world, Entity monster, IReadOnlyCollection<Entity> owners)
     {
@@ -245,7 +256,8 @@ public static class Gear
         }
 
         var position = Position(monster);
-        var ids = owners.Select(o => o.Id.Value).ToList();
+        var ids = owners.Select(o => o.Id.Value).Distinct().Order().ToList();
+        var first = (int)((monster.Id.Value + world.Tick) % ids.Count);
         var dropped = new List<Entity>(table.Count);
         for (var i = 0; i < table.Count; i++)
         {
@@ -256,7 +268,8 @@ public static class Gear
             }
 
             var baseId = table.Items[world.Random.NextInt(table.Items.Count)];
-            dropped.Add(SpawnGround(world, position, Roll(world, baseId, info.Level, rarity), ids, monster.Id));
+            var owner = ids[(first + i) % ids.Count];
+            dropped.Add(SpawnGround(world, position, Roll(world, baseId, info.Level, rarity), ids, monster.Id, owner));
         }
 
         return dropped;

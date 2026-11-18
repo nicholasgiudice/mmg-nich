@@ -254,7 +254,8 @@ public partial class WorldView : Node2D
 
     /// <summary>
     /// Itens no chão (T-222). A queda deixa todos no ponto do monstro (T-204); aqui eles são espalhados em volta dele,
-    /// em ordem de id, só no desenho. Forte e com "[F]" quando o jogador tem direito e está ao alcance de pegar.
+    /// em ordem de id, só no desenho. Forte e com "[F]" quando o jogador tem direito e está ao alcance de pegar. O direito
+    /// segue a regra do Core no tick do snapshot (T-394): dono sorteado primeiro, depois os participantes; item largado, todos.
     /// </summary>
     private void RenderGroundItems(WorldSnapshot latest, EntityId? controlled, HashSet<EntityId> seen)
     {
@@ -275,7 +276,7 @@ public partial class WorldView : Node2D
                 var at = state.Get<Transform>().Position;
                 var drawn = items.Count == 1 ? at
                     : at + (ItemSpread * new System.Numerics.Vector2(MathF.Cos(i * MathF.Tau / items.Count), MathF.Sin(i * MathF.Tau / items.Count)));
-                var mine = controlled is { } id && item.IsOwner(id);
+                var mine = controlled is { } id && item.CanPickUp(id, latest.Tick);
                 var inReach = myPos is { } p && System.Numerics.Vector2.Distance(p, at) <= range;
                 seen.Add(state.Id);
                 _items[state.Id] = (Units.ToPixels(drawn), mine, inReach);

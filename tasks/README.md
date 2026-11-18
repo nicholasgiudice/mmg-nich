@@ -427,6 +427,8 @@ Detalhadas pela T-240 a partir do esboço da seção 7, de `design/first-map-v0.
 | [T-392](fase-3/T-392-mini-mapa.md) | Cliente: mini mapa (jogador e membros por perto) | Windows | Humano + Médio | — |
 | [T-391](fase-3/T-391-posicao-do-grupo.md) | Servidor: posição dos membros distantes do grupo (pode esperar) | VPS | Médio | — |
 | [T-393](fase-3/T-393-mini-mapa-membros-distantes.md) | Cliente: membros distantes do grupo no mini mapa | Windows | Médio | 391, 392 |
+| **Saque** (pedido de 2026-11-18) | | | | |
+| [T-394](fase-3/T-394-dono-do-saque.md) | Dono por item no saque e item largado livre para todos | Windows | Médio | — |
 | [T-390](fase-3/T-390-planejar-fase-4.md) | Detalhar a fase 4 em tarefas | VPS | **Forte** | 380 |
 
 ### Ondas de execução
