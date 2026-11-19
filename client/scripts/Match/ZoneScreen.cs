@@ -6,7 +6,7 @@ namespace MmoRpgClient.Match;
 
 /// <summary>
 /// Mundo aberto (T-223), por cima do jogo: transição curta ao entrar numa zona (tela escura com o nome, que some),
-/// nome da zona no canto e, com o personagem morto, o aviso com o botão "Renascer na Cidade".
+/// nome da zona no canto e, com o personagem morto, a tela de morte (<see cref="DeathScreen"/>, T-397).
 /// </summary>
 public partial class ZoneScreen : Control
 {
@@ -23,12 +23,18 @@ public partial class ZoneScreen : Control
 
     /// <summary>Onde termina o nome da zona no canto superior direito (px); 0 sem ele. A lista de batalha fica abaixo (T-312).</summary>
     public float CornerBottom => Visible && _corner.Visible && _corner.Text.Length > 0 ? _corner.Position.Y + _corner.Size.Y : 0;
-    private readonly PanelContainer _death = new() { Visible = false };
-    private readonly Label _deathText = new() { HorizontalAlignment = HorizontalAlignment.Center };
+    private readonly DeathScreen _death = new();
     private double _transition = -1;
 
-    /// <summary>Botão "Renascer na Cidade".</summary>
-    public event Action? RespawnRequested;
+    /// <summary>Botão "Retornar à Cidade" da tela de morte.</summary>
+    public event Action? RespawnRequested
+    {
+        add => _death.RespawnRequested += value;
+        remove => _death.RespawnRequested -= value;
+    }
+
+    /// <summary>Tela de morte (T-397), para o resumo de dano e o nome das fontes.</summary>
+    public DeathScreen Death => _death;
 
     /// <summary>A tela escura da transição ainda está aparecendo.</summary>
     public bool InTransition => _transition >= 0;
@@ -54,32 +60,6 @@ public partial class ZoneScreen : Control
         _corner.AddThemeColorOverride("font_color", new Color(0.98f, 0.88f, 0.6f));
         _title.Visible = _subtitle.Visible = false;
 
-        _death.AddThemeStyleboxOverride("panel", new StyleBoxFlat
-        {
-            BgColor = new Color(0.10f, 0.04f, 0.04f, 0.92f),
-            BorderColor = new Color(0.8f, 0.25f, 0.2f),
-            BorderWidthBottom = 2,
-            BorderWidthTop = 2,
-            BorderWidthLeft = 2,
-            BorderWidthRight = 2,
-            ContentMarginLeft = 14,
-            ContentMarginRight = 10,
-            ContentMarginTop = 8,
-            ContentMarginBottom = 8,
-        });
-
-        // Faixa compacta no alto: o resumo da morte (HUD) fica no centro da tela.
-        var row = new HBoxContainer { Alignment = BoxContainer.AlignmentMode.Center };
-        row.AddThemeConstantOverride("separation", 14);
-        _death.AddChild(row);
-        _deathText.VerticalAlignment = VerticalAlignment.Center;
-        _deathText.AddThemeFontSizeOverride("font_size", 17);
-        _deathText.AddThemeColorOverride("font_color", new Color(1f, 0.55f, 0.5f));
-        row.AddChild(_deathText);
-
-        var respawn = new Button { Text = "Renascer na Cidade", TooltipText = "Volta à Cidade com vida e Mana cheias.", FocusMode = FocusModeEnum.None, CustomMinimumSize = new Vector2(190, 34) };
-        respawn.Pressed += () => RespawnRequested?.Invoke();
-        row.AddChild(respawn);
         AddChild(_death);
     }
 
@@ -104,15 +84,17 @@ public partial class ZoneScreen : Control
         Visible = false;
     }
 
-    /// <summary>Mostra ou esconde o aviso de morte.</summary>
+    /// <summary>Mostra ou esconde a tela de morte.</summary>
     public void SetDeath(bool dead, string zoneName = "")
     {
         if (dead)
         {
-            _deathText.Text = $"Você morreu em {zoneName}.";
+            _death.Open(zoneName);
         }
-
-        _death.Visible = dead;
+        else
+        {
+            _death.Close();
+        }
     }
 
     public bool DeathVisible => _death.Visible;
@@ -148,11 +130,6 @@ public partial class ZoneScreen : Control
 
         _corner.ResetSize();
         _corner.Position = new Vector2(screen.X - _corner.Size.X - 12, 8);
-        if (_death.Visible)
-        {
-            _death.ResetSize();
-            _death.Position = new Vector2((screen.X - _death.Size.X) / 2, 8);
-        }
     }
 
     /// <summary>"Zona segura" na Cidade; nos campos, a faixa de nível dos monstros.</summary>

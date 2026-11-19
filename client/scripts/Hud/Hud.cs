@@ -6,6 +6,7 @@ using Game.Core.Combat.Progression;
 using Game.Core.Combat.Shops;
 using Game.Core.Combat.Stats;
 using Game.Core.Combat.Status;
+using Game.Core.CombatLog;
 using Game.Core.Definitions;
 using Game.Core.Events;
 using Game.Core.Simulation;
@@ -121,6 +122,12 @@ public partial class Hud : Control
     /// locais, onde a tela de resultado da partida já mostra o fim.
     /// </summary>
     public bool ShowExpeditionFailure { get; set; } = true;
+
+    /// <summary>
+    /// Mundo aberto (T-397): o resumo da morte do jogador vai para a tela de morte em vez do painel solto do centro.
+    /// Null = painel de sempre (sala de encontro).
+    /// </summary>
+    public Action<DeathSummary>? DeathSummaryHandler { get; set; }
     private Label _banner = null!;
     private HBoxContainer _panelButtons = null!;
     private Button _characterButton = null!;
@@ -470,7 +477,16 @@ public partial class Hud : Control
             _log.Refresh(source.LogEntries);
             foreach (var death in source.TakeDeathSummaries())
             {
-                if (death.Victim == authority.ControlledEntity)
+                if (death.Victim != authority.ControlledEntity)
+                {
+                    continue;
+                }
+
+                if (DeathSummaryHandler is { } handler)
+                {
+                    handler(death);
+                }
+                else
                 {
                     _death.ShowSummary(death);
                 }
@@ -970,6 +986,9 @@ public partial class Hud : Control
             _ => string.Concat(words.Take(3).Select(w => char.ToUpperInvariant(w[0]))),
         };
     }
+
+    /// <summary>Nome exibido de uma habilidade/status/área pelo id (também para a tela de morte, T-397).</summary>
+    public string SourceDisplayName(string id) => SourceLabel(id);
 
     private string SourceLabel(string id) =>
         _content.Abilities.TryGetValue(id, out var a) ? a.Name
