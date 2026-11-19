@@ -30,7 +30,8 @@ namespace MmoRpgClient;
 /// imprime as respostas da autoridade; também <c>spend:str</c>, <c>raise:habilidade</c> e <c>reset_points</c>, os botões das
 /// telas de personagem e de habilidades, T-221; <c>equip:n</c>, <c>unequip:weapon</c>, <c>drop:n</c> e <c>pickup</c>, T-222; mouse na interface: <c>click:x;y</c>, <c>hover:x;y</c>, <c>drag:x1;y1;x2;y2</c>..., T-082) e <c>--capture=caminho.png</c> (salva a tela e fecha; após 2 s, ou
 /// <c>--capture-after=segundos</c>, ou ao fim do demo; com <c>--capture-every=segundos</c>, uma série até <c>--capture-after</c>, T-345). <c>--circles</c> desenha as unidades como círculos, sem sprites (T-053).
-/// Mundo aberto (T-223): <c>--auto-respawn=segundos</c> aperta "Renascer na Cidade" sozinho depois de morrer.
+/// Mundo aberto (T-223): <c>--auto-respawn=segundos</c> aperta "Retornar à Cidade" sozinho depois de morrer.
+/// <c>--death-sample</c> (T-397): mostra a tela de morte com um resumo de exemplo ao entrar na zona, sem morrer (prévia).
 /// Capturas (T-345): <c>--enemy-level=n</c> põe todos os inimigos e objetivos do encontro local no nível n, e
 /// <c>--enemy-health=f</c> faz os inimigos começarem com a fração f da vida.
 /// Efeitos (T-054): <c>--effects=reduced|normal</c> troca a intensidade só nesta execução; <c>--circles</c> também tira os efeitos.
@@ -80,6 +81,7 @@ public partial class Main : Node2D
     private ZoneScreen _zoneScreen = null!;
     private double _diedAt = -1;
     private bool _respawnSent;
+    private bool _deathSampleDone;
     private double _leaveAt = -1;
     private Label? _netMessage;
     private Godot.Vector2? _statsLast;
@@ -105,6 +107,7 @@ public partial class Main : Node2D
         _info.GetParent().AddChild(_zoneScreen);
         _info.GetParent().MoveChild(_zoneScreen, _overlay.GetIndex()); // abaixo da pausa
         _zoneScreen.RespawnRequested += Respawn;
+        _zoneScreen.Death.SourceLabel = _hud.SourceDisplayName;
         _gameMenu = new GameMenu { Name = "GameMenu" };
         _info.GetParent().AddChild(_gameMenu); // por cima de tudo, até da tela de morte
         _gameMenu.ContinueRequested += Resume;
@@ -667,6 +670,7 @@ public partial class Main : Node2D
             _encounterName = _zone?.Name ?? encounter?.Name ?? welcome.EncounterId;
             _tracker = encounter is null ? null : new MatchTracker(welcome.ControlledEntity, encounter.Defeat.TimeLimitTicks);
             _hud.ShowExpeditionFailure = _tracker is null;
+            _hud.DeathSummaryHandler = _zone is null ? null : _zoneScreen.Death.SetSummary;
             _endedAt = -1;
             _diedAt = -1;
             _respawnSent = false;
@@ -735,6 +739,17 @@ public partial class Main : Node2D
         }
 
         var dead = _authority.Latest?.Entities.FirstOrDefault(e => e.Id == me)?.TryGet<Health>() is { IsAlive: false };
+        if (!dead && !_deathSampleDone && _args.ContainsKey("death-sample") && !_zoneScreen.InTransition)
+        {
+            if (!_zoneScreen.DeathVisible)
+            {
+                _zoneScreen.SetDeath(true, _zone.Name);
+                _zoneScreen.Death.SetSummary(DeathSample.Summary(me));
+            }
+
+            return;
+        }
+
         if (dead && _diedAt < 0)
         {
             _diedAt = _elapsed;
@@ -751,6 +766,13 @@ public partial class Main : Node2D
 
     private void Respawn()
     {
+        if (_args.ContainsKey("death-sample") && !_deathSampleDone)
+        {
+            _deathSampleDone = true;
+            _zoneScreen.SetDeath(false);
+            return;
+        }
+
         if (_authority is NetAuthority net && !_respawnSent)
         {
             _respawnSent = true;
