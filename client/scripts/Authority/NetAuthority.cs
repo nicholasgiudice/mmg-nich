@@ -290,6 +290,28 @@ public sealed class NetAuthority : IGameAuthority, ICombatLogSource, IDisposable
         }
     }
 
+    /// <summary>T-396: último andamento da saída pedida com <see cref="RequestLogout"/> (T-395); null sem saída pedida.</summary>
+    public LogoutStatus? Logout { get; private set; }
+
+    /// <summary>Mundo aberto (T-395/T-396): pede para sair do mundo (trocar de personagem ou fechar o jogo).</summary>
+    public void RequestLogout()
+    {
+        if (_peer is not null && Status == NetStatus.Playing)
+        {
+            Logout = null;
+            SendRaw(ProtocolSerializer.Serialize(new LogoutRequest()), ReliableChannel, DeliveryMethod.ReliableOrdered);
+        }
+    }
+
+    /// <summary>Desiste da saída em espera; o servidor responde <see cref="LogoutState.Cancelled"/>.</summary>
+    public void CancelLogout()
+    {
+        if (_peer is not null && Status == NetStatus.Playing)
+        {
+            SendRaw(ProtocolSerializer.Serialize(new LogoutCancel()), ReliableChannel, DeliveryMethod.ReliableOrdered);
+        }
+    }
+
     public IReadOnlyList<GameEvent> TakeEvents()
     {
         if (_ready.Count == 0)
@@ -392,6 +414,9 @@ public sealed class NetAuthority : IGameAuthority, ICombatLogSource, IDisposable
                 break;
             case InstanceRejected refused:
                 _partyMessages.Add(MmoRpgClient.Hud.InstanceText.Rejection(refused.Reason));
+                break;
+            case LogoutStatus logout:
+                Logout = logout;
                 break;
         }
     }
