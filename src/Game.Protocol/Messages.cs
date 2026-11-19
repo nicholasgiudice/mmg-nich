@@ -33,6 +33,9 @@ namespace Game.Protocol;
 [MemoryPackUnion(20, typeof(InstanceRejected))]
 [MemoryPackUnion(21, typeof(InstanceNotice))]
 [MemoryPackUnion(22, typeof(PartyPositions))]
+[MemoryPackUnion(23, typeof(LogoutRequest))]
+[MemoryPackUnion(24, typeof(LogoutCancel))]
+[MemoryPackUnion(25, typeof(LogoutStatus))]
 public partial interface INetMessage;
 
 // ---------------- cliente → servidor ----------------

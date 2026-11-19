@@ -71,6 +71,22 @@ public class ProtocolTests(ITestOutputHelper output)
     }
 
     [Fact]
+    public void Logout_messages_round_trip_with_their_union_tags()
+    {
+        Assert.IsType<LogoutRequest>(RoundTrip(new LogoutRequest()));
+        Assert.IsType<LogoutCancel>(RoundTrip(new LogoutCancel()));
+        Assert.Equal(new LogoutStatus(LogoutState.Waiting, 123456), RoundTrip(new LogoutStatus(LogoutState.Waiting, 123456)));
+        Assert.Equal(new LogoutStatus(LogoutState.Cancelled, 0), RoundTrip(new LogoutStatus(LogoutState.Cancelled, 0)));
+        Assert.Equal(new LogoutStatus(LogoutState.Done, 0), RoundTrip(new LogoutStatus(LogoutState.Done, 0)));
+
+        // T-395: tags novas da união e versão 15 (cliente e servidor precisam subir juntos).
+        Assert.Equal(23, ProtocolSerializer.Serialize(new LogoutRequest())[0]);
+        Assert.Equal(24, ProtocolSerializer.Serialize(new LogoutCancel())[0]);
+        Assert.Equal(25, ProtocolSerializer.Serialize(new LogoutStatus(LogoutState.Done, 0))[0]);
+        Assert.Equal(15, ProtocolVersion.Current);
+    }
+
+    [Fact]
     public void Intents_round_trip_and_always_use_the_connection_entity()
     {
         var me = new EntityId(3);

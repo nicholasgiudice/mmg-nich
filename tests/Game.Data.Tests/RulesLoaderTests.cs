@@ -78,4 +78,29 @@ public class RulesLoaderTests
         Assert.False(bad.Success);
         Assert.Contains(bad.Errors, e => e.Path.Contains("frontal.arcDegrees"));
     }
+
+    [Fact]
+    public void Logout_combat_delay_loads_in_ticks_with_default_and_must_not_be_negative()
+    {
+        var repo = GameDataLoader.LoadSources([("rules.json", File.ReadAllText(RepoFile("data/rules.json")))]);
+        Assert.True(repo.Success, string.Join("\n", repo.Errors));
+        Assert.Equal(200, repo.Database!.Rules.Logout.CombatDelayTicks); // 10 s
+
+        Assert.Equal(200, Load("{}").Database!.Rules.Logout.CombatDelayTicks);
+
+        var custom = Load("""{ "rules": { "logout": { "combatDelay": 2.5 } } }""");
+        Assert.True(custom.Success, string.Join("\n", custom.Errors));
+        Assert.Equal(50, custom.Database!.Rules.Logout.CombatDelayTicks);
+
+        var zero = Load("""{ "rules": { "logout": { "combatDelay": 0 } } }""");
+        Assert.True(zero.Success, string.Join("\n", zero.Errors));
+        Assert.Equal(0, zero.Database!.Rules.Logout.CombatDelayTicks);
+
+        var negative = Load("""{ "rules": { "logout": { "combatDelay": -1 } } }""");
+        Assert.False(negative.Success);
+        Assert.Contains(negative.Errors, e => e.Path == "rules.logout.combatDelay");
+
+        var typo = Load("""{ "rules": { "logout": { "combatDelai": 3 } } }""");
+        Assert.False(typo.Success);
+    }
 }

@@ -40,6 +40,11 @@ namespace Game.Server.Zones;
 /// chegada da saída); quem não é do grupo dono sai depois de <see cref="ZoneDefinition.OutsiderTimeoutTicks"/>, com
 /// <see cref="InstanceNotice"/>; quem desconecta volta para dentro se reconectar enquanto a cópia existir; a cópia vazia some
 /// depois de <see cref="ZoneDefinition.EmptyTimeoutTicks"/>.</item>
+/// <item>Saída do mundo (T-395): <see cref="LogoutRequest"/> tira o personagem do mundo (fora de combate ou morto, na hora; em
+/// combate, depois de <see cref="LogoutRules.CombatDelayTicks"/>, com <see cref="LogoutStatus"/> <see cref="LogoutState.Waiting"/>),
+/// grava, espera a gravação terminar, manda <see cref="LogoutState.Done"/> e fecha a conexão. Mover-se, usar habilidade ou
+/// <see cref="LogoutCancel"/> cancelam a espera (<see cref="LogoutState.Cancelled"/>); morrer nela sai na hora. A saída segue a
+/// mesma reserva de vaga da desconexão numa instância.</item>
 /// </list>
 /// </summary>
 public sealed class WorldServer : ITransportHandler, IGameHost, IPartyHost
@@ -51,6 +56,13 @@ public sealed class WorldServer : ITransportHandler, IGameHost, IPartyHost
     public const int PartyPositionIntervalTicks = 10;
 
     public const int MaxIntentsPerTick = 16;
+
+    /// <summary>
+    /// T-395: prazo de segurança para a gravação da saída (banco travado). Passado, vai o <see cref="LogoutState.Done"/> mesmo
+    /// assim, com erro no log; a gravação continua na fila.
+    /// </summary>
+    public const int LogoutSaveTimeoutTicks = 10 * Core.Simulation.World.TickRate;
+
     private const int RejectCloseDelayTicks = 10;
     private const string DevDefaultClass = "class.warrior";
 
@@ -141,19 +153,33 @@ public sealed class WorldServer : ITransportHandler, IGameHost, IPartyHost
             _online.Remove(id);
         }
 
-        if (p.Entity is { } e)
+        if (p.Entity is not null)
         {
-            if (InstanceOf(p.Zone!) is { } instance)
-            {
-                // T-350: volta para dentro se reconectar enquanto a cópia existir.
-                var at = e.IsAlive ? e.Get<Transform>().Position : instance.Zone.SpawnPosition;
-                _reservations[CharacterKey(p)] = (instance, at);
-            }
-
-            SaveNow(p, "saída");
-            p.Zone!.World.Remove(e.Id);
-            _log.Information("{Name} saiu de {Zone}", p.Name, p.Zone.Id);
+            LeaveWorld(p, "saída", confirm: false);
         }
+    }
+
+    /// <summary>
+    /// Tira o personagem do mundo (desconexão ou <see cref="LogoutRequest"/>): reserva a vaga numa instância, grava e remove a
+    /// entidade. Com <paramref name="confirm"/>, devolve a gravação pedida (null = nada a gravar: login de desenvolvimento).
+    /// </summary>
+    private Task<bool>? LeaveWorld(Player p, string reason, bool confirm)
+    {
+        var e = p.Entity!;
+        var zone = p.Zone!;
+        if (InstanceOf(zone) is { } instance)
+        {
+            // T-350: volta para dentro se reconectar enquanto a cópia existir.
+            var at = e.IsAlive ? e.Get<Transform>().Position : instance.Zone.SpawnPosition;
+            _reservations[CharacterKey(p)] = (instance, at);
+        }
+
+        var save = SaveNow(p, reason, confirm);
+        zone.World.Remove(e.Id);
+        p.Entity = null;
+        p.Pending.Clear();
+        _log.Information("{Name} saiu de {Zone} ({Reason})", p.Name, zone.Id, reason);
+        return save;
     }
 
     public void OnReceived(int peer, ReadOnlySpan<byte> data)
@@ -177,9 +203,28 @@ public sealed class WorldServer : ITransportHandler, IGameHost, IPartyHost
             case IntentMessage intent when p.Entity is not null:
                 if (p.Pending.Count < MaxIntentsPerTick * 4)
                 {
+                    if (CancelsLogout(intent.Intent))
+                    {
+                        CancelLogout(p, "ação");
+                    }
+
                     p.Pending.Enqueue(intent);
                 }
 
+                break;
+            case LogoutRequest when p.Entity is not null:
+                if (p.Logout == LogoutPhase.None)
+                {
+                    p.Logout = LogoutPhase.Requested; // decide no próximo tick, depois das intenções e do combate
+                }
+                else if (p.Logout == LogoutPhase.Waiting)
+                {
+                    Send(peer, new LogoutStatus(LogoutState.Waiting, WaitingTick(p)));
+                }
+
+                break;
+            case LogoutCancel:
+                CancelLogout(p, "pedido");
                 break;
             case SnapshotAck ack:
                 p.View.Ack(ack.Epoch, ack.Tick);
@@ -210,9 +255,9 @@ public sealed class WorldServer : ITransportHandler, IGameHost, IPartyHost
 
     private void OnHello(Player p, Hello hello)
     {
-        if (p.Entity is not null || p.CharacterId is not null)
+        if (p.Entity is not null || p.CharacterId is not null || p.Logout != LogoutPhase.None)
         {
-            return; // repetido
+            return; // repetido (ou depois de sair do mundo: o próximo personagem vem numa conexão nova)
         }
 
         if (hello.ProtocolVersion != ProtocolVersion.Current)
@@ -364,6 +409,10 @@ public sealed class WorldServer : ITransportHandler, IGameHost, IPartyHost
         }
 
         Send(p.Peer, new Welcome(p.Entity.Id, zone.World.Tick, zone.Id, zone.Arena.Id, p.Epoch, zone.InstanceId));
+        if (p.Logout == LogoutPhase.Waiting)
+        {
+            Send(p.Peer, new LogoutStatus(LogoutState.Waiting, WaitingTick(p))); // T-395: levado de zona na espera; o tick é da zona nova
+        }
     }
 
     /// <summary>Tira o personagem da zona atual e põe em <paramref name="to"/>, com o estado capturado agora.</summary>
@@ -381,7 +430,7 @@ public sealed class WorldServer : ITransportHandler, IGameHost, IPartyHost
         from.World.Remove(e.Id);
         Place(p, to, state, position, vitals);
         _log.Information("{Name}: {From} → {To} ({Reason})", p.Name, from.Id, to.Id, reason);
-        SaveNow(p, reason);
+        _ = SaveNow(p, reason);
     }
 
     // ---------------- tick ----------------
@@ -423,6 +472,7 @@ public sealed class WorldServer : ITransportHandler, IGameHost, IPartyHost
         SaveAfterTick(active);
         MoveThroughGatesAndRespawn();
         UpdateInstances();
+        ProcessLogouts();
         foreach (var zone in _zones.Values.Concat(_instances.Select(i => i.Zone)))
         {
             Broadcast(zone);
@@ -519,14 +569,125 @@ public sealed class WorldServer : ITransportHandler, IGameHost, IPartyHost
         }
     }
 
+    // ---------------- saída do mundo (T-395) ----------------
+
+    /// <summary>Intenções que cancelam a espera da saída: andar (direção não nula) e usar habilidade ou ataque.</summary>
+    private static bool CancelsLogout(NetIntent intent) => intent.Kind switch
+    {
+        NetIntentKind.Move => intent.Direction != Vector2.Zero,
+        NetIntentKind.UseAbility => true,
+        _ => false,
+    };
+
+    /// <summary>Tick da zona atual em que a saída em espera acontece (a zona avança junto com o servidor enquanto há gente nela).</summary>
+    private long WaitingTick(Player p) => p.Zone!.World.Tick + (p.LogoutAt - _tick);
+
+    private void CancelLogout(Player p, string reason)
+    {
+        if (p.Logout is not (LogoutPhase.Requested or LogoutPhase.Waiting))
+        {
+            return;
+        }
+
+        p.Logout = LogoutPhase.None;
+        _log.Information("{Name}: saída cancelada ({Reason})", p.Name, reason);
+        Send(p.Peer, new LogoutStatus(LogoutState.Cancelled, 0));
+    }
+
+    /// <summary>
+    /// Depois dos portões e das instâncias: pedidos novos (sai na hora ou começa a espera), esperas que acabaram (ou cujo
+    /// personagem morreu) e gravações de saída que terminaram.
+    /// </summary>
+    private void ProcessLogouts()
+    {
+        foreach (var p in _players.Values.Where(p => p.Logout != LogoutPhase.None).ToList())
+        {
+            switch (p.Logout)
+            {
+                case LogoutPhase.Requested when p.Entity is { } e:
+                    var delay = _content.Rules.Logout.CombatDelayTicks;
+                    if (delay <= 0 || !e.IsAlive || !Leveling.InCombat(p.Zone!.World, e))
+                    {
+                        ExitWorld(p);
+                        break;
+                    }
+
+                    p.Logout = LogoutPhase.Waiting;
+                    p.LogoutAt = _tick + delay;
+                    p.Zone.World.Enqueue(new Core.Intents.StopIntent(e.Id)); // quem estava andando para; andar de novo cancela
+                    _log.Information("{Name}: saída em combate, espera de {Seconds:0.#} s", p.Name, delay / (double)Core.Simulation.World.TickRate);
+                    Send(p.Peer, new LogoutStatus(LogoutState.Waiting, WaitingTick(p)));
+                    break;
+                case LogoutPhase.Waiting when p.Entity is { } e:
+                    if (_tick >= p.LogoutAt || !e.IsAlive)
+                    {
+                        ExitWorld(p); // morrer na espera não cancela: sai na hora, como quem pede morto
+                    }
+
+                    break;
+                case LogoutPhase.Saving:
+                    if (p.LogoutSave is null || p.LogoutSave.IsCompleted || _tick >= p.LogoutSaveDeadline)
+                    {
+                        FinishLogout(p);
+                    }
+
+                    break;
+                case LogoutPhase.Requested or LogoutPhase.Waiting:
+                    p.Logout = LogoutPhase.None; // sem entidade (não deveria acontecer)
+                    break;
+            }
+        }
+    }
+
+    private void ExitWorld(Player p)
+    {
+        p.Leaving = true;
+        _parties.Disconnected(p.Peer);
+        p.LogoutSave = LeaveWorld(p, "troca de personagem", confirm: true);
+        p.LogoutSaveDeadline = _tick + LogoutSaveTimeoutTicks;
+        p.Logout = LogoutPhase.Saving;
+        if (p.LogoutSave is null || p.LogoutSave.IsCompleted)
+        {
+            FinishLogout(p);
+        }
+    }
+
+    /// <summary>Gravação da saída terminou (ou falhou, ou o prazo acabou): libera o personagem, manda <see cref="LogoutState.Done"/> e fecha a conexão.</summary>
+    private void FinishLogout(Player p)
+    {
+        var save = p.LogoutSave;
+        if (save is not null && !save.IsCompleted)
+        {
+            _log.Error("{Name}: gravação da saída não terminou em {Seconds} s; liberando a troca de personagem assim mesmo", p.Name, LogoutSaveTimeoutTicks / Core.Simulation.World.TickRate);
+        }
+        else if (save is not null && !(save.IsCompletedSuccessfully && save.Result))
+        {
+            _log.Error("{Name}: gravação da saída falhou; liberando a troca de personagem assim mesmo (a gravação segue na fila)", p.Name);
+        }
+
+        if (p.CharacterId is { } id && _online.TryGetValue(id, out var owner) && owner == p.Peer)
+        {
+            _online.Remove(id);
+        }
+
+        p.Logout = LogoutPhase.Done;
+        p.LogoutSave = null;
+        _log.Information("{Name} saiu do mundo (troca de personagem)", p.Name);
+        Send(p.Peer, new LogoutStatus(LogoutState.Done, 0));
+        _closeAt[p.Peer] = _tick + RejectCloseDelayTicks; // dá tempo do Done chegar antes de fechar
+    }
+
     // ---------------- gravação ----------------
 
-    /// <summary>Captura e pede a gravação (só personagem com conta). Morto grava na zona inicial, no nascimento.</summary>
-    private void SaveNow(Player p, string reason)
+    /// <summary>
+    /// Captura e pede a gravação (só personagem com conta). Morto grava na zona inicial, no nascimento. Com
+    /// <paramref name="confirm"/>, devolve a gravação para esperar (T-395); null = nada gravado.
+    /// </summary>
+    private Task<bool>? SaveNow(Player p, string reason, bool confirm = false)
     {
         if (_accounts is null || p.CharacterId is not { } id || p.Entity is not { } e || CharacterState.Capture(e) is not { } state)
         {
-            return;
+            return null;
         }
 
         var position = e.Get<Transform>().Position;
@@ -534,14 +695,20 @@ public sealed class WorldServer : ITransportHandler, IGameHost, IPartyHost
             ? new CharacterLocation(exit.To, (float)exit.Arrival.X, (float)exit.Arrival.Y) // T-350: instância grava a zona de origem
             : e.IsAlive ? new CharacterLocation(p.Zone.Id, position.X, position.Y) : new CharacterLocation(_start.Id, 0, 0);
         p.Saved = state with { Location = location };
+        if (confirm)
+        {
+            return _accounts.Persistence.SaveConfirmed(id, p.Saved, reason);
+        }
+
         _accounts.Persistence.Save(id, p.Saved, reason);
+        return null;
     }
 
     public void SaveAll(string reason)
     {
         foreach (var p in _players.Values)
         {
-            SaveNow(p, reason);
+            _ = SaveNow(p, reason);
         }
     }
 
@@ -573,7 +740,7 @@ public sealed class WorldServer : ITransportHandler, IGameHost, IPartyHost
                 };
                 if (entity is { } id && _players.Values.FirstOrDefault(p => p.CharacterId is not null && p.Zone == zone && p.Entity?.Id == id) is { } owner)
                 {
-                    SaveNow(owner, reason);
+                    _ = SaveNow(owner, reason);
                 }
             }
         }
@@ -921,5 +1088,34 @@ public sealed class WorldServer : ITransportHandler, IGameHost, IPartyHost
 
         /// <summary>O último <see cref="PartyPositions"/> enviado tinha alguém (o próximo vazio ainda precisa ir, T-391).</summary>
         public bool SentPartyPositions { get; set; }
+
+        /// <summary>T-395: andamento da saída do mundo.</summary>
+        public LogoutPhase Logout { get; set; }
+
+        /// <summary>T-395: tick do servidor em que a saída em espera acontece.</summary>
+        public long LogoutAt { get; set; }
+
+        /// <summary>T-395: gravação da saída (null = nada a gravar).</summary>
+        public Task<bool>? LogoutSave { get; set; }
+
+        /// <summary>T-395: tick do servidor em que o <see cref="LogoutState.Done"/> vai mesmo sem a gravação terminar.</summary>
+        public long LogoutSaveDeadline { get; set; }
+    }
+
+    private enum LogoutPhase
+    {
+        None,
+
+        /// <summary>Pedido recebido; decide no próximo tick.</summary>
+        Requested,
+
+        /// <summary>Em combate: continua no mundo até <see cref="Player.LogoutAt"/>.</summary>
+        Waiting,
+
+        /// <summary>Fora do mundo, esperando a gravação.</summary>
+        Saving,
+
+        /// <summary><see cref="LogoutState.Done"/> enviado; a conexão vai fechar.</summary>
+        Done,
     }
 }

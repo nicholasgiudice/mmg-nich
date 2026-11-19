@@ -106,6 +106,14 @@
             "inviteTimeout": { "$ref": "#/$defs/seconds" }
           }
         },
+        "logout": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "T-395: saída do mundo (trocar de personagem): em combate, quantos segundos o personagem continua no mundo antes de sair (0 = na hora).",
+          "properties": {
+            "combatDelay": { "$ref": "#/$defs/seconds" }
+          }
+        },
         "monsters": {
           "type": "object",
           "additionalProperties": false,

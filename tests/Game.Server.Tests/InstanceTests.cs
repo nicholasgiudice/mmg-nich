@@ -217,6 +217,29 @@ public class InstanceTests
     }
 
     [Fact]
+    public void Logout_inside_keeps_the_same_reservation_as_a_disconnect()
+    {
+        using var w = Rig();
+        var c = w.Join("aria");
+        WalkInto(w, c, CityGate);
+        var instance = Assert.Single(w.Server.Instances);
+        var spot = new Vector2(8.5f, 16.5f);
+        Teleport(w.Where(c).Entity, spot);
+        w.Tick(1, c);
+
+        c.Send(new LogoutRequest()); // T-395: fora de combate, sai na hora
+        w.Tick(1, c);
+        Assert.Equal(LogoutState.Done, Assert.Single(c.All<LogoutStatus>()).State);
+        Assert.Null(w.Server.ZoneOf(c.Raw.Peer));
+
+        w.Tick(EmptyTimeout / 2);
+        var back = w.Join("aria");
+        Assert.Equal(instance.Id, back.Welcome!.InstanceId);
+        Assert.Same(instance.Zone, w.Where(back).Zone);
+        Assert.Equal(spot.X, w.Where(back).Entity.Get<Transform>().Position.X, 0.01f);
+    }
+
+    [Fact]
     public void Account_character_inside_is_saved_at_the_origin_and_comes_back_inside_or_at_the_entrance()
     {
         var store = new FakeStore();
