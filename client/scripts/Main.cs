@@ -5,6 +5,7 @@ using Game.Core.Definitions;
 using Game.Core.Events;
 using Game.Core.Simulation;
 using Game.Core.Simulation.Components;
+using Game.Protocol;
 using Godot;
 using MmoRpgClient.Authority;
 using MmoRpgClient.Data;
@@ -63,6 +64,12 @@ public partial class Main : Node2D
     private MatchSettings? _settings;
     private MatchTracker? _tracker;
     private MatchOverlay _overlay = null!;
+    private GameMenu _gameMenu = null!;
+
+    /// <summary>T-396: o que fazer quando a saída pedida ao servidor terminar.</summary>
+    private enum LeaveAction { None, SwitchCharacter, QuitGame }
+
+    private LeaveAction _leave;
     private string _encounterName = "";
     private bool _paused;
     private double _endedAt = -1;
@@ -98,6 +105,12 @@ public partial class Main : Node2D
         _info.GetParent().AddChild(_zoneScreen);
         _info.GetParent().MoveChild(_zoneScreen, _overlay.GetIndex()); // abaixo da pausa
         _zoneScreen.RespawnRequested += Respawn;
+        _gameMenu = new GameMenu { Name = "GameMenu" };
+        _info.GetParent().AddChild(_gameMenu); // por cima de tudo, até da tela de morte
+        _gameMenu.ContinueRequested += Resume;
+        _gameMenu.SwitchRequested += () => Leave(LeaveAction.SwitchCharacter);
+        _gameMenu.QuitRequested += () => Leave(LeaveAction.QuitGame);
+        _gameMenu.CancelRequested += CancelLeave;
 
         foreach (var action in InputActions.All.Where(a => !InputMap.HasAction(a)))
         {
@@ -181,7 +194,7 @@ public partial class Main : Node2D
     public override void _Process(double delta)
     {
         _elapsed += delta;
-        if (!_paused && !_overlay.IsOpen)
+        if ((!_paused || _gameMenu.IsOpen) && !_overlay.IsOpen)
         {
             _demo?.Update(delta); // antes de ler as teclas: o roteiro aperta ações neste frame
         }
@@ -354,7 +367,11 @@ public partial class Main : Node2D
 
         if (Godot.Input.IsActionJustPressed(InputActions.Pause))
         {
-            if (_paused)
+            if (_gameMenu.Leaving)
+            {
+                CancelLeave(); // T-396: Esc na espera da saída desiste dela
+            }
+            else if (_paused)
             {
                 Resume();
             }
@@ -365,7 +382,15 @@ public partial class Main : Node2D
             else if (!_overlay.IsOpen && _input?.SelectedTarget is null)
             {
                 _paused = true;
-                _overlay.ShowPause(_settings, _encounterName, canRestart: _zone is null);
+                if (_zone is not null && _authority is NetAuthority)
+                {
+                    // T-396: no mundo aberto, o menu com trocar de personagem e sair do jogo; o mundo não pausa.
+                    _gameMenu.Open(withAccount: _settings.Online?.Ticket is not null);
+                }
+                else
+                {
+                    _overlay.ShowPause(_settings, _encounterName, canRestart: _zone is null);
+                }
             }
         }
     }
@@ -429,8 +454,82 @@ public partial class Main : Node2D
 
     private void Resume()
     {
+        if (_leave != LeaveAction.None)
+        {
+            return; // saída em andamento: só o Cancelar (ou Esc) volta ao jogo
+        }
+
         _paused = false;
         _overlay.Close();
+        _gameMenu.Close();
+    }
+
+    /// <summary>T-396: Trocar de personagem ou Sair do jogo pedem a saída ao servidor (T-395) e esperam o Done.</summary>
+    private void Leave(LeaveAction action)
+    {
+        if (_authority is not NetAuthority net || net.Status != NetStatus.Playing)
+        {
+            Finish(action);
+            return;
+        }
+
+        _leave = action;
+        net.RequestLogout();
+        _gameMenu.ShowSending();
+        GD.Print($"[zone] pedido para sair ({action})");
+    }
+
+    private void CancelLeave()
+    {
+        if (_leave == LeaveAction.None)
+        {
+            return;
+        }
+
+        (_authority as NetAuthority)?.CancelLogout();
+        GD.Print("[zone] saída cancelada pelo jogador");
+    }
+
+    /// <summary>T-396: acompanha a saída pedida; true quando terminou (a cena vai mudar ou o jogo fechar).</summary>
+    private bool UpdateLeave(NetAuthority net)
+    {
+        if (_leave == LeaveAction.None)
+        {
+            return false;
+        }
+
+        if (net.Logout?.State == LogoutState.Done || net.Status is NetStatus.Disconnected or NetStatus.Rejected)
+        {
+            Finish(_leave);
+            return true;
+        }
+
+        switch (net.Logout)
+        {
+            case { State: LogoutState.Waiting } waiting:
+                _gameMenu.ShowWaiting((waiting.Tick - net.CurrentTick) / (double)Game.Core.Simulation.World.TickRate);
+                break;
+            case { State: LogoutState.Cancelled }:
+                _leave = LeaveAction.None;
+                _gameMenu.ShowCancelled();
+                break;
+        }
+
+        return false;
+    }
+
+    private void Finish(LeaveAction action)
+    {
+        _leave = LeaveAction.None;
+        GD.Print($"[zone] saiu do mundo ({action})");
+        if (action == LeaveAction.QuitGame)
+        {
+            GetTree().Quit();
+        }
+        else
+        {
+            BackToMenu();
+        }
     }
 
     /// <summary>
@@ -514,6 +613,11 @@ public partial class Main : Node2D
             }
         }
 
+        if (UpdateLeave(net))
+        {
+            return false;
+        }
+
         if (net.Status is NetStatus.Rejected or NetStatus.Disconnected)
         {
             if (_leaveAt < 0)
@@ -566,8 +670,13 @@ public partial class Main : Node2D
             _endedAt = -1;
             _diedAt = -1;
             _respawnSent = false;
-            _paused = false;
+            _paused = _leave != LeaveAction.None; // T-396: numa saída em espera, o menu continua aberto na zona nova
             _overlay.Close();
+            if (!_paused)
+            {
+                _gameMenu.Close();
+            }
+
             if (_zone is not null)
             {
                 arenaView.ShowGates(_zone.Gates

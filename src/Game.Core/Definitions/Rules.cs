@@ -27,7 +27,20 @@ public sealed record RulesDefinition
     // ---- seção T-321 (lojas; fica em data/shops.json) ----
     public ShopRules Shops { get; init; } = new();
 
+    // ---- seção T-395 (saída do mundo) ----
+    public LogoutRules Logout { get; init; } = new();
+
     // ---- seção T-011 (threat): adicione abaixo ----
+}
+
+/// <summary>Saída do mundo para trocar de personagem (T-395; data/rules.json, seção <c>logout</c>).</summary>
+public sealed record LogoutRules
+{
+    /// <summary>
+    /// Em combate (<c>Leveling.InCombat</c>), quanto o personagem continua no mundo, vulnerável, antes de sair.
+    /// 0 = sai na hora mesmo em combate. JSON: "combatDelay" (segundos).
+    /// </summary>
+    public int CombatDelayTicks { get; init; } = 10 * 20;
 }
 
 /// <summary>Quanto vida e potência de um monstro crescem por nível acima do 1 (T-206). Frações: 0,4 = +40% por nível.</summary>

@@ -43,7 +43,8 @@
       "skillRankLevels": [1, 3, 5, 7, 9],
       "signatureRankLevels": [12, 13, 15]
     },
-    "party": { "maxMembers": 4, "inviteTimeout": 30 }
+    "party": { "maxMembers": 4, "inviteTimeout": 30 },
+    "logout": { "combatDelay": 10 }
   },
   "threat": {
     "damageMultiplier": 1.0,

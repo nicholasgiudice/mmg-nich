@@ -40,6 +40,8 @@ public static class ProtocolVersion
     /// 13 (T-391): mensagem <c>PartyPositions</c> (posição dos membros do grupo na mesma zona, para o mini mapa).
     /// 14 (T-394): <c>GroundItem</c> leva o dono sorteado (<c>Owner</c>) e o tick em que o item fica livre para os
     /// participantes (<c>FreeAtTick</c>).
+    /// 15 (T-395): mensagens <c>LogoutRequest</c>, <c>LogoutCancel</c> e <c>LogoutStatus</c> (sair do mundo para trocar de
+    /// personagem, com espera em combate).
     /// </summary>
-    public const int Current = 14;
+    public const int Current = 15;
 }

@@ -28,6 +28,9 @@ public sealed record LoadedCharacter(int Peer, Guid CharacterId, LoadOutcome Out
 /// Conflito de versão ou personagem apagado não se resolve repetindo: registra erro e descarta.</item>
 /// <item>Enquanto há estado não gravado de um personagem, carregá-lo devolve esse estado (quem sai e volta logo não vê o banco
 /// velho).</item>
+/// <item>T-395: <see cref="SaveConfirmed"/> grava como <see cref="Save"/> e devolve uma tarefa que termina quando a primeira
+/// tentativa com esse estado (ou um mais novo do mesmo personagem) acaba: true = gravado; false = falhou (a repetição segue
+/// por trás), foi descartado ou o servidor está parando.</item>
 /// </list>
 /// </summary>
 public sealed class CharacterPersistence : IDisposable
@@ -43,12 +46,17 @@ public sealed class CharacterPersistence : IDisposable
     // Estado mais novo ainda não gravado (na fila ou sendo gravado).
     private readonly Dictionary<Guid, Pending> _pending = [];
     private readonly Queue<Guid> _queue = new();
+
+    // T-395: quem espera a gravação de cada personagem, com a geração do estado pedido.
+    private readonly Dictionary<Guid, List<(long Generation, TaskCompletionSource<bool> Done)>> _waiters = [];
     private readonly ConcurrentQueue<LoadedCharacter> _loaded = new();
     private readonly SemaphoreSlim _signal = new(0);
     private readonly CancellationTokenSource _stop = new();
     private readonly Task _worker;
     private long _saved;
     private long _failures;
+    private long _generation;
+    private bool _disposed;
 
     public CharacterPersistence(ICharacterStore store, ILogger log, TimeSpan? retryDelay = null)
     {
@@ -85,21 +93,78 @@ public sealed class CharacterPersistence : IDisposable
     {
         lock (_lock)
         {
-            if (!_records.ContainsKey(characterId))
+            if (Enqueue(characterId, state, reason) is null)
             {
-                _log.Warning("Gravação de {Character} ignorada: personagem não foi carregado", characterId);
                 return;
-            }
-
-            var queued = _pending.TryGetValue(characterId, out var p) && p.Queued;
-            _pending[characterId] = new Pending(state, reason, Queued: true);
-            if (!queued)
-            {
-                _queue.Enqueue(characterId);
             }
         }
 
         _signal.Release();
+    }
+
+    /// <summary>
+    /// Como <see cref="Save"/>, mas devolve quando a gravação acaba (T-395, saída do mundo): true = gravado; false = a
+    /// primeira tentativa falhou (a repetição segue por trás), a gravação foi descartada, o personagem não foi carregado por
+    /// aqui ou o servidor está parando. A tarefa termina fora da thread do loop; o loop só olha <c>IsCompleted</c>.
+    /// </summary>
+    public Task<bool> SaveConfirmed(Guid characterId, CharacterState state, string reason)
+    {
+        var done = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        lock (_lock)
+        {
+            if (_disposed || Enqueue(characterId, state, reason) is not { } generation)
+            {
+                return Task.FromResult(false);
+            }
+
+            if (!_waiters.TryGetValue(characterId, out var list))
+            {
+                _waiters[characterId] = list = [];
+            }
+
+            list.Add((generation, done));
+        }
+
+        _signal.Release();
+        return done.Task;
+    }
+
+    /// <summary>Põe o estado na fila; a geração dele, ou null se o personagem não foi carregado. Chame com o lock.</summary>
+    private long? Enqueue(Guid characterId, CharacterState state, string reason)
+    {
+        if (!_records.ContainsKey(characterId))
+        {
+            _log.Warning("Gravação de {Character} ignorada: personagem não foi carregado", characterId);
+            return null;
+        }
+
+        var queued = _pending.TryGetValue(characterId, out var p) && p.Queued;
+        var generation = ++_generation;
+        _pending[characterId] = new Pending(state, reason, Queued: true, generation);
+        if (!queued)
+        {
+            _queue.Enqueue(characterId);
+        }
+
+        return generation;
+    }
+
+    /// <summary>Termina a espera de quem pediu a gravação da <paramref name="generation"/> ou de uma mais velha. Chame com o lock.</summary>
+    private List<TaskCompletionSource<bool>> TakeWaiters(Guid id, long generation)
+    {
+        if (!_waiters.TryGetValue(id, out var list))
+        {
+            return [];
+        }
+
+        var done = list.Where(w => w.Generation <= generation).Select(w => w.Done).ToList();
+        list.RemoveAll(w => w.Generation <= generation);
+        if (list.Count == 0)
+        {
+            _waiters.Remove(id);
+        }
+
+        return done;
     }
 
     /// <summary>Espera a fila esvaziar (parada do servidor). False se o prazo acabou com gravações pendentes.</summary>
@@ -121,6 +186,19 @@ public sealed class CharacterPersistence : IDisposable
 
     public void Dispose()
     {
+        List<TaskCompletionSource<bool>> waiting;
+        lock (_lock)
+        {
+            _disposed = true;
+            waiting = _waiters.Values.SelectMany(l => l.Select(w => w.Done)).ToList();
+            _waiters.Clear();
+        }
+
+        foreach (var w in waiting)
+        {
+            w.TrySetResult(false);
+        }
+
         _stop.Cancel();
         try
         {
@@ -264,6 +342,7 @@ public sealed class CharacterPersistence : IDisposable
         {
             Interlocked.Increment(ref _failures);
             _log.Warning("Falha ao gravar {Name} ({Reason}); repetindo em {Delay} s: {Error}", record.Name, pending.Reason, _retryDelay.TotalSeconds, ex.Message);
+            List<TaskCompletionSource<bool>> failed;
             lock (_lock)
             {
                 var current = _pending[id];
@@ -272,11 +351,19 @@ public sealed class CharacterPersistence : IDisposable
                     _pending[id] = current with { Queued = true };
                     _queue.Enqueue(id);
                 }
+
+                failed = TakeWaiters(id, pending.Generation);
+            }
+
+            foreach (var w in failed)
+            {
+                w.TrySetResult(false);
             }
 
             return false;
         }
 
+        List<TaskCompletionSource<bool>> finished;
         lock (_lock)
         {
             if (status == SaveStatus.Saved)
@@ -294,6 +381,13 @@ public sealed class CharacterPersistence : IDisposable
                 _pending.Remove(id);
                 _records.Remove(id);
             }
+
+            finished = TakeWaiters(id, pending.Generation);
+        }
+
+        foreach (var w in finished)
+        {
+            w.TrySetResult(status == SaveStatus.Saved);
         }
 
         if (status == SaveStatus.Saved)
@@ -308,5 +402,6 @@ public sealed class CharacterPersistence : IDisposable
         return true;
     }
 
-    private sealed record Pending(CharacterState State, string Reason, bool Queued);
+    /// <summary><paramref name="Generation"/>: ordem do pedido (T-395), para saber quem espera por esta gravação.</summary>
+    private sealed record Pending(CharacterState State, string Reason, bool Queued, long Generation);
 }

@@ -507,6 +507,11 @@ internal static partial class GameDataValidator
         var pc = new Ctx("rules", "rules.party", errors);
         if (rules.Party.MaxMembers < 2) { pc.Error("maxMembers", "Deve ser pelo menos 2."); }
         pc.PositiveTicks("inviteTimeout", rules.Party.InviteTimeoutTicks);
+        if (rules.Logout.CombatDelayTicks < 0)
+        {
+            new Ctx("rules", "rules.logout", errors).Error("combatDelay", $"Deve ser maior ou igual a 0 (valor: {rules.Logout.CombatDelayTicks} ticks).");
+        }
+
         var mc = new Ctx("rules", "rules.monsters", errors);
         mc.NonNegative("healthPerLevel", rules.Monsters.HealthPerLevel);
         mc.NonNegative("powerPerLevel", rules.Monsters.PowerPerLevel);
