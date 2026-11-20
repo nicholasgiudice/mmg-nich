@@ -10,7 +10,7 @@ Os números são ponto de partida para o simulador, como em `design/progression-
 |---|---|
 | Segunda classe | **4 habilidades normais e 1 assinatura**, o mesmo formato da classe base |
 | Barra | uma tecla por habilidade: com 4 normais na segunda classe, passa de 9 para **10 teclas** (1–5 da base, 6–0 da segunda classe), mais ataque básico e poção |
-| Nível máximo | **40**, mas o designer ainda tem dúvida e não queria aumentar muito o número de níveis (seção 2 compara 30, 35 e 40) |
+| Nível máximo | **40**. Foram considerados 30, 35 e 90 (com pontos de habilidade só em parte dos níveis); o designer ficou com 40 |
 | Curva de XP | **mais fácil** do que a atual |
 | Guerreiro | Guardião e Berserker |
 | Arqueiro | **Atirador de Elite** (alvo único) e **Caçador** |
@@ -31,18 +31,16 @@ Hoje são 15 pontos para 23 NH: dá para ter **65%** de tudo, e é isso que obri
 | 35 | 35 | 76% | 20 níveis: um mapa e meio |
 | 40 | 40 | 87%: quase tudo no máximo, sobra pouca escolha | 25 níveis: **quase dois mapas** |
 
-Se o nível 40 ficar, a escolha pode ser mantida com **1 ponto por nível até o 30 e, depois, 1 a cada 2 níveis**: 35 pontos no 40, ou 76%.
-
-**Leitura:** como o designer não queria aumentar muito o número de níveis, o **nível 30** é o que muda menos: dobra a jornada atual, mantém a mesma proporção de escolha com a regra de pontos de hoje e pede um mapa novo, não dois.
+**Decisão: nível 40.** Com 1 ponto por nível, o personagem completaria quase tudo. A escolha se mantém com **1 ponto por nível até o 30 e, depois, 1 a cada 2 níveis** (nos pares): 35 pontos no 40, ou 76% dos 46 NH (a confirmar, seção 7). Todo nível continua dando pontos de atributo e vida.
 
 ### Quando cada NH libera
 
-A classe base não muda: NH1–NH5 das normais nos níveis 1, 3, 5, 7 e 9, e a assinatura no 12, 13 e 15. A segunda classe é escolhida no 15 e repete o mesmo desenho nos níveis seguintes:
+A classe base não muda: NH1–NH5 das normais nos níveis 1, 3, 5, 7 e 9, e a assinatura no 12, 13 e 15. A segunda classe é escolhida no 15 e se espalha até o 40, para que algo novo libere a cada 3 a 5 níveis:
 
-| Segunda classe | Nível máximo 30 | Nível máximo 40 |
-|---|---|---|
-| NH1–NH5 das normais | 16, 18, 20, 22, 24 | 16, 19, 22, 25, 28 |
-| NH1–NH3 da assinatura | 27, 28, 30 | 30, 35, 40 |
+| Segunda classe | Níveis |
+|---|---|
+| NH1–NH5 das normais | 16, 19, 22, 25, 28 |
+| NH1–NH3 da assinatura | 30, 35, 40 |
 
 ## 3. Curva de XP mais fácil
 
@@ -145,7 +143,7 @@ Mecânicas que **não existem hoje**:
 
 ## 7. Ainda falta decidir
 
-1. **Nível máximo:** 30, 35 ou 40? Se for 40, os pontos ficam mais lentos depois do 30?
+1. **Pontos de habilidade no nível 40:** 1 a cada 2 níveis depois do 30 (35 pontos, 76%)?
 2. **Curva depois do 15:** ~100 monstros por nível, ou menos?
 3. **Segunda classe no nível 15**, sem exigir o Vigia?
 4. **Quarta habilidade normal** de cada segunda classe (seção 5) e o **Santuário** no lugar da Ressurreição.
@@ -154,5 +152,5 @@ Mecânicas que **não existem hoje**:
 ## 8. Para a T-390
 
 - A fase 4 hoje é infraestrutura (CI/CD, observabilidade, testes de carga, produção separada). Mais níveis, segunda classe e mapas novos são **conteúdo grande**: cabem melhor numa fase própria, ou numa trilha paralela, do que dentro da fase 4.
-- Ordem natural: (1) regras de nível e curva nova, com o simulador; (2) sistema de segunda classe no Core e no cliente (escolha definitiva, barra de 10 teclas) com o **Guerreiro**; (3) as outras três classes; (4) o mapa novo (ou os mapas), com monstros e masmorra.
+- Ordem natural: (1) regras de nível e curva nova, com o simulador; (2) sistema de segunda classe no Core e no cliente (escolha definitiva, barra de 10 teclas) com o **Guerreiro**; (3) as outras três classes; (4) os mapas novos para os níveis 16 a 40 (25 níveis, quase dois mapas do tamanho do primeiro), com monstros e masmorras.
 - Junto com isso, rever as metas dos testes de design e reativar os 19 casos marcados com `PlaytestRebalance.Pending` (`tasks/reports/playtest-v0.3.md`).
