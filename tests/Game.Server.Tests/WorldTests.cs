@@ -190,6 +190,87 @@ public class WorldTests
     }
 
     [Fact]
+    public void Time_a_zone_spent_parked_counts_for_corpses_and_respawns()
+    {
+        using var w = new WorldRig();
+        var fields = w.Fields;
+        var total = fields.Definition.MonsterSpawns.Sum(s => s.Count);
+        var respawn = fields.Definition.MonsterSpawns.First(s => s.Monster == "monster.field_rat").RespawnTicks;
+        Assert.True(respawn > fields.Definition.CorpseTicks);
+        var rat = fields.World.Entities.First(e => e.TryGet<UnitInfo>()?.DefinitionId == "monster.field_rat");
+        fields.World.Kill(rat);
+        fields.Step(1);
+        Assert.False(rat.IsRemoved);
+
+        // Parada menos que o prazo do corpo: o corpo continua e some no tempo certo, contando a parada.
+        var half = fields.Definition.CorpseTicks / 2;
+        fields.Step(2 + half);
+        Assert.False(rat.IsRemoved);
+        var tick = 2 + half;
+        while (!rat.IsRemoved)
+        {
+            fields.Step(++tick);
+        }
+
+        Assert.Equal(fields.Definition.CorpseTicks, tick - 1);
+
+        // Parada mais longa que o renascimento: o rato nasce no primeiro tick depois da parada.
+        Assert.Equal(total - 1, fields.LivingMonsters);
+        fields.Step(tick + respawn);
+        Assert.Equal(total, fields.LivingMonsters);
+    }
+
+    [Fact]
+    public void Monsters_killed_before_leaving_are_back_when_the_player_returns_after_the_respawn_time()
+    {
+        using var w = new WorldRig();
+        var c = w.Join("aria");
+        Teleport(w.Where(c).Entity, 78.5, 29.5);
+        w.Tick(1, c); // Cidade → Campos
+        var (fields, hero) = w.Where(c);
+        Assert.Same(w.Fields, fields);
+        var total = fields.Definition.MonsterSpawns.Sum(s => s.Count);
+        var respawn = fields.Definition.MonsterSpawns.Max(s => s.RespawnTicks);
+        foreach (var monster in fields.World.Entities.Where(e => e.TryGet<UnitInfo>()?.DefinitionId == "monster.field_rat").Take(3).ToList())
+        {
+            fields.World.Kill(monster);
+        }
+
+        w.Tick(1, c);
+        Assert.Equal(total - 3, fields.LivingMonsters);
+
+        Teleport(hero, 0.5, 69.5);
+        w.Tick(1, c); // Campos → Cidade: os Campos ficam vazios e parados
+        Assert.Same(w.City, w.Where(c).Zone);
+        var parked = fields.World.Tick;
+        w.Tick(fields.Definition.CorpseTicks + respawn, c);
+        Assert.Equal(parked, fields.World.Tick);
+        Assert.Equal(total - 3, fields.LivingMonsters);
+
+        Teleport(w.Where(c).Entity, 78.5, 29.5);
+        w.Tick(1, c); // volta aos Campos (a troca vem depois dos passos das zonas)
+        Assert.Same(w.Fields, w.Where(c).Zone);
+        w.Tick(1, c); // primeiro passo dos Campos depois da parada
+        Assert.Equal(total, fields.LivingMonsters);
+    }
+
+    [Fact]
+    public void Summon_corpses_also_count_the_parked_time()
+    {
+        using var w = new WorldRig();
+        var lair = w.Server.Zones["zone.matriarch_lair"];
+        var matriarch = lair.World.Entities.Single(e => e.TryGet<UnitInfo>()?.DefinitionId == "monster.forest_matriarch");
+        var spider = EntityFactory.SpawnMonster(lair.World, w.Content.Monsters["monster.spider_small"], new Vector2(48.5f, 16.5f), 8);
+        spider.Add(new Game.Core.Combat.Areas.SummonedBy { Owner = matriarch.Id, MonsterId = "monster.spider_small" });
+
+        lair.World.Kill(spider);
+        lair.Step(1);
+        Assert.False(spider.IsRemoved);
+        lair.Step(2 + lair.Definition.CorpseTicks);
+        Assert.True(spider.IsRemoved);
+    }
+
+    [Fact]
     public void Cooldowns_and_potions_used_survive_a_zone_change()
     {
         using var w = new WorldRig();

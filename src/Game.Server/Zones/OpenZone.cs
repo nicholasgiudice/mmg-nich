@@ -29,6 +29,9 @@ public sealed class OpenZone
     /// <summary>Tick da morte dos monstros sem ponto de surgimento (invocações), até o corpo sumir.</summary>
     private readonly Dictionary<EntityId, long> _looseCorpses = [];
 
+    /// <summary>Último tick do servidor em que a zona avançou; null = ainda não avançou por <see cref="Step(long)"/>.</summary>
+    private long? _lastServerTick;
+
     public OpenZone(ContentCatalog content, ZoneDefinition definition, ulong seed, ServerOptions options, int instanceId = 0)
     {
         Definition = definition;
@@ -108,6 +111,45 @@ public sealed class OpenZone
 
     /// <summary>Portão em que a posição está, se algum.</summary>
     public GateDefinition? GateAt(Vector2 position) => Definition.Gates.FirstOrDefault(g => g.Area.Contains(position.X, position.Y));
+
+    /// <summary>
+    /// Um tick do servidor (<paramref name="serverTick"/>). Zona vazia não avança (T-214); ao voltar a ter jogador, os ticks em que
+    /// ficou parada contam para corpos e renascimentos (T-398) antes do tick normal.
+    /// </summary>
+    public void Step(long serverTick)
+    {
+        if (_lastServerTick is { } last && serverTick - last > 1)
+        {
+            CatchUp(serverTick - last - 1);
+        }
+
+        _lastServerTick = serverTick;
+        Step();
+    }
+
+    /// <summary>
+    /// T-398: a zona ficou <paramref name="ticks"/> ticks parada (vazia). Adianta os prazos de corpos e renascimentos como se esse
+    /// tempo tivesse passado; o próximo <see cref="Step()"/> tira os corpos vencidos e faz nascer os monstros devidos. O resto da
+    /// simulação (IA, efeitos, monstros vivos) continua parado.
+    /// </summary>
+    public void CatchUp(long ticks)
+    {
+        if (ticks <= 0)
+        {
+            return;
+        }
+
+        foreach (var slot in _slots)
+        {
+            slot.DiedAt -= ticks;
+            slot.RespawnAt -= ticks;
+        }
+
+        foreach (var id in _looseCorpses.Keys.ToList())
+        {
+            _looseCorpses[id] -= ticks;
+        }
+    }
 
     /// <summary>Um tick: simulação e depois corpos e renascimentos.</summary>
     public void Step()
