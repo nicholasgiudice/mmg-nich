@@ -27,4 +27,8 @@ Também traz as pendências que vêm da T-111 e da T-230: **quatro pessoas reais
 
 ## Resultado
 
-_(preencher ao concluir)_
+**Concluída em 2026-11-19.** O designer aprovou o playtest. Relatório em `tasks/reports/playtest-v0.3.md`.
+
+- **Decisão: seguir para a fase 4 (T-390).** Os problemas do teste já foram corrigidos durante ele (T-381 a T-397), junto com um ajuste de balanceamento (Mana, Explosão Elemental, poções; commit `e9e4464`).
+- **Para a T-390:** o designer ainda quer ajustar as classes e vai mudar os níveis. Os 19 casos de teste de design ignorados com `PlaytestRebalance.Pending` esperam essa revisão.
+- **Desvios:** o ping de cada pessoa, o tempo por nível e o ouro ganho não foram anotados. O ping em números continua pendente desde a T-111.
