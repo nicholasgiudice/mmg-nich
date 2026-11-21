@@ -55,8 +55,10 @@ Fluxo para você:
 | **0 — Protótipo de combate** | Arena local, 4 classes com 3 habilidades + ataque básico, 4 inimigos, Matriarca simplificada, simulador de encontros | **Concluída** (T-025: aprovada como base; seção 6) |
 | **1 — Rede mínima** | Servidor dedicado na VPS, 4 jogadores na mesma arena, login de desenvolvimento | **Concluída** (T-111: playtest online aprovado; seção 6b) |
 | **2 — Persistência e progressão** | Contas, personagens, inventário, Cidade + Campos online; atributos, níveis, equipamento e habilidades reformuladas (`design/progression-v0.1.md`) | **Concluída** (T-230: playtest aprovado com correções para a fase 3; seção 6d) |
-| **3 — Primeiro mapa completo** | Floresta, Ruínas, Cripta instanciada, Vigia Sem Rosto; grupo, lista de batalha, ouro, lojas e mapas maiores (playtest v0.2) | **Detalhada** (T-240; seção 6e) |
-| **4 — Operação** | CI/CD, métricas, testes de carga, produção separada | Esboço |
+| **3 — Primeiro mapa completo** | Floresta, Ruínas, Cripta instanciada, Vigia Sem Rosto; grupo, lista de batalha, ouro, lojas e mapas maiores (playtest v0.2) | **Concluída** (T-380: playtest aprovado; seção 6e) |
+| **4 — Segundas classes** | Nível 40, segunda classe no nível 20 com duas opções por classe, passivas, barra de 10 teclas; Guerreiro primeiro (`design/segunda-classe-v0.1.md`) | Esboço (T-390 detalha) |
+| **5 — Operação** | CI/CD, métricas, testes de carga, produção separada | Esboço |
+| **Depois** | Áreas e mapas novos do nível 16 ao 40 | Ainda sem esboço |
 
 As fases são detalhadas em arquivos de tarefa somente quando a anterior termina (T-030 detalhou a fase 1; T-120 detalha a fase 2), porque dependem do que a fase anterior ensinar.
 
@@ -435,7 +437,7 @@ Detalhadas pela T-240 a partir do esboço da seção 7, de `design/first-map-v0.
 | [T-397](fase-3/T-397-tela-de-morte.md) | Cliente: tela de morte com "Retornar à Cidade" | Windows | Humano + Médio | — |
 | **Renascimento** (achado de 2026-11-19) | | | | |
 | [T-398](fase-3/T-398-renascimento-em-zona-vazia.md) | Servidor: renascimento conta o tempo em que a zona ficou vazia | VPS | Médio | — |
-| [T-390](fase-3/T-390-planejar-fase-4.md) | Detalhar a fase 4 em tarefas | VPS | **Forte** | 380 |
+| [T-390](fase-3/T-390-planejar-fase-4.md) | Detalhar a fase 4 (segundas classes) em tarefas | VPS | **Forte** | 380 |
 
 ### Ondas de execução
 
@@ -536,7 +538,22 @@ A arte continua no LPC (trilha de arte). Os sprites dos monstros novos (Fada da 
 | Dados: monstros e encontros de cada área, Cavaleiro Espectral, Vigia Sem Rosto | VPS | Médio |
 | NPCs, missões mínimas, mercado e armazém | VPS + Windows | Médio |
 
-### Fase 4 — Operação
+### Fase 4 — Segundas classes
+
+Decidida pelo designer depois do playtest v0.3 (2026-11-19 a 2026-11-21). Design completo em `design/segunda-classe-v0.1.md`. **Foco só nas classes**: as áreas novas vêm depois. A T-390 detalha o bloco do Guerreiro; o resto fica neste esboço até o playtest dele.
+
+| Bloco | Conteúdo | Estado do design |
+|---|---|---|
+| Base | regras do nível 40, simulador até o 40, metas dos testes de design | decidido |
+| Ferramenta de teste | botão no menu do Esc para subir de nível e desfazer a segunda classe, só em servidor de teste | decidido |
+| Guerreiro | sistema de segunda classe e passivas, Guardião e Berserker, barra de 10 teclas, tela de escolha; playtest | **aprovado** |
+| Clérigo | Sacerdote (aprovado) e Inquisidor | Inquisidor a aprovar |
+| Arqueiro | Atirador de Elite e Caçador | só as passivas decididas |
+| Mago | Piromante e Arcanista | a aprovar |
+
+### Fase 5 — Operação
+
+Era a fase 4 até 2026-11-21.
 
 | Tarefa | Ambiente | Modelo |
 |---|---|---|
