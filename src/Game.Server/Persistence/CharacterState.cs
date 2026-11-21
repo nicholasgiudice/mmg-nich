@@ -130,6 +130,26 @@ public sealed record CharacterState(CharacterBuild Build, IReadOnlyDictionary<Eq
         return e;
     }
 
+    /// <summary>
+    /// T-404: o estado sem a segunda classe, quando ela não existe mais na classe <paramref name="cls"/> (dados mudaram);
+    /// null se não há o que corrigir. Os NH das habilidades que a classe base não aprende saem (pontos de habilidade de
+    /// volta) e, se os atributos distribuídos passam do que o nível dá sem os pontos da segunda classe, todos voltam.
+    /// </summary>
+    public CharacterState? WithoutMissingSecondClass(ClassDefinition cls, ProgressionRules rules, out string? dropped)
+    {
+        dropped = Build.SecondClass;
+        if (dropped is null || Leveling.SecondClassOf(cls, dropped) is not null)
+        {
+            dropped = null;
+            return null;
+        }
+
+        var a = Build.Allocated;
+        var allocated = a.Str + a.Dex + a.Agi + a.Int + a.Vit > rules.AttributePointsAt(Build.Level) ? new AttributeSet() : a;
+        var ranks = Build.SkillRanks.Where(kv => Leveling.IsLearnable(cls, null, kv.Key)).ToDictionary(kv => kv.Key, kv => kv.Value, StringComparer.Ordinal);
+        return this with { Build = Build with { SecondClass = null, Allocated = allocated, SkillRanks = ranks } };
+    }
+
     /// <summary>Habilidades usadas por consumíveis (T-320): a recarga delas acompanha a troca de zona sem estarem nas conhecidas.</summary>
     private static HashSet<string> ItemAbilities(World world) =>
         world.Content.Items.Values.Where(i => i.UseAbility is not null).Select(i => i.UseAbility!).ToHashSet(StringComparer.Ordinal);
@@ -184,14 +204,16 @@ public sealed record CharacterLocation(string ZoneId, float X, float Y);
 ///   "skillRanks": { "warrior.heavy_strike": 1 },
 ///   "equipment": { "weapon": { "base": "weapon.sword", "level": 2, "rarity": "common", "affixes": [] } },
 ///   "inventory": [ { "slot": 3, "item": { ..., "count": 5 } } ],
-///   "gold": 120 }
+///   "gold": 120,
+///   "secondClass": "second_class.guardian" }
 /// </code>
 /// Versão 2 (T-320): <c>gold</c> e <c>count</c> nos itens (ausente = 1). A versão 1 continua sendo lida: ouro 0 e, se o
 /// inventário não tem nenhum item do inventário inicial da classe, ele é dado na carga (<see cref="CharacterState.GrantStartingInventory"/>).
+/// Versão 3 (T-404): <c>secondClass</c> (ausente = ainda não escolheu). As versões 1 e 2 abrem sem segunda classe.
 /// </summary>
 public static class CharacterDocument
 {
-    public const int Version = 2;
+    public const int Version = 3;
 
     private static readonly JsonSerializerOptions Json = new()
     {
@@ -210,6 +232,7 @@ public static class CharacterDocument
             Inventory = state.Inventory.Select((item, slot) => (item, slot)).Where(x => x.item is not null)
                 .Select(x => new SlotDoc { Slot = x.slot, Item = ItemDoc.Of(x.item!) }).ToList(),
             Gold = state.Gold,
+            SecondClass = state.Build.SecondClass,
         };
         return JsonSerializer.Serialize(doc, Json);
     }
@@ -217,9 +240,9 @@ public static class CharacterDocument
     /// <summary>Lê o documento; lança <see cref="JsonException"/> ou <see cref="InvalidDataException"/> se está corrompido.</summary>
     public static CharacterState Read(int version, string json, int level, long experience)
     {
-        if (version is not (1 or Version))
+        if (version is < 1 or > Version)
         {
-            throw new InvalidDataException($"versão de progressão {version} desconhecida (esperada 1 ou {Version})");
+            throw new InvalidDataException($"versão de progressão {version} desconhecida (esperada de 1 a {Version})");
         }
 
         var doc = JsonSerializer.Deserialize<Doc>(json, Json) ?? throw new InvalidDataException("documento de progressão nulo");
@@ -229,6 +252,7 @@ public static class CharacterDocument
             Experience = checked((int)experience),
             Allocated = doc.Allocated ?? new AttributeSet(),
             SkillRanks = doc.SkillRanks ?? [],
+            SecondClass = version >= 3 && !string.IsNullOrEmpty(doc.SecondClass) ? doc.SecondClass : null,
         };
         if (doc.Equipment is null)
         {
@@ -270,6 +294,9 @@ public static class CharacterDocument
         public Dictionary<EquipSlot, ItemDoc>? Equipment { get; set; }
         public List<SlotDoc>? Inventory { get; set; }
         public long? Gold { get; set; }
+
+        /// <summary>Segunda classe escolhida (v3, T-404); ausente = não escolheu.</summary>
+        public string? SecondClass { get; set; }
     }
 
     private sealed class SlotDoc

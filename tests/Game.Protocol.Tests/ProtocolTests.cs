@@ -83,7 +83,7 @@ public class ProtocolTests(ITestOutputHelper output)
         Assert.Equal(23, ProtocolSerializer.Serialize(new LogoutRequest())[0]);
         Assert.Equal(24, ProtocolSerializer.Serialize(new LogoutCancel())[0]);
         Assert.Equal(25, ProtocolSerializer.Serialize(new LogoutStatus(LogoutState.Done, 0))[0]);
-        Assert.Equal(16, ProtocolVersion.Current);
+        Assert.Equal(17, ProtocolVersion.Current);
     }
 
     [Fact]
@@ -106,6 +106,7 @@ public class ProtocolTests(ITestOutputHelper output)
             new UseItemIntent(new EntityId(99), 4),
             new BuyIntent(new EntityId(99), new EntityId(7), 12, 3),
             new SellIntent(new EntityId(99), new EntityId(7), 28, 15),
+            new ChooseSecondClassIntent(new EntityId(99), "second_class.guardian"), // T-404
         };
 
         for (var i = 0; i < intents.Length; i++)
@@ -123,6 +124,8 @@ public class ProtocolTests(ITestOutputHelper output)
         Assert.Null(new NetIntent(NetIntentKind.PickUpItem, default, null, null, null).ToIntent(me));
         Assert.Null(new NetIntent(NetIntentKind.Buy, default, null, null, null, Slot: 1, Quantity: 1).ToIntent(me)); // T-321: sem NPC
         Assert.Null(new NetIntent(NetIntentKind.Sell, default, null, null, null, Slot: 1, Quantity: 1).ToIntent(me));
+        Assert.Null(new NetIntent(NetIntentKind.ChooseSecondClass, default, null, null, null).ToIntent(me)); // T-404: sem id
+        Assert.Null(new NetIntent(NetIntentKind.ChooseSecondClass, default, "", null, null).ToIntent(me));
     }
 
     [Fact]
@@ -211,6 +214,26 @@ public class ProtocolTests(ITestOutputHelper output)
         Assert.Equal((40, 1, 3, 12), (progress.Experience, progress.AttributePoints, progress.SkillPoints, progress.AllocatedDex));
         Assert.Equal(8, msg.Entities[1].Components.OfType<UnitInfo>().Single().Level);
         Assert.Equal(hero.Id, msg.Entities[0].Id);
+        Assert.Null(progress.SecondClass); // T-404: ainda sem segunda classe
+    }
+
+    [Fact]
+    public void Character_progress_round_trips_the_second_class()
+    {
+        var content = RealContent();
+        var world = WorldBuilder.CreateDefault(5, null, content);
+        Game.Core.Combat.Progression.Leveling.SpawnCharacter(world, content.Classes["class.warrior"], new Vector2(1, 1), new Game.Core.Combat.Progression.CharacterBuild
+        {
+            Level = 20,
+            SecondClass = "second_class.berserker",
+        });
+
+        var snap = world.Snapshot(SnapshotScope.Replicated);
+        var msg = RoundTrip(SnapshotMessage.From(snap));
+
+        Assert.Equal(snap.Entities[0].Components.Select(Hash), msg.Entities[0].Components.Select(Hash));
+        var progress = msg.Entities[0].Components.OfType<Game.Core.Combat.Progression.CharacterProgress>().Single();
+        Assert.Equal("second_class.berserker", progress.SecondClass);
     }
 
     [Fact]

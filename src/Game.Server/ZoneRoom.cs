@@ -297,6 +297,7 @@ public sealed class ZoneRoom : ITransportHandler, IGameHost
                 continue; // caiu enquanto carregava
             }
 
+            r = r.WithoutMissingSecondClass(_content, _log);
             string? error = r.Outcome switch
             {
                 LoadOutcome.Loaded when !_content.Classes.TryGetValue(r.ClassId, out var cls) || cls.Attributes is null => $"classe {r.ClassId} sem progressão",
@@ -364,6 +365,7 @@ public sealed class ZoneRoom : ITransportHandler, IGameHost
             var (entity, reason) = ev switch
             {
                 LevelUp l => (l.Entity, "nível"),
+                SecondClassChosen s => (s.Entity, "segunda classe"), // T-404: escolha definitiva gravada logo
                 ItemPickedUp p when World.Find(p.Entity)?.TryGet<Inventory>()?[p.InventorySlot] is { Rarity: >= ItemRarity.Rare } => (p.Entity, "item raro"),
                 Core.Combat.Shops.ItemBought b => (b.Entity, "compra"), // T-321
                 Core.Combat.Shops.ItemSold s => (s.Entity, "venda"),

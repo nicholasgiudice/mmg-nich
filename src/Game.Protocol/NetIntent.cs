@@ -39,6 +39,9 @@ public enum NetIntentKind : byte
 
     /// <summary>T-321: <see cref="NetIntent.Target"/> = NPC, <see cref="NetIntent.Slot"/> = espaço do inventário, <see cref="NetIntent.Quantity"/>.</summary>
     Sell,
+
+    /// <summary>T-404: <see cref="NetIntent.AbilityId"/> = id da segunda classe (<c>second_class.*</c>).</summary>
+    ChooseSecondClass,
 }
 
 /// <summary>
@@ -71,6 +74,7 @@ public sealed partial record NetIntent(
         UseItemIntent u => new NetIntent(NetIntentKind.UseItem, default, null, null, null, Slot: u.InventorySlot),
         BuyIntent b => new NetIntent(NetIntentKind.Buy, default, null, b.Npc, null, Slot: b.Offer, Quantity: b.Quantity),
         SellIntent s => new NetIntent(NetIntentKind.Sell, default, null, s.Npc, null, Slot: s.InventorySlot, Quantity: s.Quantity),
+        ChooseSecondClassIntent c => new NetIntent(NetIntentKind.ChooseSecondClass, default, c.SecondClassId, null, null),
         _ => throw new NotSupportedException($"Intenção sem formato de rede: {intent.GetType().Name}"),
     };
 
@@ -90,6 +94,7 @@ public sealed partial record NetIntent(
         NetIntentKind.UseItem => new UseItemIntent(entity, Slot),
         NetIntentKind.Buy when Target is { } npc => new BuyIntent(entity, npc, Slot, Quantity),
         NetIntentKind.Sell when Target is { } npc => new SellIntent(entity, npc, Slot, Quantity),
+        NetIntentKind.ChooseSecondClass when !string.IsNullOrEmpty(AbilityId) => new ChooseSecondClassIntent(entity, AbilityId),
         _ => null,
     };
 }

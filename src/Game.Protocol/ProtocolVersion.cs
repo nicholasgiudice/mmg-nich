@@ -43,6 +43,8 @@ public static class ProtocolVersion
     /// 15 (T-395): mensagens <c>LogoutRequest</c>, <c>LogoutCancel</c> e <c>LogoutStatus</c> (sair do mundo para trocar de
     /// personagem, com espera em combate).
     /// 16 (T-403): evento <c>SecondClassChosen</c> (segunda classe escolhida).
+    /// 17 (T-404): <c>CharacterProgress</c> leva a segunda classe (<c>SecondClass</c>, string opcional no fim) e o
+    /// <c>NetIntent</c> ganha o tipo <c>ChooseSecondClass</c> (id da segunda classe em <c>AbilityId</c>).
     /// </summary>
-    public const int Current = 16;
+    public const int Current = 17;
 }

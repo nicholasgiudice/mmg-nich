@@ -201,6 +201,7 @@ public static class ComponentCodecs
                 w.I(p.AllocatedAgi);
                 w.I(p.AllocatedInt);
                 w.I(p.AllocatedVit);
+                w.S(p.SecondClass);
                 break;
             case Inventory inv:
                 w.I(inv.Capacity);
@@ -410,6 +411,7 @@ public static class ComponentCodecs
                     AllocatedAgi = r.I(),
                     AllocatedInt = r.I(),
                     AllocatedVit = r.I(),
+                    SecondClass = r.SOpt(),
                 };
             case 16:
                 {

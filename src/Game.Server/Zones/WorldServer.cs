@@ -342,6 +342,7 @@ public sealed class WorldServer : ITransportHandler, IGameHost, IPartyHost
                 continue; // caiu enquanto carregava
             }
 
+            r = r.WithoutMissingSecondClass(_content, _log);
             string? error = r.Outcome switch
             {
                 LoadOutcome.Loaded when !_content.Classes.TryGetValue(r.ClassId, out var cls) || cls.Attributes is null => $"classe {r.ClassId} sem progressão",
@@ -734,6 +735,7 @@ public sealed class WorldServer : ITransportHandler, IGameHost, IPartyHost
                 var (entity, reason) = ev switch
                 {
                     LevelUp l => (l.Entity, "nível"),
+                    SecondClassChosen s => (s.Entity, "segunda classe"), // T-404: escolha definitiva gravada logo
                     ItemPickedUp i when zone.World.Find(i.Entity)?.TryGet<Inventory>()?[i.InventorySlot] is { Rarity: >= ItemRarity.Rare } => (i.Entity, "item raro"),
                     Core.Combat.Shops.ItemBought b => (b.Entity, "compra"), // T-321: ouro e inventário gravados logo
                     Core.Combat.Shops.ItemSold s => (s.Entity, "venda"),
