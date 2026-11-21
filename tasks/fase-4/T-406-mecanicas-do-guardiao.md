@@ -5,6 +5,7 @@
 - **Depende de:** —
 - **Libera:** T-407
 - **Áreas que pode alterar:** `src/Game.Core/` (efeitos, estados, dano, ameaça), `src/Game.Data/` (carga e validação dos campos novos), `data/schemas/`, `tests/Game.Core.Tests/`, `tests/Game.Data.Tests/`
+- **Branch:** sai de `trilha/segundas-classes` e é integrada nela, não na `main` (seção 6f de `tasks/README.md`).
 
 ## Contexto
 

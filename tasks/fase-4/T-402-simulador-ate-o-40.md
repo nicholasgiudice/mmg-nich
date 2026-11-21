@@ -5,6 +5,7 @@
 - **Depende de:** T-401
 - **Libera:** T-408
 - **Áreas que pode alterar:** `tests/Game.Sim/`, `tests/Game.Sim.Tests/`, `tests/Game.Design.Tests/`, `data/rules.json` (só os tetos de AGI, se a análise pedir), `design/progression-v0.1.md` (§8 metas), `design/segunda-classe-v0.1.md` (só para registrar números medidos), `tasks/reports/`
+- **Branch:** sai de `trilha/segundas-classes` e é integrada nela, não na `main` (seção 6f de `tasks/README.md`).
 
 ## Contexto
 

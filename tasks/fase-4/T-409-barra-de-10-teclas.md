@@ -5,6 +5,7 @@
 - **Depende de:** —
 - **Libera:** T-410
 - **Áreas que pode alterar:** `client/scripts/Input/` (`InputActions`, `HotbarLayout`), `client/scripts/Hud/` (barra, `HotbarStore`, `AbilitySlot`), `client/project.godot` (ações de entrada), `tests/Game.Client.Tests/`, `tasks/reports/interface/`
+- **Branch:** sai de `trilha/segundas-classes` e é integrada nela, não na `main` (seção 6f de `tasks/README.md`).
 
 ## Contexto
 

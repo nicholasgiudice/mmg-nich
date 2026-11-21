@@ -56,7 +56,7 @@ Fluxo para você:
 | **1 — Rede mínima** | Servidor dedicado na VPS, 4 jogadores na mesma arena, login de desenvolvimento | **Concluída** (T-111: playtest online aprovado; seção 6b) |
 | **2 — Persistência e progressão** | Contas, personagens, inventário, Cidade + Campos online; atributos, níveis, equipamento e habilidades reformuladas (`design/progression-v0.1.md`) | **Concluída** (T-230: playtest aprovado com correções para a fase 3; seção 6d) |
 | **3 — Primeiro mapa completo** | Floresta, Ruínas, Cripta instanciada, Vigia Sem Rosto; grupo, lista de batalha, ouro, lojas e mapas maiores (playtest v0.2) | **Concluída** (T-380: playtest aprovado; seção 6e) |
-| **4 — Segundas classes** | Nível 40, segunda classe no nível 20 com duas opções por classe, passivas, barra de 10 teclas; Guerreiro primeiro (`design/segunda-classe-v0.1.md`) | **Detalhada** no bloco do Guerreiro (T-390; seção 6f); as outras classes em esboço |
+| **4 — Segundas classes** | Nível 40, segunda classe no nível 20 com duas opções por classe, passivas, barra de 10 teclas; Guerreiro primeiro (`design/segunda-classe-v0.1.md`) | **Detalhada** no bloco do Guerreiro (T-390; seção 6f); as outras classes em esboço. Em andamento na branch `trilha/segundas-classes`, que só entra na `main` com as quatro classes prontas |
 | **5 — Operação** | CI/CD, métricas, testes de carga, produção separada | Esboço |
 | **Depois** | Áreas e mapas novos do nível 16 ao 40 | Ainda sem esboço |
 
@@ -543,8 +543,14 @@ Detalhadas pela T-390 a partir de `design/segunda-classe-v0.1.md` e do playtest 
 | 5 | — | T-411, depois T-410 |
 | 6 | — | T-413 |
 
+**Branch da trilha (decisão do designer, 2026-11-21).** A fase 4 só vai para a `main` quando as **quatro classes** estiverem prontas. Até lá:
+- toda tarefa da fase 4 sai de **`trilha/segundas-classes`** (ou da branch de outra tarefa, quando a tarefa diz) e é integrada **nela**, nunca na `main`. Onde as tarefas e o `AGENTS.md` dizem "`main`", leia `trilha/segundas-classes`;
+- a **T-401** chegou a entrar na `main` e foi desfeita lá com um `git revert` do merge dela. A trilha tem o **revert desse revert**, então continua com a T-401, e o merge final da trilha na `main` traz a T-401 de volta sem passo extra;
+- para trazer correções da `main` para a trilha, faça merge da `main` na trilha normalmente. **Nunca** faça merge da trilha na `main` antes do fim;
+- o servidor de teste roda a `main`. Para um playtest da trilha (T-413), rode o `deploy-dev.sh` a partir da trilha só no dia do teste, publique o cliente da trilha, e depois volte o servidor e o cliente para a `main`.
+
 **Cuidados de integração**
-- **Protocolo (revisto em 2026-11-21):** a T-406 também subiu `ProtocolVersion` (para 16), por causa do evento novo de desvio de dano. Por isso, **T-406, T-407, T-404, T-405 e T-411 entram na `main` numa rodada só**, com um `deploy-dev.sh` (com `GAME_DEV_TOOLS` ligado no servidor de teste) e um cliente novo (`export-client.ps1` e `deploy-download.ps1`). Nenhuma delas entra sozinha. A T-407 sai da branch da T-406; a T-405 da T-404; a T-411 da T-405. Cada uma sobe o número a partir da sua base; na integração, o conflito é só o número e o comentário de `ProtocolVersion`, e o valor final é o maior + 1 se houver mudança nova de protocolo depois do merge (confira com os testes de protocolo).
+- **Protocolo (revisto em 2026-11-21):** a T-406 também subiu `ProtocolVersion` (para 16), por causa do evento novo de desvio de dano. Por isso, **T-406, T-407, T-404, T-405 e T-411 entram na trilha numa rodada só**, para a trilha nunca ficar com um servidor e um cliente de versões diferentes. Nenhuma delas entra sozinha. O deploy (`deploy-dev.sh` com `GAME_DEV_TOOLS` ligado, cliente novo com `export-client.ps1` e `deploy-download.ps1`) só acontece no dia do playtest. A T-407 sai da branch da T-406; a T-405 da T-404; a T-411 da T-405. Cada uma sobe o número a partir da sua base; na integração, o conflito é só o número e o comentário de `ProtocolVersion`, e o valor final é o maior + 1 se houver mudança nova de protocolo depois do merge (confira com os testes de protocolo).
 - A T-410 não sobe o protocolo, mas precisa da T-404 na `main` (e da T-408): integre depois da rodada acima, com outro cliente novo.
 - A T-403 e a T-404 mexem em `Leveling` e no documento do personagem; a T-405 também. Uma de cada vez, na ordem.
 - A T-406 e a T-407 mexem em `DamageResolver`, estados e efeitos: a T-407 sai **da branch da T-406** (que não está na `main`).

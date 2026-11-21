@@ -5,6 +5,7 @@
 - **Depende de:** —
 - **Libera:** T-402, T-403
 - **Áreas que pode alterar:** `data/rules.json`, `data/schemas/`, `src/Game.Core/Definitions/` (regras novas), `src/Game.Data/` (validação), `src/Game.Site/` (página de classes, só o que as regras novas mudarem), `design/progression-v0.1.md`, `design/classes-v0.1.md`, `design/skills-v0.1.md`, `tests/`
+- **Branch:** sai de `trilha/segundas-classes` e é integrada nela, não na `main` (seção 6f de `tasks/README.md`).
 
 ## Contexto
 

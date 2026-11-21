@@ -5,6 +5,7 @@
 - **Depende de:** T-404, T-408, T-409
 - **Libera:** T-413
 - **Áreas que pode alterar:** `client/scripts/Hud/` (`SkillPanel`, `SkillDetailText`, `SkillIcon`, painéis novos), `client/scripts/Authority/` (enviar a intenção nova), `client/scenes/`, `client/assets/art/` (só peças do kit de interface), `tests/Game.Client.Tests/`, `tasks/reports/interface/`
+- **Branch:** sai de `trilha/segundas-classes` e é integrada nela, não na `main` (seção 6f de `tasks/README.md`).
 
 ## Contexto
 
@@ -25,7 +26,7 @@ A interface usa o **kit de pedra e ouro** (aprovado; `tasks/trilha-interface/`) 
 
 ## Integração
 
-Não sobe `ProtocolVersion`. Pode entrar na `main` depois da T-404, da T-405 e da T-411, com um cliente novo publicado.
+Não sobe `ProtocolVersion`. Pode entrar na `trilha/segundas-classes` depois da T-404, da T-405 e da T-411.
 
 ## Critérios de aceite
 

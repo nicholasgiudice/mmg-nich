@@ -5,6 +5,7 @@
 - **Depende de:** T-404 (sai da branch dela)
 - **Libera:** T-411
 - **Áreas que pode alterar:** `src/Game.Server/` (opção nova e tratamento das mensagens), `src/Game.Protocol/` (mensagens novas e `ProtocolVersion`), `src/Game.Core/Combat/Progression/` (só os métodos de apoio da ferramenta), `deploy/compose.yml` e `scripts/deploy-dev.sh` (só a variável da opção nova), `src/Game.Server/README.md`, `tests/`
+- **Branch:** sai de `trilha/segundas-classes` e é integrada nela, não na `main` (seção 6f de `tasks/README.md`).
 
 ## Contexto
 
@@ -27,7 +28,7 @@ A ferramenta **não pode ser ligada por engano** num servidor aberto a jogadores
 
 ## Integração
 
-Sai da branch da T-404. **T-406, T-407, T-404, T-405 e T-411 entram juntas** e, na mesma rodada, rode o `deploy-dev.sh` (com a ferramenta ligada no servidor de teste) e publique o cliente novo. Veja a seção 6f de `tasks/README.md`.
+Sai da branch da T-404. **T-406, T-407, T-404, T-405 e T-411 entram juntas** na `trilha/segundas-classes`. O deploy com a ferramenta ligada só acontece no dia do playtest da trilha (seção 6f de `tasks/README.md`).
 
 ## Critérios de aceite
 

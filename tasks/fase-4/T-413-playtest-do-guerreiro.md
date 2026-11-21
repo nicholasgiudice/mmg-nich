@@ -5,6 +5,7 @@
 - **Depende de:** T-410, T-411, T-412
 - **Libera:** detalhar as outras três classes (seção 7 de `tasks/README.md`)
 - **Áreas que pode alterar:** `tasks/reports/`
+- **Branch:** sai de `trilha/segundas-classes` e é integrada nela, não na `main` (seção 6f de `tasks/README.md`).
 
 ## Contexto
 

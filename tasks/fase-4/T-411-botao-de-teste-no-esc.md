@@ -5,6 +5,7 @@
 - **Depende de:** T-404, T-405 (sai da branch da T-405)
 - **Libera:** T-413
 - **Áreas que pode alterar:** `client/scripts/Match/GameMenu.cs`, `client/scripts/Main.cs` (só para ligar o menu às mensagens novas), `client/scripts/Authority/` (enviar as mensagens novas), `tests/Game.Client.Tests/`, `tasks/reports/interface/`
+- **Branch:** sai de `trilha/segundas-classes` e é integrada nela, não na `main` (seção 6f de `tasks/README.md`).
 
 ## Contexto
 
@@ -20,7 +21,7 @@ Design em `design/segunda-classe-v0.1.md`, seção 4.2. Decisão do designer: a 
 
 ## Integração
 
-Sai da branch da T-405. **T-406, T-407, T-404, T-405 e T-411 entram juntas** e, na mesma rodada, rode o `deploy-dev.sh` com a ferramenta ligada no servidor de teste e publique o cliente novo (`export-client.ps1` e `deploy-download.ps1`).
+Sai da branch da T-405. **T-406, T-407, T-404, T-405 e T-411 entram juntas** na `trilha/segundas-classes`. O deploy com a ferramenta ligada e o cliente novo (`export-client.ps1` e `deploy-download.ps1`) só acontecem no dia do playtest da trilha (seção 6f de `tasks/README.md`).
 
 ## Critérios de aceite
 

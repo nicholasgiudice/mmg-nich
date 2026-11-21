@@ -5,6 +5,7 @@
 - **Depende de:** T-401
 - **Libera:** T-404, T-408
 - **Áreas que pode alterar:** `src/Game.Core/` (progressão, definições, estados), `src/Game.Data/` (carga e validação), `data/classes.json`, `data/schemas/`, `tests/Game.Core.Tests/`, `tests/Game.Data.Tests/`, `tests/Game.Sim/` (perfil com segunda classe), `design/segunda-classe-v0.1.md` (só para registrar decisões)
+- **Branch:** sai de `trilha/segundas-classes` e é integrada nela, não na `main` (seção 6f de `tasks/README.md`).
 
 ## Contexto
 

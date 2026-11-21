@@ -5,13 +5,14 @@
 - **Depende de:** T-403
 - **Libera:** T-405, T-410, T-411
 - **Áreas que pode alterar:** `src/Game.Protocol/` (intenção e componente novos, `ProtocolVersion`), `src/Game.Server/` (persistência do personagem), `src/Game.Api/` (só se a lista de personagens precisar mostrar a segunda classe), `src/Game.Bots/` (só se a intenção nova quebrar algo), `tests/`
+- **Branch:** sai de `trilha/segundas-classes` e é integrada nela, não na `main` (seção 6f de `tasks/README.md`).
 
 ## Contexto
 
 A T-403 criou no Core a escolha da segunda classe (`ChooseSecondClassIntent`), o campo da segunda classe em `CharacterBuild` e o componente replicado. Falta levar isso pela rede e gravar.
 
 - As intenções viajam em `NetIntent` (`src/Game.Protocol/NetIntent.cs`, `NetIntentKind`), convertidas por `NetIntent.From` e `ToIntent`.
-- Componentes replicados têm codec em `src/Game.Protocol/ComponentCodecs.cs`. Tipo novo = tag nova e `ProtocolVersion.Current` + 1 (15 na `main`; a T-406, ainda fora da `main`, já usa 16).
+- Componentes replicados têm codec em `src/Game.Protocol/ComponentCodecs.cs`. Tipo novo = tag nova e `ProtocolVersion.Current` + 1 (15 na `main` e na trilha; a T-406, ainda fora da trilha, já usa 16).
 - O personagem é gravado como documento JSON (`Character.Progression`, jsonb) com versão (`ProgressionVersion`), escrito e lido por `CharacterDocument` (`src/Game.Server/Persistence/CharacterState.cs`). **Não precisa de migração de banco**: só um campo novo no documento e a versão do documento + 1, lendo os documentos antigos (sem segunda classe).
 
 ## Requisitos
@@ -24,7 +25,7 @@ A T-403 criou no Core a escolha da segunda classe (`ChooseSecondClassIntent`), o
 
 ## Integração
 
-**Não integre a T-404 na `main` sozinha.** Ela sobe `ProtocolVersion`, e o próximo `deploy-dev.sh` subiria um servidor que o cliente publicado não aceita. A T-405 sai da branch desta. **T-406, T-407, T-404, T-405 e T-411 entram juntas** (a T-406 também sobe o protocolo), com o `deploy-dev.sh` e o cliente novo (`export-client.ps1` e `deploy-download.ps1`) na mesma rodada. Veja os cuidados de integração na seção 6f de `tasks/README.md`.
+**Não integre a T-404 na trilha sozinha.** Ela sobe `ProtocolVersion`. A T-405 sai da branch desta. **T-406, T-407, T-404, T-405 e T-411 entram juntas** na `trilha/segundas-classes` (a T-406 também sobe o protocolo), para a trilha nunca ter servidor e cliente de versões diferentes. Veja os cuidados de integração na seção 6f de `tasks/README.md`.
 
 ## Critérios de aceite
 

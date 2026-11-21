@@ -5,6 +5,7 @@
 - **Depende de:** T-402, T-403, T-407
 - **Libera:** T-410, T-412
 - **Áreas que pode alterar:** `data/` (habilidades, estados, áreas, `classes.json`), `tests/Game.Design.Tests/`, `tests/Game.Data.Tests/`, `design/segunda-classe-v0.1.md` (só números ajustados pelo simulador), `design/skills-v0.1.md` (seção nova do Guerreiro), `tasks/reports/`
+- **Branch:** sai de `trilha/segundas-classes` e é integrada nela, não na `main` (seção 6f de `tasks/README.md`).
 
 ## Contexto
 
@@ -15,7 +16,7 @@ As 10 habilidades estão em `design/segunda-classe-v0.1.md`, seção 5, com cust
 
 As mecânicas novas foram feitas na T-406 (desvio de dano, avançar até aliado, imunidade a empurrão, ameaça multiplicada) e na T-407 (dano pela vida do alvo, zerar recarga ao matar, vida pelo dano, área que acompanha). A segunda classe e as passivas, na T-403. As metas de segunda classe, na T-402 (§8 do design de progressão).
 
-**Base:** a T-406 e a T-407 sobem o protocolo e só entram na `main` na rodada da seção 6f de `tasks/README.md`. Se essa rodada ainda não tiver entrado, crie a branch a partir da branch da T-407 e mescle nela a T-403. Registre a base no Resultado.
+**Base:** a T-406 e a T-407 sobem o protocolo e só entram na `trilha/segundas-classes` na rodada da seção 6f de `tasks/README.md`. Se essa rodada ainda não tiver entrado, crie a branch a partir da branch da T-407 e mescle nela a T-403. Registre a base no Resultado.
 
 ## Requisitos
 
