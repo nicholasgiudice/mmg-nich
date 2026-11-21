@@ -2,7 +2,7 @@
 
 Status: **esboço em discussão com o designer**, entrada para a T-390. Pedido do designer em 2026-11-19, ao fechar o playtest v0.3: **mais níveis** e uma **segunda classe**, com **duas opções por classe**. Decisões fechadas em 2026-11-20 (seção 1).
 
-Os números são ponto de partida para o simulador, como em `design/progression-v0.1.md`. O que ainda falta decidir está na seção 8.
+Os números são ponto de partida para o simulador, como em `design/progression-v0.1.md`. O que ainda falta decidir está na seção 10.
 
 ## 1. Decisões do designer
 
@@ -229,69 +229,473 @@ Custo 90, recarga 75 s. Por 4 s, gira sem parar, acertando todos num raio de 3 a
 
 O Berserker usa quase só o que já existe. O Guardião traz o **desvio de dano**, que o Sacerdote (Elo da Vida) também vai usar.
 
-## 6. As outras segundas classes (a detalhar depois do Guerreiro)
+## 6. Arqueiro em detalhe
 
-Habilidades guardadas em "Depois do MVP" (`classes-v0.1.md`) estão marcadas com ★. A quarta habilidade normal de cada uma é nova e precisa de aprovação.
+**Perfil de referência no nível 21:** pontos divididos entre DES e AGI (DES 62, AGI 56) e arco comum do nível 21 (ARMA 25). Nesse perfil, o Disparo dá 82 e o Disparo Potente no NH5 dá 404 (3 flechas).
 
-### Arqueiro
+### Atirador de Elite — alvo único, de longe, rajadas e críticos
 
-| | **Atirador de Elite** | **Caçador** |
+#### Flecha Perfurante — tiro forte que atravessa
+
+Custo 30, recarga 8 s, linha de 10 tiles. O primeiro alvo recebe o dano inteiro; quem está atrás, na mesma linha, recebe uma parte.
+
+| NH | Valor | Quem está atrás | Outros efeitos | Perfil nível 21 |
+|---|---|---|---|---|
+| 1 | dano 14 + 1,4 × ARMA + 2,8 × DES | 60% | — | 223 |
+| 2 | dano 16,8 + 1,68 × ARMA + 3,36 × DES | 60% | — | 267 |
+| 3 | dano 19,6 + 1,96 × ARMA + 3,92 × DES | **80%** | — | 312 |
+| 4 | dano 22,4 + 2,24 × ARMA + 4,48 × DES | 80% | — | 356 |
+| 5 | dano 25,2 + 2,52 × ARMA + 5,04 × DES | 80% | linha de **14 tiles** e recarga **6 s** | 401 |
+
+#### Tiro Debilitante — o alvo fica lento e fraco
+
+Custo 20, recarga 12 s, alcance 10.
+
+| NH | Valor | Lentidão | Dano do alvo | Duração | Perfil nível 21 |
+|---|---|---|---|---|---|
+| 1 | dano 6 + 0,6 × ARMA + 1,2 × DES | 30% | −15% | 4 s | 95 |
+| 2 | dano 7,2 + 0,72 × ARMA + 1,44 × DES | 30% | −15% | 4 s | 114 |
+| 3 | dano 8,4 + 0,84 × ARMA + 1,68 × DES | **40%** | **−20%** | **5 s** | 134 |
+| 4 | dano 9,6 + 0,96 × ARMA + 1,92 × DES | 40% | −20% | 5 s | 153 |
+| 5 | dano 10,8 + 1,08 × ARMA + 2,16 × DES | **50%** | **−25%** | **6 s** | 172 |
+
+#### Mira Firme — parado, atira mais longe e acerta crítico
+
+Sem custo, recarga 15 s, só no Atirador. Enquanto ele **não anda**, ganha alcance e chance de crítico. Andar acaba com o efeito.
+
+| NH | Alcance | Crítico | Duração | Outros efeitos |
+|---|---|---|---|---|
+| 1 | +2 | +10% | 6 s | — |
+| 2 | +2 | +12% | 6 s | — |
+| 3 | **+3** | +15% | **8 s** | — |
+| 4 | +3 | +18% | 8 s | — |
+| 5 | +3 | +20% | 8 s | o crítico causa **× 1,75** (em vez de × 1,5) |
+
+#### Tiro Certeiro — preparação longa, dano muito alto
+
+Custo 35, recarga 10 s, alcance 12, conjuração de 1,5 s parado. Ignora parte da armadura do alvo.
+
+| NH | Valor | Armadura ignorada | Outros efeitos | Perfil nível 21 |
+|---|---|---|---|---|
+| 1 | dano 25 + 2 × ARMA + 4 × DES | 30% | — | 323 |
+| 2 | dano 30 + 2,4 × ARMA + 4,8 × DES | 30% | — | 388 |
+| 3 | dano 35 + 2,8 × ARMA + 5,6 × DES | **40%** | — | 452 |
+| 4 | dano 40 + 3,2 × ARMA + 6,4 × DES | 40% | — | 517 |
+| 5 | dano 45 + 3,6 × ARMA + 7,2 × DES | **50%** | conjuração **1 s** | 581 |
+
+#### Olho de Falcão (assinatura, nível 35) — todo ataque é crítico
+
+Custo 70, recarga 90 s, só no Atirador.
+
+| NH | Duração | Outros efeitos |
 |---|---|---|
-| Papel | alvo único, de longe, rajadas e críticos | venenos e sangramento em vários alvos, dano ao longo do tempo |
-| Normal 1 | ★ Flecha Perfurante: tiro forte que atravessa o alvo e acerta quem está atrás | Flecha Envenenada: veneno que acumula no alvo |
-| Normal 2 | ★ Tiro Debilitante: deixa o alvo lento e com menos dano | Ferida Aberta: sangramento forte, maior se o alvo se mexer |
-| Normal 3 | Mira Firme: parado, ganha alcance e crítico; andar cancela | Nuvem Tóxica: área que envenena quem fica nela |
-| Normal 4 | Tiro Certeiro: preparação de 1,5 s, dano muito alto, ignora parte da armadura | Flecha Dispersa: copia os venenos do alvo para os monstros por perto |
-| Assinatura | Olho de Falcão: por alguns segundos, todo ataque é crítico | Praga: por alguns segundos, o veneno que acaba num monstro pula para os vizinhos |
+| 1 | 6 s | todo ataque e habilidade de dano é crítico |
+| 2 | 7 s | todos críticos |
+| 3 | **8 s** | todos críticos e **+2 de alcance** |
 
-### Mago
+### Caçador — venenos e sangramento em vários alvos
 
-| | **Piromante** | **Arcanista** |
+Usa um veneno próprio, o **Veneno do Caçador**, que **acumula** (até 3 pilhas no NH1 da Flecha Envenenada) e dura 6 s. Cada pilha causa o dano por segundo da Flecha Envenenada.
+
+#### Flecha Envenenada — veneno que acumula
+
+Custo 20, recarga 6 s, alcance 9. Dano no impacto e 1 pilha do Veneno do Caçador.
+
+| NH | Impacto | Veneno por pilha | Pilhas no máximo | Perfil nível 21 |
+|---|---|---|---|---|
+| 1 | dano 5 + 0,5 × ARMA + 1 × DES | 4 + 0,4 × DES por s | 3 | 80 e 29/s por pilha |
+| 2 | dano 6 + 0,6 × ARMA + 1,2 × DES | 4,8 + 0,48 × DES por s | 3 | 95 e 35/s |
+| 3 | dano 7 + 0,7 × ARMA + 1,4 × DES | 5,6 + 0,56 × DES por s | **4** | 111 e 40/s |
+| 4 | dano 8 + 0,8 × ARMA + 1,6 × DES | 6,4 + 0,64 × DES por s | 4 | 127 e 46/s |
+| 5 | dano 9 + 0,9 × ARMA + 1,8 × DES | 7,2 + 0,72 × DES por s | **5** | 143 e 52/s |
+
+#### Ferida Aberta — sangramento forte, pior se o alvo correr
+
+Custo 25, recarga 10 s, alcance 9. Sangramento por segundo; se o alvo se move, sangra mais.
+
+| NH | Sangramento por s | Duração | Se o alvo andar | Perfil nível 21 |
+|---|---|---|---|---|
+| 1 | 6 + 0,6 × DES | 6 s | +50% | 43/s, 259 no total |
+| 2 | 7,2 + 0,72 × DES | 6 s | +50% | 52/s, 311 |
+| 3 | 8,4 + 0,84 × DES | **8 s** | +50% | 60/s, 484 |
+| 4 | 9,6 + 0,96 × DES | 8 s | +50% | 69/s, 553 |
+| 5 | 10,8 + 1,08 × DES | 8 s | **+100%** | 78/s, 622 |
+
+#### Nuvem Tóxica — área que envenena
+
+Custo 45, recarga 14 s, alcance 9. Nuvem no chão; quem fica nela sofre dano a cada segundo e ganha 1 pilha do Veneno do Caçador a cada 2 s.
+
+| NH | Dano por s | Raio | Duração | Outros efeitos | Perfil nível 21 |
+|---|---|---|---|---|---|
+| 1 | 4 + 0,7 × DES | 3 | 6 s | — | 47/s, 284 no total |
+| 2 | 4,8 + 0,84 × DES | 3 | 6 s | — | 57/s, 341 |
+| 3 | 5,6 + 0,98 × DES | **4** | 6 s | — | 66/s, 398 |
+| 4 | 6,4 + 1,12 × DES | 4 | 6 s | — | 76/s, 455 |
+| 5 | 7,2 + 1,26 × DES | 4 | **8 s** | lentidão de 20% na nuvem | 85/s, 683 |
+
+#### Flecha Dispersa — espalha os venenos do alvo
+
+Custo 30, recarga 12 s, alcance 9. Dano no alvo e **copia** o Veneno do Caçador e o sangramento dele para monstros a até 4 tiles.
+
+| NH | Valor | Monstros que recebem a cópia | Perfil nível 21 |
+|---|---|---|---|
+| 1 | dano 8 + 0,6 × ARMA + 1,2 × DES | 2 | 97 |
+| 2 | dano 9,6 + 0,72 × ARMA + 1,44 × DES | 2 | 117 |
+| 3 | dano 11,2 + 0,84 × ARMA + 1,68 × DES | **3** | 136 |
+| 4 | dano 12,8 + 0,96 × ARMA + 1,92 × DES | 3 | 156 |
+| 5 | dano 14,4 + 1,08 × ARMA + 2,16 × DES | **4** | 175 |
+
+#### Praga (assinatura, nível 35) — o veneno pula de monstro em monstro
+
+Custo 80, recarga 90 s, alcance 9, raio 6. Põe pilhas do Veneno do Caçador em todos no raio. Pela duração, quando o veneno acaba num monstro, ele pula com todas as pilhas para o monstro mais próximo (até 4 tiles).
+
+| NH | Pilhas | Duração |
 |---|---|---|
-| Papel | dano em área, queimadura | dano constante em alvo único: o dano cresce enquanto ele mantém o mesmo alvo |
-| Normal 1 | ★ Combustão: detona as queimaduras dos monstros por perto | Raio Arcano: canalizado, o dano sobe a cada segundo no mesmo alvo |
-| Normal 2 | Rajada de Chamas: cone curto de fogo que queima | Marca Arcana: dano ao longo do tempo que acumula até 5 vezes |
-| Normal 3 | Chão em Chamas: área que queima quem fica nela | Orbes Arcanos: 3 orbes que disparam sozinhos no alvo atual |
-| Normal 4 | Bola de Fogo: projétil que explode numa área pequena e queima | Sifão Arcano: dano no alvo que devolve Mana |
-| Assinatura | Meteoro: grande área com aviso no chão e dano muito alto | Feixe do Vazio: canalização longa com dano muito alto num alvo; anda devagar enquanto canaliza |
+| 1 | 3 | 8 s |
+| 2 | 4 | 8 s |
+| 3 | 5 | **10 s** |
 
-O Arcanista e o Atirador de Elite são de alvo único, mas o Atirador é **rajada** (dano alto de uma vez) e o Arcanista é **constante** (dano que cresce com o tempo e perde força se trocar de alvo).
+### Mecânicas do Arqueiro
 
-### Clérigo
-
-| | **Sacerdote** | **Inquisidor** |
+| Habilidade | Já existe no Core | Novo |
 |---|---|---|
-| Papel | cura do grupo | dano sagrado corpo a corpo, com cura menor |
-| Normal 1 | ★ Oração Restauradora: cura em área ao longo do tempo | Martelo da Justiça: dano sagrado e atordoamento |
-| Normal 2 | ★ Bênção: reforço nos atributos de um aliado | Consagração: área no chão que fere mortos-vivos e cura aliados |
-| Normal 3 | Elo da Vida: liga dois aliados, que dividem o dano | Selo da Luz: quem ataca o alvo marcado se cura |
-| Normal 4 | Renovar: cura ao longo do tempo num aliado | Julgamento: dano sagrado de perto, maior contra mortos-vivos |
-| Assinatura | **Santuário**: área onde os aliados não caem abaixo de 1 de vida por alguns segundos | Ira Divina: por alguns segundos, os ataques básicos viram área sagrada que cura |
+| Flecha Perfurante | linha (como a Flecha Devastadora NH2) | dano menor em quem está atrás |
+| Tiro Debilitante | dano, lentidão, menos dano causado | — |
+| Mira Firme | reforço próprio | **crítico e alcance como reforço**, acabar ao andar |
+| Tiro Certeiro | conjuração | **ignorar armadura** |
+| Olho de Falcão | reforço próprio | **crítico garantido** (passa do teto de 40%) |
+| Flecha Envenenada | veneno, pilhas (como o Sangramento) | — |
+| Ferida Aberta | sangramento | **dano maior se o alvo andar** |
+| Nuvem Tóxica | área no chão (como o Campo de Relâmpagos) | — |
+| Flecha Dispersa | dano | **copiar estados para outros monstros** |
+| Praga | estado em área | **estado que pula ao acabar** |
+
+## 7. Mago em detalhe
+
+**Perfil de referência no nível 21:** todos os pontos em INT (111) e cajado comum do nível 21 (+11 INT): **INT 122**. Nesse perfil, o Projétil Arcano dá 113 e a Explosão Elemental dá 271 no NH1 e 922 no NH5 (4 explosões).
+
+### Piromante — dano em área e queimadura
+
+Usa um estado novo, a **Queimadura** (dano de fogo por segundo, 4 s). Cada habilidade do Piromante que queima aplica a Queimadura do seu NH; uma nova renova a antiga.
+
+| NH da habilidade | Queimadura por s | Perfil nível 21 |
+|---|---|---|
+| 1 | 3 + 0,3 × INT | 40/s, 158 no total |
+| 2 | 3,6 + 0,36 × INT | 48/s, 190 |
+| 3 | 4,2 + 0,42 × INT | 55/s, 222 |
+| 4 | 4,8 + 0,48 × INT | 63/s, 253 |
+| 5 | 5,4 + 0,54 × INT | 71/s, 285 |
+
+#### Combustão — detona as queimaduras
+
+Custo 40, recarga 10 s, raio 8 em volta do Piromante. Cada monstro **queimando** no raio sofre o dano, e a Queimadura acaba.
+
+| NH | Valor por monstro queimando | Outros efeitos | Perfil nível 21 |
+|---|---|---|---|
+| 1 | dano 20 + 1,5 × INT | — | 203 |
+| 2 | dano 24 + 1,8 × INT | — | 244 |
+| 3 | dano 28 + 2,1 × INT | a Queimadura **não acaba** | 284 |
+| 4 | dano 32 + 2,4 × INT | a Queimadura não acaba | 325 |
+| 5 | dano 36 + 2,7 × INT | a Queimadura não acaba e **pula** para monstros a até 2 tiles | 365 |
+
+#### Rajada de Chamas — cone curto de fogo
+
+Custo 35, recarga 6 s, cone de 90° e 4 tiles à frente. Aplica Queimadura.
+
+| NH | Valor | Outros efeitos | Perfil nível 21 |
+|---|---|---|---|
+| 1 | dano 14 + 1,4 × INT | — | 185 |
+| 2 | dano 16,8 + 1,68 × INT | — | 222 |
+| 3 | dano 19,6 + 1,96 × INT | cone de **120°** | 259 |
+| 4 | dano 22,4 + 2,24 × INT | cone de 120° | 296 |
+| 5 | dano 25,2 + 2,52 × INT | cone de 120° e a Queimadura dura **6 s** | 333 |
+
+#### Chão em Chamas — área que queima
+
+Custo 50, recarga 14 s, alcance 9. Um pulso por segundo em quem está na área; cada pulso aplica Queimadura.
+
+| NH | Valor por pulso | Raio | Duração | Perfil nível 21 |
+|---|---|---|---|---|
+| 1 | dano 5 + 0,6 × INT | 3 | 6 s | 6 × 78 = 469 |
+| 2 | dano 6 + 0,72 × INT | 3 | 6 s | 6 × 94 = 563 |
+| 3 | dano 7 + 0,84 × INT | **4** | 6 s | 6 × 109 = 657 |
+| 4 | dano 8 + 0,96 × INT | 4 | 6 s | 6 × 125 = 751 |
+| 5 | dano 9 + 1,08 × INT | 4 | **8 s** | 8 × 141 = 1 126 |
+
+#### Bola de Fogo — projétil que explode
+
+Custo 45, recarga 7 s, alcance 10. Explode no primeiro monstro que acerta e aplica Queimadura em todos na explosão.
+
+| NH | Valor | Raio da explosão | Perfil nível 21 |
+|---|---|---|---|
+| 1 | dano 38 + 2,8 × INT | 2 | 380 |
+| 2 | dano 45,6 + 3,36 × INT | 2 | 456 |
+| 3 | dano 53,2 + 3,92 × INT | **2,5** | 531 |
+| 4 | dano 60,8 + 4,48 × INT | 2,5 | 607 |
+| 5 | dano 68,4 + 5,04 × INT | **3** | 683 |
+
+#### Meteoro (assinatura, nível 35) — grande área com aviso
+
+Custo 100, recarga 120 s, alcance 10. Aviso aliado de 2 s no chão; depois o impacto, que aplica Queimadura.
+
+| NH | Valor | Outros efeitos | Perfil nível 21 |
+|---|---|---|---|
+| 1 | dano 90 + 9 × INT | raio 5 | 1 188 |
+| 2 | dano 117 + 11,7 × INT | raio **6** | 1 544 |
+| 3 | dano 144 + 14,4 × INT | raio 6 e deixa **Chão em Chamas** (NH1) por 5 s | 1 901 |
+
+### Arcanista — dano constante em alvo único
+
+O Arcanista rende mais quanto mais tempo fica no mesmo alvo: o Raio Arcano sobe a cada pulso, a Marca Arcana acumula e os Orbes atiram sozinhos. Trocar de alvo perde o que foi acumulado.
+
+#### Raio Arcano — canalizado, o dano sobe a cada pulso
+
+Custo 40, recarga 8 s, alcance 9. Canaliza parado; um pulso a cada 0,5 s, e **cada pulso causa 15% mais** que o anterior. Andar cancela.
+
+| NH | Primeiro pulso | Canalização | Outros efeitos | Perfil nível 21 |
+|---|---|---|---|---|
+| 1 | dano 6 + 0,5 × INT | 3 s (6 pulsos) | — | 67 → 135, total 587 |
+| 2 | dano 7,2 + 0,6 × INT | 3 s | — | 80 → 162, total 704 |
+| 3 | dano 8,4 + 0,7 × INT | **4 s (8 pulsos)** | — | 94 → 250, total 1 288 |
+| 4 | dano 9,6 + 0,8 × INT | 4 s | — | 107 → 285, total 1 472 |
+| 5 | dano 10,8 + 0,9 × INT | 4 s | pode **andar devagar** (−50%) sem cancelar | 121 → 321, total 1 655 |
+
+#### Marca Arcana — dano ao longo do tempo que acumula
+
+Custo 15, recarga 3 s, alcance 9. Cada uso põe 1 pilha (dura 10 s; um uso novo renova todas). Cada pilha causa o dano por segundo.
+
+| NH | Dano por s por pilha | Pilhas no máximo | Perfil nível 21 |
+|---|---|---|---|
+| 1 | 1 + 0,12 × INT | 3 | 16/s por pilha, 47/s no máximo |
+| 2 | 1,2 + 0,144 × INT | 3 | 19/s, 56/s no máximo |
+| 3 | 1,4 + 0,168 × INT | **4** | 22/s, 88/s no máximo |
+| 4 | 1,6 + 0,192 × INT | 4 | 25/s, 100/s no máximo |
+| 5 | 1,8 + 0,216 × INT | **5** | 28/s, 141/s no máximo |
+
+#### Orbes Arcanos — atiram sozinhos no alvo atual
+
+Custo 45, recarga 16 s, duração 10 s. Os orbes giram em volta do Arcanista e cada um atira no **alvo atual** a cada 1,5 s.
+
+| NH | Orbes | Valor por disparo | Perfil nível 21 |
+|---|---|---|---|
+| 1 | 2 | dano 2 + 0,2 × INT | 26 cada, 35/s |
+| 2 | 2 | dano 2,4 + 0,24 × INT | 32 cada, 42/s |
+| 3 | **3** | dano 2,8 + 0,28 × INT | 37 cada, 74/s |
+| 4 | 3 | dano 3,2 + 0,32 × INT | 42 cada, 84/s |
+| 5 | **4** | dano 3,6 + 0,36 × INT | 48 cada, 127/s |
+
+#### Sifão Arcano — dano que devolve Mana
+
+Sem custo, recarga 10 s, alcance 9, conjuração 1 s.
+
+| NH | Valor | Mana devolvida | Outros efeitos | Perfil nível 21 |
+|---|---|---|---|---|
+| 1 | dano 20 + 1,5 × INT | 30 | — | 203 |
+| 2 | dano 24 + 1,8 × INT | 35 | — | 244 |
+| 3 | dano 28 + 2,1 × INT | 40 | põe **1 pilha** de Marca Arcana | 284 |
+| 4 | dano 32 + 2,4 × INT | 45 | põe 1 pilha | 325 |
+| 5 | dano 36 + 2,7 × INT | 50 | põe 1 pilha e conjuração **0,5 s** | 365 |
+
+#### Feixe do Vazio (assinatura, nível 35) — canalização longa num alvo
+
+Custo 90, recarga 90 s, alcance 9. Canaliza 4 s, um pulso a cada 0,5 s (8 pulsos). Pode andar 50% mais devagar enquanto canaliza.
+
+| NH | Valor por pulso | Outros efeitos | Perfil nível 21 |
+|---|---|---|---|
+| 1 | dano 20 + 2 × INT | — | 8 × 264 = 2 112 |
+| 2 | dano 26 + 2,6 × INT | — | 8 × 343 = 2 746 |
+| 3 | dano 32 + 3,2 × INT | ao acabar, o alvo recebe **+15% de dano** de todos por 6 s | 8 × 422 = 3 379 |
+
+### Mecânicas do Mago
+
+| Habilidade | Já existe no Core | Novo |
+|---|---|---|
+| Queimadura | estado com dano por segundo (como o veneno) | — |
+| Combustão | dano em área | **dano só em quem tem um estado**, e tirar o estado |
+| Rajada de Chamas | arco à frente (como o Golpe Pesado), com alcance maior | — |
+| Chão em Chamas | área no chão (como o Campo de Relâmpagos) | — |
+| Bola de Fogo | projétil, área | explodir no primeiro que acerta (a verificar no Core) |
+| Meteoro | área com aviso (como o Cataclismo Arcano) | — |
+| Raio Arcano | canalização (como a Flecha Devastadora) | **dano que sobe a cada pulso**; andar canalizando (NH5) |
+| Marca Arcana | pilhas (como o Sangramento) | — |
+| Orbes Arcanos | — | **orbes que atiram sozinhos no alvo atual** |
+| Sifão Arcano | dano, Mana (como a poção de Mana) | — |
+| Feixe do Vazio | canalização, mais dano recebido (como a Marca do Caçador) | andar canalizando |
+
+## 8. Clérigo em detalhe
+
+**Perfil de referência no nível 21:** pontos divididos entre INT e VIT (INT 62, VIT 58) e maça comum do nível 21 (ARMA 22). Nesse perfil, a Cura Direta dá 150 no NH1 e 270 no NH5, e o Golpe Sagrado dá 59.
+
+### Sacerdote — cura do grupo
+
+#### Oração Restauradora — cura em área ao longo do tempo
+
+Custo 45, recarga 12 s, raio 6 em volta do Sacerdote. Cura por segundo todos os aliados que estavam no raio ao lançar.
+
+| NH | Cura por s | Duração | Outros efeitos | Perfil nível 21 |
+|---|---|---|---|---|
+| 1 | 4 + 0,4 × INT | 8 s | — | 29/s, 230 em cada aliado |
+| 2 | 4,8 + 0,48 × INT | 8 s | — | 35/s, 276 |
+| 3 | 5,6 + 0,56 × INT | **10 s** | — | 40/s, 403 |
+| 4 | 6,4 + 0,64 × INT | 10 s | — | 46/s, 461 |
+| 5 | 7,2 + 0,72 × INT | 10 s | raio **8** | 52/s, 518 |
+
+#### Bênção — reforço num aliado
+
+Custo 20, recarga 15 s, alcance 8, duração 20 s. O aliado causa mais dano e recebe menos dano.
+
+| NH | Dano causado | Dano recebido | Alvos |
+|---|---|---|---|
+| 1 | +8% | −8% | 1 |
+| 2 | +10% | −10% | 1 |
+| 3 | +10% | −10% | **2** (o alvo e o aliado mais próximo dele) |
+| 4 | +12% | −12% | 2 |
+| 5 | **+15%** | **−15%** | 2 |
+
+#### Elo da Vida — dois aliados dividem o dano
+
+Custo 30, recarga 18 s, alcance 8. Liga o aliado escolhido ao aliado com mais vida perto dele (até 6 tiles): uma parte do dano que o escolhido receberia vai para o outro.
+
+| NH | Dano desviado | Duração | Outros efeitos |
+|---|---|---|---|
+| 1 | 25% | 6 s | — |
+| 2 | 30% | 6 s | — |
+| 3 | 30% | **8 s** | — |
+| 4 | 35% | 8 s | — |
+| 5 | **40%** | 8 s | os dois ligados recebem **5% menos dano** |
+
+#### Renovar — cura ao longo do tempo num aliado
+
+Custo 15, recarga 6 s, alcance 8.
+
+| NH | Cura por s | Duração | Outros efeitos | Perfil nível 21 |
+|---|---|---|---|---|
+| 1 | 4 + 0,45 × INT | 8 s | — | 32/s, 255 no total |
+| 2 | 4,8 + 0,54 × INT | 8 s | — | 38/s, 306 |
+| 3 | 5,6 + 0,63 × INT | **10 s** | — | 45/s, 447 |
+| 4 | 6,4 + 0,72 × INT | 10 s | — | 51/s, 510 |
+| 5 | 7,2 + 0,81 × INT | 10 s | também vai para o **aliado mais ferido** perto do alvo | 57/s, 574 |
+
+#### Santuário (assinatura, nível 35) — ninguém cai
+
+Custo 90, recarga 120 s, raio 6 em volta do Sacerdote. Pela duração, os aliados no raio **não caem abaixo de 1 de vida**.
+
+| NH | Duração | Outros efeitos |
+|---|---|---|
+| 1 | 4 s | — |
+| 2 | 5 s | — |
+| 3 | **6 s** | ao acabar, cura **20% da vida máxima** de cada aliado no raio |
 
 **Por que não há Ressurreição:** o jogo já ressuscita. O **Milagre** do Clérigo base, no NH3 (nível 15), levanta os aliados caídos num raio de 8 tiles com 30% da vida (efeito `revive`, T-061), enquanto eles ainda estão na tela de morte. O Santuário evita a morte em vez de desfazê-la.
 
-## 7. Custo
+### Inquisidor — dano sagrado corpo a corpo, com cura menor
 
-São **40 habilidades novas** (5 por segunda classe), cada uma com dados, regras no Core, teste, ícone e efeito visual. Mecânicas novas das outras classes, além das do Guerreiro (seção 5):
+As habilidades sagradas do Inquisidor causam **+25% contra mortos-vivos e corrompidos**, como o Golpe Sagrado, salvo onde a tabela diz outro valor.
 
-| Mecânica | Quem usa |
+#### Martelo da Justiça — dano sagrado e atordoamento
+
+Custo 25, recarga 8 s, arco de 60° e alcance 1,9.
+
+| NH | Valor | Outros efeitos | Perfil nível 21 |
+|---|---|---|---|
+| 1 | dano 10 + 1 × ARMA + 1,8 × INT | atordoa 1 s | 144 |
+| 2 | dano 12 + 1,2 × ARMA + 2,16 × INT | atordoa 1 s | 172 |
+| 3 | dano 14 + 1,4 × ARMA + 2,52 × INT | atordoa **1,5 s** | 201 |
+| 4 | dano 16 + 1,6 × ARMA + 2,88 × INT | atordoa 1,5 s | 230 |
+| 5 | dano 18 + 1,8 × ARMA + 3,24 × INT | atordoa 1,5 s e o arco vai a **120°** | 258 |
+
+#### Consagração — área no chão que fere e cura
+
+Custo 45, recarga 14 s, no chão onde o Inquisidor está. Um pulso por segundo: dano nos monstros (**+50%** contra mortos-vivos) e cura nos aliados.
+
+| NH | Dano por s | Cura por s | Raio | Duração | Perfil nível 21 |
+|---|---|---|---|---|---|
+| 1 | 4 + 0,5 × INT | 3 + 0,3 × INT | 3 | 6 s | 35/s e 22/s |
+| 2 | 4,8 + 0,6 × INT | 3,6 + 0,36 × INT | 3 | 6 s | 42/s e 26/s |
+| 3 | 5,6 + 0,7 × INT | 4,2 + 0,42 × INT | 3 | **8 s** | 49/s e 30/s |
+| 4 | 6,4 + 0,8 × INT | 4,8 + 0,48 × INT | 3 | 8 s | 56/s e 35/s |
+| 5 | 7,2 + 0,9 × INT | 5,4 + 0,54 × INT | **4** | 8 s | 63/s e 39/s |
+
+#### Selo da Luz — quem bate no alvo se cura
+
+Custo 20, recarga 12 s, alcance 6, um monstro. Pela duração, todo aliado que causa dano no alvo marcado se cura de uma parte do dano.
+
+| NH | Vida pelo dano | Duração |
+|---|---|---|
+| 1 | 10% | 8 s |
+| 2 | 12% | 8 s |
+| 3 | 15% | **10 s** |
+| 4 | 17% | 10 s |
+| 5 | 20% | 10 s |
+
+#### Julgamento — dano sagrado forte de perto
+
+Custo 30, recarga 7 s, alcance 3.
+
+| NH | Valor | Contra mortos-vivos | Outros efeitos | Perfil nível 21 |
+|---|---|---|---|---|
+| 1 | dano 20 + 1,2 × ARMA + 2,5 × INT | +50% | — | 201 |
+| 2 | dano 24 + 1,44 × ARMA + 3 × INT | +50% | — | 242 |
+| 3 | dano 28 + 1,68 × ARMA + 3,5 × INT | +50% | alcance **5** | 282 |
+| 4 | dano 32 + 1,92 × ARMA + 4 × INT | +50% | alcance 5 | 322 |
+| 5 | dano 36 + 2,16 × ARMA + 4,5 × INT | **+75%** | alcance 5 e cura o Inquisidor em **20% do dano** | 363 |
+
+#### Ira Divina (assinatura, nível 35) — o ataque básico vira área que cura
+
+Custo 80, recarga 90 s, só no Inquisidor. Pela duração, o Golpe Sagrado acerta **todos num raio de 2** com mais dano, e cada acerto cura os aliados a até 4 tiles em uma parte do dano.
+
+| NH | Dano do Golpe Sagrado | Cura nos aliados | Duração | Perfil nível 21 |
+|---|---|---|---|---|
+| 1 | +50% | 10% do dano | 10 s | 89 por alvo |
+| 2 | +50% | 10% | **12 s** | 89 |
+| 3 | **+80%** | **15%** | **15 s** | 107 |
+
+### Mecânicas do Clérigo
+
+| Habilidade | Já existe no Core | Novo |
+|---|---|---|
+| Oração Restauradora | estado em aliados no raio | **estado que cura por segundo** (hoje o periódico só causa dano; a verificar) |
+| Bênção | estado com mais dano causado e menos recebido | — |
+| Elo da Vida | — | **desviar dano** (o mesmo do Guardião) |
+| Renovar | — | estado que cura por segundo (o mesmo da Oração) |
+| Santuário | estado em aliados no raio | **vida mínima de 1** |
+| Martelo da Justiça | dano, atordoamento | — |
+| Consagração | área no chão | área que **também cura** aliados |
+| Selo da Luz | estado no monstro | **vida pelo dano** (o mesmo da Sede de Sangue), para quem bate no alvo |
+| Julgamento | dano sagrado, bônus contra mortos-vivos | — |
+| Ira Divina | reforço próprio | **ataque básico em área** e cura pelo dano |
+
+## 9. Custo
+
+São **40 habilidades novas** (5 por segunda classe), cada uma com dados, regras no Core, teste, ícone e efeito visual. Muitas mecânicas novas servem a mais de uma classe:
+
+| Mecânica nova | Quem usa |
 |---|---|
+| Desviar dano de um aliado | Guardião (Interceptação, Juramento), Sacerdote (Elo da Vida) |
+| Vida pelo dano causado | Berserker (Sede de Sangue), Inquisidor (Selo da Luz, Julgamento, Ira Divina) |
+| Estado que cura por segundo | Sacerdote (Oração Restauradora, Renovar) |
+| Dano que depende de um estado ou da vida do alvo | Berserker (Execução), Piromante (Combustão), Caçador (Ferida Aberta) |
+| Copiar ou espalhar estados | Caçador (Flecha Dispersa, Praga), Piromante (Combustão NH5) |
+| Crítico, alcance e armadura como números de reforço | Atirador de Elite (Mira Firme, Tiro Certeiro, Olho de Falcão) |
+| Canalizar andando, dano que sobe a cada pulso | Arcanista (Raio Arcano, Feixe do Vazio) |
+| Unidades que atiram sozinhas | Arcanista (Orbes Arcanos) |
+| Área que acompanha quem anda | Berserker (Tempestade de Aço) |
 | Vida mínima de 1 | Sacerdote (Santuário) |
-| Dano que cresce enquanto mantém o alvo | Arcanista |
-| Veneno que se espalha | Caçador (Flecha Dispersa, Praga) |
-| Ataque básico que vira área | Inquisidor (Ira Divina) |
-| Curar com o dano causado | Inquisidor (Selo da Luz), o mesmo da Sede de Sangue |
+| Ataque básico em área | Inquisidor (Ira Divina) |
 | Barra com 10 teclas, tela de escolha da segunda classe | todas |
 
-## 8. Ainda falta decidir
+## 10. Ainda falta decidir
 
-1. **Guardião e Berserker** como detalhados na seção 5.
+O designer aprovou o Guardião e o Berserker em 2026-11-20 (seção 5).
+
+1. **Atirador de Elite, Caçador, Piromante, Arcanista, Sacerdote e Inquisidor** como detalhados nas seções 6 a 8.
 2. **+5 de atributo ao virar segunda classe**, para fechar 200 no nível 40?
 3. **Conteúdo do 16 ao 20:** área nova no primeiro mapa, ou redistribuir os níveis do mapa atual?
 4. **XP por hora** como meta de cada área (o simulador mede).
-5. A quarta habilidade normal e as ideias das outras seis segundas classes (seção 6).
 
-## 9. Para a T-390
+Todos os números das seções 5 a 8 seguem a regra da seção 2 e ainda **não passaram pelo simulador**: devem mudar depois dos testes de design.
+
+## 11. Para a T-390
 
 - A fase 4 hoje é infraestrutura (CI/CD, observabilidade, testes de carga, produção separada). Nível 40, segunda classe e mapas novos são **conteúdo grande**: cabem melhor numa fase própria, ou numa trilha paralela, do que dentro da fase 4.
 - Ordem natural: (1) regras do nível 40 (pontos, NH por classe) e simulador até o 40; (2) sistema de segunda classe no Core e no cliente (escolha definitiva, barra de 10 teclas) com o **Guerreiro**; (3) conteúdo do 16 ao 20; (4) as outras três classes; (5) mapas novos para o 21 ao 40, com monstros, elites e masmorras.
