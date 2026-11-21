@@ -14,7 +14,7 @@ Os números são ponto de partida para o simulador, como em `design/progression-
 | Pontos de habilidade | **40** no nível 40 (1 por nível, como hoje) |
 | Pontos de atributo | **200** no nível 40 |
 | Barra | uma tecla por habilidade: **10 teclas** (1–5 da base, 6–0 da segunda classe), mais ataque básico e poção |
-| Passivas | **algumas habilidades viram passivas**, sem que toda classe precise ter; a primeira é a **Sede de Sangue** do Berserker (seção 4) |
+| Passivas | **algumas habilidades viram passivas**, sem que toda classe precise ter: **Sede de Sangue** (Berserker) e **Mira Firme** (Atirador de Elite) (seção 4.1) |
 | Curva de XP | a dificuldade continua crescendo como hoje, com **monstros mais fortes que dão mais XP** (seção 3) |
 | Guerreiro | Guardião e Berserker |
 | Arqueiro | Atirador de Elite (alvo único) e Caçador |
@@ -80,23 +80,23 @@ Base: os ~775 monstros até o 15 levam de 8 a 9 horas. Um nível alto leva de 2 
 - **Escolha definitiva:** não dá para trocar. A tela de escolha mostra as duas opções com as habilidades e pede confirmação.
 - **Pontos:** a partir do 21, os pontos podem ir para qualquer habilidade, da base ou da segunda classe.
 - **Barra:** 10 teclas. As teclas 6–0 aparecem vazias até a segunda classe.
-- **Passivas** (decisão do designer, 2026-11-20): algumas habilidades podem ser **passivas**, sem que toda classe precise ter uma. A passiva usa pontos e tem NH como as outras, mas não ocupa tecla, não custa Mana e vale sempre. Na tela de habilidades, aparece com uma moldura diferente. Uma classe com passiva usa menos teclas da barra. A primeira é a **Sede de Sangue** do Berserker; as outras candidatas estão na seção 4.1.
+- **Passivas** (decisão do designer, 2026-11-20): algumas habilidades podem ser **passivas**, sem que toda classe precise ter uma. A passiva usa pontos e tem NH como as outras, mas não ocupa tecla, não custa Mana e vale sempre. Na tela de habilidades, aparece com uma moldura diferente. Uma classe com passiva usa menos teclas da barra. São passivas a **Sede de Sangue** do Berserker e a **Mira Firme** do Atirador de Elite (seção 4.1).
 
 ### 4.1 Candidatas a passiva
 
-Bom candidato é a habilidade que só reforça o próprio personagem ou o grupo por perto, sem mirar e sem momento certo de usar. Quando vira passiva, o valor cai para a média do tempo em que a versão ativa ficava ligada.
+Bom candidato é a habilidade que só reforça o próprio personagem, sem mirar e sem momento certo de usar. Quando vira passiva, o valor cai para a média do tempo em que a versão ativa ficava ligada.
 
-| Classe | Habilidade | Como ficaria passiva | Comentário |
+| Classe | Habilidade | Passiva? | Como fica |
 |---|---|---|---|
-| Berserker | **Sede de Sangue** | 5% a 10% de vida pelo dano, sempre | **decidida** (seção 5) |
-| Guardião | Bastião | aliados a até 5 tiles recebem 5% a 10% menos dano, sempre | aura combina com o papel; perde o momento de usar na hora certa |
-| Atirador de Elite | Mira Firme | parado há 1 s, ganha +2 de alcance e +6% a +12% de crítico | já funcionava como estado, só sem botão |
-| Sacerdote | Bênção | aliados a até 6 tiles causam 4% a 8% mais dano e recebem 4% a 8% menos | hoje é um reforço de 20 s para renovar; como aura, tira trabalho repetitivo |
-| Arcanista | Orbes Arcanos | os orbes giram sempre em combate, com dano menor | possível, mas muito forte; eu deixaria ativa |
+| Berserker | **Sede de Sangue** | **sim** (decidida) | 5% a 10% de vida pelo dano, sempre (seção 5) |
+| Atirador de Elite | **Mira Firme** | **sim** (decidida) | mais crítico contra alvos a 6+ tiles e +1 de alcance, sem precisar ficar parado (seção 6) |
+| Guardião | Bastião | não | continua ativa |
+| Sacerdote | Bênção | não | continua ativa |
+| Arcanista | Orbes Arcanos | não | continua ativa (como passiva ficaria forte demais) |
 
-**Ficam ativas:** Caçador, Piromante e Inquisidor não têm boa candidata. Todas as habilidades deles miram ou têm momento certo de usar.
+As outras segundas classes (Guardião, Caçador, Piromante, Arcanista, Sacerdote e Inquisidor) e as classes base não têm passiva.
 
-**No Core:** a passiva simples é um estado permanente, aplicado quando o jogador põe o primeiro ponto (como o Frenesi dos monstros). As auras (Bastião, Bênção) precisam reaplicar o estado nos aliados por perto o tempo todo: é a mesma peça da "área que acompanha quem anda" da Tempestade de Aço. A Mira Firme precisa saber há quanto tempo o personagem está parado.
+**No Core:** a passiva é um estado permanente, aplicado quando o jogador põe o primeiro ponto (como o Frenesi dos monstros). A Mira Firme precisa de uma condição nova: bônus de crítico pela distância até o alvo.
 
 ## 5. Guerreiro em detalhe (primeira classe a entregar)
 
@@ -277,17 +277,19 @@ Custo 20, recarga 12 s, alcance 10.
 | 4 | dano 9,6 + 0,96 × ARMA + 1,92 × DES | 40% | −20% | 5 s | 153 |
 | 5 | dano 10,8 + 1,08 × ARMA + 2,16 × DES | **50%** | **−25%** | **6 s** | 172 |
 
-#### Mira Firme — parado, atira mais longe e acerta crítico
+#### Mira Firme (passiva) — quanto mais longe o alvo, mais crítico
 
-Sem custo, recarga 15 s, só no Atirador. Enquanto ele **não anda**, ganha alcance e chance de crítico. Andar acaba com o efeito.
+**Passiva** (decisão do designer, 2026-11-20). Não precisa ficar parado: o bônus de crítico vale contra alvos **a 6 tiles ou mais**, o que premia manter distância sem tirar a mobilidade do Arqueiro. O alcance extra vale sempre.
 
-| NH | Alcance | Crítico | Duração | Outros efeitos |
-|---|---|---|---|---|
-| 1 | +2 | +10% | 6 s | — |
-| 2 | +2 | +12% | 6 s | — |
-| 3 | **+3** | +15% | **8 s** | — |
-| 4 | +3 | +18% | 8 s | — |
-| 5 | +3 | +20% | 8 s | o crítico causa **× 1,75** (em vez de × 1,5) |
+| NH | Crítico contra alvos a 6+ tiles | Alcance | Outros efeitos |
+|---|---|---|---|
+| 1 | +6% | — | — |
+| 2 | +8% | — | — |
+| 3 | +10% | **+1** em todos os disparos | — |
+| 4 | +12% | +1 | — |
+| 5 | +12% | +1 | o crítico contra esses alvos causa **× 1,65** (em vez de × 1,5) |
+
+Os valores são menores que os da versão ativa (+10% a +20% por 6 a 8 s, a cada 15 s), porque agora valem o tempo todo. A versão anterior, que exigia ficar parado, foi descartada: com o Tiro Certeiro já pedindo 1,5 s parado, o Atirador passaria tempo demais sem andar.
 
 #### Tiro Certeiro — preparação longa, dano muito alto
 
@@ -379,7 +381,7 @@ Custo 80, recarga 90 s, alcance 9, raio 6. Põe pilhas do Veneno do Caçador em 
 |---|---|---|
 | Flecha Perfurante | linha (como a Flecha Devastadora NH2) | dano menor em quem está atrás |
 | Tiro Debilitante | dano, lentidão, menos dano causado | — |
-| Mira Firme | reforço próprio | **crítico e alcance como reforço**, acabar ao andar |
+| Mira Firme (passiva) | estado permanente | **crítico pela distância até o alvo**, alcance como reforço |
 | Tiro Certeiro | conjuração | **ignorar armadura** |
 | Olho de Falcão | reforço próprio | **crítico garantido** (passa do teto de 40%) |
 | Flecha Envenenada | veneno, pilhas (como o Sangramento) | — |
@@ -707,7 +709,7 @@ São **40 habilidades novas** (5 por segunda classe), cada uma com dados, regras
 O designer aprovou o Guardião e o Berserker em 2026-11-20 (seção 5).
 
 1. **Atirador de Elite, Caçador, Piromante, Arcanista, Sacerdote e Inquisidor** como detalhados nas seções 6 a 8.
-2. **Outras passivas:** Bastião, Mira Firme e Bênção (seção 4.1)?
+2. **Mira Firme passiva** pela distância (seção 6), no lugar da versão que pedia ficar parado?
 3. **+5 de atributo ao virar segunda classe**, para fechar 200 no nível 40?
 4. **Conteúdo do 16 ao 20:** área nova no primeiro mapa, ou redistribuir os níveis do mapa atual?
 5. **XP por hora** como meta de cada área (o simulador mede).
