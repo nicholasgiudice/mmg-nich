@@ -219,6 +219,35 @@ public sealed record RedirectDefinition
     public required double MaxDistance { get; init; }
 }
 
+/// <summary>
+/// Vida pelo dano causado (T-407: Sede de Sangue; depois o Selo da Luz e o Julgamento do Inquisidor): quem tem o status cura
+/// <see cref="Fraction"/> (× acúmulos) do dano final que causa em outra entidade. A cura passa pela cura recebida
+/// (<c>healingTakenMultiplier</c>) e não é crítica. Dano refletido, dano desviado e dano em si mesmo não geram vida.
+/// </summary>
+public sealed record LifestealDefinition
+{
+    /// <summary>Fração do dano final que volta como vida, em (0, 1].</summary>
+    public required double Fraction { get; init; }
+
+    /// <summary>
+    /// Com vida atual abaixo desta fração da vida máxima (estritamente), a fração é multiplicada por
+    /// <see cref="BelowHealthMultiplier"/>. 0 = nunca. Em [0, 1].
+    /// </summary>
+    public double BelowHealth { get; init; }
+
+    /// <summary>Multiplicador da fração com pouca vida (2 = dobra). Pelo menos 1.</summary>
+    public double BelowHealthMultiplier { get; init; } = 2;
+
+    /// <summary>Ao matar um inimigo (facção diferente) com o dano, cura também esta fração da vida máxima. 0 = nada. Em [0, 1].</summary>
+    public double KillHeal { get; init; }
+
+    /// <summary>
+    /// Habilidade a que a cura é atribuída no evento <c>HealApplied</c> e no log (a que deu o status, ex.:
+    /// <c>berserker.bloodthirst</c>). Null = o próprio status.
+    /// </summary>
+    public string? Ability { get; init; }
+}
+
 public sealed record StatusFlags
 {
     public bool Stunned { get; init; }
@@ -279,6 +308,9 @@ public sealed record StatusDefinition
 
     /// <summary>Desvia parte do dano recebido para um protetor (T-406).</summary>
     public RedirectDefinition? Redirect { get; init; }
+
+    /// <summary>Vida pelo dano causado (T-407).</summary>
+    public LifestealDefinition? Lifesteal { get; init; }
 }
 
 public sealed record AreaDefinition
@@ -294,6 +326,12 @@ public sealed record AreaDefinition
     public AreaMode Mode { get; init; } = AreaMode.Periodic;
     public FactionFilter Affects { get; init; } = FactionFilter.Enemy;
     public IReadOnlyList<EffectDefinition> Effects { get; init; } = [];
+
+    /// <summary>
+    /// Presa ao dono (T-407, Tempestade de Aço): nasce na posição de quem a criou e, a cada tick, acompanha a posição atual
+    /// dele (inclusive para acertar). Acaba com a duração ou quando o dono morre ou some (<c>AreaExpireReason.OwnerDied</c>).
+    /// </summary>
+    public bool FollowOwner { get; init; }
 }
 
 public sealed record AiProfileDefinition

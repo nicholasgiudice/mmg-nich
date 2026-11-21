@@ -358,6 +358,11 @@ internal static partial class GameDataValidator
                     }
 
                     if (d.ThreatMultiplier is { } tm) { c.NonNegative("threatMultiplier", tm); }
+                    if (d.LowHealthBonus is { } lhb)
+                    {
+                        if (!(lhb.BelowHealth > 0 && lhb.BelowHealth <= 1)) { c.Error("lowHealthBonus.belowHealth", "Deve estar em (0, 1]."); }
+                        c.Positive("lowHealthBonus.bonus", lhb.Bonus);
+                    }
 
                     break;
                 case HealEffect h:
@@ -467,6 +472,14 @@ internal static partial class GameDataValidator
             if (!(rd.Fraction > 0 && rd.Fraction <= 1)) { ctx.Error("redirect.fraction", "Deve estar em (0, 1]."); }
             if (!(rd.Reduction >= 0 && rd.Reduction < 1)) { ctx.Error("redirect.reduction", "Deve estar em [0, 1)."); }
             ctx.Positive("redirect.maxDistance", rd.MaxDistance);
+        }
+        if (x.Lifesteal is { } ls)
+        {
+            if (!(ls.Fraction > 0 && ls.Fraction <= 1)) { ctx.Error("lifesteal.fraction", "Deve estar em (0, 1]."); }
+            if (ls.BelowHealth is < 0 or > 1) { ctx.Error("lifesteal.belowHealth", "Deve estar em 0..1."); }
+            if (!(ls.BelowHealthMultiplier >= 1)) { ctx.Error("lifesteal.belowHealthMultiplier", "Deve ser pelo menos 1."); }
+            if (ls.KillHeal is < 0 or > 1) { ctx.Error("lifesteal.killHeal", "Deve estar em 0..1."); }
+            if (ls.Ability is { } la) { ctx.Exists("lifesteal.ability", la, refs.Abilities, "habilidade"); }
         }
         if (x.Frontal is { } fr)
         {

@@ -27,10 +27,39 @@ public static class CoreEffects
         // T-201: base + escala pelas estatísticas da fonte; crítico só para quem tem estatísticas.
         var crit = Stats.StatMath.RollCrit(c.World, c.Source);
         var value = Stats.StatMath.Scaled(e.Base, e.Scaling, c.Source) * Stats.StatMath.MonsterPower(c.World, c.Source)
-            * TagBonus(c.Target!, e) * c.Power * CritFactor(c.World, crit);
+            * TagBonus(c.Target!, e) * LowHealthBonus(c.Target!, e) * c.Power * CritFactor(c.World, crit);
         DamageResolver.Deal(
             c.World, c.Source, c.Target!, c.SourceId, value, e.School, melee: c.Ability?.IsMelee ?? false, critical: crit,
             threatMultiplier: e.ThreatMultiplier);
+        if (e.ResetCooldownOnKill && !c.Target!.IsAlive)
+        {
+            ResetCooldown(c);
+        }
+    }
+
+    /// <summary>
+    /// T-407 (Execução): 1 + <c>lowHealthBonus.bonus</c> se o alvo está abaixo de <c>belowHealth</c> da vida máxima agora
+    /// (antes deste dano); senão 1.
+    /// </summary>
+    public static double LowHealthBonus(Entity target, DamageEffect e) =>
+        e.LowHealthBonus is { } b && target.TryGet<Health>() is { Max: > 0 } h && h.Current < b.BelowHealth * h.Max
+            ? 1 + b.Bonus
+            : 1;
+
+    /// <summary>
+    /// T-407 (Execução NH5): o golpe matou, a recarga da habilidade de origem volta a zero (pronta neste tick). Com cargas,
+    /// a carga em recarga volta no tick seguinte (<c>RechargeCooldownCharges</c>). Sem habilidade (status, área) não faz nada.
+    /// O cliente vê a recarga nova pelo <c>AbilityState</c> do snapshot.
+    /// </summary>
+    private static void ResetCooldown(EffectContext c)
+    {
+        if (c.Ability is not { } ability || c.Source?.TryGet<AbilityState>() is not { } st
+            || !st.ReadyAtTick.TryGetValue(ability.Id, out var ready) || ready <= c.World.Tick)
+        {
+            return;
+        }
+
+        st.ReadyAtTick[ability.Id] = c.World.Tick;
     }
 
     private static double CritFactor(World world, bool crit) => crit ? world.Content.Rules.Stats.CritMultiplier : 1;
@@ -222,7 +251,9 @@ public static class DamageResolver
             }
 
             var part = baseAmount * share.Fraction * (1 - share.Redirect.Reduction);
-            var taken = Apply(world, source, share.Protector, ph, sourceId, part, school, melee: false, applyModifiers: true, critical, threatMultiplier);
+            var taken = Apply(
+                world, source, share.Protector, ph, sourceId, part, school, melee: false, applyModifiers: true, critical, threatMultiplier,
+                redirected: true);
             world.Events.Publish(new Status.DamageRedirected(
                 source?.Id ?? EntityId.None, target.Id, share.Protector.Id, sourceId, share.Status.StatusId, taken));
         }
@@ -230,10 +261,14 @@ public static class DamageResolver
         return amount;
     }
 
-    /// <summary>O dano num alvo, sem desvio: modificadores, defesa, escudos, vida, eventos e reações.</summary>
+    /// <summary>
+    /// O dano num alvo, sem desvio: modificadores, defesa, escudos, vida, eventos e reações. <paramref name="redirected"/>:
+    /// a parte desviada para um protetor (T-406); ela e o dano sem modificadores (reflexos) vão às reações como indiretos
+    /// (<see cref="DamageReport.Indirect"/>, T-407: não geram vida).
+    /// </summary>
     private static float Apply(
         World world, Entity? source, Entity target, Health health, string sourceId, double baseAmount, DamageSchool school,
-        bool melee, bool applyModifiers, bool critical, double? threatMultiplier)
+        bool melee, bool applyModifiers, bool critical, double? threatMultiplier, bool redirected = false)
     {
         var svc = world.Combat;
         var dealt = source is null || !applyModifiers ? 1.0 : svc.DamageDealtMultiplier(world, source, target, school);
@@ -279,7 +314,7 @@ public static class DamageResolver
 
         if (amount > 0)
         {
-            svc.AfterDamage(world, new DamageReport(source, target, sourceId, school, amount, melee));
+            svc.AfterDamage(world, new DamageReport(source, target, sourceId, school, amount, melee, Indirect: redirected || !applyModifiers));
         }
 
         return amount;

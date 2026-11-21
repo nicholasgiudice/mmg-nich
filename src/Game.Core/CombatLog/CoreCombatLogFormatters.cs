@@ -65,9 +65,11 @@ public static class CoreCombatLogFormatters
         f.Register<HealApplied>((c, e) =>
         {
             var over = e.Overheal > 0 ? $" ({CombatLogContext.Number(e.Overheal)} excedentes)" : "";
-            var text =
-                $"{c.Origin(e.Source, e.SourceId)} curou {c.Name(e.Target)} em " +
-                $"{CombatLogContext.Number(e.Effective)} de vida{(e.Critical ? " (crítico)" : "")}{over}";
+            var crit = e.Critical ? " (crítico)" : "";
+            // T-407: cura em si mesmo (vida pelo dano, poção) mostra a habilidade: "Berserker recuperou 10 de vida com Sede de Sangue".
+            var text = !e.Source.IsNone && e.Source == e.Target
+                ? $"{c.Name(e.Target)} recuperou {CombatLogContext.Number(e.Effective)} de vida com {c.SourceLabel(e.SourceId)}{crit}{over}"
+                : $"{c.Origin(e.Source, e.SourceId)} curou {c.Name(e.Target)} em {CombatLogContext.Number(e.Effective)} de vida{crit}{over}";
             return c.Entry(e, LogCategory.Cura, text, e.Source, e.Target);
         });
 
