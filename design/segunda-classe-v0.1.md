@@ -582,13 +582,15 @@ Para ter ideia do tamanho: +7 em cada atributo são 35 pontos, o que um personag
 
 Pedido do designer (2026-11-20). Custo 20, recarga 20 s, raio 6 em volta do Sacerdote. Todos os aliados no raio ao lançar (com ele) andam mais rápido pela duração. Ajuda o grupo a fugir, a reposicionar numa luta e a atravessar o mapa.
 
+**Dura 30 s em todos os NH** (pedido do designer, 2026-11-21). Com a recarga de 20 s, dá para manter o efeito ligado o tempo todo.
+
 | NH | Velocidade de movimento | Duração | Outros efeitos |
 |---|---|---|---|
-| 1 | +15% | 8 s | — |
-| 2 | +15% | **10 s** | — |
-| 3 | **+20%** | 10 s | **tira a lentidão** dos aliados no raio |
-| 4 | +20% | 10 s | tira a lentidão |
-| 5 | **+25%** | 10 s | tira a lentidão, raio **8** e imunidade a lentidão pela duração |
+| 1 | +15% | 30 s | — |
+| 2 | **+17%** | 30 s | — |
+| 3 | **+20%** | 30 s | **tira a lentidão** dos aliados no raio |
+| 4 | **+22%** | 30 s | tira a lentidão |
+| 5 | **+25%** | 30 s | tira a lentidão, raio **8** e imunidade a lentidão por 10 s |
 
 #### Elo da Vida — dois aliados dividem o dano
 
