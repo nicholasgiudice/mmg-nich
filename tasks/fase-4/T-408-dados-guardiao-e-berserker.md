@@ -15,6 +15,8 @@ As 10 habilidades estão em `design/segunda-classe-v0.1.md`, seção 5, com cust
 
 As mecânicas novas foram feitas na T-406 (desvio de dano, avançar até aliado, imunidade a empurrão, ameaça multiplicada) e na T-407 (dano pela vida do alvo, zerar recarga ao matar, vida pelo dano, área que acompanha). A segunda classe e as passivas, na T-403. As metas de segunda classe, na T-402 (§8 do design de progressão).
 
+**Base:** a T-406 e a T-407 sobem o protocolo e só entram na `main` na rodada da seção 6f de `tasks/README.md`. Se essa rodada ainda não tiver entrado, crie a branch a partir da branch da T-407 e mescle nela a T-403. Registre a base no Resultado.
+
 ## Requisitos
 
 1. Arquivos de dados das habilidades (sugestão: `data/abilities_guardian.json` e `data/abilities_berserker.json`), com todos os NH, e os estados e áreas que elas usam. Ids no padrão `guardian.interception`, `berserker.blood_thirst`; textos em português.

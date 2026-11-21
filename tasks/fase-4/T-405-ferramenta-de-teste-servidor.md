@@ -27,7 +27,7 @@ A ferramenta **não pode ser ligada por engano** num servidor aberto a jogadores
 
 ## Integração
 
-Sai da branch da T-404. **Integre T-404, T-405 e T-411 juntas** e, na mesma rodada, rode o `deploy-dev.sh` (com a ferramenta ligada no servidor de teste) e publique o cliente novo.
+Sai da branch da T-404. **T-406, T-407, T-404, T-405 e T-411 entram juntas** e, na mesma rodada, rode o `deploy-dev.sh` (com a ferramenta ligada no servidor de teste) e publique o cliente novo. Veja a seção 6f de `tasks/README.md`.
 
 ## Critérios de aceite
 

@@ -544,10 +544,11 @@ Detalhadas pela T-390 a partir de `design/segunda-classe-v0.1.md` e do playtest 
 | 6 | — | T-413 |
 
 **Cuidados de integração**
-- **Protocolo:** a T-404 e a T-405 sobem `ProtocolVersion` (hoje 15). **Não integre nenhuma das duas sozinha.** A T-405 sai da branch da T-404, e a T-411 da branch da T-405. Integre **T-404, T-405 e T-411 juntas** e, na mesma rodada, rode o `deploy-dev.sh` com `GAME_DEV_TOOLS` ligado no servidor de teste e publique o cliente novo (`export-client.ps1` e `deploy-download.ps1`).
+- **Protocolo (revisto em 2026-11-21):** a T-406 também subiu `ProtocolVersion` (para 16), por causa do evento novo de desvio de dano. Por isso, **T-406, T-407, T-404, T-405 e T-411 entram na `main` numa rodada só**, com um `deploy-dev.sh` (com `GAME_DEV_TOOLS` ligado no servidor de teste) e um cliente novo (`export-client.ps1` e `deploy-download.ps1`). Nenhuma delas entra sozinha. A T-407 sai da branch da T-406; a T-405 da T-404; a T-411 da T-405. Cada uma sobe o número a partir da sua base; na integração, o conflito é só o número e o comentário de `ProtocolVersion`, e o valor final é o maior + 1 se houver mudança nova de protocolo depois do merge (confira com os testes de protocolo).
 - A T-410 não sobe o protocolo, mas precisa da T-404 na `main` (e da T-408): integre depois da rodada acima, com outro cliente novo.
 - A T-403 e a T-404 mexem em `Leveling` e no documento do personagem; a T-405 também. Uma de cada vez, na ordem.
-- A T-406 e a T-407 mexem em `DamageResolver`, estados e efeitos: a T-407 sai depois da T-406.
+- A T-406 e a T-407 mexem em `DamageResolver`, estados e efeitos: a T-407 sai **da branch da T-406** (que não está na `main`).
+- A T-408 (dados) precisa das mecânicas da T-407 e da segunda classe da T-403: sai da branch da T-407 com a T-403 mesclada (ou da `main`, se a rodada do protocolo já tiver entrado), e entra na `main` na mesma rodada ou logo depois dela.
 - A T-403 (progressão) e a T-406/T-407 (efeitos) rodam em paralelo; se as duas tocarem em `CombatServices` ou no validador de dados, integre uma e rebase a outra.
 - A T-409 e a T-410 mexem na barra e no `SkillPanel`; a T-411 no `GameMenu` e no `Main.cs`: integre uma de cada vez.
 
