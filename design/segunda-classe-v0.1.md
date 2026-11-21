@@ -15,7 +15,7 @@ Os números são ponto de partida para o simulador, como em `design/progression-
 | Pontos de atributo | **200** no nível 40 |
 | Barra | uma tecla por habilidade: **10 teclas** (1–5 da base, 6–0 da segunda classe), mais ataque básico e poção |
 | Passivas | **algumas habilidades viram passivas**, sem que toda classe precise ter: **Sede de Sangue** (Berserker) e **Mira Firme** (Atirador de Elite), esta pela distância do alvo, sem ficar parado (seção 4.1) |
-| Bênção (Sacerdote) | **velocidade de movimento e atributos para todos perto do Sacerdote** (seção 8) |
+| Sacerdote | **Bênção** dá atributos e a nova **Graça Veloz** dá velocidade de movimento, as duas para todos perto do Sacerdote (seção 8) |
 | Curva de XP | a dificuldade continua crescendo como hoje, com **monstros mais fortes que dão mais XP** (seção 3) |
 | Guerreiro | Guardião e Berserker |
 | Arqueiro | Atirador de Elite (alvo único) e Caçador |
@@ -561,19 +561,31 @@ Custo 45, recarga 12 s, raio 6 em volta do Sacerdote. Cura por segundo todos os 
 | 4 | 6,4 + 0,64 × INT | 10 s | — | 46/s, 461 |
 | 5 | 7,2 + 0,72 × INT | 10 s | raio **8** | 52/s, 518 |
 
-#### Bênção — velocidade e atributos para todos por perto
+#### Bênção — atributos para todos por perto
 
-Pedido do designer (2026-11-20). Custo 40, recarga 30 s, raio 6 em volta do Sacerdote. Todos os aliados no raio ao lançar (com ele) ganham **velocidade de movimento** e **pontos em todos os atributos** (FOR, DES, AGI, INT e VIT) pela duração. O bônus de atributo escala com a INT do Sacerdote.
+Pedido do designer (2026-11-20). Custo 35, recarga 30 s, raio 6 em volta do Sacerdote. Todos os aliados no raio ao lançar (com ele) ganham **pontos em todos os atributos** (FOR, DES, AGI, INT e VIT) pela duração. O bônus escala com a INT do Sacerdote.
 
-| NH | Atributos (cada um) | Velocidade | Duração | Outros efeitos | Perfil nível 21 |
-|---|---|---|---|---|---|
-| 1 | +(2 + 0,08 × INT) | +10% | 15 s | — | +7 em cada atributo |
-| 2 | +(2,4 + 0,096 × INT) | +10% | 15 s | — | +8 |
-| 3 | +(2,8 + 0,112 × INT) | **+15%** | **20 s** | — | +10 |
-| 4 | +(3,2 + 0,128 × INT) | +15% | 20 s | — | +11 |
-| 5 | +(3,6 + 0,144 × INT) | **+20%** | 20 s | raio **8** | +13 |
+| NH | Atributos (cada um) | Duração | Outros efeitos | Perfil nível 21 |
+|---|---|---|---|---|
+| 1 | +(2 + 0,08 × INT) | 15 s | — | +7 em cada atributo |
+| 2 | +(2,4 + 0,096 × INT) | 15 s | — | +8 |
+| 3 | +(2,8 + 0,112 × INT) | **20 s** | — | +10 |
+| 4 | +(3,2 + 0,128 × INT) | 20 s | — | +11 |
+| 5 | +(3,6 + 0,144 × INT) | 20 s | raio **8** | +13 |
 
-Para ter ideia do tamanho: +7 em cada atributo são 35 pontos, o que um personagem ganha em 7 níveis. Num Guerreiro de nível 21, +7 de FOR e de VIT dão +31 no Golpe Pesado (NH5) e +70 de vida. A Bênção fica ligada metade do tempo no NH1 e dois terços a partir do NH3; a velocidade também ajuda o grupo a atravessar o mapa.
+Para ter ideia do tamanho: +7 em cada atributo são 35 pontos, o que um personagem ganha em 7 níveis. Num Guerreiro de nível 21, +7 de FOR e de VIT dão +31 no Golpe Pesado (NH5) e +70 de vida. A Bênção fica ligada metade do tempo no NH1 e dois terços a partir do NH3.
+
+#### Graça Veloz — velocidade para todos por perto
+
+Pedido do designer (2026-11-20). Custo 20, recarga 20 s, raio 6 em volta do Sacerdote. Todos os aliados no raio ao lançar (com ele) andam mais rápido pela duração. Ajuda o grupo a fugir, a reposicionar numa luta e a atravessar o mapa.
+
+| NH | Velocidade de movimento | Duração | Outros efeitos |
+|---|---|---|---|
+| 1 | +15% | 8 s | — |
+| 2 | +15% | **10 s** | — |
+| 3 | **+20%** | 10 s | **tira a lentidão** dos aliados no raio |
+| 4 | +20% | 10 s | tira a lentidão |
+| 5 | **+25%** | 10 s | tira a lentidão, raio **8** e imunidade a lentidão pela duração |
 
 #### Elo da Vida — dois aliados dividem o dano
 
@@ -587,17 +599,7 @@ Custo 30, recarga 18 s, alcance 8. Liga o aliado escolhido ao aliado com mais vi
 | 4 | 35% | 8 s | — |
 | 5 | **40%** | 8 s | os dois ligados recebem **5% menos dano** |
 
-#### Renovar — cura ao longo do tempo num aliado
-
-Custo 15, recarga 6 s, alcance 8.
-
-| NH | Cura por s | Duração | Outros efeitos | Perfil nível 21 |
-|---|---|---|---|---|
-| 1 | 4 + 0,45 × INT | 8 s | — | 32/s, 255 no total |
-| 2 | 4,8 + 0,54 × INT | 8 s | — | 38/s, 306 |
-| 3 | 5,6 + 0,63 × INT | **10 s** | — | 45/s, 447 |
-| 4 | 6,4 + 0,72 × INT | 10 s | — | 51/s, 510 |
-| 5 | 7,2 + 0,81 × INT | 10 s | também vai para o **aliado mais ferido** perto do alvo | 57/s, 574 |
+**Saiu o Renovar** (cura ao longo do tempo num aliado) para a Graça Veloz caber nas 4 habilidades normais: ele repetia a Oração Restauradora, que já cura ao longo do tempo, e a Cura Direta da base.
 
 #### Santuário (assinatura, nível 35) — ninguém cai
 
@@ -678,9 +680,9 @@ Custo 80, recarga 90 s, só no Inquisidor. Pela duração, o Golpe Sagrado acert
 | Habilidade | Já existe no Core | Novo |
 |---|---|---|
 | Oração Restauradora | estado em aliados no raio | **estado que cura por segundo** (hoje o periódico só causa dano; a verificar) |
-| Bênção | estado em aliados no raio, velocidade de movimento | **atributos vindos de um estado** (hoje só o equipamento soma atributos) |
+| Bênção | estado em aliados no raio | **atributos vindos de um estado** (hoje só o equipamento soma atributos) |
+| Graça Veloz | estado em aliados no raio, velocidade, tirar estados, imunidade por etiqueta | — |
 | Elo da Vida | — | **desviar dano** (o mesmo do Guardião) |
-| Renovar | — | estado que cura por segundo (o mesmo da Oração) |
 | Santuário | estado em aliados no raio | **vida mínima de 1** |
 | Martelo da Justiça | dano, atordoamento | — |
 | Consagração | área no chão | área que **também cura** aliados |
@@ -696,7 +698,7 @@ São **40 habilidades novas** (5 por segunda classe), cada uma com dados, regras
 |---|---|
 | Desviar dano de um aliado | Guardião (Interceptação, Juramento), Sacerdote (Elo da Vida) |
 | Vida pelo dano causado | Berserker (Sede de Sangue), Inquisidor (Selo da Luz, Julgamento, Ira Divina) |
-| Estado que cura por segundo | Sacerdote (Oração Restauradora, Renovar) |
+| Estado que cura por segundo | Sacerdote (Oração Restauradora) |
 | Atributos vindos de um estado | Sacerdote (Bênção) |
 | Dano que depende de um estado ou da vida do alvo | Berserker (Execução), Piromante (Combustão), Caçador (Ferida Aberta) |
 | Copiar ou espalhar estados | Caçador (Flecha Dispersa, Praga), Piromante (Combustão NH5) |
@@ -713,7 +715,7 @@ São **40 habilidades novas** (5 por segunda classe), cada uma com dados, regras
 O designer aprovou o Guardião e o Berserker em 2026-11-20 (seção 5).
 
 1. **Atirador de Elite, Caçador, Piromante, Arcanista, Sacerdote e Inquisidor** como detalhados nas seções 6 a 8.
-2. **Bênção** como área de velocidade e atributos (seção 8), e as outras habilidades do Sacerdote: o designer vai sugerir mais.
+2. **Sacerdote:** a Graça Veloz entra no lugar do Renovar (seção 8)? O designer vai sugerir mais habilidades.
 3. **+5 de atributo ao virar segunda classe**, para fechar 200 no nível 40?
 4. **Conteúdo do 16 ao 20:** área nova no primeiro mapa, ou redistribuir os níveis do mapa atual?
 5. **XP por hora** como meta de cada área (o simulador mede).
