@@ -14,7 +14,8 @@ Os números são ponto de partida para o simulador, como em `design/progression-
 | Pontos de habilidade | **40** no nível 40 (1 por nível, como hoje) |
 | Pontos de atributo | **200** no nível 40 |
 | Barra | uma tecla por habilidade: **10 teclas** (1–5 da base, 6–0 da segunda classe), mais ataque básico e poção |
-| Passivas | **algumas habilidades viram passivas**, sem que toda classe precise ter: **Sede de Sangue** (Berserker) e **Mira Firme** (Atirador de Elite) (seção 4.1) |
+| Passivas | **algumas habilidades viram passivas**, sem que toda classe precise ter: **Sede de Sangue** (Berserker) e **Mira Firme** (Atirador de Elite), esta pela distância do alvo, sem ficar parado (seção 4.1) |
+| Bênção (Sacerdote) | **velocidade de movimento e atributos para todos perto do Sacerdote** (seção 8) |
 | Curva de XP | a dificuldade continua crescendo como hoje, com **monstros mais fortes que dão mais XP** (seção 3) |
 | Guerreiro | Guardião e Berserker |
 | Arqueiro | Atirador de Elite (alvo único) e Caçador |
@@ -560,17 +561,19 @@ Custo 45, recarga 12 s, raio 6 em volta do Sacerdote. Cura por segundo todos os 
 | 4 | 6,4 + 0,64 × INT | 10 s | — | 46/s, 461 |
 | 5 | 7,2 + 0,72 × INT | 10 s | raio **8** | 52/s, 518 |
 
-#### Bênção — reforço num aliado
+#### Bênção — velocidade e atributos para todos por perto
 
-Custo 20, recarga 15 s, alcance 8, duração 20 s. O aliado causa mais dano e recebe menos dano.
+Pedido do designer (2026-11-20). Custo 40, recarga 30 s, raio 6 em volta do Sacerdote. Todos os aliados no raio ao lançar (com ele) ganham **velocidade de movimento** e **pontos em todos os atributos** (FOR, DES, AGI, INT e VIT) pela duração. O bônus de atributo escala com a INT do Sacerdote.
 
-| NH | Dano causado | Dano recebido | Alvos |
-|---|---|---|---|
-| 1 | +8% | −8% | 1 |
-| 2 | +10% | −10% | 1 |
-| 3 | +10% | −10% | **2** (o alvo e o aliado mais próximo dele) |
-| 4 | +12% | −12% | 2 |
-| 5 | **+15%** | **−15%** | 2 |
+| NH | Atributos (cada um) | Velocidade | Duração | Outros efeitos | Perfil nível 21 |
+|---|---|---|---|---|---|
+| 1 | +(2 + 0,08 × INT) | +10% | 15 s | — | +7 em cada atributo |
+| 2 | +(2,4 + 0,096 × INT) | +10% | 15 s | — | +8 |
+| 3 | +(2,8 + 0,112 × INT) | **+15%** | **20 s** | — | +10 |
+| 4 | +(3,2 + 0,128 × INT) | +15% | 20 s | — | +11 |
+| 5 | +(3,6 + 0,144 × INT) | **+20%** | 20 s | raio **8** | +13 |
+
+Para ter ideia do tamanho: +7 em cada atributo são 35 pontos, o que um personagem ganha em 7 níveis. Num Guerreiro de nível 21, +7 de FOR e de VIT dão +31 no Golpe Pesado (NH5) e +70 de vida. A Bênção fica ligada metade do tempo no NH1 e dois terços a partir do NH3; a velocidade também ajuda o grupo a atravessar o mapa.
 
 #### Elo da Vida — dois aliados dividem o dano
 
@@ -675,7 +678,7 @@ Custo 80, recarga 90 s, só no Inquisidor. Pela duração, o Golpe Sagrado acert
 | Habilidade | Já existe no Core | Novo |
 |---|---|---|
 | Oração Restauradora | estado em aliados no raio | **estado que cura por segundo** (hoje o periódico só causa dano; a verificar) |
-| Bênção | estado com mais dano causado e menos recebido | — |
+| Bênção | estado em aliados no raio, velocidade de movimento | **atributos vindos de um estado** (hoje só o equipamento soma atributos) |
 | Elo da Vida | — | **desviar dano** (o mesmo do Guardião) |
 | Renovar | — | estado que cura por segundo (o mesmo da Oração) |
 | Santuário | estado em aliados no raio | **vida mínima de 1** |
@@ -694,6 +697,7 @@ São **40 habilidades novas** (5 por segunda classe), cada uma com dados, regras
 | Desviar dano de um aliado | Guardião (Interceptação, Juramento), Sacerdote (Elo da Vida) |
 | Vida pelo dano causado | Berserker (Sede de Sangue), Inquisidor (Selo da Luz, Julgamento, Ira Divina) |
 | Estado que cura por segundo | Sacerdote (Oração Restauradora, Renovar) |
+| Atributos vindos de um estado | Sacerdote (Bênção) |
 | Dano que depende de um estado ou da vida do alvo | Berserker (Execução), Piromante (Combustão), Caçador (Ferida Aberta) |
 | Copiar ou espalhar estados | Caçador (Flecha Dispersa, Praga), Piromante (Combustão NH5) |
 | Crítico, alcance e armadura como números de reforço | Atirador de Elite (Mira Firme, Tiro Certeiro, Olho de Falcão) |
@@ -709,7 +713,7 @@ São **40 habilidades novas** (5 por segunda classe), cada uma com dados, regras
 O designer aprovou o Guardião e o Berserker em 2026-11-20 (seção 5).
 
 1. **Atirador de Elite, Caçador, Piromante, Arcanista, Sacerdote e Inquisidor** como detalhados nas seções 6 a 8.
-2. **Mira Firme passiva** pela distância (seção 6), no lugar da versão que pedia ficar parado?
+2. **Bênção** como área de velocidade e atributos (seção 8), e as outras habilidades do Sacerdote: o designer vai sugerir mais.
 3. **+5 de atributo ao virar segunda classe**, para fechar 200 no nível 40?
 4. **Conteúdo do 16 ao 20:** área nova no primeiro mapa, ou redistribuir os níveis do mapa atual?
 5. **XP por hora** como meta de cada área (o simulador mede).
