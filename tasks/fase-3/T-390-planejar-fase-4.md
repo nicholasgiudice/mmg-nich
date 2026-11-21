@@ -50,4 +50,25 @@ O playtest da fase 3 foi aprovado (`tasks/reports/playtest-v0.3.md`). Depois del
 
 ## Resultado
 
-_(preencher ao concluir)_
+Concluída em 2026-11-21, feita no Windows (só documentos), a pedido do designer. **13 tarefas** em `tasks/fase-4/` (T-401 a T-413) e índice, decisões, ondas, cuidados de integração e grafo na seção 6f de `tasks/README.md`.
+
+**Blocos**
+- **Base:** regras do nível 40 nos dados (T-401); simulador até o 40, revisão das metas e reativação dos 19 casos de `PlaytestRebalance.Pending` (T-402).
+- **Sistema de segunda classe:** Core com escolha definitiva e passivas (T-403); servidor, protocolo e gravação (T-404); ferramenta de teste no servidor (T-405).
+- **Guerreiro:** mecânicas do Guardião (T-406) e do Berserker (T-407); dados das 10 habilidades (T-408).
+- **Cliente:** barra de 10 teclas (T-409), escolha e tela de habilidades (T-410), botão de teste no Esc (T-411), ícones e efeitos (T-412).
+- **Fechamento:** playtest do Guerreiro (T-413).
+
+**Decisões**
+- A escolha da segunda classe é feita pela tela de habilidades, fora de combate. O "mestre da classe na Cidade" do design fica para quando os mapas forem refeitos (a T-403 registra no design).
+- A segunda classe vai no documento de progressão do personagem (jsonb, com versão): **sem migração de banco**.
+- As mecânicas novas são tarefas próprias, antes dos dados, porque também servem às classes seguintes.
+- A ferramenta de teste fica desligada por padrão (`--dev-tools`, `GAME_DEV_TOOLS`), e o critério de aceite da T-405 verifica a recusa sem ela.
+- **Protocolo:** T-404 e T-405 sobem `ProtocolVersion`; integrar T-404, T-405 e T-411 juntas, com `deploy-dev.sh` e cliente novo na mesma rodada.
+
+**Desvios**
+- Feita no Windows, e não na VPS, por pedido do designer. Não mexeu em código.
+- As outras três classes (Arqueiro, Mago, Clérigo) ficaram como esboço na seção 7, como o requisito 3 pede: dependem do playtest do Guerreiro e da aprovação de cinco segundas classes.
+
+**Pendências**
+- Aprovação do designer do Atirador de Elite (além da Mira Firme), do Caçador (além da Flecha Envenenada), do Piromante, do Arcanista e do Inquisidor, antes de detalhar as outras classes.
