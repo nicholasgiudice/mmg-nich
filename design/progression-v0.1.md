@@ -86,7 +86,7 @@ Cinco atributos. **Todos os pontos ganhos por nível são livres** (5 por nível
 |---|---|
 | **Força (FOR)** | **dano corpo a corpo**: escala as habilidades físicas de perto (Guerreiro, ataque do Clérigo) |
 | **Destreza (DES)** | **dano à distância**: escala as habilidades físicas à distância (Arqueiro) e o bônus da Marca do Caçador |
-| **Agilidade (AGI)** | **velocidade de ataque e crítico, para todas as classes**: recarga do ataque básico ÷ (1 + AGI × 0,005), máx. +50%; crítico +0,25% por ponto (base 5%, máx. 40%). Não aumenta o dano de cada golpe. |
+| **Agilidade (AGI)** | **velocidade de ataque e crítico, para todas as classes**: recarga do ataque básico ÷ (1 + AGI × 0,005), máx. +60% (era +50% até a T-402); crítico +0,25% por ponto (base 5%, máx. 40%). Não aumenta o dano de cada golpe. |
 | **Inteligência (INT)** | **magia, cura e Mana**: escala magias arcanas e elementais (Mago), cura, escudos e dano sagrado (Clérigo); +2 de Mana máxima e +0,1 Mana/s por ponto |
 | **Vitalidade (VIT)** | +10 de vida máxima por ponto |
 
@@ -123,7 +123,7 @@ Como a distribuição é livre, a interface mostra o **atributo sugerido** da cl
   - Redução = `D / (D + 40 + 8 × nível do atacante)`, máximo 60%.
   - Exemplo: armadura 60 contra atacante nível 10 → 60 / (60 + 120) = 33% de redução.
 - **Crítico**: chance 5% + AGI × 0,25% (máx. 40%), dano ou cura × 1,5. Vale para dano e cura, em todas as classes.
-- **Velocidade de ataque**: recarga do ataque básico ÷ (1 + AGI × 0,005), máx. +50% (AGI 100). Só o ataque básico; habilidades mantêm a recarga.
+- **Velocidade de ataque**: recarga do ataque básico ÷ (1 + AGI × 0,005), máx. +60% (AGI 120; era +50% com AGI 100 até a T-402, `balance-v0.18.md` §3). Só o ataque básico; habilidades mantêm a recarga.
 
 ## 5. Fórmula das habilidades
 
@@ -274,19 +274,42 @@ Arma rara de dano 18, 50 pontos no atributo de dano e 20 em AGI (FOR/DES 62, AGI
 
 ## 8. Metas para o simulador e testes de design
 
-Perfis de teste: personagem no **nível esperado** da área, pontos no **atributo sugerido** da classe e equipamento **comum** do nível da área ("perfil esperado"); e o mesmo personagem **3 níveis abaixo** ("perfil fraco").
+Perfis de teste: personagem no **nível esperado** da área, pontos no **atributo sugerido** da classe e equipamento **comum** do nível da área ("perfil esperado"); e o mesmo personagem **3 níveis abaixo** ("perfil fraco"). Desde a T-402 os perfis vão do nível 1 ao 40 (`tests/Game.Sim`, `--level-curve`).
+
+**Revisão de 2026-11-21 (T-402, `tasks/reports/balance-v0.18.md` §4):** o balanceamento do playtest de 2026-11-16 (mais Mana por INT, Explosão Elemental +50%, poções mais rápidas e curando com a VIT) deixou o jogo mais fácil, e o designer aprovou o jogo assim. As metas abaixo foram revistas para esse jogo; entre parênteses, a meta anterior.
 
 | Situação | Meta |
 |---|---|
 | Encontro solo da área, perfil esperado, estratégia correta | vitória ≥ 85%, duração 15–40 s |
-| Encontro solo da área, perfil fraco | vitória ≤ 50% |
-| Matriarca (nível 8), grupo de 4 no nível 7–8 com incomuns | vitória 60–90%, duração 2–4 min |
-| Vigia Sem Rosto (nível 15), grupo de 4 no nível 14–15 com raros | vitória 50–80%, duração 4–6 min |
+| Encontro solo da área, perfil fraco | vitória ≤ 50% **ou**, se vence, leva pelo menos **1,25×** o tempo do perfil esperado (era: vitória ≤ 50%; a regra do tempo valia só para o Clérigo, com 1,3×) |
+| Matriarca (nível 8), grupo de 4 no nível 7–8 com incomuns | vitória **60–97%** (60–90%), duração 2–4 min |
+| Cavaleiro Espectral (nível 11), grupo de 3 no nível 10–11 com incomuns | vitória média **85–99%** (70–90%), 60–120 s |
+| Vigia Sem Rosto (nível 15), grupo de 4 no nível 14–15 com raros | vitória média **80–99%**, cada nível ≥ 70% (50–80%, cada nível 40–90%), duração 4–6 min |
+| Ida completa à Cripta (grupos da rota + Vigia) | **20–40 min** (25–40 min) |
 | Mesma classe, pontos todos no atributo sugerido × espalhados | o sugerido vence mais rápido, mas o espalhado ainda vence ≥ 60% no perfil esperado |
 | Distribuição de pontos de habilidade (perfil esperado, mesma classe) | duas habilidades no NH5 × pontos espalhados: as duas vencem ≥ 70%; nenhuma distribuição é a única que vence |
-| Diferença entre classes (solo, perfil esperado) | nenhuma classe mais de 1,6× mais lenta que a média (Clérigo pode ser a mais lenta, como hoje) |
+| Diferença entre classes (solo, perfil esperado) | nenhuma classe mais de 1,6× mais lenta que a média; o Clérigo, a mais lenta pelo design, até **1,8×** (1,7×) |
+| Mago só com a Explosão Elemental (4 Ratos) | vence no máximo metade **ou não é mais de 10% mais rápido** que a rotação (ou é mais lento que a rotação); e fica sem Mana na maioria das lutas |
+| Poção de Mana no perfil fraco (Mago e Clérigo solo) | o fraco com 1 poção por luta vence no máximo 50% **ou a poção acrescenta no máximo 15 pontos** à vitória dele sem poção (vitória ≤ 50%) |
+| Do nível 15 ao 40 (perfil esperado, solo, monstro normal do próprio nível, sem assinatura) | tempo para matar **não cresce mais de 20%** do nível 15 ao 40 em nenhuma classe (a escala dos monstros acompanha a do personagem; medido: de −28% a +11%); nenhuma classe mais de 1,6× mais lenta que a média, Clérigo até 1,8× (medido no 40: Clérigo 1,64× contra o Guarda e **1,92× contra o Lobo**, a rever com as segundas classes do Clérigo) |
+
+Saiu na T-402: "pelo menos três encontros do protótipo com uma estratégia relevante entre 5% e 95%" (T-018). Os encontros do protótipo ficaram em 96–100%; resultados não binários continuam cobertos pelo Pátio dos Mortos solo (média 40–70%), pela Matriarca sem Clérigo (5–60%) e pelo perfil fraco.
 
 Os testes de design atuais passam a rodar com o "perfil esperado nível 1" — que reproduz o protótipo pela regra de calibração da §1.
+
+### Metas da segunda classe (T-402, para a T-408)
+
+Perfil esperado com segunda classe: o do nível, com os +5 pontos de atributo da segunda classe nos atributos sugeridos e os pontos de habilidade do 21 em diante divididos como no perfil focado — primeiro o que falta da base, depois cada normal da segunda classe no NH1 e as duas principais dela alternando, e a assinatura quando o nível deixa. Comparação "só a base": o mesmo nível e equipamento, sem segunda classe (pontos que sobram ficam sem uso). Testes nos níveis **25, 30 e 40**, monstros normais do próprio nível.
+
+| Situação | Meta |
+|---|---|
+| Berserker × Guerreiro só com a base, grupo típico (3 monstros normais do nível), solo | o Berserker vence ≥ 85% e em no máximo **85%** do tempo do Guerreiro só com a base |
+| Berserker, mesmo encontro | recebe no máximo **1,5×** o dano do Guerreiro só com a base (a Fúria expõe, a Sede de Sangue devolve), e vence ≥ 85% |
+| Guardião × Guerreiro só com a base, encontro de grupo (grupo de 4 com Clérigo contra um chefe ou elite do nível) | os **outros membros** do grupo recebem pelo menos **15% menos dano** com o Guardião, e a vitória não cai |
+| Guardião, solo | vence ≥ 85% o grupo típico; pode ser mais lento que o Guerreiro só com a base |
+| Diferença entre segundas classes (solo, perfil esperado, grupo típico) | nenhuma segunda classe mais de **1,6×** mais lenta que a média das outras (as classes base no mesmo nível entram na média enquanto houver só as do Guerreiro) |
+| Nível 21 (NH1 da segunda classe) | escolher a segunda classe não deixa o personagem mais lento que só a base: o NH1 já é útil (`design/segunda-classe-v0.1.md` §2) |
+| Distribuição de pontos (base × segunda classe) | pôr os pontos do 21 em diante só na base (as 3 NH que faltam) ou na segunda classe: as duas vencem ≥ 70%; nenhuma é a única que vence |
 
 ## 9. Implementação (fase 2, ordem sugerida)
 

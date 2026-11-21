@@ -15,7 +15,7 @@
       "critMax": 0.4,
       "critMultiplier": 1.5,
       "attackSpeedPerAgi": 0.005,
-      "attackSpeedMax": 0.5,
+      "attackSpeedMax": 0.6,
       "defenseBase": 40,
       "defensePerAttackerLevel": 8,
       "defenseMax": 0.6

@@ -27,9 +27,12 @@ dotnet run --project tests/Game.Sim -- --encounter encounter.four_rats --rank cl
 # T-206: perfil de personagem por nível contra monstros do nível da área (rules.monsters)
 dotnet run --project tests/Game.Sim -- --encounter encounter.four_rats --level 9 --monster-level 9
 dotnet run --project tests/Game.Sim -- --encounter encounter.forest_matriarch --strategy kite+dodge --level 8 --gear incomum --monster-level 8
+
+# T-402: curva do nível 1 ao máximo (perfil esperado de cada classe, tetos, tempo para matar um monstro do próprio nível)
+dotnet run --project tests/Game.Sim -- --level-curve --runs 50
 ```
 
-Opções: `--data <dir>`, `--encounter <ids|all>`, `--strategy <a,b>`, `--role <classe>=<estratégia>` (repetível, `*` = todas), `--opt <chave>=<valor>` (repetível), `--ranks <nh1|focado|espalhado>`, `--rank <classe>:<habilidade>=<NH>` (repetível, por cima do perfil), perfil de personagem (T-206, ignora `--ranks`): `--level <n>`, `--attrs <sugerido|espalhado>` (espalhado = metade no sugerido, metade nos outros), `--gear <comum|incomum|raro>`, `--gear-level <n>`, `--skills <focado|espalhado>`, `--focus <classe>=<h1>,<h2>`; `--monster-level <n>` (nível de todos os monstros), `--runs`, `--seed` (execução *i* usa seed+*i*), `--jitter <tiles>` (variação das posições iniciais por seed; padrão 0,5), `--max-seconds` (usado se o encontro não tiver `defeat.timeLimit`), `--parallel`, `--out <arquivo.json>`, `--per-run`, `--list`. Código de saída 2 em erro de uso ou de dados.
+Opções: `--data <dir>`, `--encounter <ids|all>`, `--strategy <a,b>`, `--role <classe>=<estratégia>` (repetível, `*` = todas), `--opt <chave>=<valor>` (repetível), `--ranks <nh1|focado|espalhado>`, `--rank <classe>:<habilidade>=<NH>` (repetível, por cima do perfil), perfil de personagem (T-206, ignora `--ranks`): `--level <n>`, `--attrs <sugerido|espalhado>` (espalhado = metade no sugerido, metade nos outros), `--gear <comum|incomum|raro>`, `--gear-level <n>`, `--skills <focado|espalhado>`, `--focus <classe>=<h1>,<h2>`; `--monster-level <n>` (nível de todos os monstros), `--runs`, `--seed` (execução *i* usa seed+*i*), `--jitter <tiles>` (variação das posições iniciais por seed; padrão 0,5), `--max-seconds` (usado se o encontro não tiver `defeat.timeLimit`), `--parallel`, `--out <arquivo.json>`, `--per-run`, `--list`, `--level-curve` (T-402: tabelas em Markdown do `balance-v0.18.md`; usa `--runs` e `--parallel`). Código de saída 2 em erro de uso ou de dados.
 
 ## Estratégias (`src/Game.Bots`)
 

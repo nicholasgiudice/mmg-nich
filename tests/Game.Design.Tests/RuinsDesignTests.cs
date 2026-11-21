@@ -68,7 +68,7 @@ public class RuinsDesignTests(ITestOutputHelper output)
     /// Solo é possível, mas arriscado: a média das 4 classes sozinhas (perfil esperado, foco no mais próximo) fica entre 40% e
     /// 70%, e pelo menos uma classe vence a maior parte das vezes.
     /// </summary>
-    [Fact(Skip = PlaytestRebalance.Pending)]
+    [Fact]
     public void Solo_against_the_dead_courtyard_is_possible_but_risky()
     {
         var solos = AllClasses.Select(c => Group(Courtyard, CharacterProfile.Expected(CourtyardLevel), focusPriest: false, c)).ToList();
@@ -105,11 +105,12 @@ public class RuinsDesignTests(ITestOutputHelper output)
     // ---------- Cavaleiro Espectral ----------
 
     /// <summary>
-    /// Grupo de 3 nos níveis 10 e 11 com equipamento incomum: a vitória média (dois grupos × dois níveis) fica entre 70% e 90%,
-    /// e cada lote, quando vence, leva de 60 a 120 s.
+    /// Grupo de 3 nos níveis 10 e 11 com equipamento incomum: a vitória média (dois grupos × dois níveis) fica entre 85% e 99%,
+    /// e cada lote, quando vence, leva de 60 a 120 s. Era 70–90% até o balanceamento do playtest de 2026-11-16, que levou a
+    /// média a 98% (balance-v0.18 §4).
     /// </summary>
-    [Fact(Skip = PlaytestRebalance.Pending)]
-    public void A_group_of_three_beats_the_spectral_knight_70_to_90_percent_in_60_to_120_seconds()
+    [Fact]
+    public void A_group_of_three_beats_the_spectral_knight_85_to_99_percent_in_60_to_120_seconds()
     {
         var batches = new List<BatchSummary>();
         foreach (var level in new[] { 10, 11 })
@@ -123,7 +124,7 @@ public class RuinsDesignTests(ITestOutputHelper output)
 
         var report = string.Join("; ", batches.Select(Fmt));
         output.WriteLine(report);
-        Assert.InRange(batches.Average(s => s.WinRate), 0.70, 0.90);
+        Assert.InRange(batches.Average(s => s.WinRate), 0.85, 0.99);
         Assert.All(batches, s => Assert.True(s.WinRate == 0 || s.TimeToWinMean is >= 60 and <= 120, report));
     }
 
