@@ -17,8 +17,14 @@ public enum ProgressionRejectReason
     MaxRank,
     LevelTooLow,
 
-    /// <summary>Redistribuição só fora de combate.</summary>
+    /// <summary>Redistribuição (e escolha da segunda classe, T-403) só fora de combate e sem conjurar.</summary>
     InCombat,
+
+    /// <summary>T-403: a segunda classe já foi escolhida (a escolha é definitiva).</summary>
+    SecondClassAlreadyChosen,
+
+    /// <summary>T-403: o id não é de uma segunda classe da classe base do personagem.</summary>
+    NotASecondClass,
 }
 
 /// <summary>Ação de pontos rejeitada. <paramref name="Id"/> = habilidade ou atributo pedido ("" na redistribuição).</summary>
@@ -35,6 +41,12 @@ public sealed record AttributeRaised(EntityId Entity, AttributeKind Attribute, i
 
 /// <summary>NH da habilidade subiu para <paramref name="Rank"/> (1 = aprendeu).</summary>
 public sealed record SkillRankRaised(EntityId Entity, string AbilityId, int Rank) : GameEvent;
+
+/// <summary>
+/// T-403: segunda classe escolhida (definitiva). <paramref name="AttributePoints"/> = pontos de atributo livres depois do
+/// bônus da escolha.
+/// </summary>
+public sealed record SecondClassChosen(EntityId Entity, string SecondClassId, int AttributePoints) : GameEvent;
 
 /// <summary>Todos os pontos devolvidos (redistribuição).</summary>
 public sealed record PointsReset(EntityId Entity, int AttributePoints, int SkillPoints) : GameEvent;

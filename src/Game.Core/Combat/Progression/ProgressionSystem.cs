@@ -47,6 +47,9 @@ public sealed class ProgressionSystem : ISimulationSystem
                 case ResetPointsIntent reset:
                     Handle(world, reset.Entity, "", e => Leveling.ResetPoints(world, e));
                     break;
+                case ChooseSecondClassIntent choose:
+                    Handle(world, choose.Entity, choose.SecondClassId, e => Leveling.ChooseSecondClass(world, e, choose.SecondClassId));
+                    break;
             }
         }
     }
@@ -231,6 +234,8 @@ public static class ProgressionLog
             LogCategory.Progressao,
             e.Rank == 1 ? $"{c.Name(e.Entity)} aprendeu {c.SourceLabel(e.AbilityId)}" : $"{c.Name(e.Entity)}: {c.SourceLabel(e.AbilityId)} NH{e.Rank}",
             e.Entity));
+        f.Register<SecondClassChosen>((c, e) => c.Entry(
+            e, LogCategory.Progressao, $"{c.Name(e.Entity)} escolheu a segunda classe {c.SourceLabel(e.SecondClassId)}", e.Entity));
         f.Register<PointsReset>((c, e) => c.Entry(e, LogCategory.Progressao, $"{c.Name(e.Entity)} redistribuiu os pontos", e.Entity));
         f.Register<ProgressionRejected>((c, e) => c.Entry(e, LogCategory.Progressao, $"{c.Name(e.Entity)}: {RejectText(e.Reason)}", e.Entity));
         return f;
@@ -252,7 +257,9 @@ public static class ProgressionLog
         ProgressionRejectReason.NoSkillPoints => "sem pontos de habilidade",
         ProgressionRejectReason.NotLearnable => "habilidade não pode receber pontos",
         ProgressionRejectReason.MaxRank => "habilidade já no nível máximo",
-        ProgressionRejectReason.LevelTooLow => "nível insuficiente para o próximo NH",
+        ProgressionRejectReason.LevelTooLow => "nível insuficiente",
+        ProgressionRejectReason.SecondClassAlreadyChosen => "a segunda classe já foi escolhida",
+        ProgressionRejectReason.NotASecondClass => "não é uma segunda classe da sua classe",
         _ => "não dá para redistribuir em combate",
     };
 }

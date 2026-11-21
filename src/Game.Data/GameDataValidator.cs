@@ -31,6 +31,7 @@ internal static partial class GameDataValidator
         ValidateShops(c, errors); // T-321
         foreach (var e in c.Arenas) { ValidateArena(e, errors); }
         var abilityDefs = c.Abilities.GroupBy(a => a.Value.Id).ToDictionary(g => g.Key, g => g.First().Value, StringComparer.Ordinal);
+        ValidateSecondClasses(c, abilityDefs, errors); // T-403
         foreach (var e in c.Encounters)
         {
             ValidateEncounter(e, classes, monsters, c.Arenas.GroupBy(a => a.Value.Id).ToDictionary(g => g.Key, g => g.First().Value), abilityDefs, errors);
@@ -254,6 +255,89 @@ internal static partial class GameDataValidator
         ValidateEffects(x.Effects, ctx, "effects", refs);
         ValidateRankFields(x.Hits, x.CooldownCharges, ctx);
         ValidateRanks(x, ctx, refs);
+        ValidatePassive(x, ctx, refs);
+    }
+
+    /// <summary>
+    /// T-403: passiva sem custo, recarga, conjuração, alvo (targeting <c>self</c>), telegráfo, efeitos nem acertos, em
+    /// nenhum NH, e com um status permanente que existe. Só passiva tem <c>passiveStatus</c>.
+    /// </summary>
+    private static void ValidatePassive(AbilityDefinition x, Ctx ctx, Refs refs)
+    {
+        if (!x.Passive)
+        {
+            if (x.PassiveStatus is not null) { ctx.Error("passiveStatus", "Só habilidade passiva tem passiveStatus."); }
+            for (var i = 0; i < x.Ranks.Count; i++)
+            {
+                if (x.Ranks[i].PassiveStatus is not null) { ctx.Error($"ranks[{i}].passiveStatus", "Só habilidade passiva tem passiveStatus."); }
+            }
+
+            return;
+        }
+
+        const string Why = "Passiva não tem custo, recarga nem alvo: o efeito vem do status permanente (passiveStatus).";
+        if (x.Cost is not null) { ctx.Error("cost", Why); }
+        if (x.CooldownTicks != 0) { ctx.Error("cooldown", Why); }
+        if (x.CastTimeTicks != 0) { ctx.Error("castTime", Why); }
+        if (x.Targeting is not SelfTargeting) { ctx.Error("targeting", "Passiva usa targeting 'self' (sem alvo)."); }
+        if (x.Telegraph is not null) { ctx.Error("telegraph", Why); }
+        if (x.Effects.Count > 0) { ctx.Error("effects", Why); }
+        if (x.Hits is not null) { ctx.Error("hits", Why); }
+        if (x.CooldownCharges != 1) { ctx.Error("cooldownCharges", Why); }
+        if (x.PassiveStatus is null) { ctx.Error("passiveStatus", "Passiva precisa de passiveStatus."); }
+        else { ctx.Exists("passiveStatus", x.PassiveStatus, refs.Statuses, "status"); }
+
+        for (var i = 0; i < x.Ranks.Count; i++)
+        {
+            var r = x.Ranks[i];
+            var rc = ctx.At($".ranks[{i}]");
+            if (r.Cost is not null) { rc.Error("cost", Why); }
+            if (r.CooldownTicks is { } cd && cd != 0) { rc.Error("cooldown", Why); }
+            if (r.CastTimeTicks is { } cast && cast != 0) { rc.Error("castTime", Why); }
+            if (r.Targeting is { } t && t is not SelfTargeting) { rc.Error("targeting", "Passiva usa targeting 'self' (sem alvo)."); }
+            if (r.Telegraph is not null) { rc.Error("telegraph", Why); }
+            if (r.Effects is { Count: > 0 }) { rc.Error("effects", Why); }
+            if (r.Hits is not null) { rc.Error("hits", Why); }
+            if (r.CooldownCharges is { } ch && ch != 1) { rc.Error("cooldownCharges", Why); }
+            if (r.PassiveStatus is { } status) { rc.Exists("passiveStatus", status, refs.Statuses, "status"); }
+        }
+    }
+
+    /// <summary>
+    /// T-403: segundas classes (<c>classes[].secondClasses</c>): ids válidos e únicos entre todas, nome, habilidades que
+    /// existem, sem repetir, fora da lista da classe base e sem o ataque básico, e no máximo uma assinatura por segunda
+    /// classe.
+    /// </summary>
+    private static void ValidateSecondClasses(RawContent c, Dictionary<string, AbilityDefinition> abilities, List<LoadError> errors)
+    {
+        var seen = new Dictionary<string, string>(StringComparer.Ordinal);
+        foreach (var e in c.Classes)
+        {
+            var cls = e.Value;
+            for (var i = 0; i < cls.SecondClasses.Count; i++)
+            {
+                var x = cls.SecondClasses[i];
+                var ctx = new Ctx(e.File, $"{e.Path}.secondClasses[{i}]", errors);
+                if (!IdPattern().IsMatch(x.Id)) { ctx.Error("id", $"Id '{x.Id}' inválido: use snake_case com namespace por ponto (ex.: second_class.guardian)."); }
+                if (seen.TryGetValue(x.Id, out var first)) { ctx.Error("id", $"Id de segunda classe duplicado '{x.Id}' (primeira em {first})."); }
+                else { seen[x.Id] = cls.Id; }
+
+                if (string.IsNullOrWhiteSpace(x.Name)) { ctx.Error("name", "Nome obrigatório."); }
+                var signatures = 0;
+                var ids = new HashSet<string>(StringComparer.Ordinal);
+                for (var j = 0; j < x.Abilities.Count; j++)
+                {
+                    var id = x.Abilities[j];
+                    var field = $"abilities[{j}]";
+                    if (!ids.Add(id)) { ctx.Error(field, $"Habilidade repetida: '{id}'."); }
+                    if (id == cls.BasicAttack || cls.Abilities.Contains(id)) { ctx.Error(field, $"'{id}' já é da classe base '{cls.Id}'."); }
+                    if (!abilities.TryGetValue(id, out var ability)) { ctx.Error(field, $"Referência inexistente: habilidade '{id}'."); }
+                    else if (ability.Signature) { signatures++; }
+                }
+
+                if (signatures > 1) { ctx.Error("abilities", $"{signatures} assinaturas; a segunda classe tem no máximo uma."); }
+            }
+        }
     }
 
     /// <summary>T-060: níveis de habilidade em sequência (2, 3, ...), até 5 (3 na assinatura); cada nível validado como a base.</summary>

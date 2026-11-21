@@ -79,7 +79,7 @@ Base: os ~775 monstros até o 15 levam de 8 a 9 horas. Um nível alto leva de 2 
 
 ## 4. Como a segunda classe funciona
 
-- **Quando:** no nível 20, falando com um mestre da classe na Cidade.
+- **Quando:** no nível 20, falando com um mestre da classe na Cidade. **Decisão da fase 4 (T-403, 2026-11-21):** por enquanto a escolha é feita pela tela de habilidades (T-410), em qualquer lugar fora de combate; o mestre da classe na Cidade fica para quando os mapas forem refeitos.
 - **Escolha definitiva:** não dá para trocar. A tela de escolha mostra as duas opções com as habilidades e pede confirmação.
 - **Pontos:** a partir do 21, os pontos podem ir para qualquer habilidade, da base ou da segunda classe.
 - **Barra:** 10 teclas. As teclas 6–0 aparecem vazias até a segunda classe.

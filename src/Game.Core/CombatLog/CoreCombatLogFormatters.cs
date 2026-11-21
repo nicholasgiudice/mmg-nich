@@ -105,7 +105,9 @@ public static class CoreCombatLogFormatters
         {
             var status = c.SourceLabel(e.StatusId);
             var stacks = e.Stacks > 1 ? $", {e.Stacks} acúmulos" : "";
-            var duration = $"({CombatLogContext.Seconds(e.ExpiresAtTick - e.Tick)} s{stacks})";
+            var duration = e.ExpiresAtTick == StatusManager.PermanentTick
+                ? $"(permanente{stacks})" // T-403: passivas
+                : $"({CombatLogContext.Seconds(e.ExpiresAtTick - e.Tick)} s{stacks})";
             var text = e.Source.IsNone || e.Source == e.Target
                 ? $"{c.Name(e.Target)} recebeu {status} {duration}"
                 : $"{c.Name(e.Source)} aplicou {status} em {c.Name(e.Target)} {duration}";

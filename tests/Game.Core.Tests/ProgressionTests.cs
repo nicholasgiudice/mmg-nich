@@ -574,7 +574,7 @@ public class ProgressionTests
         public static readonly BuildComparer Instance = new();
 
         public bool Equals(CharacterBuild? x, CharacterBuild? y) =>
-            x is not null && y is not null && x.Level == y.Level && x.Experience == y.Experience && x.Allocated == y.Allocated
+            x is not null && y is not null && x.Level == y.Level && x.Experience == y.Experience && x.Allocated == y.Allocated && x.SecondClass == y.SecondClass
             && x.SkillRanks.Where(kv => kv.Value > 0).OrderBy(kv => kv.Key).SequenceEqual(y.SkillRanks.Where(kv => kv.Value > 0).OrderBy(kv => kv.Key));
 
         public int GetHashCode(CharacterBuild? obj) => 0;

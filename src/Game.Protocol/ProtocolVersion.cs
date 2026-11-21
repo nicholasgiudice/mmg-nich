@@ -42,6 +42,7 @@ public static class ProtocolVersion
     /// participantes (<c>FreeAtTick</c>).
     /// 15 (T-395): mensagens <c>LogoutRequest</c>, <c>LogoutCancel</c> e <c>LogoutStatus</c> (sair do mundo para trocar de
     /// personagem, com espera em combate).
+    /// 16 (T-403): evento <c>SecondClassChosen</c> (segunda classe escolhida).
     /// </summary>
-    public const int Current = 15;
+    public const int Current = 16;
 }
