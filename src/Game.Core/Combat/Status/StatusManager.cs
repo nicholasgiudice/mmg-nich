@@ -67,6 +67,9 @@ public static class StatusManager
         return Vector2.Normalize(away);
     }
 
+    /// <summary>Tem status com a marca <c>knockbackImmune</c> (T-406, Bastião NH5): empurrão de inimigo não o move.</summary>
+    public static bool IsKnockbackImmune(World world, Entity e) => Active(world, e).Any(s => Def(world, s).Flags.KnockbackImmune);
+
     /// <summary>Tem status com a marca <c>untargetable</c> (T-340): ninguém além dele mesmo o alcança com habilidades.</summary>
     public static bool IsUntargetable(World world, Entity e) => Active(world, e).Any(s => Def(world, s).Flags.Untargetable);
 
@@ -104,7 +107,13 @@ public static class StatusManager
     /// <paramref name="durationTicks"/> null = duração padrão da definição. Controle (tag "control") passa pelas regras de rank e retorno decrescente.
     /// </summary>
     /// <param name="origin">Ponto de origem (T-351, medo); null = a posição da fonte.</param>
-    public static StatusInstance? Apply(World world, Entity? source, Entity target, string statusId, int? durationTicks = null, Vector2? origin = null)
+    /// <param name="redirectTo">
+    /// Protetor de um status com <c>redirect</c> (T-406) quando não é a fonte (ex.: Elo da Vida liga o alvo a outro aliado);
+    /// null = quem aplicou.
+    /// </param>
+    public static StatusInstance? Apply(
+        World world, Entity? source, Entity target, string statusId, int? durationTicks = null, Vector2? origin = null,
+        EntityId? redirectTo = null)
     {
         if (!target.IsAlive)
         {
@@ -159,6 +168,7 @@ public static class StatusManager
                 ExpiresAtTick = expires,
                 NextPeriodicTick = def.Periodic.Select(p => world.Tick + p.IntervalTicks).ToArray(),
                 Origin = origin,
+                RedirectTo = redirectTo ?? EntityId.None,
             };
             effects.Active.RemoveAll(s => s.StatusId == statusId); // restos expirados ainda não limpos
             effects.Active.Add(inst);
@@ -170,6 +180,7 @@ public static class StatusManager
             inst.ExpiresAtTick = IsPermanent(inst) ? PermanentTick : expires; // T-403: aplicar de novo não tira a permanência
             inst.DamageTaken = 0;
             inst.Origin = origin;
+            inst.RedirectTo = redirectTo ?? EntityId.None;
             if (def.Stacking == StackingMode.Stack && inst.Stacks < def.MaxStacks)
             {
                 inst.Stacks++;

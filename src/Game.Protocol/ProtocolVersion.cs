@@ -43,6 +43,9 @@ public static class ProtocolVersion
     /// 15 (T-395): mensagens <c>LogoutRequest</c>, <c>LogoutCancel</c> e <c>LogoutStatus</c> (sair do mundo para trocar de
     /// personagem, com espera em combate).
     /// 16 (T-403): evento <c>SecondClassChosen</c> (segunda classe escolhida).
+    /// 17 (T-406): evento <c>DamageRedirected</c> (dano desviado para um protetor) e o status ativo leva quem recebe o
+    /// desvio (<c>RedirectTo</c>). A T-403 e a T-406 subiram para 16 em paralelo; na integração (T-408) ficou 16 para a
+    /// T-403 e 17 para a T-406.
     /// </summary>
-    public const int Current = 16;
+    public const int Current = 17;
 }

@@ -536,7 +536,12 @@
       "oneOf": [
         { "type": "object", "additionalProperties": false, "required": ["type", "base"],
           "properties": { "target": { "$ref": "#/$defs/effectTarget" }, "onHit": { "$ref": "#/$defs/onHit" }, "type": { "const": "damage" }, "base": { "type": "number", "minimum": 0 }, "scaling": { "$ref": "#/$defs/scaling" }, "school": { "$ref": "#/$defs/school" },
-            "bonusVsTags": { "type": "object", "additionalProperties": { "type": "number", "exclusiveMinimum": -1 }, "description": "{ \"undead\": 0.5 } = +50% contra alvos com a tag; somam." } } },
+            "bonusVsTags": { "type": "object", "additionalProperties": { "type": "number", "exclusiveMinimum": -1 }, "description": "{ \"undead\": 0.5 } = +50% contra alvos com a tag; somam." },
+            "threatMultiplier": { "type": "number", "minimum": 0, "description": "T-406: ameaça = este número × dano causado, no lugar de rules.threat.damageMultiplier." },
+            "lowHealthBonus": { "type": "object", "additionalProperties": false, "required": ["belowHealth", "bonus"],
+              "description": "T-407: alvo abaixo de belowHealth da vida máxima no acerto leva o dano × (1 + bonus).",
+              "properties": { "belowHealth": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 }, "bonus": { "type": "number", "exclusiveMinimum": 0 } } },
+            "resetCooldownOnKill": { "type": "boolean", "description": "T-407: se este dano matar o alvo, a recarga da habilidade volta a zero." } } },
         { "type": "object", "additionalProperties": false, "required": ["type", "base"],
           "properties": { "target": { "$ref": "#/$defs/effectTarget" }, "onHit": { "$ref": "#/$defs/onHit" }, "type": { "const": "heal" }, "base": { "type": "number", "minimum": 0 }, "scaling": { "$ref": "#/$defs/scaling" } } },
         { "type": "object", "additionalProperties": false, "required": ["type", "amount", "duration"],
@@ -627,6 +632,30 @@
           "description": "T-341: devolve esta fração do dano direto recebido a quem atacou (sem multiplicadores).",
           "properties": { "fraction": { "type": "number", "minimum": 0, "maximum": 1 } }
         },
+        "redirect": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["fraction", "maxDistance"],
+          "description": "T-406: desvia esta fração do dano recebido para o protetor (quem aplicou o status), que recebe a parte com a defesa dele e reduzida por reduction. Não desvia de novo; protetor morto ou além de maxDistance não recebe nada.",
+          "properties": {
+            "fraction": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 },
+            "reduction": { "type": "number", "minimum": 0, "exclusiveMaximum": 1 },
+            "maxDistance": { "type": "number", "exclusiveMinimum": 0 }
+          }
+        },
+        "lifesteal": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["fraction"],
+          "description": "T-407: quem tem o status cura esta fração (× acúmulos) do dano final que causa; dobra (belowHealthMultiplier) abaixo de belowHealth da vida; matar inimigo cura killHeal da vida máxima. Dano refletido ou desviado não gera vida.",
+          "properties": {
+            "fraction": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 },
+            "belowHealth": { "type": "number", "minimum": 0, "maximum": 1, "description": "0 = nunca." },
+            "belowHealthMultiplier": { "type": "number", "minimum": 1, "description": "Padrão 2 (dobra)." },
+            "killHeal": { "type": "number", "minimum": 0, "maximum": 1 },
+            "ability": { "$ref": "#/$defs/id", "description": "Habilidade a que a cura é atribuída no log (a que deu o status). Padrão: o status." }
+          }
+        },
         "breaks": {
           "type": "object",
           "additionalProperties": false,
@@ -665,7 +694,8 @@
             "rooted": { "type": "boolean" },
             "silenced": { "type": "boolean" },
             "untargetable": { "type": "boolean", "description": "T-340: não pode ser alvo de habilidades de outros (unidade, área, telegráfo)." },
-            "feared": { "type": "boolean", "description": "T-351: medo; não age e foge do ponto de origem, sem controle do jogador." }
+            "feared": { "type": "boolean", "description": "T-351: medo; não age e foge do ponto de origem, sem controle do jogador." },
+            "knockbackImmune": { "type": "boolean", "description": "T-406: empurrão (knockback) de inimigo não move quem tem o status." }
           }
         }
       }
@@ -682,7 +712,8 @@
         "armTime": { "$ref": "#/$defs/seconds", "description": "Segundos até a área ficar armada; antes disso não dispara." },
         "mode": { "enum": ["periodic", "on_enter_once"] },
         "affects": { "$ref": "#/$defs/faction" },
-        "effects": { "$ref": "#/$defs/effects" }
+        "effects": { "$ref": "#/$defs/effects" },
+        "followOwner": { "type": "boolean", "description": "T-407: a área nasce no dono e acompanha a posição dele; acaba se ele morrer." }
       }
     },
     "monster": {

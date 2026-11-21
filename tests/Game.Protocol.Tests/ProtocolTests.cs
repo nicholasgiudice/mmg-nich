@@ -83,7 +83,34 @@ public class ProtocolTests(ITestOutputHelper output)
         Assert.Equal(23, ProtocolSerializer.Serialize(new LogoutRequest())[0]);
         Assert.Equal(24, ProtocolSerializer.Serialize(new LogoutCancel())[0]);
         Assert.Equal(25, ProtocolSerializer.Serialize(new LogoutStatus(LogoutState.Done, 0))[0]);
-        Assert.Equal(16, ProtocolVersion.Current);
+        Assert.True(ProtocolVersion.Current >= 15);
+    }
+
+    [Fact]
+    public void Redirected_damage_and_the_status_link_cross_the_network()
+    {
+        // T-406: evento novo (tag 26) e o protetor do status ativo; versão 17 (16 da T-403 + 17 da T-406).
+        Assert.Equal((ushort)26, EventCodecs.Tags[typeof(Game.Core.Combat.Status.DamageRedirected)]);
+        Assert.Equal(17, ProtocolVersion.Current);
+
+        var status = new Game.Core.Definitions.StatusDefinition
+        {
+            Id = "status.link",
+            Name = "Elo",
+            DefaultDurationTicks = 100,
+            Redirect = new Game.Core.Definitions.RedirectDefinition { Fraction = 0.3, MaxDistance = 6 },
+        };
+        var world = WorldBuilder.CreateDefault(5, null, new ContentCatalog(statuses: [status]));
+        var caster = world.Spawn(new Transform(), new Health(100));
+        var ally = world.Spawn(new Transform(), new Health(100));
+        Game.Core.Combat.Status.StatusManager.Apply(world, caster, ally, status.Id, redirectTo: new EntityId(77));
+
+        var snap = world.Snapshot(SnapshotScope.Replicated);
+        var msg = RoundTrip(SnapshotMessage.From(snap));
+
+        var back = msg.Entities[1].Components.OfType<Game.Core.Combat.Status.StatusEffects>().Single();
+        Assert.Equal(new EntityId(77), back.Active[0].RedirectTo);
+        Assert.Equal(snap.Entities[1].Components.Select(Hash), msg.Entities[1].Components.Select(Hash));
     }
 
     [Fact]

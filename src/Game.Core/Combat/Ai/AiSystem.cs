@@ -56,7 +56,7 @@ public sealed class AiSystem : ISimulationSystem
                 continue;
             }
 
-            ThreatService.Add(world, target, source, d.Amount * rules.DamageMultiplier, AggroReason.Damage);
+            ThreatService.Add(world, target, source, d.Amount * (d.ThreatMultiplier ?? rules.DamageMultiplier), AggroReason.Damage);
         }
 
         foreach (var h in world.Events.Of<HealApplied>())
