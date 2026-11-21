@@ -14,6 +14,7 @@ Os números são ponto de partida para o simulador, como em `design/progression-
 | Pontos de habilidade | **40** no nível 40 (1 por nível, como hoje) |
 | Pontos de atributo | **200** no nível 40 |
 | Barra | uma tecla por habilidade: **10 teclas** (1–5 da base, 6–0 da segunda classe), mais ataque básico e poção |
+| Passivas | **algumas habilidades viram passivas**, sem que toda classe precise ter; a primeira é a **Sede de Sangue** do Berserker (seção 4) |
 | Curva de XP | a dificuldade continua crescendo como hoje, com **monstros mais fortes que dão mais XP** (seção 3) |
 | Guerreiro | Guardião e Berserker |
 | Arqueiro | Atirador de Elite (alvo único) e Caçador |
@@ -79,6 +80,23 @@ Base: os ~775 monstros até o 15 levam de 8 a 9 horas. Um nível alto leva de 2 
 - **Escolha definitiva:** não dá para trocar. A tela de escolha mostra as duas opções com as habilidades e pede confirmação.
 - **Pontos:** a partir do 21, os pontos podem ir para qualquer habilidade, da base ou da segunda classe.
 - **Barra:** 10 teclas. As teclas 6–0 aparecem vazias até a segunda classe.
+- **Passivas** (decisão do designer, 2026-11-20): algumas habilidades podem ser **passivas**, sem que toda classe precise ter uma. A passiva usa pontos e tem NH como as outras, mas não ocupa tecla, não custa Mana e vale sempre. Na tela de habilidades, aparece com uma moldura diferente. Uma classe com passiva usa menos teclas da barra. A primeira é a **Sede de Sangue** do Berserker; as outras candidatas estão na seção 4.1.
+
+### 4.1 Candidatas a passiva
+
+Bom candidato é a habilidade que só reforça o próprio personagem ou o grupo por perto, sem mirar e sem momento certo de usar. Quando vira passiva, o valor cai para a média do tempo em que a versão ativa ficava ligada.
+
+| Classe | Habilidade | Como ficaria passiva | Comentário |
+|---|---|---|---|
+| Berserker | **Sede de Sangue** | 5% a 10% de vida pelo dano, sempre | **decidida** (seção 5) |
+| Guardião | Bastião | aliados a até 5 tiles recebem 5% a 10% menos dano, sempre | aura combina com o papel; perde o momento de usar na hora certa |
+| Atirador de Elite | Mira Firme | parado há 1 s, ganha +2 de alcance e +6% a +12% de crítico | já funcionava como estado, só sem botão |
+| Sacerdote | Bênção | aliados a até 6 tiles causam 4% a 8% mais dano e recebem 4% a 8% menos | hoje é um reforço de 20 s para renovar; como aura, tira trabalho repetitivo |
+| Arcanista | Orbes Arcanos | os orbes giram sempre em combate, com dano menor | possível, mas muito forte; eu deixaria ativa |
+
+**Ficam ativas:** Caçador, Piromante e Inquisidor não têm boa candidata. Todas as habilidades deles miram ou têm momento certo de usar.
+
+**No Core:** a passiva simples é um estado permanente, aplicado quando o jogador põe o primeiro ponto (como o Frenesi dos monstros). As auras (Bastião, Bênção) precisam reaplicar o estado nos aliados por perto o tempo todo: é a mesma peça da "área que acompanha quem anda" da Tempestade de Aço. A Mira Firme precisa saber há quanto tempo o personagem está parado.
 
 ## 5. Guerreiro em detalhe (primeira classe a entregar)
 
@@ -188,19 +206,19 @@ Custo 30, recarga 8 s, arco de 90° e alcance 1,9. Causa dano extra em alvo com 
 | 4 | dano 32 + 2,08 × ARMA + 5,12 × FOR | +75% abaixo de 30% | — | 401 |
 | 5 | dano 36 + 2,34 × ARMA + 5,76 × FOR | +75% abaixo de **35%** | se o golpe **matar**, a recarga zera | 452 |
 
-#### Sede de Sangue — vida pelo dano causado
+#### Sede de Sangue (passiva) — vida pelo dano causado
 
-Custo 25, recarga 18 s, só no Berserker. Pela duração, uma parte do dano que ele causa volta como vida.
+**Passiva** (decisão do designer, 2026-11-20): não ocupa tecla nem custa Mana, vale sempre. Uma parte do dano que o Berserker causa volta como vida.
 
-| NH | Vida pelo dano | Duração |
+| NH | Vida pelo dano | Outros efeitos |
 |---|---|---|
-| 1 | 15% | 6 s |
-| 2 | 18% | 6 s |
-| 3 | 20% | **8 s** |
-| 4 | 23% | 8 s |
-| 5 | 25% | 8 s |
+| 1 | 5% | — |
+| 2 | 6% | — |
+| 3 | 7% | abaixo de 30% de vida, a parte **dobra** |
+| 4 | 8% | dobra abaixo de 30% de vida |
+| 5 | 10% | dobra abaixo de 30% de vida e matar um monstro cura **5% da vida máxima** |
 
-Contra chefes, a vida devolvida pode precisar de redução, para o Clérigo continuar importante (`design/ideias-futuras.md`, roubo de vida).
+Os valores são a média da versão ativa (15% a 25% por 6 a 8 s, a cada 18 s), que ficava ligada um terço do tempo. Contra chefes, a vida devolvida pode precisar de redução, para o Clérigo continuar importante (`design/ideias-futuras.md`, roubo de vida).
 
 #### Tempestade de Aço (assinatura, nível 35) — gira enquanto anda
 
@@ -224,7 +242,7 @@ Custo 90, recarga 75 s. Por 4 s, gira sem parar, acertando todos num raio de 3 a
 | Investida | avanço até o alvo, atordoamento, reforço do próximo golpe (como o Recuo Rápido) | — |
 | Fúria | estado com mais dano, velocidade e dano recebido (como o Frenesi dos monstros) | — |
 | Execução | dano | **dano extra pela vida do alvo**, zerar a recarga ao matar |
-| Sede de Sangue | estado no próprio Berserker | **vida pelo dano causado** |
+| Sede de Sangue (passiva) | estado permanente (como o Frenesi dos monstros) | **vida pelo dano causado**; **habilidade passiva** (pontos e NH, sem tecla) |
 | Tempestade de Aço | vários acertos com intervalo, Sangramento | **área que acompanha quem anda** (a verificar no Core) |
 
 O Berserker usa quase só o que já existe. O Guardião traz o **desvio de dano**, que o Sacerdote (Elo da Vida) também vai usar.
@@ -689,9 +707,10 @@ São **40 habilidades novas** (5 por segunda classe), cada uma com dados, regras
 O designer aprovou o Guardião e o Berserker em 2026-11-20 (seção 5).
 
 1. **Atirador de Elite, Caçador, Piromante, Arcanista, Sacerdote e Inquisidor** como detalhados nas seções 6 a 8.
-2. **+5 de atributo ao virar segunda classe**, para fechar 200 no nível 40?
-3. **Conteúdo do 16 ao 20:** área nova no primeiro mapa, ou redistribuir os níveis do mapa atual?
-4. **XP por hora** como meta de cada área (o simulador mede).
+2. **Outras passivas:** Bastião, Mira Firme e Bênção (seção 4.1)?
+3. **+5 de atributo ao virar segunda classe**, para fechar 200 no nível 40?
+4. **Conteúdo do 16 ao 20:** área nova no primeiro mapa, ou redistribuir os níveis do mapa atual?
+5. **XP por hora** como meta de cada área (o simulador mede).
 
 Todos os números das seções 5 a 8 seguem a regra da seção 2 e ainda **não passaram pelo simulador**: devem mudar depois dos testes de design.
 
