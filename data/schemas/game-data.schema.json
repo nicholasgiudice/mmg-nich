@@ -378,7 +378,21 @@
         },
         "basicAttack": { "$ref": "#/$defs/id" },
         "abilities": { "$ref": "#/$defs/idList" },
-        "resourceRules": { "type": "array", "items": { "$ref": "#/$defs/resourceRule" } }
+        "resourceRules": { "type": "array", "items": { "$ref": "#/$defs/resourceRule" } },
+        "secondClasses": {
+          "type": "array",
+          "description": "T-403: segundas classes escolhidas no nível progression.secondClassLevel (definitivas). Habilidades fora da lista da base; no máximo uma assinatura.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "name"],
+            "properties": {
+              "id": { "$ref": "#/$defs/id" },
+              "name": { "type": "string" },
+              "abilities": { "$ref": "#/$defs/idList" }
+            }
+          }
+        }
       }
     },
     "resourceRule": {
@@ -439,7 +453,8 @@
       }
     },
         "hits": { "$ref": "#/$defs/abilityHits" },
-        "cooldownCharges": { "type": "integer", "minimum": 1 }
+        "cooldownCharges": { "type": "integer", "minimum": 1 },
+        "passiveStatus": { "$ref": "#/$defs/id", "description": "T-403: status permanente da passiva neste NH." }
       }
     },
     "ability": {
@@ -461,6 +476,8 @@
         "castWhileMoving": { "type": "boolean" },
         "cooldownOnInterrupt": { "type": "boolean", "description": "T-351: interrompida, entra na recarga cheia." },
         "signature": { "type": "boolean", "description": "T-060: assinatura (até 3 níveis em vez de 5)." },
+        "passive": { "type": "boolean", "description": "T-403: passiva: tem NH, não entra na barra nem se usa; sem custo, recarga nem alvo (targeting self)." },
+        "passiveStatus": { "$ref": "#/$defs/id", "description": "T-403: status permanente da passiva com NH ≥ 1 (obrigatório na passiva)." },
         "hits": { "$ref": "#/$defs/abilityHits" },
         "cooldownCharges": { "type": "integer", "minimum": 1, "description": "T-060: usos guardados que recarregam um a um." },
         "ranks": { "type": "array", "maxItems": 4, "items": { "$ref": "#/$defs/abilityRank" } },

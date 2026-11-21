@@ -21,6 +21,9 @@ public enum AbilityRejectReason
     InvalidTarget,
     OutOfRange,
     NoLineOfSight,
+
+    /// <summary>T-403: habilidade passiva (vale sempre; não se usa).</summary>
+    Passive,
 }
 
 public enum CastInterruptReason

@@ -40,6 +40,13 @@ public sealed record CharacterProfile
     /// <summary>NH explícitos por classe (precisam valer para o nível); substituem <see cref="Skills"/> para essa classe.</summary>
     public IReadOnlyDictionary<string, Dictionary<string, int>> Ranks { get; init; } = new Dictionary<string, Dictionary<string, int>>();
 
+    /// <summary>
+    /// T-403: segunda classe por classe base (ex.: <c>class.warrior</c> → <c>second_class.berserker</c>) e os NH das
+    /// habilidades dela, somados aos da base. Classes fora do dicionário ficam sem segunda classe.
+    /// </summary>
+    public IReadOnlyDictionary<string, string> SecondClass { get; init; } = new Dictionary<string, string>();
+    public IReadOnlyDictionary<string, Dictionary<string, int>> SecondClassRanks { get; init; } = new Dictionary<string, Dictionary<string, int>>();
+
     public string Label =>
         $"nv{Level} {(Attributes == AttributePlan.Suggested ? "sugerido" : "espalhado")} {CharacterProfiles.RarityName(Gear)}"
         + (GearLevel is { } g && g != Level ? $"{g}" : "") + $" NH:{(Ranks.Count > 0 ? "explícito" : Skills)}";
@@ -91,7 +98,8 @@ public static class CharacterProfiles
     {
         var rules = content.Rules.Progression;
         var level = Math.Clamp(profile.Level, 1, rules.MaxLevel);
-        var points = rules.AttributePointsAt(level);
+        var second = profile.SecondClass.TryGetValue(cls.Id, out var sc) ? sc : null; // T-403
+        var points = rules.AttributePointsAt(level, second is not null);
         var suggested = Suggested.TryGetValue(cls.Id, out var s) ? s : Enum.GetValues<AttributeKind>();
         var given = new int[5];
         if (profile.Attributes == AttributePlan.Suggested)
@@ -105,13 +113,20 @@ public static class CharacterProfiles
             Split(half, Enum.GetValues<AttributeKind>().Except(suggested).ToArray(), given);
         }
 
+        var ranks = profile.Ranks.TryGetValue(cls.Id, out var explicitRanks)
+            ? explicitRanks
+            : SkillRanks(content, cls, level, profile.Skills, profile.Focus.TryGetValue(cls.Id, out var focus) ? focus : null);
+        if (second is not null && profile.SecondClassRanks.TryGetValue(cls.Id, out var secondRanks))
+        {
+            ranks = new Dictionary<string, int>(ranks.Concat(secondRanks), StringComparer.Ordinal);
+        }
+
         return new CharacterBuild
         {
             Level = level,
             Allocated = new AttributeSet { Str = given[0], Dex = given[1], Agi = given[2], Int = given[3], Vit = given[4] },
-            SkillRanks = profile.Ranks.TryGetValue(cls.Id, out var explicitRanks)
-                ? explicitRanks
-                : SkillRanks(content, cls, level, profile.Skills, profile.Focus.TryGetValue(cls.Id, out var focus) ? focus : null),
+            SkillRanks = ranks,
+            SecondClass = second,
         };
     }
 

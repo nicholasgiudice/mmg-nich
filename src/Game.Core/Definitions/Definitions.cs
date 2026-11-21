@@ -34,6 +34,24 @@ public sealed record ClassDefinition
 
     /// <summary>Regras de geração de recurso por evento (T-010).</summary>
     public IReadOnlyList<ResourceRuleDefinition> ResourceRules { get; init; } = [];
+
+    /// <summary>
+    /// Segundas classes que o personagem desta classe pode escolher no nível <c>progression.secondClassLevel</c>
+    /// (T-403, <c>design/segunda-classe-v0.1.md</c> §4). Vazio = a classe não tem segunda classe.
+    /// </summary>
+    public IReadOnlyList<SecondClassDefinition> SecondClasses { get; init; } = [];
+}
+
+/// <summary>
+/// Segunda classe (T-403): escolhida uma vez, de forma definitiva, entre as da classe base. As habilidades recebem pontos
+/// como as da base, com os níveis por NH da segunda classe (<c>progression.secondClassRankLevels</c>), e entram na barra
+/// depois das da base (passivas não entram). Id: <c>second_class.*</c>.
+/// </summary>
+public sealed record SecondClassDefinition
+{
+    public required string Id { get; init; }
+    public required string Name { get; init; }
+    public IReadOnlyList<string> Abilities { get; init; } = [];
 }
 
 public sealed record AbilityDefinition
@@ -78,6 +96,16 @@ public sealed record AbilityDefinition
     /// </summary>
     public IReadOnlyList<AbilityRankDefinition> Ranks { get; init; } = [];
 
+    /// <summary>
+    /// Passiva (T-403, <c>design/segunda-classe-v0.1.md</c> §4): recebe pontos e NH, mas não entra na barra, não pode ser
+    /// usada e não tem custo, recarga nem alvo (targeting <c>self</c>). Com NH ≥ 1, o personagem mantém o status
+    /// permanente <see cref="PassiveStatus"/> do NH atual.
+    /// </summary>
+    public bool Passive { get; init; }
+
+    /// <summary>Status permanente de uma passiva (T-403); um NH pode trocar por outro.</summary>
+    public string? PassiveStatus { get; init; }
+
     public const int MaxRank = 5;
     public const int MaxSignatureRank = 3;
 
@@ -113,6 +141,9 @@ public sealed record AbilityRankDefinition
     public IReadOnlyList<EffectDefinition>? Effects { get; init; }
     public AbilityHitsDefinition? Hits { get; init; }
     public int? CooldownCharges { get; init; }
+
+    /// <summary>Status permanente da passiva neste NH (T-403); null herda.</summary>
+    public string? PassiveStatus { get; init; }
 }
 
 /// <summary>

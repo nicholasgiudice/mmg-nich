@@ -83,7 +83,7 @@ public class ProtocolTests(ITestOutputHelper output)
         Assert.Equal(23, ProtocolSerializer.Serialize(new LogoutRequest())[0]);
         Assert.Equal(24, ProtocolSerializer.Serialize(new LogoutCancel())[0]);
         Assert.Equal(25, ProtocolSerializer.Serialize(new LogoutStatus(LogoutState.Done, 0))[0]);
-        Assert.Equal(15, ProtocolVersion.Current);
+        Assert.Equal(16, ProtocolVersion.Current);
     }
 
     [Fact]

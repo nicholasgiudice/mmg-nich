@@ -67,6 +67,7 @@ public static class EventCodecs
         [typeof(SkillRankRaised)] = 93,
         [typeof(PointsReset)] = 94,
         [typeof(ProgressionRejected)] = 95,
+        [typeof(SecondClassChosen)] = 96,
         [typeof(ItemDropped)] = 100,
         [typeof(ItemPickedUp)] = 101,
         [typeof(ItemEquipped)] = 102,
@@ -172,6 +173,7 @@ public static class EventCodecs
             case SkillRankRaised x: w.Id(x.Entity); w.S(x.AbilityId); w.I(x.Rank); break;
             case PointsReset x: w.Id(x.Entity); w.I(x.AttributePoints); w.I(x.SkillPoints); break;
             case ProgressionRejected x: w.Id(x.Entity); w.S(x.Id); w.E(x.Reason); break;
+            case SecondClassChosen x: w.Id(x.Entity); w.S(x.SecondClassId); w.I(x.AttributePoints); break;
 
             case ItemDropped x: w.Id(x.Item); w.Id(x.Source); w.S(x.BaseId); w.I(x.Level); w.E(x.Rarity); break;
             case ItemPickedUp x: w.Id(x.Entity); w.Id(x.Item); w.S(x.BaseId); w.I(x.InventorySlot); break;
@@ -249,6 +251,7 @@ public static class EventCodecs
             93 => new SkillRankRaised(r.Id(), r.S(), r.I()),
             94 => new PointsReset(r.Id(), r.I(), r.I()),
             95 => new ProgressionRejected(r.Id(), r.S(), r.E<ProgressionRejectReason>()),
+            96 => new SecondClassChosen(r.Id(), r.S(), r.I()),
 
             100 => new ItemDropped(r.Id(), r.Id(), r.S(), r.I(), r.E<ItemRarity>()),
             101 => new ItemPickedUp(r.Id(), r.Id(), r.S(), r.I()),

@@ -37,6 +37,7 @@ public static class AbilityRanks
                 Effects = r.Effects ?? current.Effects,
                 Hits = r.Hits ?? current.Hits,
                 CooldownCharges = r.CooldownCharges ?? current.CooldownCharges,
+                PassiveStatus = r.PassiveStatus ?? current.PassiveStatus,
             };
         }
 
