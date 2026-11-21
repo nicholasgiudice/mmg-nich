@@ -31,7 +31,7 @@ Esta tarefa não depende da segunda classe: com 10 espaços, um personagem de ho
 
 ## Resultado
 
-**Feito** (Windows, 2026-11-21), na branch `task/T-409-barra-de-10-teclas`. **Falta a aprovação do designer** da captura.
+**Feito** (Windows, 2026-11-21), na branch `task/T-409-barra-de-10-teclas`. **O designer aprovou a barra em duas linhas** em 2026-11-21. A linha de cima continua aparecendo sempre, também antes da segunda classe. Integra na `trilha/segundas-classes`, não na `main` (seção 6f de `tasks/README.md`).
 
 - **10 espaços:** `HotbarLayout.Size` = 10 e `HotbarLayout.KeyLabel` ("1" a "9" e "0" no décimo). Ações `ability_7` a `ability_10` no `project.godot`, nas teclas físicas 7, 8, 9 e 0 (nenhuma outra ação usava essas teclas). O `PlayerInput` já percorria `InputActions.AbilitySlots`, então as teclas novas usam os espaços 7 a 10 sem outra mudança.
 - **Barra salva antes:** o formato guardado não mudou (ids separados por `|`). Uma barra de 6 espaços abre com os 6 nos mesmos lugares e os 4 novos vazios (teste).
