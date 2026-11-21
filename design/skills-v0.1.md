@@ -2,8 +2,6 @@
 
 Status: **proposta para revisão do designer** (T-034, 2026-10-19). Complementa `design/progression-v0.1.md` §7, que define as regras (1 ponto de habilidade por nível do personagem, requisito de nível `2n − 1` por NH, assinatura nos níveis 12, 13 e 15).
 
-**Segunda classe (T-401):** as habilidades da segunda classe, escolhida no nível 20, seguem outra escada de nível: normais no 21 (NH1), 24, 27, 30 e 33 (NH5); assinatura no 35, 37 e 40. A escada de valor por NH é a mesma (× 1,0 / 1,2 / 1,4 / 1,6 / 1,8; assinatura × 1,0 / 1,3 / 1,6), e o NH1 da segunda classe vale cerca de 1,4 vez o NH1 de uma habilidade parecida da base. As tabelas das habilidades da segunda classe ficam em `design/segunda-classe-v0.1.md`; este documento cobre a classe base.
-
 **Situação no jogo:** hoje só existe o **NH1** de cada habilidade (é o que o protótipo usa). Os níveis 2 a 5 estão só neste documento; a implementação está planejada na trilha de habilidades (`tasks/README.md`, T-060 a T-064).
 
 ## Como ler as tabelas

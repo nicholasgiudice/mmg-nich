@@ -66,41 +66,8 @@ public class ProgressionTests
         Assert.Equal(491, Rules.XpToNext(3));
         Assert.Equal(4291, Rules.XpToNext(10));
         Assert.Equal(7862, Rules.XpToNext(14));
+        Assert.Equal(0, Rules.XpToNext(15));
         Assert.Equal(43325, Enumerable.Range(1, 14).Sum(Rules.XpToNext));
-
-        // T-401: nível máximo 40, mesma curva.
-        Assert.Equal(40, Rules.MaxLevel);
-        Assert.Equal(8902, Rules.XpToNext(15));
-        Assert.Equal(49708, Rules.XpToNext(39));
-        Assert.Equal(0, Rules.XpToNext(40));
-        Assert.Equal(717404, Enumerable.Range(1, 39).Sum(Rules.XpToNext));
-    }
-
-    [Fact]
-    public void Second_class_rules_follow_the_design()
-    {
-        Assert.Equal(20, Rules.SecondClassLevel);
-        Assert.Equal(5, Rules.SecondClassAttributePoints);
-
-        // Classe base: igual a antes, com ou sem o parâmetro.
-        Assert.Equal(9, Rules.RequiredLevel(signature: false, rank: 5));
-        Assert.Equal(9, Rules.RequiredLevel(signature: false, rank: 5, secondClass: false));
-        Assert.Equal(15, Rules.RequiredLevel(signature: true, rank: 3, secondClass: false));
-
-        // Segunda classe (design/segunda-classe-v0.1.md, §2).
-        Assert.Equal([21, 24, 27, 30, 33], Enumerable.Range(1, 5).Select(r => Rules.RequiredLevel(false, r, secondClass: true)));
-        Assert.Equal([35, 37, 40], Enumerable.Range(1, 3).Select(r => Rules.RequiredLevel(true, r, secondClass: true)));
-        Assert.Equal(int.MaxValue, Rules.RequiredLevel(false, 6, secondClass: true));
-        Assert.Equal(int.MaxValue, Rules.RequiredLevel(true, 4, secondClass: true));
-        Assert.Equal(int.MaxValue, Rules.RequiredLevel(true, 0, secondClass: true));
-
-        // Pontos: 195 no 40, 200 com a segunda classe; 40 de habilidade.
-        Assert.Equal(95, Rules.AttributePointsAt(20));
-        Assert.Equal(95, Rules.AttributePointsAt(20, secondClassChosen: false));
-        Assert.Equal(100, Rules.AttributePointsAt(20, secondClassChosen: true));
-        Assert.Equal(195, Rules.AttributePointsAt(40));
-        Assert.Equal(200, Rules.AttributePointsAt(40, secondClassChosen: true));
-        Assert.Equal(40, Rules.SkillPointsAt(40));
     }
 
     [Theory]
@@ -266,12 +233,12 @@ public class ProgressionTests
         Leveling.GrantExperience(w, hero, 1_000_000, EntityId.None, "test");
         w.Step();
         var p = hero.Get<CharacterProgress>();
-        Assert.Equal(40, hero.Get<CharacterStats>().Level); // T-401: nível máximo 40 (1 000 000 > 717 404 de XP até o 40)
+        Assert.Equal(15, hero.Get<CharacterStats>().Level);
         Assert.Equal(0, p.Experience);
         Assert.Equal(0, p.ExperienceToNext);
-        Assert.Equal(195, p.AttributePoints);
-        Assert.Equal(40, p.SkillPoints);
-        Assert.Equal(39, w.LastTickEvents.OfType<LevelUp>().Count());
+        Assert.Equal(70, p.AttributePoints);
+        Assert.Equal(15, p.SkillPoints);
+        Assert.Equal(14, w.LastTickEvents.OfType<LevelUp>().Count());
         Assert.Equal(0, Leveling.GrantExperience(w, hero, 100, EntityId.None, "test"));
     }
 
@@ -534,7 +501,7 @@ public class ProgressionTests
 
     [Theory]
     [InlineData(0, 0, 0, null, 0)]
-    [InlineData(41, 0, 0, null, 0)] // T-401: acima do nível máximo (40)
+    [InlineData(16, 0, 0, null, 0)]
     [InlineData(1, 68, 0, null, 0)]
     [InlineData(2, 0, 6, null, 0)]
     [InlineData(2, 0, 0, "warrior.heavy_strike", 3)]

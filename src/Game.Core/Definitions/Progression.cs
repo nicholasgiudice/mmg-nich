@@ -24,7 +24,7 @@ public sealed record XpByRank
 /// </summary>
 public sealed record ProgressionRules
 {
-    public int MaxLevel { get; init; } = 40;
+    public int MaxLevel { get; init; } = 15;
 
     /// <summary>XP para passar do nível L para L+1 = round(<see cref="XpCurveBase"/> × L^<see cref="XpCurveExponent"/>).</summary>
     public double XpCurveBase { get; init; } = 50;
@@ -81,50 +81,19 @@ public sealed record ProgressionRules
     /// <summary>Nível exigido por NH da assinatura.</summary>
     public IReadOnlyList<int> SignatureRankLevels { get; init; } = [12, 13, 15];
 
-    /// <summary>T-401: nível em que a segunda classe pode ser escolhida (design/segunda-classe-v0.1.md, §1).</summary>
-    public int SecondClassLevel { get; init; } = 20;
-
-    /// <summary>T-401: pontos de atributo extras ao escolher a segunda classe.</summary>
-    public int SecondClassAttributePoints { get; init; } = 5;
-
-    /// <summary>T-401: nível exigido por NH das habilidades normais da segunda classe (índice 0 = NH1).</summary>
-    public IReadOnlyList<int> SecondClassRankLevels { get; init; } = [21, 24, 27, 30, 33];
-
-    /// <summary>T-401: nível exigido por NH da assinatura da segunda classe.</summary>
-    public IReadOnlyList<int> SecondClassSignatureRankLevels { get; init; } = [35, 37, 40];
-
     /// <summary>XP para sair do nível <paramref name="level"/>; 0 no nível máximo.</summary>
     public int XpToNext(int level) =>
         level >= MaxLevel ? 0 : (int)Math.Round(XpCurveBase * Math.Pow(level, XpCurveExponent), MidpointRounding.AwayFromZero);
 
     /// <summary>Nível exigido para o NH <paramref name="rank"/> (1..); int.MaxValue se a lista não cobre o NH.</summary>
-    public int RequiredLevel(bool signature, int rank) => RequiredLevel(signature, rank, secondClass: false);
-
-    /// <summary>
-    /// T-401: nível exigido para o NH <paramref name="rank"/> de uma habilidade da classe base ou, com
-    /// <paramref name="secondClass"/>, da segunda classe; int.MaxValue se a lista não cobre o NH.
-    /// </summary>
-    public int RequiredLevel(bool signature, int rank, bool secondClass)
+    public int RequiredLevel(bool signature, int rank)
     {
-        var levels = (signature, secondClass) switch
-        {
-            (true, true) => SecondClassSignatureRankLevels,
-            (false, true) => SecondClassRankLevels,
-            (true, false) => SignatureRankLevels,
-            _ => SkillRankLevels,
-        };
+        var levels = signature ? SignatureRankLevels : SkillRankLevels;
         return rank >= 1 && rank <= levels.Count ? levels[rank - 1] : int.MaxValue;
     }
 
     /// <summary>Pontos de atributo ganhos até o nível (sem os gastos).</summary>
     public int AttributePointsAt(int level) => (level - 1) * AttributePointsPerLevel;
-
-    /// <summary>
-    /// T-401: pontos de atributo ganhos até o nível, mais <see cref="SecondClassAttributePoints"/> se a segunda classe
-    /// foi escolhida.
-    /// </summary>
-    public int AttributePointsAt(int level, bool secondClassChosen) =>
-        AttributePointsAt(level) + (secondClassChosen ? SecondClassAttributePoints : 0);
 
     /// <summary>Pontos de habilidade ganhos até o nível (sem os gastos).</summary>
     public int SkillPointsAt(int level) => level * SkillPointsPerLevel;

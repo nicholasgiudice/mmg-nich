@@ -44,7 +44,7 @@
         "progression": {
           "type": "object",
           "additionalProperties": false,
-          "description": "T-203: níveis, XP por monstro, divisão em grupo, pontos e requisito de nível por NH. T-401: nível 40 e regras da segunda classe.",
+          "description": "T-203: níveis, XP por monstro, divisão em grupo, pontos e requisito de nível por NH.",
           "properties": {
             "maxLevel": { "type": "integer", "minimum": 1 },
             "xpCurveBase": { "type": "number", "exclusiveMinimum": 0 },
@@ -81,11 +81,7 @@
             "attributePointsPerLevel": { "type": "integer", "minimum": 0 },
             "skillPointsPerLevel": { "type": "integer", "minimum": 0 },
             "skillRankLevels": { "type": "array", "minItems": 5, "items": { "type": "integer", "minimum": 1 } },
-            "signatureRankLevels": { "type": "array", "minItems": 3, "items": { "type": "integer", "minimum": 1 } },
-            "secondClassLevel": { "type": "integer", "minimum": 1, "description": "T-401: nível em que a segunda classe pode ser escolhida; menor que o primeiro de secondClassRankLevels." },
-            "secondClassAttributePoints": { "type": "integer", "minimum": 0, "description": "T-401: pontos de atributo extras ao escolher a segunda classe." },
-            "secondClassRankLevels": { "type": "array", "minItems": 5, "items": { "type": "integer", "minimum": 1 }, "description": "T-401: nível exigido por NH das normais da segunda classe." },
-            "secondClassSignatureRankLevels": { "type": "array", "minItems": 3, "items": { "type": "integer", "minimum": 1 }, "description": "T-401: nível exigido por NH da assinatura da segunda classe." }
+            "signatureRankLevels": { "type": "array", "minItems": 3, "items": { "type": "integer", "minimum": 1 } }
           }
         },
         "shops": {

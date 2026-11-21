@@ -6,19 +6,6 @@ As classes são arquétipos iniciais. Evoluções e especializações ficam fora
 
 **Habilidades:** cada classe tem um ataque básico e **5 habilidades no MVP** — 4 normais e 1 de assinatura —, uma por tecla (1–5). São aprendidas com pontos de habilidade (1 por nível) e têm níveis de habilidade que aumentam o valor e mudam o comportamento; as regras estão em `design/progression-v0.1.md` (§7) e **todos os níveis de cada habilidade** em `design/skills-v0.1.md`. As habilidades em "Depois do MVP" ficam para especializações.
 
-## Segunda classe (fase 4)
-
-Decisão do designer (2026-11-20/21, T-401): no **nível 20** o personagem escolhe uma **segunda classe**, entre duas opções da sua classe base. A escolha é **definitiva**. A segunda classe tem o mesmo formato da base: **4 habilidades normais (5 NH) e 1 assinatura (3 NH)**, nas teclas 6–0 da barra de 10 teclas. Ao escolhê-la, o personagem ganha **+5 pontos de atributo**.
-
-| Classe base | Segundas classes |
-|---|---|
-| Guerreiro | Guardião, Berserker |
-| Arqueiro | Atirador de Elite, Caçador |
-| Mago | Piromante, Arcanista |
-| Clérigo | Sacerdote, Inquisidor |
-
-O Guerreiro é o primeiro a ganhar as segundas classes. Os níveis exigidos por NH estão em `design/progression-v0.1.md` (§7); o detalhe das segundas classes (habilidades, passivas, números) está em **`design/segunda-classe-v0.1.md`**.
-
 ## Guerreiro
 
 **Função:** combate corpo a corpo, resistência, ameaça e proteção.
@@ -115,4 +102,4 @@ O Guerreiro é o primeiro a ganhar as segundas classes. Os níveis exigidos por 
 - controle é reduzido contra elites e bosses;
 - dano em área exige posicionamento e recurso;
 - nenhuma classe pode ser dominante em todas as situações;
-- com 40 pontos de habilidade para 46 NH (base e segunda classe) não é possível ter todas as habilidades no nível máximo: escolher onde investir faz parte da build.
+- com 15 pontos de habilidade não é possível ter todas as habilidades no nível máximo: escolher onde investir faz parte da build.

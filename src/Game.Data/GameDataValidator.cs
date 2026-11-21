@@ -567,16 +567,6 @@ internal static partial class GameDataValidator
         RankLevels(c, "skillRankLevels", p.SkillRankLevels, AbilityDefinition.MaxRank, p.MaxLevel);
         RankLevels(c, "signatureRankLevels", p.SignatureRankLevels, AbilityDefinition.MaxSignatureRank, p.MaxLevel);
 
-        // T-401: segunda classe.
-        if (p.SecondClassLevel < 1 || p.SecondClassLevel > p.MaxLevel) { c.Error("secondClassLevel", $"Nível deve estar em 1..{p.MaxLevel}."); }
-        c.NonNegative("secondClassAttributePoints", p.SecondClassAttributePoints);
-        RankLevels(c, "secondClassRankLevels", p.SecondClassRankLevels, AbilityDefinition.MaxRank, p.MaxLevel);
-        RankLevels(c, "secondClassSignatureRankLevels", p.SecondClassSignatureRankLevels, AbilityDefinition.MaxSignatureRank, p.MaxLevel);
-        if (p.SecondClassRankLevels.Count > 0 && p.SecondClassLevel >= p.SecondClassRankLevels[0])
-        {
-            c.Error("secondClassLevel", "Deve ser menor que o nível do NH1 da segunda classe (secondClassRankLevels[0]).");
-        }
-
         static void RankLevels(Ctx c, string field, IReadOnlyList<int> levels, int ranks, int maxLevel)
         {
             if (levels.Count < ranks) { c.Error(field, $"Precisa do nível exigido para cada um dos {ranks} NH."); }
