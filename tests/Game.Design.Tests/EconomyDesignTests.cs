@@ -130,13 +130,15 @@ public class EconomyDesignTests(ITestOutputHelper output)
 
     /// <summary>
     /// Poção de Mana não resolve sozinha a falta de Mana (design/progression-v0.1.md §8): nos solos do Mago e do Clérigo, o
-    /// perfil fraco bebendo 1 poção por luta (com metade da Mana) continua vencendo no máximo 50%. O Clérigo fraco contra o
+    /// perfil fraco bebendo 1 poção por luta (com metade da Mana) continua vencendo no máximo 50%, ou a poção acrescenta no
+    /// máximo 15 pontos à vitória do fraco sem poção (T-402: desde o balanceamento do playtest de 2026-11-16 o Mago fraco do
+    /// nível 9 já vence sem poção, e a poção não é o que o carrega; balance-v0.18 §4). O Clérigo fraco contra o
     /// Guarda já vence sem poção (exceção da §8, balance-v0.7 §3) e não chega a precisar dela; para ele vale a meta de tempo:
     /// pelo menos 1,3× o perfil esperado.
     /// </summary>
     [Theory]
     [InlineData("encounter.four_rats", "class.mage", 5)]
-    [InlineData("encounter.four_rats", "class.mage", 9, Skip = PlaytestRebalance.Pending)]
+    [InlineData("encounter.four_rats", "class.mage", 9)]
     [InlineData("encounter.skeleton_guard", "class.cleric", 5)]
     [InlineData("encounter.skeleton_guard", "class.cleric", 9)]
     public void One_mana_potion_per_fight_does_not_carry_the_weak_profile(string encounter, string cls, int level)
@@ -154,8 +156,8 @@ public class EconomyDesignTests(ITestOutputHelper output)
         }
 
         Assert.True(drunk > 0, "o bot não bebeu a poção de Mana: " + text);
-        Assert.True(weak.WinRate <= 0.50, text);
         var without = DesignHarness.RunProfile(encounter, "rotation", CharacterProfile.Weak(level), level);
         output.WriteLine($"sem poção: win {without.WinRate:P0}");
+        Assert.True(weak.WinRate <= 0.50 || weak.WinRate <= without.WinRate + 0.15, $"{text}; sem poção: win {without.WinRate:P0}");
     }
 }

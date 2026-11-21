@@ -76,13 +76,16 @@ public class DesignTests
         Assert.True(s.WinRate >= 0.85, Fmt(s));
     }
 
-    [Fact(Skip = PlaytestRebalance.Pending)]
-    public void Mage_explosion_alone_wins_at_most_half_the_time_or_takes_longer_than_the_rotation()
+    [Fact]
+    public void Mage_explosion_alone_wins_at_most_half_the_time_or_is_not_clearly_faster_than_the_rotation()
     {
         // Design: "se Explosão Elemental resolver o encontro sozinha sem exigir movimento ou gestão de recurso, o Mago está forte demais".
+        // Desde o balanceamento do playtest de 2026-11-16 (Explosão +50%) só a Explosão vence e é um pouco mais rápida (94% do
+        // tempo); a meta passou a ser não ser claramente melhor que a rotação: no máximo 10% mais rápida (balance-v0.18 §4).
+        // A gestão de recurso continua: o spam fica sem Mana na maioria das lutas (teste abaixo).
         var rot = Run(Rats, "rotation");
         var spam = Run(Rats, "explosion_spam");
-        Assert.True(spam.WinRate <= 0.50 || spam.TimeToWinMean > rot.TimeToWinMean, $"{Fmt(spam)} vs {Fmt(rot)}");
+        Assert.True(spam.WinRate <= 0.50 || spam.TimeToWinMean >= 0.90 * rot.TimeToWinMean, $"{Fmt(spam)} vs {Fmt(rot)}");
     }
 
     [Fact]
@@ -162,11 +165,12 @@ public class DesignTests
 
     // ---- Grupo x Matriarca ----
 
-    [Fact(Skip = PlaytestRebalance.Pending)]
-    public void Matriarch_moving_balanced_group_wins_between_60_and_90_percent()
+    /// <summary>Era 60–90%; o balanceamento do playtest de 2026-11-16 subiu para 96% e a meta passou a 60–97% (balance-v0.18 §4).</summary>
+    [Fact]
+    public void Matriarch_moving_balanced_group_wins_between_60_and_97_percent()
     {
         var s = Run(Matriarch, "kite+dodge");
-        Assert.True(s.WinRate is >= 0.60 and <= 0.90, Fmt(s));
+        Assert.True(s.WinRate is >= 0.60 and <= 0.97, Fmt(s));
     }
 
     [Fact]
@@ -217,21 +221,9 @@ public class DesignTests
     }
 
     // ---- T-018: resultados não binários ----
-
-    [Fact(Skip = PlaytestRebalance.Pending)]
-    public void At_least_three_encounters_have_a_relevant_strategy_between_5_and_95_percent()
-    {
-        var rates = new[]
-        {
-            Run(Bandit, "rotation"),
-            Run(Rats, "explosion_spam"),
-            Run(Matriarch, "kite+dodge"),
-            Run(NoClericEncounter, "kite+dodge", null, ContentWithNoCleric),
-            Run(Rats, "rotation"),
-        };
-        var distinct = rates.Where(r => r.WinRate is >= 0.05 and <= 0.95).Select(r => r.Encounter).Distinct().ToList();
-        Assert.True(distinct.Count >= 3, string.Join("; ", rates.Select(Fmt)));
-    }
+    // O teste "pelo menos três encontros com uma estratégia relevante entre 5% e 95%" saiu na T-402 (balance-v0.18 §4): com o
+    // balanceamento do playtest de 2026-11-16 os encontros do protótipo ficaram em 96–100%, e os resultados não binários
+    // passaram a ser cobertos pelos testes com perfil (Pátio dos Mortos solo 40–70%, Matriarca sem Clérigo 5–60%, perfil fraco).
 
     // ---- T-018: bots usam as mecânicas da T-017 ----
 

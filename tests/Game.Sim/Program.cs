@@ -34,6 +34,8 @@ namespace Game.Sim
               --out <arquivo>       grava também JSON
               --per-run             inclui cada execução no JSON
               --list                lista encontros, classes e estratégias e sai
+              --level-curve         T-402: tabelas do nível 1 ao máximo (perfil esperado de cada classe, tetos, tempo
+                                    para matar um monstro do próprio nível) em Markdown; usa --runs e --parallel
             """;
 
         public static int Run(string[] args, TextWriter stdout, TextWriter stderr)
@@ -53,6 +55,12 @@ namespace Game.Sim
                     stdout.WriteLine("Encontros: " + string.Join(", ", content.Encounters.Keys.Order(StringComparer.Ordinal)));
                     stdout.WriteLine("Classes:   " + string.Join(", ", content.Classes.Keys.Order(StringComparer.Ordinal)));
                     stdout.WriteLine("Estratégias: " + string.Join(", ", BotStrategies.Names));
+                    return 0;
+                }
+
+                if (o.LevelCurve)
+                {
+                    stdout.Write(LevelCurve.ToMarkdown(content, o.Runs, o.Parallel));
                     return 0;
                 }
 
@@ -155,6 +163,7 @@ namespace Game.Sim
             public string? Out { get; set; }
             public bool PerRun { get; set; }
             public bool List { get; set; }
+            public bool LevelCurve { get; set; }
             public bool Help { get; set; }
         }
 
@@ -211,6 +220,7 @@ namespace Game.Sim
                     case "--out": o.Out = Next(); break;
                     case "--per-run": o.PerRun = true; break;
                     case "--list": o.List = true; break;
+                    case "--level-curve": o.LevelCurve = true; break;
                     case "--help" or "-h": o.Help = true; break;
                     default: throw new ArgumentException($"Opção desconhecida: {args[i]}. Use --help.");
                 }
