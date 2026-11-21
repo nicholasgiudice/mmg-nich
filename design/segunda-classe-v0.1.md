@@ -599,7 +599,7 @@ Custo 30, recarga 18 s, alcance 8. Liga o aliado escolhido ao aliado com mais vi
 | 4 | 35% | 8 s | — |
 | 5 | **40%** | 8 s | os dois ligados recebem **5% menos dano** |
 
-**Saiu o Renovar** (cura ao longo do tempo num aliado) para a Graça Veloz caber nas 4 habilidades normais: ele repetia a Oração Restauradora, que já cura ao longo do tempo, e a Cura Direta da base.
+**Saiu o Renovar** (cura ao longo do tempo num aliado; aprovado pelo designer em 2026-11-20) para a Graça Veloz caber nas 4 habilidades normais: ele repetia a Oração Restauradora, que já cura ao longo do tempo, e a Cura Direta da base.
 
 #### Santuário (assinatura, nível 35) — ninguém cai
 
@@ -715,7 +715,7 @@ São **40 habilidades novas** (5 por segunda classe), cada uma com dados, regras
 O designer aprovou o Guardião e o Berserker em 2026-11-20 (seção 5).
 
 1. **Atirador de Elite, Caçador, Piromante, Arcanista, Sacerdote e Inquisidor** como detalhados nas seções 6 a 8.
-2. **Sacerdote:** a Graça Veloz entra no lugar do Renovar (seção 8)? O designer vai sugerir mais habilidades.
+2. **Sacerdote:** o designer aprovou a Graça Veloz no lugar do Renovar (2026-11-20) e ainda pode sugerir mais habilidades.
 3. **+5 de atributo ao virar segunda classe**, para fechar 200 no nível 40?
 4. **Conteúdo do 16 ao 20:** área nova no primeiro mapa, ou redistribuir os níveis do mapa atual?
 5. **XP por hora** como meta de cada área (o simulador mede).
