@@ -56,7 +56,7 @@ Fluxo para você:
 | **1 — Rede mínima** | Servidor dedicado na VPS, 4 jogadores na mesma arena, login de desenvolvimento | **Concluída** (T-111: playtest online aprovado; seção 6b) |
 | **2 — Persistência e progressão** | Contas, personagens, inventário, Cidade + Campos online; atributos, níveis, equipamento e habilidades reformuladas (`design/progression-v0.1.md`) | **Concluída** (T-230: playtest aprovado com correções para a fase 3; seção 6d) |
 | **3 — Primeiro mapa completo** | Floresta, Ruínas, Cripta instanciada, Vigia Sem Rosto; grupo, lista de batalha, ouro, lojas e mapas maiores (playtest v0.2) | **Concluída** (T-380: playtest aprovado; seção 6e) |
-| **4 — Segundas classes** | Nível 40, segunda classe no nível 20 com duas opções por classe, passivas, barra de 10 teclas; Guerreiro primeiro (`design/segunda-classe-v0.1.md`) | Esboço (T-390 detalha) |
+| **4 — Segundas classes** | Nível 40, segunda classe no nível 20 com duas opções por classe, passivas, barra de 10 teclas; Guerreiro primeiro (`design/segunda-classe-v0.1.md`) | **Detalhada** no bloco do Guerreiro (T-390; seção 6f); as outras classes em esboço |
 | **5 — Operação** | CI/CD, métricas, testes de carga, produção separada | Esboço |
 | **Depois** | Áreas e mapas novos do nível 16 ao 40 | Ainda sem esboço |
 
@@ -498,9 +498,76 @@ T-302, T-311, T-312, T-322, T-323, T-342, T-345, T-352 ─► T-380 ─► T-390
 
 ---
 
+## 6f. Tarefas da fase 4 (segundas classes, bloco do Guerreiro)
+
+Detalhadas pela T-390 a partir de `design/segunda-classe-v0.1.md` e do playtest v0.3 (`tasks/reports/playtest-v0.3.md`). A fase entrega o **sistema** de segunda classe com o **Guerreiro** (Guardião e Berserker). As outras três classes ficam no esboço da seção 7 até o playtest do Guerreiro (T-413).
+
+**Decisões da T-390**
+- **Escolha pela tela de habilidades**, fora de combate, em qualquer lugar (T-403, T-410). O mestre da classe na Cidade, do design, fica para quando os mapas forem refeitos.
+- **Sem migração de banco:** a segunda classe vai no documento de progressão do personagem (jsonb, com versão), como o resto da progressão (T-404).
+- **Mecânicas antes dos dados:** as peças novas do Core (desvio de dano, vida pelo dano, dano pela vida do alvo, área que acompanha) são tarefas próprias com dados de teste (T-406, T-407). Elas também servem às classes seguintes (o desvio de dano ao Elo da Vida do Sacerdote; a vida pelo dano ao Inquisidor).
+- **Ferramenta de teste desligada por padrão** (`--dev-tools`), ligada só no servidor de teste (T-405).
+- **Fora desta fase:** áreas e mapas novos, monstros novos, as outras segundas classes e a operação (fase 5).
+
+### Índice
+
+| ID | Tarefa | Ambiente | Modelo | Depende de |
+|---|---|---|---|---|
+| **Base** | | | | |
+| [T-401](fase-4/T-401-regras-do-nivel-40.md) | Regras do nível 40 e da segunda classe nos dados | VPS | Médio | — |
+| [T-402](fase-4/T-402-simulador-ate-o-40.md) | Simulador até o 40 e metas dos testes de design (reativa os 19 casos desligados) | VPS | **Forte** | 401 |
+| **Sistema de segunda classe** | | | | |
+| [T-403](fase-4/T-403-core-segunda-classe.md) | Core: segunda classe e habilidades passivas | VPS | **Forte** | 401 |
+| [T-404](fase-4/T-404-servidor-segunda-classe.md) | Servidor e protocolo: segunda classe gravada e replicada | VPS | Médio | 403 |
+| [T-405](fase-4/T-405-ferramenta-de-teste-servidor.md) | Servidor: ferramenta de teste para subir de nível | VPS | Médio | 404 |
+| **Guerreiro** | | | | |
+| [T-406](fase-4/T-406-mecanicas-do-guardiao.md) | Core: mecânicas novas do Guardião (desvio de dano, imunidade a empurrão, ameaça pelo dano) | VPS | **Forte** | — |
+| [T-407](fase-4/T-407-mecanicas-do-berserker.md) | Core: mecânicas novas do Berserker (dano pela vida do alvo, vida pelo dano, área que acompanha) | VPS | **Forte** | 406 |
+| [T-408](fase-4/T-408-dados-guardiao-e-berserker.md) | Dados: habilidades do Guardião e do Berserker | VPS | Médio | 402, 403, 407 |
+| **Cliente** | | | | |
+| [T-409](fase-4/T-409-barra-de-10-teclas.md) | Barra de atalhos com 10 teclas | Windows | Médio | — |
+| [T-410](fase-4/T-410-tela-da-segunda-classe.md) | Escolha da segunda classe e tela de habilidades | Windows | Humano + Médio | 404, 408, 409 |
+| [T-411](fase-4/T-411-botao-de-teste-no-esc.md) | Botão de teste no menu do Esc | Windows | Médio | 404, 405 |
+| [T-412](fase-4/T-412-icones-e-efeitos-do-guerreiro.md) | Ícones e efeitos das habilidades do Guardião e do Berserker | Windows | Humano + Médio | 408 |
+| **Fechamento** | | | | |
+| [T-413](fase-4/T-413-playtest-do-guerreiro.md) | Playtest do Guerreiro com segunda classe | Windows | Humano | 410, 411, 412 |
+
+### Ondas de execução
+
+| Onda | VPS | Windows |
+|---|---|---|
+| 1 | T-401, T-406 | T-409 |
+| 2 | T-402, T-403, T-407 | — |
+| 3 | T-404, T-408 | — |
+| 4 | T-405 | T-412 |
+| 5 | — | T-411, depois T-410 |
+| 6 | — | T-413 |
+
+**Cuidados de integração**
+- **Protocolo:** a T-404 e a T-405 sobem `ProtocolVersion` (hoje 15). **Não integre nenhuma das duas sozinha.** A T-405 sai da branch da T-404, e a T-411 da branch da T-405. Integre **T-404, T-405 e T-411 juntas** e, na mesma rodada, rode o `deploy-dev.sh` com `GAME_DEV_TOOLS` ligado no servidor de teste e publique o cliente novo (`export-client.ps1` e `deploy-download.ps1`).
+- A T-410 não sobe o protocolo, mas precisa da T-404 na `main` (e da T-408): integre depois da rodada acima, com outro cliente novo.
+- A T-403 e a T-404 mexem em `Leveling` e no documento do personagem; a T-405 também. Uma de cada vez, na ordem.
+- A T-406 e a T-407 mexem em `DamageResolver`, estados e efeitos: a T-407 sai depois da T-406.
+- A T-403 (progressão) e a T-406/T-407 (efeitos) rodam em paralelo; se as duas tocarem em `CombatServices` ou no validador de dados, integre uma e rebase a outra.
+- A T-409 e a T-410 mexem na barra e no `SkillPanel`; a T-411 no `GameMenu` e no `Main.cs`: integre uma de cada vez.
+
+### Grafo de dependências
+
+```text
+T-401 ─┬─► T-402 ─────────────► T-408
+       └─► T-403 ─┬───────────► T-408
+                  └─► T-404 ─┬─► T-405 ─► T-411
+                             └─► T-410
+T-406 ─► T-407 ─► T-408 ─┬─► T-410 ◄── T-409
+                         └─► T-412
+T-410, T-411, T-412 ─► T-413 ─► (outras três classes, seção 7)
+```
+
+---
+
 ## 7. Fases seguintes (esboço)
 
-Serão convertidas em arquivos de tarefa no fim de cada fase (T-390 para a fase 4). As fases 1, 2 e 3 já estão detalhadas nas seções 6b, 6d e 6e.
+Serão convertidas em arquivos de tarefa no fim de cada fase. As fases 1, 2 e 3 estão detalhadas nas seções 6b, 6d e 6e, e o bloco do Guerreiro da fase 4 na seção 6f.
 
 ### Fase 2 — Persistência e progressão
 
@@ -540,7 +607,7 @@ A arte continua no LPC (trilha de arte). Os sprites dos monstros novos (Fada da 
 
 ### Fase 4 — Segundas classes
 
-Decidida pelo designer depois do playtest v0.3 (2026-11-19 a 2026-11-21). Design completo em `design/segunda-classe-v0.1.md`. **Foco só nas classes**: as áreas novas vêm depois. A T-390 detalha o bloco do Guerreiro; o resto fica neste esboço até o playtest dele.
+Decidida pelo designer depois do playtest v0.3 (2026-11-19 a 2026-11-21). Design completo em `design/segunda-classe-v0.1.md`. **Foco só nas classes**: as áreas novas vêm depois. O bloco do Guerreiro está detalhado na seção 6f (T-390); o resto fica neste esboço até o playtest dele (T-413).
 
 | Bloco | Conteúdo | Estado do design |
 |---|---|---|
