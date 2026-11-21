@@ -26,7 +26,8 @@ namespace Game.Server.Zones;
 /// cargas gastas — T-301; status e ameaça se perdem); o
 /// cliente recebe um <see cref="Welcome"/> novo com a arena da zona e época nova.</item>
 /// <item>Morte: o personagem fica caído até mandar <see cref="RespawnRequest"/>; renasce na zona inicial, cheio, sem perder nada.</item>
-/// <item>Só zonas com jogador avançam; zona vazia fica parada (monstros e renascimentos esperam).</item>
+/// <item>Só zonas com jogador avançam; zona vazia fica parada. Ao voltar a ter jogador, o tempo parado conta para corpos e
+/// renascimentos (T-398).</item>
 /// <item>Personagens com conta são gravados como na sala (T-212) e também ao trocar de zona; a gravação leva zona e posição.</item>
 /// <item>Grupo (T-310): <see cref="PartyManager"/> acima das zonas; cada membro tem o <c>PartyMembership</c> na entidade
 /// (refeito a cada troca de zona) e recebe o <see cref="PartyState"/> quando algo muda. Desconectar tira do grupo; o
@@ -466,7 +467,7 @@ public sealed class WorldServer : ITransportHandler, IGameHost, IPartyHost
         var active = _players.Values.Where(p => p.Zone is not null && p.Entity is not null).Select(p => p.Zone!).Distinct().ToList();
         foreach (var zone in active)
         {
-            zone.Step();
+            zone.Step(_tick); // T-398: recupera o tempo em que ficou vazia
         }
 
         SaveAfterTick(active);

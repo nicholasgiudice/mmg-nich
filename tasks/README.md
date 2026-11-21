@@ -433,6 +433,8 @@ Detalhadas pela T-240 a partir do esboço da seção 7, de `design/first-map-v0.
 | [T-395](fase-3/T-395-saida-do-mundo.md) | Servidor: sair do mundo com espera em combate | VPS | Médio | — |
 | [T-396](fase-3/T-396-menu-do-esc.md) | Cliente: menu do Esc (trocar de personagem, sair do jogo) | Windows | Humano + Médio | 395 |
 | [T-397](fase-3/T-397-tela-de-morte.md) | Cliente: tela de morte com "Retornar à Cidade" | Windows | Humano + Médio | — |
+| **Renascimento** (achado de 2026-11-19) | | | | |
+| [T-398](fase-3/T-398-renascimento-em-zona-vazia.md) | Servidor: renascimento conta o tempo em que a zona ficou vazia | VPS | Médio | — |
 | [T-390](fase-3/T-390-planejar-fase-4.md) | Detalhar a fase 4 em tarefas | VPS | **Forte** | 380 |
 
 ### Ondas de execução
