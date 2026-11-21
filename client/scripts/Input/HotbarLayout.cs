@@ -1,7 +1,7 @@
 namespace MmoRpgClient.Input;
 
 /// <summary>
-/// Barra de atalhos 1–6 configurável pelo jogador (T-081): o id da habilidade (ou do ataque básico, ou do consumível) em cada
+/// Barra de atalhos 1–0 configurável pelo jogador (T-081; 10 espaços desde a T-409): o id da habilidade (ou do ataque básico, ou do consumível) em cada
 /// tecla. Só do cliente: o uso continua indo à autoridade pelo id (<c>UseAbilityIntent</c>). T-323: o tipo do atalho é o do
 /// id (um id de item, <c>consumable.*</c>, é atalho para aquele tipo de consumível e sai como <c>UseItemIntent</c> na primeira
 /// pilha dele; o resto é habilidade). Sem Godot, para os testes.
@@ -9,7 +9,11 @@ namespace MmoRpgClient.Input;
 /// </summary>
 public sealed class HotbarLayout
 {
-    public const int Size = 6;
+    /// <summary>T-409: 10 espaços, nas teclas 1 a 9 e 0 (1–5 da classe base, 6–0 da segunda classe).</summary>
+    public const int Size = 10;
+
+    /// <summary>T-409: espaços por linha na tela (a de baixo tem 1–5, a de cima 6–0).</summary>
+    public const int RowSize = 5;
 
     private const char Separator = '|';
 
@@ -26,7 +30,7 @@ public sealed class HotbarLayout
     public IReadOnlyList<string?> Slots => _slots;
 
     /// <summary>
-    /// Padrão sem configuração salva: as habilidades na ordem dos dados, de 1 a 6. T-323: a poção saiu da barra padrão (fica
+    /// Padrão sem configuração salva: as habilidades na ordem dos dados, a partir do 1. T-323: a poção saiu da barra padrão (fica
     /// na tecla Q, e o jogador pode arrastá-la do inventário para a barra).
     /// </summary>
     public static string?[] Defaults(IReadOnlyList<string> abilities)
@@ -98,6 +102,9 @@ public sealed class HotbarLayout
     }
 
     public void Clear(int slot) => Set(slot, null);
+
+    /// <summary>Tecla do espaço como aparece na barra: "1" a "9" e "0" no décimo (T-409).</summary>
+    public static string KeyLabel(int slot) => ((slot + 1) % 10).ToString(System.Globalization.CultureInfo.InvariantCulture);
 
     /// <summary>Espaço onde o id está, ou -1.</summary>
     public int IndexOf(string id) => Array.IndexOf(_slots, id);
