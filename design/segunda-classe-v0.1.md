@@ -14,7 +14,7 @@ Os números são ponto de partida para o simulador, como em `design/progression-
 | Pontos de habilidade | **40** no nível 40 (1 por nível, como hoje) |
 | Pontos de atributo | **200** no nível 40 |
 | Barra | uma tecla por habilidade: **10 teclas** (1–5 da base, 6–0 da segunda classe), mais ataque básico e poção |
-| Passivas | **algumas habilidades viram passivas**, sem que toda classe precise ter: **Sede de Sangue** (Berserker) e **Mira Firme** (Atirador de Elite), esta pela distância do alvo, sem ficar parado (seção 4.1) |
+| Passivas | **algumas habilidades viram passivas**, sem que toda classe precise ter: **Sede de Sangue** (Berserker), **Mira Firme** (Atirador de Elite), esta pela distância do alvo, sem ficar parado, e **Flecha Envenenada** (Caçador), que envenena em todo acerto (seção 4.1) |
 | Sacerdote | **Bênção** dá atributos e a nova **Graça Veloz** dá velocidade de movimento, as duas para todos perto do Sacerdote (seção 8) |
 | Curva de XP | a dificuldade continua crescendo como hoje, com **monstros mais fortes que dão mais XP** (seção 3) |
 | Guerreiro | Guardião e Berserker |
@@ -81,7 +81,7 @@ Base: os ~775 monstros até o 15 levam de 8 a 9 horas. Um nível alto leva de 2 
 - **Escolha definitiva:** não dá para trocar. A tela de escolha mostra as duas opções com as habilidades e pede confirmação.
 - **Pontos:** a partir do 21, os pontos podem ir para qualquer habilidade, da base ou da segunda classe.
 - **Barra:** 10 teclas. As teclas 6–0 aparecem vazias até a segunda classe.
-- **Passivas** (decisão do designer, 2026-11-20): algumas habilidades podem ser **passivas**, sem que toda classe precise ter uma. A passiva usa pontos e tem NH como as outras, mas não ocupa tecla, não custa Mana e vale sempre. Na tela de habilidades, aparece com uma moldura diferente. Uma classe com passiva usa menos teclas da barra. São passivas a **Sede de Sangue** do Berserker e a **Mira Firme** do Atirador de Elite (seção 4.1).
+- **Passivas** (decisão do designer, 2026-11-20): algumas habilidades podem ser **passivas**, sem que toda classe precise ter uma. A passiva usa pontos e tem NH como as outras, mas não ocupa tecla, não custa Mana e vale sempre. Na tela de habilidades, aparece com uma moldura diferente. Uma classe com passiva usa menos teclas da barra. São passivas a **Sede de Sangue** do Berserker, a **Mira Firme** do Atirador de Elite e a **Flecha Envenenada** do Caçador (seção 4.1).
 
 ### 4.1 Candidatas a passiva
 
@@ -91,11 +91,12 @@ Bom candidato é a habilidade que só reforça o próprio personagem, sem mirar 
 |---|---|---|---|
 | Berserker | **Sede de Sangue** | **sim** (decidida) | 5% a 10% de vida pelo dano, sempre (seção 5) |
 | Atirador de Elite | **Mira Firme** | **sim** (decidida) | mais crítico contra alvos a 6+ tiles e +1 de alcance, sem precisar ficar parado (seção 6) |
+| Caçador | **Flecha Envenenada** | **sim** (sugestão do designer) | todo acerto põe uma pilha de veneno e renova a duração (seção 6) |
 | Guardião | Bastião | não | continua ativa |
 | Sacerdote | Bênção | não | continua ativa |
 | Arcanista | Orbes Arcanos | não | continua ativa (como passiva ficaria forte demais) |
 
-As outras segundas classes (Guardião, Caçador, Piromante, Arcanista, Sacerdote e Inquisidor) e as classes base não têm passiva.
+As outras segundas classes (Guardião, Piromante, Arcanista, Sacerdote e Inquisidor) e as classes base não têm passiva.
 
 **No Core:** a passiva é um estado permanente, aplicado quando o jogador põe o primeiro ponto (como o Frenesi dos monstros). A Mira Firme precisa de uma condição nova: bônus de crítico pela distância até o alvo.
 
@@ -316,19 +317,21 @@ Custo 70, recarga 90 s, só no Atirador.
 
 ### Caçador — venenos e sangramento em vários alvos
 
-Usa um veneno próprio, o **Veneno do Caçador**, que **acumula** (até 3 pilhas no NH1 da Flecha Envenenada) e dura 6 s. Cada pilha causa o dano por segundo da Flecha Envenenada.
+Usa um veneno próprio, o **Veneno do Caçador**, que **acumula** em pilhas. O dano por pilha, o máximo de pilhas e quanto tempo o veneno dura vêm do NH da Flecha Envenenada.
 
-#### Flecha Envenenada — veneno que acumula
+#### Flecha Envenenada (passiva) — todo golpe envenena
 
-Custo 20, recarga 6 s, alcance 9. Dano no impacto e 1 pilha do Veneno do Caçador.
+**Passiva** (sugestão do designer, 2026-11-21). Não ocupa tecla nem custa Mana. **Todo acerto** do Caçador (o Disparo e qualquer habilidade de dano) põe 1 pilha do Veneno do Caçador no alvo e **renova a duração** de todas as pilhas. Quem continua atirando mantém o alvo envenenado; se parar, o veneno acaba depois da duração.
 
-| NH | Impacto | Veneno por pilha | Pilhas no máximo | Perfil nível 21 |
+| NH | Veneno por pilha | Pilhas no máximo | Duração depois do último acerto | Perfil nível 21 |
 |---|---|---|---|---|
-| 1 | dano 5 + 0,5 × ARMA + 1 × DES | 4 + 0,4 × DES por s | 3 | 80 e 29/s por pilha |
-| 2 | dano 6 + 0,6 × ARMA + 1,2 × DES | 4,8 + 0,48 × DES por s | 3 | 95 e 35/s |
-| 3 | dano 7 + 0,7 × ARMA + 1,4 × DES | 5,6 + 0,56 × DES por s | **4** | 111 e 40/s |
-| 4 | dano 8 + 0,8 × ARMA + 1,6 × DES | 6,4 + 0,64 × DES por s | 4 | 127 e 46/s |
-| 5 | dano 9 + 0,9 × ARMA + 1,8 × DES | 7,2 + 0,72 × DES por s | **5** | 143 e 52/s |
+| 1 | 1 + 0,12 × DES por s | 3 | 4 s | 8/s por pilha, 25/s no máximo |
+| 2 | 1,2 + 0,144 × DES por s | 3 | 4 s | 10/s, 30/s no máximo |
+| 3 | 1,4 + 0,168 × DES por s | **4** | **5 s** | 12/s, 47/s no máximo |
+| 4 | 1,6 + 0,192 × DES por s | 4 | 5 s | 14/s, 54/s no máximo |
+| 5 | 1,8 + 0,216 × DES por s | **5** | **6 s** | 15/s, 76/s no máximo |
+
+**Por que o dano por pilha caiu:** na versão ativa, a pilha dava 29 a 52 por segundo, mas a recarga de 6 s deixava manter só uma pilha por alvo. Como passiva, o veneno chega ao máximo de pilhas em poucos disparos e pega em **todos** os alvos que o Caçador acerta, inclusive com a Chuva de Flechas. No máximo, o NH1 soma uns 30% ao dano do Disparo (82 a cada 1 s).
 
 #### Ferida Aberta — sangramento forte, pior se o alvo correr
 
@@ -385,7 +388,7 @@ Custo 80, recarga 90 s, alcance 9, raio 6. Põe pilhas do Veneno do Caçador em 
 | Mira Firme (passiva) | estado permanente | **crítico pela distância até o alvo**, alcance como reforço |
 | Tiro Certeiro | conjuração | **ignorar armadura** |
 | Olho de Falcão | reforço próprio | **crítico garantido** (passa do teto de 40%) |
-| Flecha Envenenada | veneno, pilhas (como o Sangramento) | — |
+| Flecha Envenenada (passiva) | veneno, pilhas (como o Sangramento), estado permanente | **efeito em todo acerto** (hoje um efeito só vale dentro da própria habilidade) |
 | Ferida Aberta | sangramento | **dano maior se o alvo andar** |
 | Nuvem Tóxica | área no chão (como o Campo de Relâmpagos) | — |
 | Flecha Dispersa | dano | **copiar estados para outros monstros** |
@@ -707,6 +710,7 @@ São **40 habilidades novas** (5 por segunda classe), cada uma com dados, regras
 | Unidades que atiram sozinhas | Arcanista (Orbes Arcanos) |
 | Área que acompanha quem anda | Berserker (Tempestade de Aço) |
 | Vida mínima de 1 | Sacerdote (Santuário) |
+| Efeito em todo acerto (passiva que age a cada golpe) | Caçador (Flecha Envenenada) |
 | Ataque básico em área | Inquisidor (Ira Divina) |
 | Barra com 10 teclas, tela de escolha da segunda classe | todas |
 
