@@ -91,7 +91,7 @@ Bom candidato é a habilidade que só reforça o próprio personagem, sem mirar 
 |---|---|---|---|
 | Berserker | **Sede de Sangue** | **sim** (decidida) | 5% a 10% de vida pelo dano, sempre (seção 5) |
 | Atirador de Elite | **Mira Firme** | **sim** (decidida) | mais crítico contra alvos a 6+ tiles e +1 de alcance, sem precisar ficar parado (seção 6) |
-| Caçador | **Flecha Envenenada** | **sim** (sugestão do designer) | todo acerto põe uma pilha de veneno e renova a duração (seção 6) |
+| Caçador | **Flecha Envenenada** | **sim** (decidida) | todo acerto põe uma pilha de veneno e renova a duração; as pilhas ficam (seção 6) |
 | Guardião | Bastião | não | continua ativa |
 | Sacerdote | Bênção | não | continua ativa |
 | Arcanista | Orbes Arcanos | não | continua ativa (como passiva ficaria forte demais) |
@@ -321,7 +321,7 @@ Usa um veneno próprio, o **Veneno do Caçador**, que **acumula** em pilhas. O d
 
 #### Flecha Envenenada (passiva) — todo golpe envenena
 
-**Passiva** (sugestão do designer, 2026-11-21). Não ocupa tecla nem custa Mana. **Todo acerto** do Caçador (o Disparo e qualquer habilidade de dano) põe 1 pilha do Veneno do Caçador no alvo e **renova a duração** de todas as pilhas. Quem continua atirando mantém o alvo envenenado; se parar, o veneno acaba depois da duração.
+**Passiva** (sugestão do designer, 2026-11-21, que manteve as **pilhas**: o veneno acumula em vez de ser um só). Não ocupa tecla nem custa Mana. **Todo acerto** do Caçador (o Disparo e qualquer habilidade de dano) põe 1 pilha do Veneno do Caçador no alvo e **renova a duração** de todas as pilhas. Quem continua atirando mantém o alvo envenenado; se parar, o veneno acaba depois da duração.
 
 | NH | Veneno por pilha | Pilhas no máximo | Duração depois do último acerto | Perfil nível 21 |
 |---|---|---|---|---|
