@@ -60,7 +60,7 @@ A escada por NH continua igual (× 1,0 / 1,2 / 1,4 / 1,6 / 1,8; assinatura × 1,
 | 15 | ~99 | ~9 h |
 | 20 | ~124 | ~14 h |
 | 30 | ~172 | ~32 h |
-| 39 → 40 | ~255 | **~54 h** |
+| 39 → 40 | ~212 | **~54 h** |
 
 Base: os ~775 monstros até o 15 levam de 8 a 9 horas. Um nível alto leva de 2 a 3 horas.
 

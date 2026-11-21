@@ -2,13 +2,15 @@
 
 - **Ambiente:** VPS
 - **Modelo:** **Forte**
-- **Depende de:** T-406 (mesmos arquivos de dano e estados)
+- **Depende de:** T-406 (sai da branch dela: mesmos arquivos de dano e estados)
 - **Libera:** T-408
-- **Áreas que pode alterar:** `src/Game.Core/` (efeitos, estados, dano, áreas, recargas), `src/Game.Data/` (carga e validação dos campos novos), `data/schemas/`, `tests/Game.Core.Tests/`, `tests/Game.Data.Tests/`
+- **Áreas que pode alterar:** `src/Game.Core/` (efeitos, estados, dano, áreas, recargas), `src/Game.Protocol/` (só formato de rede de eventos novos e `ProtocolVersion`), `src/Game.Data/` (carga e validação dos campos novos), `data/schemas/`, `tests/Game.Core.Tests/`, `tests/Game.Data.Tests/`
 
 ## Contexto
 
 Design em `design/segunda-classe-v0.1.md`, seção 5 (Berserker e a tabela de mecânicas). Esta tarefa cria **as mecânicas** no Core, cada uma com teste e com dados de teste. As habilidades de verdade vêm na T-408.
+
+**Base:** crie a branch a partir de `task/T-406-mecanicas-do-guardiao`, que ainda não está na `main` porque subiu `ProtocolVersion` para 16. Se esta tarefa precisar de evento novo na rede, suba o número a partir do da T-406. A T-407 entra na `main` junto com a rodada do protocolo (seção 6f de `tasks/README.md`).
 
 Já existem: estado com mais dano causado, velocidade e dano recebido (o `status.frenzy` dos monstros), metade da duração de controles (`controlDurationMultiplier`), reforço do próximo golpe (`empower`, do Recuo Rápido), vários acertos com intervalo (`hits`), Sangramento e reações depois do dano (`IDamageReaction`).
 

@@ -20,7 +20,7 @@ Design em `design/segunda-classe-v0.1.md`, seção 4.2. Decisão do designer: a 
 
 ## Integração
 
-Sai da branch da T-405. **Integre T-404, T-405 e T-411 juntas** e, na mesma rodada, rode o `deploy-dev.sh` com a ferramenta ligada no servidor de teste e publique o cliente novo (`export-client.ps1` e `deploy-download.ps1`).
+Sai da branch da T-405. **T-406, T-407, T-404, T-405 e T-411 entram juntas** e, na mesma rodada, rode o `deploy-dev.sh` com a ferramenta ligada no servidor de teste e publique o cliente novo (`export-client.ps1` e `deploy-download.ps1`).
 
 ## Critérios de aceite
 
