@@ -38,7 +38,7 @@ Esta tarefa não depende da segunda classe: com 10 espaços, um personagem de ho
 - **Duas linhas (req. 3):** numa linha só, a barra teria 12 quadros (M1, 1–0 e Q), 668 px. Na resolução mínima (1280 × 720), o espaço livre entre a ajuda (410 px) e o log de combate (400 px) é de 454 px, e a barra cobriria os dois. Por isso a barra ficou em **duas linhas**, centralizadas: embaixo M1, 1–5 e Q (388 px, cabe); em cima 6–0, os espaços da segunda classe. `Hud._abilityBar` virou um `VBoxContainer` com duas linhas, e o preenchimento de cada linha saiu para `FillBarRow`.
 - **Remapeamento de teclas:** o cliente não tem tela de remapear teclas, então não há nada a preservar.
 
-**Testes:** `HotbarLayoutTests` atualizados para 10 espaços, mais três novos (barra de 6 salva antes, rótulos de 1 a 0, os últimos espaços aceitam habilidade). 107 testes de cliente passando; `./scripts/check.sh --fast` passa; o projeto do cliente compila sem avisos.
+**Testes:** `HotbarLayoutTests` atualizados para 10 espaços, mais três novos (barra de 6 salva antes, rótulos de 1 a 0, os últimos espaços aceitam habilidade). 107 testes de cliente passando; `./scripts/check.sh` completo passa (os 14 testes de design ignorados são os de antes, inclusive os `PlaytestRebalance.Pending` da T-402); o projeto do cliente compila sem avisos.
 
 **Prévia:** `tasks/reports/interface/barra-10-teclas/guerreiro-1920.png`, Guerreiro nível 1 num encontro local (`--class=class.warrior --encounter=encounter.three_wolves`). A linha de cima aparece vazia porque o Guerreiro de hoje só tem 5 habilidades.
 
