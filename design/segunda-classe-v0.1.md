@@ -24,7 +24,7 @@ Os números são ponto de partida para o simulador, como em `design/progression-
 | Trocar de segunda classe | **não pode**: a escolha é definitiva |
 | Primeira classe a entregar | **Guerreiro**, com as duas segundas classes dele, para validar o sistema |
 | Foco agora | **só as classes** (decisão de 2026-11-21). Áreas e mapas novos, inclusive do 16 ao 20, vêm depois das classes novas |
-| Teste sem conteúdo | uma **ferramenta de desenvolvimento para subir de nível** (botão ou NPC), para o designer testar as classes sem mapa novo (seção 4.2) |
+| Teste sem conteúdo | uma **ferramenta de desenvolvimento para subir de nível**, num **botão no menu do Esc** (decisão de 2026-11-21), para o designer testar as classes sem mapa novo (seção 4.2) |
 
 ## 2. Pontos e níveis de habilidade (NH)
 
@@ -106,7 +106,7 @@ As outras segundas classes (Guardião, Piromante, Arcanista, Sacerdote e Inquisi
 
 Pedido do designer (2026-11-21): enquanto não há áreas do 16 ao 40, ele precisa de um jeito de subir de nível para testar as classes. Hoje não existe: o único atalho de desenvolvimento é o `--dev-login`, que entra sem conta.
 
-**Recomendação: um botão, não um NPC.** O botão fica no menu do Esc (T-396) e não pede mexer no mapa da Cidade. Um NPC pediria editar o mapa no Tiled e um tipo novo de NPC.
+**Decisão: um botão no menu do Esc** (T-396), escolhido pelo designer em 2026-11-21. Não pede mexer no mapa da Cidade; um NPC pediria editar o mapa no Tiled e um tipo novo de NPC.
 
 - **Só em servidor de teste.** O servidor ganha uma opção nova (por exemplo, `--dev-tools`), desligada por padrão. Sem ela, o servidor recusa o pedido e o cliente nem mostra o botão. Antes de abrir o jogo a jogadores de fora, a opção precisa estar desligada.
 - **O que o botão faz:** sobe +1 nível, +5 níveis, ou vai direto ao 20 ou ao 40. O cliente só envia a intenção; quem sobe o nível é o servidor, pelo mesmo caminho da XP normal, para os pontos de atributo e de habilidade saírem iguais aos de quem subiu jogando.
