@@ -582,7 +582,7 @@ Para ter ideia do tamanho: +7 em cada atributo são 35 pontos, o que um personag
 
 Pedido do designer (2026-11-20). Custo 20, recarga 20 s, raio 6 em volta do Sacerdote. Todos os aliados no raio ao lançar (com ele) andam mais rápido pela duração. Ajuda o grupo a fugir, a reposicionar numa luta e a atravessar o mapa.
 
-**Dura 30 s em todos os NH** (pedido do designer, 2026-11-21). Com a recarga de 20 s, dá para manter o efeito ligado o tempo todo.
+**Dura 30 s em todos os NH** (pedido do designer, 2026-11-21). Com a recarga de 20 s, dá para manter o efeito ligado o tempo todo, e isso é **de propósito** (decisão do designer, 2026-11-21): a Graça Veloz é o reforço de viagem e de posicionamento do grupo.
 
 | NH | Velocidade de movimento | Duração | Outros efeitos |
 |---|---|---|---|
