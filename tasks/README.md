@@ -456,7 +456,7 @@ A T-216 (destino do backup, da fase 2) continua fora das ondas. Convém concluí
 - **VPS, em paralelo:** T-385 e T-387.
 - **Windows, uma de cada vez, nesta ordem:** T-383, T-386, T-384, T-381, T-382, T-388. As duas últimas pedem escolha do designer entre opções do PixelLab e podem dividir a mesma rodada de geração.
 - Depois de integrar: subir o servidor na VPS (`scripts/deploy-dev.sh`, por causa da T-385 e da T-387) e publicar um cliente novo (`export-client.ps1` e `deploy-download.ps1`).
-- A T-380 continua aberta; o relatório `playtest-v0.3.md` registra essas correções como achados do playtest.
+- O relatório `playtest-v0.3.md` registra essas correções como achados do playtest. A T-380 foi concluída em 2026-11-19: seguir para a T-390, com ajustes de classe e mudança nos níveis.
 
 **Mini mapa (T-391 a T-393).** O designer pediu em 2026-11-17, ainda durante a T-380, um mini mapa com a posição dos membros do grupo; o essencial é o mini mapa com a posição do jogador. A área de interesse do servidor só alcança uns 40 tiles e os mapas chegam a 200 × 160, por isso o pedido foi dividido:
 - **T-392 (Windows), primeiro:** o mini mapa e o mapa grande da zona, com o jogador e os membros que o cliente já vê. Não mexe em servidor nem protocolo; sai sozinha, com um cliente novo.
