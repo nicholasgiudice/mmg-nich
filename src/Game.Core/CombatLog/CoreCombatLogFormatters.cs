@@ -56,6 +56,12 @@ public static class CoreCombatLogFormatters
             return c.Entry(e, LogCategory.Dano, text, e.Source, e.Target);
         });
 
+        // T-406: desvio de dano (Interceptação, Juramento). O dano no protetor já sai na linha do DamageDealt.
+        f.Register<DamageRedirected>((c, e) => c.Entry(e, LogCategory.Dano,
+            $"{c.Name(e.Protector)} protegeu {c.Name(e.Target)} com {c.SourceLabel(e.StatusId)}: " +
+            $"{CombatLogContext.Number(e.Amount)} de dano desviado",
+            e.Protector, e.Target));
+
         f.Register<HealApplied>((c, e) =>
         {
             var over = e.Overheal > 0 ? $" ({CombatLogContext.Number(e.Overheal)} excedentes)" : "";

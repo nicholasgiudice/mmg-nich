@@ -200,6 +200,25 @@ public sealed record StatusBreakDefinition
     public bool Interrupt { get; init; }
 }
 
+/// <summary>
+/// Desvio de dano (T-406: Interceptação, Juramento; depois o Elo da Vida): parte do dano que quem tem o status receberia
+/// vai para o protetor (quem aplicou o status, ou a entidade que o efeito escolheu). A parte desviada sai do dano antes de
+/// tudo, não passa pelos escudos nem pelos modificadores de quem tem o status, passa pela defesa e pelos modificadores do
+/// protetor e é reduzida por <see cref="Reduction"/>. Dano desviado não é desviado de novo; protetor morto, longe demais
+/// (<see cref="MaxDistance"/>) ou o próprio alvo não recebe nada.
+/// </summary>
+public sealed record RedirectDefinition
+{
+    /// <summary>Fração do dano desviada para o protetor, em (0, 1]. Vários desvios no mesmo alvo somam até 1.</summary>
+    public required double Fraction { get; init; }
+
+    /// <summary>Redução sobre a parte desviada, em [0, 1) (Juramento: o Guardião recebe o dano desviado 40% menor). 0 = nenhuma.</summary>
+    public double Reduction { get; init; }
+
+    /// <summary>Distância máxima (tiles) entre o alvo e o protetor para o desvio valer.</summary>
+    public required double MaxDistance { get; init; }
+}
+
 public sealed record StatusFlags
 {
     public bool Stunned { get; init; }
@@ -218,6 +237,12 @@ public sealed record StatusFlags
     /// Use com a tag <c>control</c> para valerem as regras de controle (rank, retorno decrescente, imunidade).
     /// </summary>
     public bool Feared { get; init; }
+
+    /// <summary>
+    /// Imune a empurrão (T-406, Bastião NH5): <c>displacement</c> do tipo <c>knockback</c> vindo de inimigos (ou sem fonte)
+    /// não move quem tem o status. Empurrão de aliado e avanço próprio continuam valendo.
+    /// </summary>
+    public bool KnockbackImmune { get; init; }
 }
 
 public sealed record PeriodicEffectDefinition
@@ -251,6 +276,9 @@ public sealed record StatusDefinition
 
     /// <summary>Quebra por dano recebido ou por interrupção (T-341).</summary>
     public StatusBreakDefinition? Breaks { get; init; }
+
+    /// <summary>Desvia parte do dano recebido para um protetor (T-406).</summary>
+    public RedirectDefinition? Redirect { get; init; }
 }
 
 public sealed record AreaDefinition

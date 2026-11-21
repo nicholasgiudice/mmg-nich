@@ -42,6 +42,8 @@ public static class ProtocolVersion
     /// participantes (<c>FreeAtTick</c>).
     /// 15 (T-395): mensagens <c>LogoutRequest</c>, <c>LogoutCancel</c> e <c>LogoutStatus</c> (sair do mundo para trocar de
     /// personagem, com espera em combate).
+    /// 16 (T-406): evento <c>DamageRedirected</c> (dano desviado para um protetor) e o status ativo leva quem recebe o
+    /// desvio (<c>RedirectTo</c>).
     /// </summary>
-    public const int Current = 15;
+    public const int Current = 16;
 }

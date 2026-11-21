@@ -515,7 +515,8 @@
       "oneOf": [
         { "type": "object", "additionalProperties": false, "required": ["type", "base"],
           "properties": { "target": { "$ref": "#/$defs/effectTarget" }, "onHit": { "$ref": "#/$defs/onHit" }, "type": { "const": "damage" }, "base": { "type": "number", "minimum": 0 }, "scaling": { "$ref": "#/$defs/scaling" }, "school": { "$ref": "#/$defs/school" },
-            "bonusVsTags": { "type": "object", "additionalProperties": { "type": "number", "exclusiveMinimum": -1 }, "description": "{ \"undead\": 0.5 } = +50% contra alvos com a tag; somam." } } },
+            "bonusVsTags": { "type": "object", "additionalProperties": { "type": "number", "exclusiveMinimum": -1 }, "description": "{ \"undead\": 0.5 } = +50% contra alvos com a tag; somam." },
+            "threatMultiplier": { "type": "number", "minimum": 0, "description": "T-406: ameaça = este número × dano causado, no lugar de rules.threat.damageMultiplier." } } },
         { "type": "object", "additionalProperties": false, "required": ["type", "base"],
           "properties": { "target": { "$ref": "#/$defs/effectTarget" }, "onHit": { "$ref": "#/$defs/onHit" }, "type": { "const": "heal" }, "base": { "type": "number", "minimum": 0 }, "scaling": { "$ref": "#/$defs/scaling" } } },
         { "type": "object", "additionalProperties": false, "required": ["type", "amount", "duration"],
@@ -606,6 +607,17 @@
           "description": "T-341: devolve esta fração do dano direto recebido a quem atacou (sem multiplicadores).",
           "properties": { "fraction": { "type": "number", "minimum": 0, "maximum": 1 } }
         },
+        "redirect": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["fraction", "maxDistance"],
+          "description": "T-406: desvia esta fração do dano recebido para o protetor (quem aplicou o status), que recebe a parte com a defesa dele e reduzida por reduction. Não desvia de novo; protetor morto ou além de maxDistance não recebe nada.",
+          "properties": {
+            "fraction": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 },
+            "reduction": { "type": "number", "minimum": 0, "exclusiveMaximum": 1 },
+            "maxDistance": { "type": "number", "exclusiveMinimum": 0 }
+          }
+        },
         "breaks": {
           "type": "object",
           "additionalProperties": false,
@@ -644,7 +656,8 @@
             "rooted": { "type": "boolean" },
             "silenced": { "type": "boolean" },
             "untargetable": { "type": "boolean", "description": "T-340: não pode ser alvo de habilidades de outros (unidade, área, telegráfo)." },
-            "feared": { "type": "boolean", "description": "T-351: medo; não age e foge do ponto de origem, sem controle do jogador." }
+            "feared": { "type": "boolean", "description": "T-351: medo; não age e foge do ponto de origem, sem controle do jogador." },
+            "knockbackImmune": { "type": "boolean", "description": "T-406: empurrão (knockback) de inimigo não move quem tem o status." }
           }
         }
       }

@@ -41,6 +41,7 @@ public static class EventCodecs
         [typeof(ShieldExpired)] = 23,
         [typeof(Displaced)] = 24,
         [typeof(ChainJumped)] = 25,
+        [typeof(DamageRedirected)] = 26,
         [typeof(StatusApplied)] = 30,
         [typeof(StatusRefreshed)] = 31,
         [typeof(StatusStacked)] = 32,
@@ -123,6 +124,9 @@ public static class EventCodecs
                 w.Id(x.Source); w.Id(x.Entity); w.S(x.SourceId); w.E(x.Kind); w.V(x.From); w.V(x.To); w.F(x.Distance);
                 break;
             case ChainJumped x: w.Id(x.Source); w.Id(x.From); w.Id(x.To); w.S(x.SourceId); w.I(x.Jump); break;
+            case DamageRedirected x:
+                w.Id(x.Attacker); w.Id(x.Target); w.Id(x.Protector); w.S(x.SourceId); w.S(x.StatusId); w.F(x.Amount);
+                break;
 
             case StatusApplied x:
                 w.Id(x.Source); w.Id(x.Target); w.S(x.StatusId); w.I(x.InstanceId); w.I(x.Stacks); w.L(x.ExpiresAtTick);
@@ -216,6 +220,7 @@ public static class EventCodecs
             23 => new ShieldExpired(r.Id(), r.I(), r.F(), r.E<ShieldEndReason>()),
             24 => new Displaced(r.Id(), r.Id(), r.S(), r.E<DisplacementKind>(), r.V(), r.V(), r.F()),
             25 => new ChainJumped(r.Id(), r.Id(), r.Id(), r.S(), r.I()),
+            26 => new DamageRedirected(r.Id(), r.Id(), r.Id(), r.S(), r.S(), r.F()),
 
             30 => new StatusApplied(r.Id(), r.Id(), r.S(), r.I(), r.I(), r.L(), r.I()),
             31 => new StatusRefreshed(r.Id(), r.Id(), r.S(), r.I(), r.I(), r.L()),
