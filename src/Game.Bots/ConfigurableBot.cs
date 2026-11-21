@@ -289,6 +289,9 @@ public sealed class ConfigurableBot(BotPlan plan) : IBotController
                     return true;
                 }
 
+            case AbilityRole.Dash when info.TargetsAllies:
+                return PlanProtect(ctx, info, enemies, force, out target);
+
             case AbilityRole.Dash:
                 return PlanDash(ctx, info, nearest, focus, fleeing, force, out aim);
 
@@ -498,6 +501,28 @@ public sealed class ConfigurableBot(BotPlan plan) : IBotController
 
             _allyHp[a.Id] = hp;
         }
+    }
+
+    /// <summary>
+    /// T-408: avanço até um aliado (Interceptação do Guardião): o aliado (não o próprio bot) ao alcance com um inimigo a
+    /// até 4 tiles, o mais ferido primeiro. Reage depois do tempo de reação.
+    /// </summary>
+    private bool PlanProtect(BotContext ctx, AbilityInfo info, List<Entity> enemies, bool force, out EntityId? target)
+    {
+        target = null;
+        var ally = ctx.Allies()
+            .Where(a => a.Id != ctx.Self.Id && ctx.EdgeDistanceTo(a) <= info.Reach
+                && (force || enemies.Any(e => Vector2.Distance(BotContext.PositionOf(e), BotContext.PositionOf(a)) <= 4 + BotContext.RadiusOf(e))))
+            .OrderBy(BotContext.HealthOf)
+            .ThenBy(a => a.Id.Value)
+            .FirstOrDefault();
+        if (!_reactor.Ready(ctx, info.Id, ally is not null))
+        {
+            return false;
+        }
+
+        target = ally!.Id;
+        return true;
     }
 
     private static bool PlanDash(

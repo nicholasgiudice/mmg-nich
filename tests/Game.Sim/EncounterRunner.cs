@@ -88,6 +88,9 @@ public sealed record RunResult
     public double DamageTaken { get; init; }
     public double DamageDealt { get; init; }
 
+    /// <summary>T-408: <see cref="DamageTaken"/> por classe do jogador (ex.: os outros membros com e sem o Guardião).</summary>
+    public IReadOnlyDictionary<string, double> DamageTakenByClass { get; init; } = new Dictionary<string, double>();
+
     /// <summary>Cura efetiva feita por jogadores e cura excedente (acima da vida máxima).</summary>
     public double Healing { get; init; }
     public double Overheal { get; init; }
@@ -143,7 +146,7 @@ public static class EncounterRunner
 
         var playerIds = setup.Players.Select(p => p.Id).ToHashSet();
         var maxTicks = encounter.Defeat.TimeLimitTicks ?? (int)Math.Round(spec.MaxSeconds * World.TickRate);
-        var m = new Metrics(content, playerIds);
+        var m = new Metrics(content, playerIds, setup.Players.ToDictionary(p => p.Id, p => p.Get<UnitInfo>().DefinitionId));
         var lastPos = setup.Players.ToDictionary(p => p.Id, p => p.Get<Transform>().Position);
 
         var outcome = RunOutcome.Timeout;
@@ -215,8 +218,9 @@ public static class EncounterRunner
         }
     }
 
-    private sealed class Metrics(ContentCatalog content, HashSet<EntityId> players)
+    private sealed class Metrics(ContentCatalog content, HashSet<EntityId> players, Dictionary<EntityId, string> classOf)
     {
+        private readonly SortedDictionary<string, double> _takenByClass = new(StringComparer.Ordinal);
         private readonly Dictionary<string, int> _uses = new(StringComparer.Ordinal);
         private double _taken, _dealt, _heal, _overheal, _gained, _spent, _wasted, _moved;
         private int _atCap, _playerDeaths, _enemyDeaths, _phases, _stationaryUses, _totalUses, _objectivesLost;
@@ -234,6 +238,8 @@ public static class EncounterRunner
                         if (players.Contains(d.Target))
                         {
                             _taken += d.Amount;
+                            var cls = classOf[d.Target];
+                            _takenByClass[cls] = _takenByClass.GetValueOrDefault(cls) + d.Amount;
                         }
 
                         if (players.Contains(d.Source))
@@ -370,6 +376,7 @@ public static class EncounterRunner
                 Outcome = outcome,
                 Ticks = ticks,
                 DamageTaken = _taken,
+                DamageTakenByClass = _takenByClass,
                 DamageDealt = _dealt,
                 Healing = _heal,
                 Overheal = _overheal,
