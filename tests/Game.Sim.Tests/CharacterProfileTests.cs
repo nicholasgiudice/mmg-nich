@@ -33,7 +33,9 @@ public class CharacterProfileTests
     {
         var c = Content.Classes[cls];
         var rules = Content.Rules.Progression;
-        for (var level = 1; level <= rules.MaxLevel; level++)
+        // T-401: até o nível da segunda classe. Acima do 23 a classe base não tem NH para todos os pontos; os perfis com a
+        // segunda classe são da T-402.
+        for (var level = 1; level <= Math.Min(rules.MaxLevel, rules.SecondClassLevel); level++)
         {
             foreach (var plan in new[] { RankProfiles.Focused, RankProfiles.Spread })
             {
