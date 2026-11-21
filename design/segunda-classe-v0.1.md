@@ -12,7 +12,7 @@ Os números são ponto de partida para o simulador, como em `design/progression-
 | Segunda classe | no **nível 20**, com **4 habilidades normais e 1 assinatura**, o mesmo formato da classe base |
 | Habilidades por personagem | **8 normais e 2 assinaturas**: 8 × 5 + 2 × 3 = 46 NH |
 | Pontos de habilidade | **40** no nível 40 (1 por nível, como hoje) |
-| Pontos de atributo | **200** no nível 40 |
+| Pontos de atributo | **200** no nível 40: 5 por nível a partir do 2 (195) e **+5 ao virar segunda classe** (decisão de 2026-11-21) |
 | Barra | uma tecla por habilidade: **10 teclas** (1–5 da base, 6–0 da segunda classe), mais ataque básico e poção |
 | Passivas | **algumas habilidades viram passivas**, sem que toda classe precise ter: **Sede de Sangue** (Berserker), **Mira Firme** (Atirador de Elite), esta pela distância do alvo, sem ficar parado, e **Flecha Envenenada** (Caçador), que envenena em todo acerto (seção 4.1) |
 | Sacerdote | **Bênção** dá atributos e a nova **Graça Veloz** dá velocidade de movimento, as duas para todos perto do Sacerdote (seção 8) |
@@ -23,13 +23,15 @@ Os números são ponto de partida para o simulador, como em `design/progression-
 | Clérigo | Sacerdote e Inquisidor |
 | Trocar de segunda classe | **não pode**: a escolha é definitiva |
 | Primeira classe a entregar | **Guerreiro**, com as duas segundas classes dele, para validar o sistema |
+| Foco agora | **só as classes** (decisão de 2026-11-21). Áreas e mapas novos, inclusive do 16 ao 20, vêm depois das classes novas |
+| Teste sem conteúdo | uma **ferramenta de desenvolvimento para subir de nível** (botão ou NPC), para o designer testar as classes sem mapa novo (seção 4.2) |
 
 ## 2. Pontos e níveis de habilidade (NH)
 
 ### Pontos
 
 - **Habilidade:** 1 por nível, a partir do 1, como hoje: 40 pontos para 46 NH. No 40 dá para ter 87% de tudo, e sobram 6 NH sem preencher. A escolha fica menor que hoje (65%), mas existe.
-- **Atributo:** hoje são 5 por nível **a partir do 2** (70 no nível 15). No 40 isso dá **195**. Para chegar a **200**, a sugestão é dar **+5 ao virar segunda classe**, no nível 20. A outra saída é dar 5 já no nível 1, mas isso muda a calibração do nível 1 (§1 do design de progressão).
+- **Atributo:** hoje são 5 por nível **a partir do 2** (70 no nível 15). No 40 isso dá **195**. Para chegar a **200**, o personagem ganha **+5 ao virar segunda classe**, no nível 20 (decisão de 2026-11-21). A calibração do nível 1 (§1 do design de progressão) não muda.
 
 ### Quando cada NH libera
 
@@ -66,7 +68,7 @@ Base: os ~775 monstros até o 15 levam de 8 a 9 horas. Um nível alto leva de 2 
 
 **Conteúdo:** com a curva atual, o caminho do 20 ao 40 leva umas 40 horas, cerca de 3 vezes o que o primeiro mapa oferece hoje. Isso pede mais áreas, ou conteúdo que se repete bem (elites, masmorras de grupo).
 
-**O primeiro mapa precisa ir até o 20.** Hoje ele termina no 15, com o Vigia. Como a segunda classe só entra no 20, falta conteúdo do 16 ao 20 para a classe base: uma área nova, ou os níveis do primeiro mapa redistribuídos.
+**O primeiro mapa termina no 15**, com o Vigia, e a segunda classe só entra no 20. Por decisão do designer (2026-11-21), as áreas novas, inclusive do 16 ao 20, ficam para **depois das classes**: haverá muitos mapas novos. Até lá, o teste usa a ferramenta de subir de nível (seção 4.2).
 
 ### Outras regras que mudam com o nível 40
 
@@ -99,6 +101,18 @@ Bom candidato é a habilidade que só reforça o próprio personagem, sem mirar 
 As outras segundas classes (Guardião, Piromante, Arcanista, Sacerdote e Inquisidor) e as classes base não têm passiva.
 
 **No Core:** a passiva é um estado permanente, aplicado quando o jogador põe o primeiro ponto (como o Frenesi dos monstros). A Mira Firme precisa de uma condição nova: bônus de crítico pela distância até o alvo.
+
+### 4.2 Ferramenta de teste: subir de nível
+
+Pedido do designer (2026-11-21): enquanto não há áreas do 16 ao 40, ele precisa de um jeito de subir de nível para testar as classes. Hoje não existe: o único atalho de desenvolvimento é o `--dev-login`, que entra sem conta.
+
+**Recomendação: um botão, não um NPC.** O botão fica no menu do Esc (T-396) e não pede mexer no mapa da Cidade. Um NPC pediria editar o mapa no Tiled e um tipo novo de NPC.
+
+- **Só em servidor de teste.** O servidor ganha uma opção nova (por exemplo, `--dev-tools`), desligada por padrão. Sem ela, o servidor recusa o pedido e o cliente nem mostra o botão. Antes de abrir o jogo a jogadores de fora, a opção precisa estar desligada.
+- **O que o botão faz:** sobe +1 nível, +5 níveis, ou vai direto ao 20 ou ao 40. O cliente só envia a intenção; quem sobe o nível é o servidor, pelo mesmo caminho da XP normal, para os pontos de atributo e de habilidade saírem iguais aos de quem subiu jogando.
+- **Desfazer a segunda classe:** como a escolha é definitiva, o teste precisa de um jeito de voltar atrás. A ferramenta também volta o personagem para antes da escolha, devolvendo os pontos gastos nela.
+- **Redistribuir pontos:** a redistribuição na Cidade já existe (1ª vez grátis, depois ouro). A ferramenta pode deixá-la grátis no servidor de teste.
+- O personagem é gravado normalmente; no servidor de teste isso não atrapalha ninguém.
 
 ## 5. Guerreiro em detalhe (primeira classe a entregar)
 
@@ -722,14 +736,15 @@ O designer aprovou o Guardião e o Berserker em 2026-11-20 (seção 5).
 
 1. **Atirador de Elite, Caçador, Piromante, Arcanista, Sacerdote e Inquisidor** como detalhados nas seções 6 a 8.
 2. **Sacerdote:** o designer aprovou a Graça Veloz no lugar do Renovar (2026-11-20) e ainda pode sugerir mais habilidades.
-3. **+5 de atributo ao virar segunda classe**, para fechar 200 no nível 40?
-4. **Conteúdo do 16 ao 20:** área nova no primeiro mapa, ou redistribuir os níveis do mapa atual?
-5. **XP por hora** como meta de cada área (o simulador mede).
+3. **XP por hora** como meta de cada área (o simulador mede), quando as áreas novas forem planejadas.
+
+Decididos em 2026-11-21: **+5 de atributo ao virar segunda classe**; foco só nas classes, com as áreas novas depois; uma **ferramenta para subir de nível** no teste (seção 4.2).
 
 Todos os números das seções 5 a 8 seguem a regra da seção 2 e ainda **não passaram pelo simulador**: devem mudar depois dos testes de design.
 
 ## 11. Para a T-390
 
 - A fase 4 hoje é infraestrutura (CI/CD, observabilidade, testes de carga, produção separada). Nível 40, segunda classe e mapas novos são **conteúdo grande**: cabem melhor numa fase própria, ou numa trilha paralela, do que dentro da fase 4.
-- Ordem natural: (1) regras do nível 40 (pontos, NH por classe) e simulador até o 40; (2) sistema de segunda classe no Core e no cliente (escolha definitiva, barra de 10 teclas) com o **Guerreiro**; (3) conteúdo do 16 ao 20; (4) as outras três classes; (5) mapas novos para o 21 ao 40, com monstros, elites e masmorras.
+- **Foco: só as classes.** Ordem: (1) regras do nível 40 (pontos, NH por classe, +5 de atributo na segunda classe) e simulador até o 40; (2) **ferramenta para subir de nível** no servidor de teste e no menu do Esc (seção 4.2); (3) sistema de segunda classe e passivas no Core e no cliente (escolha definitiva, barra de 10 teclas) com o **Guerreiro**; (4) as outras três classes.
+- **Depois das classes:** as áreas novas (do 16 ao 40), com monstros, elites e masmorras, numa fase própria.
 - Junto com isso, rever as metas dos testes de design e reativar os 19 casos marcados com `PlaytestRebalance.Pending` (`tasks/reports/playtest-v0.3.md`).
