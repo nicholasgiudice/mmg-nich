@@ -77,6 +77,13 @@ Base: os ~775 monstros até o 15 levam de 8 a 9 horas. Um nível alto leva de 2 
 - **Monstros:** a escala por nível (`healthPerLevel 0,4`, `powerPerLevel 0,17`) é linear e nunca foi testada acima do 15.
 - **Itens e defesa:** rever se a armadura chega ao teto de 60% cedo demais.
 
+**Medido na T-402** (`tasks/reports/balance-v0.18.md`, perfil esperado sem segunda classe):
+
+- **Agilidade:** o Arqueiro esperado batia no teto de velocidade de ataque no nível 39 (AGI 101). O teto subiu de +50% para **+60%** (AGI 120); o crítico (AGI 140) o perfil esperado não alcança (30,7% no 40).
+- **Monstros:** a escala linear acompanha o personagem. O tempo para matar um monstro normal do próprio nível fica quase igual do 15 ao 40 (de −28% a +11% por classe), e a XP por minuto cresce com o nível. O dano recebido por luta, em fração da vida, também fica constante.
+- **Defesa:** ninguém chega a 60% contra o mesmo nível; a redução converge para 47% (pesada), 37% (média) e 27% (leve).
+- **Perfil de referência no 21** (§5) confirmado: Guerreiro FOR 62, VIT 60, ARMA 25, Golpe de Espada 87, Golpe Pesado NH5 351.
+
 ## 4. Como a segunda classe funciona
 
 - **Quando:** no nível 20, falando com um mestre da classe na Cidade.
@@ -112,7 +119,8 @@ Pedido do designer (2026-11-21): enquanto não há áreas do 16 ao 40, ele preci
 - **O que o botão faz:** sobe +1 nível, +5 níveis, ou vai direto ao 20 ou ao 40. O cliente só envia a intenção; quem sobe o nível é o servidor, pelo mesmo caminho da XP normal, para os pontos de atributo e de habilidade saírem iguais aos de quem subiu jogando.
 - **Desfazer a segunda classe:** como a escolha é definitiva, o teste precisa de um jeito de voltar atrás. A ferramenta também volta o personagem para antes da escolha, devolvendo os pontos gastos nela.
 - **Redistribuir pontos:** a redistribuição na Cidade já existe (1ª vez grátis, depois ouro). A ferramenta pode deixá-la grátis no servidor de teste.
-- O personagem é gravado normalmente; no servidor de teste isso não atrapalha ninguém.
+- O personagem é gravado normalmente quando o servidor tem banco; no servidor de teste isso não atrapalha ninguém.
+- **Onde testar (decisão do designer, 2026-11-22):** os testes da trilha são **locais, no Windows**, com o servidor rodando `--world --dev-login --dev-tools`, sem deploy na VPS. Sem banco, o personagem começa no nível 1 e não é gravado; a ferramenta resolve isso subindo de nível na hora. Comando em `tasks/README.md`, seção 6f.
 
 ## 5. Guerreiro em detalhe (primeira classe a entregar)
 

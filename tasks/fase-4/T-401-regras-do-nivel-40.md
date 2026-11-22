@@ -40,4 +40,37 @@ Usar as regras no Core (T-403), simulador e metas (T-402), qualquer habilidade n
 
 ## Resultado
 
-_(preencher ao concluir)_
+Concluída em 2026-11-21, na VPS.
+
+**Dados e schema**
+- `data/rules.json`, `progression`: `maxLevel` 15 → **40**; regras novas `secondClassLevel` 20, `secondClassAttributePoints` 5, `secondClassRankLevels` [21, 24, 27, 30, 33] e `secondClassSignatureRankLevels` [35, 37, 40]. Curva de XP e listas da base sem mudança.
+- `data/schemas/game-data.schema.json`: os quatro campos novos, com descrição.
+
+**Core (`ProgressionRules`, `src/Game.Core/Definitions/Progression.cs`)**
+- Propriedades `SecondClassLevel`, `SecondClassAttributePoints`, `SecondClassRankLevels`, `SecondClassSignatureRankLevels`, com os números do design como padrão. O padrão de `MaxLevel` também passou a 40.
+- `RequiredLevel(signature, rank, secondClass)`: escolhe a lista certa; o `RequiredLevel(signature, rank)` de antes continua e chama a nova com `secondClass: false`.
+- `AttributePointsAt(level, secondClassChosen)`: soma os 5 pontos quando a segunda classe foi escolhida; o de um parâmetro não muda.
+- Nada no Core usa as regras novas ainda (T-403). `Leveling` já respeita `MaxLevel`, então personagens sobem até o 40 com a classe base.
+
+**Validação (`GameDataValidator.ValidateProgression`)**
+- `secondClassLevel` em 1..`maxLevel` e menor que `secondClassRankLevels[0]`; `secondClassAttributePoints` ≥ 0; as duas listas novas passam pela mesma checagem das listas da base (5 e 3 itens no mínimo, em 1..`maxLevel`, sem diminuir).
+- Decisão: "crescentes" usa a regra que já valia para as listas da base (um NH não pode exigir nível menor que o anterior; nível igual é aceito), para as quatro listas seguirem a mesma regra.
+- Consequência: um `maxLevel` menor que 40 sem trocar as listas da segunda classe agora é erro (as listas passam do teto). É de propósito: as regras da segunda classe precisam caber no jogo.
+
+**Site:** a página de classes (`Pages.Classes.cs`, "Regras de todas as classes") mostra o nível da segunda classe, os pontos extras e os níveis por NH das normais e da assinatura da segunda classe.
+
+**Documentos:** `design/progression-v0.1.md` (nota da fase 4 no topo; §2 nível máximo 40 e tabela de XP até o 39 → 40; §3 pontos de atributo 195 + 5 = 200; §7 40 pontos, 46 NH e tabela de NH da base e da segunda classe), `design/classes-v0.1.md` (seção nova "Segunda classe", com as opções de cada classe e link para `design/segunda-classe-v0.1.md`; regra de balanceamento com 40 pontos para 46 NH) e `design/skills-v0.1.md` (escada de nível por NH da segunda classe e onde ficam as tabelas dela).
+
+**Testes**
+- Novos: `ProgressionTests.Second_class_rules_follow_the_design` (listas, `RequiredLevel` com e sem segunda classe, NH fora da lista, 195/200 pontos de atributo, 40 de habilidade); `Xp_curve_follows_the_design_table` agora checa `XpToNext(39)` = 49 708 e `XpToNext(40)` = 0; `ProgressionLoaderTests` checa os padrões novos e tem um caso de erro para cada regra nova (nível 0, acima do máximo, não menor que o NH1, pontos negativos, lista curta, lista que diminui, nível fora de 1..40, `maxLevel` 30 com as listas padrão).
+- Ajustados só porque o nível máximo mudou:
+  - `ProgressionTests.Big_xp_climbs_several_levels_and_stops_at_the_cap`: o teto agora é 40 (39 subidas, 195 pontos de atributo, 40 de habilidade); 1 000 000 de XP ainda passa dos 717 404 até o 40.
+  - `ProgressionTests.Invalid_builds_are_refused`: o caso "nível acima do máximo" passou de 16 para 41.
+  - `ProgressionLoaderTests`: o teste de carga usava `maxLevel` 20, que agora fica abaixo das listas da segunda classe; passou para 45. O caso `signatureRankLevels` [12, 13, 16] (16 passava do teto 15) virou [12, 13, 41]. O teste dos dados reais espera `maxLevel` 40.
+  - `Game.Sim.Tests.CharacterProfileTests.Every_level_gives_a_valid_build_that_spends_all_points`: ia até `MaxLevel`, e do 24 em diante a classe base (23 NH) não tem onde gastar todos os pontos. O laço agora para em `SecondClassLevel` (20); perfis com segunda classe são da T-402.
+- `./scripts/check.sh` completo passando (inclui `Game.Design.Tests`).
+
+**Desvios e observações**
+- Áreas: tudo dentro das listadas (`tests/Game.Sim.Tests` está em `tests/`). Não mexi em efeitos, estados nem `DamageResolver`.
+- `design/segunda-classe-v0.1.md` §3 diz "~255" monstros normais para ir do 39 ao 40; pela curva são ~212 (49 708 ÷ (6 × 39)). Os outros números dessa tabela batem. Não corrigi porque o arquivo não está nas áreas desta tarefa: fica para quem mexer nele.
+- `CharacterProfiles.BuildFor` (simulador) aceita nível até `MaxLevel`, mas acima do 23 não gasta todos os pontos de habilidade. Nenhum perfil atual passa do 15; isso fica para a T-402.

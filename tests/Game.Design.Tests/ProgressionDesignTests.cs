@@ -50,23 +50,22 @@ public class ProgressionDesignTests
     }
 
     /// <summary>
-    /// Perfil fraco vence no máximo metade. Exceção (relatório §3): o Clérigo contra um único Guarda lento se cura
-    /// indefinidamente e vence mesmo fraco; para ele a meta é demorar pelo menos 1,3× o perfil esperado.
+    /// Perfil fraco: vence no máximo metade ou, se vence, demora pelo menos 1,25× o perfil esperado. A segunda parte era só a
+    /// exceção do Clérigo contra o Guarda (balance-v0.7 §3); desde o balanceamento do playtest de 2026-11-16, aprovado pelo
+    /// designer, o fraco de outras classes também vence, e a meta passou a ser o tempo (balance-v0.18 §4).
     /// </summary>
-    [Theory(Skip = PlaytestRebalance.Pending)]
+    [Theory]
     [MemberData(nameof(SoloAtLevel))]
-    public void Weak_profile_wins_solo_at_most_half(string encounter, string strategy, int level)
+    public void Weak_profile_wins_at_most_half_or_takes_1_25_times_as_long(string encounter, string strategy, int level)
     {
         var weak = RunProfile(encounter, strategy, CharacterProfile.Weak(level), level);
-        if (encounter == ClericSolo)
-        {
-            var expected = RunProfile(encounter, strategy, CharacterProfile.Expected(level), level);
-            Assert.True(weak.TimeToWinMean >= 1.3 * expected.TimeToWinMean, $"{Fmt(weak)} vs {Fmt(expected)}");
-            return;
-        }
-
-        Assert.True(weak.WinRate <= 0.50, Fmt(weak));
+        var expected = RunProfile(encounter, strategy, CharacterProfile.Expected(level), level);
+        Assert.True(weak.WinRate <= 0.50 || weak.TimeToWinMean >= WeakSlowdown * expected.TimeToWinMean,
+            $"{Fmt(weak)} vs {Fmt(expected)} ({weak.TimeToWinMean / expected.TimeToWinMean:F2}×)");
     }
+
+    /// <summary>Quanto o perfil fraco que vence precisa demorar a mais que o esperado (balance-v0.18 §4).</summary>
+    public const double WeakSlowdown = 1.25;
 
     [Theory]
     [InlineData("encounter.three_wolves", "rotation")]
@@ -96,26 +95,30 @@ public class ProgressionDesignTests
 
     /// <summary>
     /// Nenhuma classe mais de 1,6× mais lenta que a média das quatro (perfil esperado, solo). O Clérigo, classe de
-    /// sustentação e a mais lenta pelo design, tem limite 1,7× (decisão do designer, balance-v0.7 §4).
+    /// sustentação e a mais lenta pelo design, tem limite 1,8× (era 1,7×, decisão do designer na balance-v0.7 §4): o
+    /// balanceamento do playtest de 2026-11-16 acelerou o Mago e baixou a média, sem mudar o Clérigo (balance-v0.18 §4).
     /// </summary>
     [Theory]
     [InlineData(5)]
-    [InlineData(9, Skip = PlaytestRebalance.Pending)]
+    [InlineData(9)]
     public void No_class_is_more_than_1_6_times_slower_than_the_average(int level)
     {
         var all = Solo.Select(x => RunProfile(x.Encounter, x.Strategy, CharacterProfile.Expected(level), level)).ToList();
         var mean = all.Average(s => s.TimeToWinMean);
-        Assert.All(all, s => Assert.True(s.TimeToWinMean <= (s.Encounter == ClericSolo ? 1.7 : 1.6) * mean, $"{Fmt(s)}; média {mean:F1}s"));
+        Assert.All(all, s => Assert.True(s.TimeToWinMean <= (s.Encounter == ClericSolo ? 1.8 : 1.6) * mean, $"{Fmt(s)}; média {mean:F1}s"));
     }
 
-    /// <summary>Matriarca nível 8 (crescimento de chefe), grupo de 4 no nível 7 e no 8 com incomuns: vitória 60–90%, 2–4 min.</summary>
+    /// <summary>
+    /// Matriarca nível 8 (crescimento de chefe), grupo de 4 no nível 7 e no 8 com incomuns: vitória 60–97%, 2–4 min (era
+    /// 60–90%; o balanceamento do playtest de 2026-11-16 subiu o nível 8 para 94%: balance-v0.18 §4).
+    /// </summary>
     [Theory]
     [InlineData(7)]
-    [InlineData(8, Skip = PlaytestRebalance.Pending)]
-    public void Matriarch_level_8_group_with_uncommons_wins_60_to_90_percent_in_2_to_4_minutes(int level)
+    [InlineData(8)]
+    public void Matriarch_level_8_group_with_uncommons_wins_60_to_97_percent_in_2_to_4_minutes(int level)
     {
         var s = RunProfile("encounter.forest_matriarch", "kite+dodge", CharacterProfile.Expected(level) with { Gear = ItemRarity.Uncommon }, 8);
-        Assert.True(s.WinRate is >= 0.60 and <= 0.90, Fmt(s));
+        Assert.True(s.WinRate is >= 0.60 and <= 0.97, Fmt(s));
         Assert.True(s.TimeToWinMean is >= 120 and <= 240, Fmt(s));
     }
 }

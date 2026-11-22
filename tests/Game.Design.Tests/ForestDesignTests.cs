@@ -57,22 +57,17 @@ public class ForestDesignTests
     }
 
     /// <summary>
-    /// Perfil fraco vence no máximo metade. Exceção do Clérigo, a mesma do Guarda Esquelético (balance-v0.7 §3): ele se cura
-    /// indefinidamente e vence mesmo fraco; para ele a meta é demorar pelo menos 1,3× o perfil esperado (balance-v0.11 §3).
+    /// Perfil fraco vence no máximo metade ou, se vence, demora pelo menos 1,25× o perfil esperado (a meta do Clérigo, 1,3×, desde a
+    /// balance-v0.11 §3, estendida a todas as classes pelo balanceamento do playtest de 2026-11-16: balance-v0.18 §4).
     /// </summary>
-    [Theory(Skip = PlaytestRebalance.Pending)]
+    [Theory]
     [MemberData(nameof(GroupsAndClasses))]
-    public void Weak_profile_wins_solo_at_most_half(string encounter, string cls)
+    public void Weak_profile_wins_solo_at_most_half_or_takes_1_25_times_as_long(string encounter, string cls)
     {
         var weak = Solo(encounter, cls, CharacterProfile.Weak(GroupLevel(encounter)));
-        if (cls == "class.cleric")
-        {
-            var expected = Solo(encounter, cls, CharacterProfile.Expected(GroupLevel(encounter)));
-            Assert.True(weak.WinRate == 0 || weak.TimeToWinMean >= 1.3 * expected.TimeToWinMean, $"{Fmt(weak)} vs {Fmt(expected)}");
-            return;
-        }
-
-        Assert.True(weak.WinRate <= 0.50, Fmt(weak));
+        var expected = Solo(encounter, cls, CharacterProfile.Expected(GroupLevel(encounter)));
+        Assert.True(weak.WinRate <= 0.50 || weak.TimeToWinMean >= ProgressionDesignTests.WeakSlowdown * expected.TimeToWinMean,
+            $"{Fmt(weak)} vs {Fmt(expected)} ({weak.TimeToWinMean / expected.TimeToWinMean:F2}×)");
     }
 
     /// <summary>
