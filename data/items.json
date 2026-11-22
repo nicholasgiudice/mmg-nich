@@ -18,6 +18,22 @@
       "price": 15
     },
     {
+      "id": "consumable.greater_healing_potion",
+      "name": "Poção de Cura Maior",
+      "type": "consumable",
+      "stack": 20,
+      "useAbility": "item.greater_healing_potion",
+      "price": 45
+    },
+    {
+      "id": "consumable.greater_mana_potion",
+      "name": "Poção de Mana Maior",
+      "type": "consumable",
+      "stack": 20,
+      "useAbility": "item.greater_mana_potion",
+      "price": 45
+    },
+    {
       "id": "weapon.sword",
       "name": "Espada",
       "slot": "weapon",

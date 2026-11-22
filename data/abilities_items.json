@@ -16,6 +16,22 @@
       "cooldown": 12,
       "targeting": { "type": "self" },
       "effects": [{ "type": "resource", "resource": "mana", "amount": 40 }]
+    },
+    {
+      "id": "item.greater_healing_potion",
+      "name": "Poção de Cura Maior",
+      "tags": ["consumable", "heal"],
+      "cooldown": 12,
+      "targeting": { "type": "self" },
+      "effects": [{ "type": "heal", "base": 180, "scaling": { "vit": 5 } }]
+    },
+    {
+      "id": "item.greater_mana_potion",
+      "name": "Poção de Mana Maior",
+      "tags": ["consumable", "mana"],
+      "cooldown": 12,
+      "targeting": { "type": "self" },
+      "effects": [{ "type": "resource", "resource": "mana", "amount": 120 }]
     }
   ]
 }

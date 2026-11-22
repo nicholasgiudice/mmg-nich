@@ -92,6 +92,31 @@ public class PrototypeContentTests
         }
     }
 
+    [Theory]
+    [InlineData("healing")]
+    [InlineData("mana")]
+    public void Greater_potion_gives_more_than_the_minor_one_and_costs_more(string kind)
+    {
+        var db = Db();
+        var minor = db.Items[$"consumable.minor_{kind}_potion"];
+        var greater = db.Items[$"consumable.greater_{kind}_potion"];
+        Assert.Equal((ItemKind.Consumable, $"item.greater_{kind}_potion", 20), (greater.Type, greater.UseAbility, greater.Stack));
+        Assert.True(greater.Price > minor.Price);
+
+        var ability = db.Abilities[greater.UseAbility!];
+        Assert.Equal(12 * 20, ability.CooldownTicks);
+        Assert.IsType<SelfTargeting>(ability.Targeting);
+        Assert.True(Amount(ability) > Amount(db.Abilities[minor.UseAbility!]));
+    }
+
+    /// <summary>Valor base do efeito de poção (cura ou recurso).</summary>
+    private static double Amount(AbilityDefinition ability) => Assert.Single(ability.Effects) switch
+    {
+        HealEffect h => h.Base,
+        ResourceEffect r => r.Amount,
+        var e => throw new InvalidOperationException($"efeito inesperado: {e}"),
+    };
+
     [Fact]
     public void Warrior_taunt_and_cleric_purify_are_wired_as_designed()
     {
