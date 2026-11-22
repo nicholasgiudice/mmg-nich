@@ -103,6 +103,29 @@ public sealed class HotbarLayout
 
     public void Clear(int slot) => Set(slot, null);
 
+    /// <summary>
+    /// T-410: põe <paramref name="id"/> no primeiro espaço vazio a partir de <paramref name="from"/> (a segunda classe usa 6 a 0).
+    /// Nada muda se ele já está na barra ou se não há espaço vazio. Devolve o espaço, ou -1.
+    /// </summary>
+    public int PlaceInFirstEmpty(string id, int from)
+    {
+        if (IndexOf(id) >= 0)
+        {
+            return -1;
+        }
+
+        for (var i = Math.Max(0, from); i < Size; i++)
+        {
+            if (_slots[i] is null)
+            {
+                Set(i, id);
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
     /// <summary>Tecla do espaço como aparece na barra: "1" a "9" e "0" no décimo (T-409).</summary>
     public static string KeyLabel(int slot) => ((slot + 1) % 10).ToString(System.Globalization.CultureInfo.InvariantCulture);
 
