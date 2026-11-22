@@ -21,6 +21,9 @@ services:
       MMO_DEV_LOGIN: ${GAME_DEV_LOGIN:-true}
       # Mundo aberto (T-214): Cidade + Campos em vez da sala de encontro (--encounter, --bots e --restart-after não valem).
       MMO_WORLD: ${GAME_WORLD:-false}
+      # Ferramenta de teste (T-405): subir de nível e desfazer a segunda classe pelo menu do Esc. Só em servidor de teste,
+      # ligada por GAME_DEV_TOOLS=true no deploy/.env; nunca num servidor aberto a jogadores.
+      MMO_DEV_TOOLS: ${GAME_DEV_TOOLS:-false}
     depends_on:
       migrate:
         condition: service_completed_successfully

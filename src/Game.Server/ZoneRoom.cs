@@ -186,6 +186,13 @@ public sealed class ZoneRoom : ITransportHandler, IGameHost
             case SnapshotAck ack:
                 c.View.Ack(ack.Epoch, ack.Tick);
                 break;
+            case DevToolRequest tool when c.Slot is not null:
+                if (c.DevRequests.Count < Zones.WorldServer.MaxDevRequests)
+                {
+                    c.DevRequests.Enqueue(tool.Action); // T-405: aplicado no próximo tick, antes das intenções
+                }
+
+                break;
             case Ping ping:
                 Send(peer, new Pong(ping.ClientTimeMs, World.Tick));
                 break;
@@ -297,6 +304,7 @@ public sealed class ZoneRoom : ITransportHandler, IGameHost
                 continue; // caiu enquanto carregava
             }
 
+            r = r.WithoutMissingSecondClass(_content, _log);
             string? error = r.Outcome switch
             {
                 LoadOutcome.Loaded when !_content.Classes.TryGetValue(r.ClassId, out var cls) || cls.Attributes is null => $"classe {r.ClassId} sem progressão",
@@ -364,6 +372,7 @@ public sealed class ZoneRoom : ITransportHandler, IGameHost
             var (entity, reason) = ev switch
             {
                 LevelUp l => (l.Entity, "nível"),
+                SecondClassChosen s => (s.Entity, "segunda classe"), // T-404: escolha definitiva gravada logo
                 ItemPickedUp p when World.Find(p.Entity)?.TryGet<Inventory>()?[p.InventorySlot] is { Rarity: >= ItemRarity.Rare } => (p.Entity, "item raro"),
                 Core.Combat.Shops.ItemBought b => (b.Entity, "compra"), // T-321
                 Core.Combat.Shops.ItemSold s => (s.Entity, "venda"),
@@ -419,10 +428,11 @@ public sealed class ZoneRoom : ITransportHandler, IGameHost
         c.Slot = index;
         c.LastApplied = 0;
         c.Pending.Clear();
+        c.DevRequests.Clear();
         c.View.Reset(_epoch);
         c.LastPosition = null;
         RebuildBots();
-        Send(c.Peer, new Welcome(slot.Entity!.Id, World.Tick, _encounter.Id, _encounter.Arena, _epoch));
+        Send(c.Peer, new Welcome(slot.Entity!.Id, World.Tick, _encounter.Id, _encounter.Arena, _epoch, DevTools: _options.DevTools));
     }
 
     /// <summary>
@@ -491,9 +501,11 @@ public sealed class ZoneRoom : ITransportHandler, IGameHost
             if (c.Slot is not { } index || _slots[index].Entity is not { } entity)
             {
                 c.Pending.Clear();
+                c.DevRequests.Clear();
                 continue;
             }
 
+            ApplyDevTools(c, entity);
             for (var n = 0; n < MaxIntentsPerTick && c.Pending.TryDequeue(out var msg); n++)
             {
                 // A entidade vem da conexão, nunca da mensagem (T-103).
@@ -512,6 +524,35 @@ public sealed class ZoneRoom : ITransportHandler, IGameHost
         SaveAfterTick();
         Broadcast();
         CheckEnd();
+    }
+
+    /// <summary>
+    /// T-405: pedidos da ferramenta de teste, como no mundo aberto (<c>WorldServer</c>): sem <c>--dev-tools</c> recusa e
+    /// registra quem pediu; aceito, grava o personagem com conta. Responde sempre com <see cref="DevToolResult"/>.
+    /// </summary>
+    private void ApplyDevTools(Connection c, Entity entity)
+    {
+        while (c.DevRequests.TryDequeue(out var action))
+        {
+            DevToolOutcome outcome;
+            if (!_options.DevTools)
+            {
+                outcome = DevToolOutcome.Disabled;
+                _log.Warning("Ferramenta de teste recusada (servidor sem --dev-tools): {Name} (conexão {Peer}, personagem {Character}) pediu {Action}",
+                    c.Name, c.Peer, c.CharacterId?.ToString() ?? "sem conta", action);
+            }
+            else
+            {
+                outcome = DevTools.Apply(World, entity, action);
+                _log.Information("Ferramenta de teste: {Name} pediu {Action} → {Outcome} (nível {Level})", c.Name, action, outcome, DevTools.LevelOf(entity));
+                if (outcome == DevToolOutcome.Done)
+                {
+                    SaveNow(c, "ferramenta de teste");
+                }
+            }
+
+            Send(c.Peer, new DevToolResult(action, outcome, DevTools.LevelOf(entity)));
+        }
     }
 
     /// <summary>Vitória (inimigos mortos), derrota (jogadores mortos) ou tempo esgotado; recomeça depois do intervalo.</summary>
@@ -698,6 +739,9 @@ public sealed class ZoneRoom : ITransportHandler, IGameHost
         public string Name { get; set; } = "";
         public int? Slot { get; set; }
         public Queue<IntentMessage> Pending { get; } = new();
+
+        /// <summary>T-405: pedidos da ferramenta de teste ainda não aplicados.</summary>
+        public Queue<DevToolAction> DevRequests { get; } = new();
         public uint LastApplied { get; set; }
         public bool AckDue { get; set; }
 

@@ -1,4 +1,6 @@
 using System.Collections.Concurrent;
+using Game.Core.Combat;
+using Game.Core.Definitions;
 using Game.Persistence;
 using Serilog;
 
@@ -16,7 +18,26 @@ public enum LoadOutcome
 }
 
 /// <summary>Resultado de um carregamento pedido por <see cref="CharacterPersistence.BeginLoad"/>, entregue à thread do loop.</summary>
-public sealed record LoadedCharacter(int Peer, Guid CharacterId, LoadOutcome Outcome, string Name, string ClassId, CharacterState? State, string? Error);
+public sealed record LoadedCharacter(int Peer, Guid CharacterId, LoadOutcome Outcome, string Name, string ClassId, CharacterState? State, string? Error)
+{
+    /// <summary>
+    /// T-404: personagem carregado com uma segunda classe que não existe mais na classe dele (dados mudaram) entra sem ela,
+    /// com os pontos devolvidos (<see cref="CharacterState.WithoutMissingSecondClass"/>), e com aviso no log. O próximo
+    /// salvamento grava o documento corrigido.
+    /// </summary>
+    public LoadedCharacter WithoutMissingSecondClass(ContentCatalog content, ILogger log)
+    {
+        if (this is not { Outcome: LoadOutcome.Loaded, State: { } state } || !content.Classes.TryGetValue(ClassId, out var cls)
+            || state.WithoutMissingSecondClass(cls, content.Rules.Progression, out var dropped) is not { } fixedState)
+        {
+            return this;
+        }
+
+        log.Warning("Segunda classe {SecondClass} do personagem {Character} ({Name}) não existe mais em {Class}: removida, pontos devolvidos",
+            dropped, CharacterId, Name, ClassId);
+        return this with { State = fixedState };
+    }
+}
 
 /// <summary>
 /// Carrega e grava personagens fora da thread do loop (T-212). O loop só chama <see cref="BeginLoad"/>,

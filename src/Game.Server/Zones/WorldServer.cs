@@ -58,6 +58,9 @@ public sealed class WorldServer : ITransportHandler, IGameHost, IPartyHost
 
     public const int MaxIntentsPerTick = 16;
 
+    /// <summary>T-405: pedidos da ferramenta de teste guardados por conexão até o próximo tick; o resto é descartado.</summary>
+    public const int MaxDevRequests = 8;
+
     /// <summary>
     /// T-395: prazo de segurança para a gravação da saída (banco travado). Passado, vai o <see cref="LogoutState.Done"/> mesmo
     /// assim, com erro no log; a gravação continua na fila.
@@ -233,6 +236,13 @@ public sealed class WorldServer : ITransportHandler, IGameHost, IPartyHost
             case RespawnRequest:
                 p.WantsRespawn = true;
                 break;
+            case DevToolRequest tool when p.Entity is not null:
+                if (p.DevRequests.Count < MaxDevRequests)
+                {
+                    p.DevRequests.Enqueue(tool.Action); // T-405: aplicado no próximo tick, antes das intenções
+                }
+
+                break;
             case PartyInvite invite when p.Entity is not null:
                 _parties.Invite(peer, FindInvitee(p, invite), _tick);
                 break;
@@ -342,6 +352,7 @@ public sealed class WorldServer : ITransportHandler, IGameHost, IPartyHost
                 continue; // caiu enquanto carregava
             }
 
+            r = r.WithoutMissingSecondClass(_content, _log);
             string? error = r.Outcome switch
             {
                 LoadOutcome.Loaded when !_content.Classes.TryGetValue(r.ClassId, out var cls) || cls.Attributes is null => $"classe {r.ClassId} sem progressão",
@@ -394,6 +405,7 @@ public sealed class WorldServer : ITransportHandler, IGameHost, IPartyHost
         p.View.Reset(p.Epoch);
         p.LastPosition = null;
         p.Pending.Clear();
+        p.DevRequests.Clear();
         p.AckDue = false;
         p.WantsRespawn = false;
         p.RefusedGate = null;
@@ -409,7 +421,7 @@ public sealed class WorldServer : ITransportHandler, IGameHost, IPartyHost
             MarkParty(p.Peer);
         }
 
-        Send(p.Peer, new Welcome(p.Entity.Id, zone.World.Tick, zone.Id, zone.Arena.Id, p.Epoch, zone.InstanceId));
+        Send(p.Peer, new Welcome(p.Entity.Id, zone.World.Tick, zone.Id, zone.Arena.Id, p.Epoch, zone.InstanceId, _options.DevTools));
         if (p.Logout == LogoutPhase.Waiting)
         {
             Send(p.Peer, new LogoutStatus(LogoutState.Waiting, WaitingTick(p))); // T-395: levado de zona na espera; o tick é da zona nova
@@ -448,9 +460,11 @@ public sealed class WorldServer : ITransportHandler, IGameHost, IPartyHost
             if (p.Entity is not { } entity)
             {
                 p.Pending.Clear();
+                p.DevRequests.Clear();
                 continue;
             }
 
+            ApplyDevTools(p, entity);
             for (var n = 0; n < MaxIntentsPerTick && p.Pending.TryDequeue(out var msg); n++)
             {
                 // A entidade vem da conexão, nunca da mensagem (T-103).
@@ -481,6 +495,36 @@ public sealed class WorldServer : ITransportHandler, IGameHost, IPartyHost
 
         SendPartyStates();
         SendPartyPositions();
+    }
+
+    /// <summary>
+    /// T-405: pedidos da ferramenta de teste. Sem <c>--dev-tools</c>, recusa e registra quem pediu. Aceito, grava o
+    /// personagem (com conta; no <c>--dev-login</c> só muda o personagem em memória). Responde sempre com
+    /// <see cref="DevToolResult"/>. Os eventos publicados aqui (entre ticks) saem com o tick seguinte.
+    /// </summary>
+    private void ApplyDevTools(Player p, Entity entity)
+    {
+        while (p.DevRequests.TryDequeue(out var action))
+        {
+            DevToolOutcome outcome;
+            if (!_options.DevTools)
+            {
+                outcome = DevToolOutcome.Disabled;
+                _log.Warning("Ferramenta de teste recusada (servidor sem --dev-tools): {Name} (conexão {Peer}, personagem {Character}) pediu {Action}",
+                    p.Name, p.Peer, p.CharacterId?.ToString() ?? "sem conta", action);
+            }
+            else
+            {
+                outcome = DevTools.Apply(p.Zone!.World, entity, action);
+                _log.Information("Ferramenta de teste: {Name} pediu {Action} → {Outcome} (nível {Level})", p.Name, action, outcome, DevTools.LevelOf(entity));
+                if (outcome == DevToolOutcome.Done)
+                {
+                    _ = SaveNow(p, "ferramenta de teste");
+                }
+            }
+
+            Send(p.Peer, new DevToolResult(action, outcome, DevTools.LevelOf(entity)));
+        }
     }
 
     private void MoveThroughGatesAndRespawn()
@@ -734,6 +778,7 @@ public sealed class WorldServer : ITransportHandler, IGameHost, IPartyHost
                 var (entity, reason) = ev switch
                 {
                     LevelUp l => (l.Entity, "nível"),
+                    SecondClassChosen s => (s.Entity, "segunda classe"), // T-404: escolha definitiva gravada logo
                     ItemPickedUp i when zone.World.Find(i.Entity)?.TryGet<Inventory>()?[i.InventorySlot] is { Rarity: >= ItemRarity.Rare } => (i.Entity, "item raro"),
                     Core.Combat.Shops.ItemBought b => (b.Entity, "compra"), // T-321: ouro e inventário gravados logo
                     Core.Combat.Shops.ItemSold s => (s.Entity, "venda"),
@@ -1064,6 +1109,9 @@ public sealed class WorldServer : ITransportHandler, IGameHost, IPartyHost
         public int Epoch { get; set; }
         public Vector2? LastPosition { get; set; }
         public Queue<IntentMessage> Pending { get; } = new();
+
+        /// <summary>T-405: pedidos da ferramenta de teste ainda não aplicados.</summary>
+        public Queue<DevToolAction> DevRequests { get; } = new();
         public uint LastApplied { get; set; }
         public bool AckDue { get; set; }
         public bool WantsRespawn { get; set; }
