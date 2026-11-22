@@ -143,9 +143,10 @@ public class SecondClassDesignTests(ITestOutputHelper output)
         RunWith(Group, "kite+dodge", second is null ? CharacterProfile.Expected(level) : WithSecondClass(level, second), level,
             second == Guardian ? GuardianGroupOptions : null);
 
-    /// <summary>Dano por segundo de luta nos membros do grupo que não são o Guerreiro (todas as execuções).</summary>
+    /// <summary>Dano por segundo vivo nos membros do grupo que não são o Guerreiro (todas as execuções somadas).</summary>
     public static double OthersDamagePerSecond(BatchSummary s) =>
-        s.PerRun!.Sum(r => r.DamageTakenByClass.Where(kv => kv.Key != Warrior).Sum(kv => kv.Value)) / s.PerRun!.Sum(r => r.Seconds);
+        s.PerRun!.Sum(r => r.DamageTakenByClass.Where(kv => kv.Key != Warrior).Sum(kv => kv.Value))
+        / s.PerRun!.Sum(r => r.AliveSecondsByClass.Where(kv => kv.Key != Warrior).Sum(kv => kv.Value));
 
     private static string Fmt(string label, BatchSummary s) =>
         $"{label}: vitória {s.WinRate:P0}, {s.TimeToWinMean:F1} s, dano recebido {s.DamageTaken:F0}, usos "
@@ -214,14 +215,11 @@ public class SecondClassDesignTests(ITestOutputHelper output)
 
     /// <summary>
     /// Meta da T-402: os outros membros (Arqueiro, Mago e Clérigo) recebem pelo menos 15% menos dano com o Guardião.
-    /// Medido por segundo de luta (o total por luta depende da duração e de quem morre cedo). <b>Não é atingida de forma
-    /// estável</b> com os números do design: com equipamento comum a redução oscila de 8% a 23% conforme as sementes (as
-    /// derrotas pesam; nas seeds 1–100 dá 17% no 30 e 12% no 40); com incomum, quase sem derrotas, fica entre 0% e 12%; no
-    /// Cavaleiro Espectral, entre −5% e +5%. Três quartos do dano nos outros é veneno e poça de veneno em quem fica de
-    /// longe, fora do raio do Bastião, e a conta do kit no NH5 dá no máximo uns 15% com uso perfeito. Rever a meta ou o
-    /// Guardião é decisão do designer (<c>tasks/reports/balance-v0.19.md</c> §4); até lá o teste fica desligado.
+    /// Medido por segundo <b>vivo</b> de cada um: o total por luta depende da duração, e o dano por segundo de luta cai
+    /// quando alguém morre (premiaria as mortes). Com o reforço da T-408 (Interceptação +2 s, Bastião +10 pontos) a
+    /// redução fica entre 19% e 26% nos lotes 1–100, 1001–1100 e 2001–2100 (<c>tasks/reports/balance-v0.19.md</c> §4).
     /// </summary>
-    [Theory(Skip = "Meta pendente do designer (balance-v0.19.md §4): o Guardião reduz de 0% a 23% conforme o lote; a meta pede 15% estáveis.")]
+    [Theory]
     [InlineData(30)]
     [InlineData(40)]
     public void Guardian_cuts_the_damage_on_the_rest_of_the_group_by_at_least_15_percent(int level)

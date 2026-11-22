@@ -8,7 +8,7 @@ Fase 4, segunda classe do Guerreiro. Esta tarefa escreve nos dados as 10 habilid
 - **Perfis** (`tests/Game.Design.Tests/SecondClassDesignTests.cs`): o perfil esperado do nível com a segunda classe tem os +5 pontos de atributo (o `BuildFor` do simulador já usa `AttributePointsAt(nível, segunda classe)` desde a T-403) e os pontos de habilidade primeiro no que falta da base (perfil focado), depois cada normal da segunda classe no NH1, as duas principais alternando, a assinatura quando o nível deixa e o resto. Par principal: **Bastião e Interceptação** (Guardião) e **Execução e Fúria** (Berserker). "Só a base" é o mesmo nível e equipamento sem segunda classe.
 - **Encontros:** solo, os **Três Lobos** do nível (`encounter.three_wolves` com `MonsterLevel`); grupo, a **Matriarca** do nível contra o grupo de 4 com Clérigo (`encounter.forest_matriarch`, `kite+dodge`), equipamento comum. Classes base, nos encontros solo delas. 100 seeds por lote.
 - **Estratégia correta:** o Berserker abre com a Fúria e não usa a Investida contra a matilha (`order=berserker.fury`, `skip=berserker.charge`); no grupo, o Guardião não usa o Golpe de Escudo (`skip=guardian.shield_bash`). Explicação nas seções 3 e 4.
-- **Dano nos outros membros do grupo:** novo `DamageTakenByClass` no simulador (`RunResult` e `BatchSummary`), medido por **segundo de luta** (seção 4).
+- **Dano nos outros membros do grupo:** novo `DamageTakenByClass` no simulador (`RunResult` e `BatchSummary`), e `AliveSecondsByClass` (segundos vivos), medido por **segundo vivo** de cada membro (seção 4).
 
 ## 2. Resultados
 
@@ -17,20 +17,20 @@ Fase 4, segunda classe do Guerreiro. Esta tarefa escreve nos dados as 10 habilid
 | Nível | Só a base | Berserker | Berserker / base (tempo; dano recebido) | Guardião |
 |---|---|---|---|---|
 | 21 (NH1 de uma habilidade) | 100%, 15,4 s, 387 de dano | 100%, 12,6 s, 288 (Fúria NH1) | 82%; 0,74× | 100%, 15,3 s, 373 (Bastião NH1) |
-| 25 | 100%, 15,4 s, 408 | 100%, 12,6 s, 383 | **82%**; 0,94× | 100%, 17,4 s, 451 |
-| 30 | 100%, 15,7 s, 472 | 100%, 12,2 s, 419 | **78%**; 0,89× | 100%, 24,0 s, 759 |
-| 40 | 100%, 16,4 s, 624 | 100%, 12,2 s, 555 | **74%**; 0,89× | 100%, 24,6 s, 966 |
+| 25 | 100%, 15,4 s, 408 | 100%, 12,6 s, 383 | **82%**; 0,94× | 100%, 17,4 s, 443 |
+| 30 | 100%, 15,7 s, 472 | 100%, 12,2 s, 419 | **78%**; 0,89× | 100%, 24,0 s, 714 |
+| 40 | 100%, 16,4 s, 624 | 100%, 12,2 s, 555 | **74%**; 0,89× | 100%, 24,7 s, 911 |
 
 | Meta (§8) | Resultado |
 |---|---|
 | Berserker vence ≥ 85% em no máximo 85% do tempo da base | **passa** (74–82%) |
 | Berserker recebe no máximo 1,5× o dano da base | **passa** (0,89–0,94×: a Sede de Sangue devolve vida e a luta é mais curta) |
-| Guardião solo vence ≥ 85% (pode ser mais lento) | **passa** (100%; 113–155% do tempo da base) |
+| Guardião solo vence ≥ 85% (pode ser mais lento) | **passa** (100%; 113–153% do tempo da base) |
 | Nenhuma segunda classe > 1,6× mais lenta que a média das outras | **passa**: Guardião 1,01× (25), 1,40× (30), 1,43× (40). Média com Berserker, Arqueiro (~7 s), Mago (~6 s) e Clérigo (~43 s) |
 | Nível 21: NH1 da segunda classe não deixa mais lento que só a base | **passa** (Guardião 15,3 s, Berserker 12,6 s × 15,4 s) |
 | Pontos do 21 em diante só na base ou na segunda classe: os dois vencem ≥ 70% | **passa** (nível 30: 100% os quatro casos) |
-| Guardião no grupo: a vitória não cai | **passa** (30: 77% → 70%; 40: 63% → 68%; margem de 10 pontos, seção 4) |
-| Guardião no grupo: os outros recebem ≥ 15% menos dano | **não é atingida de forma estável** (seção 4); teste desligado, pendente do designer |
+| Guardião no grupo: a vitória não cai | **passa** (30: 77% → 75%; 40: 63% → 72%; margem de 10 pontos, seção 4) |
+| Guardião no grupo: os outros recebem ≥ 15% menos dano | **passa** depois do reforço da seção 4.2 (30: 24,3 → 19,1/s, **−21%**; 40: 30,3 → 22,5/s, **−26%**; 19–26% em três lotes de sementes) |
 
 O Guardião solo fica mais lento porque gasta a Mana em Bastião, Interceptação e Golpe de Escudo, que não causam dano contra a matilha (o design aceita: "pode ser mais lento").
 
@@ -57,13 +57,17 @@ A resposta não é linear: são 160 de Mana por luta, e 10 de Mana a mais ou a m
 
 ## 4. Guardião: proteção do grupo
 
+Os números do Guardião na seção 2 já são com o reforço da seção 4.2. A seção 4.1 é a primeira rodada, com os números do design.
+
+### 4.1 Primeira rodada: números do design
+
 **O bot não usava a Interceptação.** O `ConfigurableBot` trata "avanço sem dano" como avanço até o inimigo, e uma habilidade que mira um aliado falhava sempre. Mudança mínima em `src/Game.Bots/ConfigurableBot.cs` (`PlanProtect`): avanço que mira aliado vai até o aliado mais ferido ao alcance com um inimigo a até 4 tiles. Nenhuma habilidade antiga usa avanço até aliado, então nada muda nos testes de antes.
 
 **O Juramento nunca é usado pelo bot**, como a Muralha Viva hoje: o bot gasta a Mana assim que uma habilidade barata fica pronta, e nunca junta 80. Na prática, as medidas abaixo são sem o Juramento.
 
 **Bastião 40 → 20:** com 40, o Bastião saía uma vez por luta de grupo (~5% do tempo nos aliados); com 20, fica em ~30%. No grupo, o Guardião também deixa o Golpe de Escudo de lado: a Provocação já segura a Matriarca, e com ele o Golpe Pesado (que interrompe) caía de 15 para 3 usos por luta.
 
-**Dano nos outros membros, por segundo de luta** (Arqueiro, Mago e Clérigo). Por segundo porque o total por luta depende da duração (de 60 s a 190 s) e de quem morre cedo:
+**Dano nos outros membros, por segundo de luta** (Arqueiro, Mago e Clérigo), como medido nesta rodada. Por segundo porque o total por luta depende da duração (de 60 s a 190 s) e de quem morre cedo; na segunda rodada a medida passou a ser por segundo **vivo** (seção 4.2):
 
 | Lote | nv30: só a base → Guardião | nv40: só a base → Guardião |
 |---|---|---|
@@ -88,15 +92,49 @@ O efeito oscila de −23% a +6% conforme o lote. Com equipamento comum (~30% de 
 
 **Três quartos do dano nos outros é veneno e poça de veneno em quem fica de longe**, fora do raio do Bastião (5, e 7 do NH3) e longe do Guardião, que fica no chefe. A Interceptação protege um aliado por vez, e o vínculo cai quando o Guardião volta ao chefe (8 tiles). A conta do kit no NH5, com uso perfeito, dá uns 15%: Interceptação 40% × ~45% do tempo no aliado mais atingido (~9%), Bastião 25% × 40% do tempo × quem está no raio (~4%), Juramento 70% × 10 s a cada 90 s (~4%). **A meta pede o máximo teórico como mínimo.**
 
-**Para o designer decidir** (o teste `Guardian_cuts_the_damage_on_the_rest_of_the_group_by_at_least_15_percent` está desligado com `Skip` até lá):
-1. rever a meta, por exemplo "os outros recebem menos dano e a vitória não cai", ou 15% só nos golpes do chefe em quem está perto do Guardião; ou
-2. reforçar o Guardião: raio do Bastião maior, vínculo da Interceptação mais longo (o design não fixa a distância; os dados usam 8, o alcance dela), Juramento mais barato para sair na luta.
+Ficou para o designer decidir entre rever a meta e reforçar o Guardião.
+
+### 4.2 Segunda rodada: reforço do Guardião
+
+**Decisão do designer (2026-11-22):** manter a meta de 15% e reforçar o Guardião, com o menor reforço que bate a meta de forma estável no lote do teste (seeds 1–100) e num lote de controle (1001–1100).
+
+**Medida corrigida: dano por segundo vivo.** O dano por segundo de luta cai quando alguém morre: quem morre para de levar dano. Com ela, o Juramento parecia piorar (+3 pontos) justamente porque mantinha mais gente viva (vitória 63% → 76–81%). A medida passou a ser o dano nos outros membros dividido pelos segundos que eles ficaram vivos (`AliveSecondsByClass`, novo no simulador). Com os números do design, ela dá **12–16%**: perto da meta, sem margem.
+
+**Alavancas, uma de cada vez e juntas** (Matriarca do nível, equipamento comum, 100 seeds por lote; redução do dano por segundo vivo nos outros; entre parênteses, vitória com o Guardião / só a base):
+
+| Variante | nv30, seeds 1– | nv40, seeds 1– | nv30, seeds 1001– | nv40, seeds 1001– |
+|---|---|---|---|---|
+| Números do design | 16% (70%/77%) | 15% (68%/63%) | 14% (72%/65%) | 12% (72%/71%) |
+| Raio do Bastião 7 e 9 (era 5 e 7) | 13% | 17% | 14% | 12% |
+| Vínculo da Interceptação 12 tiles (era 8), medido por segundo de luta | 17% (design: 17%) | 14% (12%) | 14% (14%) | 13% (11%) |
+| Juramento 40 de Mana (era 80; o bot passa a usá-lo 1× por luta no 40) | 16% | 19% (76%) | 14% | 13% (81%) |
+| Juramento 40 e na frente da rotação | 23% | 16% | 13% | 11% |
+| As três juntas (raio, vínculo, Juramento) | 13% | 22% | 14% | 14% |
+| Bastião mais longo (8 e 10 s) | 12% | 11% | 11% | 9% |
+| Bastião a cada 15 s (com Interceptação +2 s) | 15% | 20% | 13% | 11% |
+| Interceptação +10 pontos de desvio | 13% (63%) | 23% | 16% | 16% |
+| **Interceptação +2 s** | 17% | 19% | 16% | 20% |
+| **Bastião +10 pontos de redução** | 22% | 25% | 17% | 12% |
+| Interceptação +2 s e Juramento 40 | 17% | 21% | 16% | 15% |
+| Interceptação +2 s e raio 7/9 | 15% | 19% | 17% | 20% |
+| Interceptação +3 s | 14% | 16% | 16% | 20% |
+| Interceptação +2 s e Bastião +5 | 16% | 26% | 14% | 16% |
+| Interceptação +2 s e Bastião +7 | 14% | 27% | 15% | 16% |
+| **Interceptação +2 s e Bastião +10** | **21%** (75%/77%) | **26%** (72%/63%) | **21%** (70%/65%) | **19%** (72%/71%) |
+
+Lote extra de confirmação (seeds 2001–2100): números do design 19% e 26%; **Interceptação +2 s e Bastião +10: 23% e 22%** (vitória 77%/75% e 77%/61%).
+
+O ruído entre lotes é de uns ±3 pontos. As alavancas pedidas sozinhas (raio, vínculo, Juramento) mexem 1–3 pontos, dentro do ruído: o dano longe do Guardião continua longe, e o Juramento só existe do 35 em diante. O que move o número é **quanto** o Guardião protege enquanto está perto: tempo de Interceptação no aliado (o Clérigo, que leva 66% do dano dos outros, luta no corpo a corpo) e o tamanho da redução do Bastião, que já vale para veneno e poça (dano de estado e de área passa pelos modificadores de quem recebe).
+
+**Escolha:** **Interceptação +2 s** em todos os NH (4/4/5/5/6 → 6/6/7/7/8 s; o escudo do NH3+ dura o mesmo) e **Bastião +10 pontos** em todos os NH (15/18/20/23/25% → 25/28/30/33/35%). É a única combinação que passa com folga nos seis casos (19–26%); as menores ficaram em 14–16% em pelo menos um. Raio, vínculo e Juramento ficaram como no design. A vitória do grupo não cai (sobe no 40).
+
+No teste da suíte (seeds 1–100): nv30 24,3 → 19,1/s (−21%), vitória 77% → 75%; nv40 30,3 → 22,5/s (−26%), vitória 63% → 72%. O Guardião solo continua vencendo 100% (17,4 / 24,0 / 24,7 s nos níveis 25 / 30 / 40) e as metas do Berserker e da diferença entre classes não mudam.
 
 ## 5. Outros achados
 
 - **Inabalável não sai atordoado:** o Core recusa qualquer habilidade com o personagem atordoado (`StatusGate`). O Inabalável tira enraizamento e lentidão de si, dá a imunidade e (NH5) tira atordoamento dos aliados, mas não tira o atordoamento do próprio Guardião, como o design sugere. Para isso, o Core precisaria de uma habilidade "usável atordoado".
 - **Golpes em arco fora do alcance:** o bot usa o Golpe Pesado e a Execução no começo da luta, com os Lobos ainda longe (o arco não falha sem alvo). Gasta uns 30–50 de Mana à toa nos dois perfis; não muda a comparação.
-- **Custo da suíte:** o teste de grupo roda 4 lotes da Matriarca (~1 min cada na VPS de 2 vCPU, sozinho); os solo, segundos. No `check.sh` completo da entrega, `Game.Design.Tests` levou 23 min (247 casos), com a VPS dividida com a sessão da T-404; vale medir de novo com a máquina livre.
+- **Custo da suíte:** o teste de grupo roda 4 lotes da Matriarca (~1 min cada na VPS de 2 vCPU, sozinho); os solo, segundos. No `check.sh` completo, `Game.Design.Tests` levou 23 min nas duas rodadas (247 e 248 casos); na primeira, a VPS estava dividida com a sessão da T-404.
 
 ## 6. Números que mudaram em relação ao design
 
@@ -106,5 +144,7 @@ O efeito oscila de −23% a +6% conforme o lote. Com equipamento comum (~30% de 
 | Execução (Berserker) | custo 30 | **20** |
 | Tempestade de Aço (Berserker) | custo 90 | **80** |
 | Bastião (Guardião) | custo 40 | **20** |
+| Bastião (Guardião) | redução 15/18/20/23/25% | **25/28/30/33/35%** (segunda rodada) |
+| Interceptação (Guardião) | duração 4/4/5/5/6 s | **6/6/7/7/8 s** (segunda rodada) |
 
 Registrado em `design/segunda-classe-v0.1.md` §5 ("Ajustes do simulador") e em `design/skills-v0.1.md`.

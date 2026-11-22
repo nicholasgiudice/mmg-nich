@@ -183,8 +183,8 @@ public class WarriorSecondClassContentTests
     // ---------- Guardião ----------
 
     [Theory]
-    [InlineData(1, 0.30, 4, 12, 0)]
-    [InlineData(5, 0.40, 6, 9, 40)]
+    [InlineData(1, 0.30, 6, 12, 0)]
+    [InlineData(5, 0.40, 8, 9, 40)]
     public void Interception_dashes_to_the_ally_and_takes_part_of_its_damage(int rank, double fraction, int seconds, int cooldown, float shield)
     {
         var w = NewWorld();
@@ -226,8 +226,8 @@ public class WarriorSecondClassContentTests
     }
 
     [Theory]
-    [InlineData(1, 0.85, 6, false, false)]
-    [InlineData(5, 0.75, 8, true, true)]
+    [InlineData(1, 0.75, 6, false, false)]
+    [InlineData(5, 0.65, 8, true, true)]
     public void Bastion_cuts_damage_for_allies_around_the_guardian(int rank, double taken, int seconds, bool reachesSix, bool knockbackImmune)
     {
         var w = NewWorld();

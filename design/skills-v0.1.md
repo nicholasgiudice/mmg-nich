@@ -264,7 +264,7 @@ Custo 90, recarga 120 s. Cura todos os aliados a até 8 tiles (inclui o Clérigo
 
 ## Segunda classe do Guerreiro (fase 4)
 
-Guardião e Berserker, no nível 20. As tabelas finais (efeitos e valores por NH) são as de `design/segunda-classe-v0.1.md` §5; os dados estão em `data/abilities_guardian.json` e `data/abilities_berserker.json` (T-408). NH1 no nível 21, depois 24, 27, 30 e 33; a assinatura no 35, 37 e 40. Só os custos mudaram com o simulador (`tasks/reports/balance-v0.19.md`):
+Guardião e Berserker, no nível 20. As tabelas finais (efeitos e valores por NH) são as de `design/segunda-classe-v0.1.md` §5; os dados estão em `data/abilities_guardian.json` e `data/abilities_berserker.json` (T-408). NH1 no nível 21, depois 24, 27, 30 e 33; a assinatura no 35, 37 e 40. Com o simulador mudaram os custos abaixo e, no Guardião, a duração da Interceptação (+2 s: 6/6/7/7/8 s) e a redução do Bastião (+10 pontos: 25/28/30/33/35%) (`tasks/reports/balance-v0.19.md`):
 
 | Habilidade | Id | Custo | Recarga |
 |---|---|---|---|
