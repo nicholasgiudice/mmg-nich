@@ -78,6 +78,8 @@ Itens de inventário (`type: consumable` em `items.json`): empilham, e usar gast
 |---|---|---|---|---|---|---|
 | Poção de Cura Menor | `consumable.minor_healing_potion` | `item.minor_healing_potion` | cura 60 + 2 × VIT | 12 s | 20 | 15 |
 | Poção de Mana Menor | `consumable.minor_mana_potion` | `item.minor_mana_potion` | +40 de Mana | 12 s | 20 | 15 |
+| Poção de Cura Maior | `consumable.greater_healing_potion` | `item.greater_healing_potion` | cura 180 + 5 × VIT | 12 s | 20 | 45 |
+| Poção de Mana Maior | `consumable.greater_mana_potion` | `item.greater_mana_potion` | +120 de Mana | 12 s | 20 | 45 |
 
 Todo personagem novo começa com **5 Poções de Cura Menor** (`startingInventory` em `classes.json`). Nenhum monstro deixa cair consumível: eles vêm do inventário inicial e do Templo.
 
@@ -152,7 +154,7 @@ Ouro de uma morte = `goldPerMonsterLevel` (**1**) × nível do monstro × catego
 
 | NPC | Loja | Vende |
 |---|---|---|
-| Sacerdote (Templo) | `shop.temple` | Poção de Cura Menor e Poção de Mana Menor (15 cada) |
+| Sacerdote (Templo) | `shop.temple` | Poções de Cura e de Mana: Menor (15 cada) e Maior (45 cada) |
 | Ferreiro | `shop.smith` | as 7 armas e as 12 armaduras, **comuns**, nos níveis 2 a 6 |
 
 O Mercado, o Armazém, a Estalagem e o Salão de Treinamento ainda não têm loja. Para comprar ou vender é preciso estar a até **3 tiles** do NPC (`interactRange`). Estoque ilimitado; até 100 unidades por pedido.
