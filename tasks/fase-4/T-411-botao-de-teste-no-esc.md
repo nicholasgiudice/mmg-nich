@@ -32,7 +32,7 @@ Sai da `main` (a T-405 já está nela, com protocolo 19). Não há deploy na VPS
 
 ## Resultado
 
-**Feito** (Windows, 2026-11-22), na branch `task/T-411-botao-de-teste-no-esc`, saída de `integra/fase-4-main` (a fase 4 inteira na `main`, com a T-405 e o protocolo 19). Não subiu `ProtocolVersion`.
+**Feito** (Windows, 2026-11-22; **aprovado pelo designer**), na branch `task/T-411-botao-de-teste-no-esc`, saída de `integra/fase-4-main` (a fase 4 inteira na `main`, com a T-405 e o protocolo 19). Não subiu `ProtocolVersion`.
 
 - **Entrada no menu do Esc:** "Teste (desenvolvimento)", por último e separada das outras por uma linha. Só aparece quando o `Welcome` do servidor diz que a ferramenta está ligada (`Welcome.DevTools`, T-405); sem ela, a entrada nem existe. Abre a lista: +1 nível, +5 níveis, ir ao nível 20, ir ao nível 40, desfazer a segunda classe, redistribuir pontos (grátis) e Voltar. O título da janela muda para "Teste".
 - **Desfazer a segunda classe** pede confirmação ("As habilidades dela saem e os pontos voltam. Depois dá para escolher outra.", Desfazer / Cancelar). Os outros pedidos saem direto.
@@ -45,5 +45,5 @@ Sai da `main` (a T-405 já está nela, com protocolo 19). Não há deploy na VPS
 - `client/scripts/Match/DevToolText.cs` é arquivo novo fora das áreas listadas (o mínimo, para os textos serem testáveis sem Godot); entra no projeto de testes do cliente por link, como os outros.
 
 **Pendências**
-- Captura aprovada pelo designer.
+- ~~Captura aprovada pelo designer.~~ Aprovada em 2026-11-22.
 - Os critérios "+1 sobe um" e "desfazer volta para antes da escolha" precisam da T-410 para escolher a segunda classe pela tela; a ida ao 20 e a recusa foram conferidas no jogo, e o servidor tem os testes da T-405 para os outros pedidos.
