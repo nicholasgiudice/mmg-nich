@@ -84,29 +84,51 @@ public sealed class SkillPlan
     /// Plano do personagem com progressão (T-221): NH do estado (0 = não aprendida), pontos do nível e requisitos ligados.
     /// Só leitura do que o servidor mandou; mudar um NH de verdade é a intenção <c>RaiseSkillRankIntent</c>.
     /// </summary>
-    public static SkillPlan FromState(ClassDefinition cls, ContentCatalog content, AbilityState state, int level)
+    public static SkillPlan FromState(ClassDefinition cls, ContentCatalog content, AbilityState state, int level,
+        string? secondClassId = null)
     {
         var rules = content.Rules.Progression;
-        var plan = new SkillPlan(cls, content.Abilities) { Enforce = true, Level = level, Rules = rules, PointBudget = rules.SkillPointsAt(level) };
-        plan._ranks.Clear();
-        foreach (var a in plan.Abilities)
+        var second = secondClassId is null ? null : cls.SecondClasses.FirstOrDefault(s => s.Id == secondClassId);
+        var plan = new SkillPlan(cls, content.Abilities)
         {
-            plan._ranks[a.Id] = state.Known.Contains(a.Id) ? state.RankOf(a.Id) : 0;
+            Enforce = true,
+            Level = level,
+            Rules = rules,
+            PointBudget = rules.SkillPointsAt(level),
+            SecondClass = second,
+            SecondAbilities = second?.Abilities.Where(content.Abilities.ContainsKey).Select(id => content.Abilities[id]).ToList() ?? [],
+        };
+        plan._ranks.Clear();
+        foreach (var a in plan.Abilities.Concat(plan.SecondAbilities))
+        {
+            // T-410: passiva aprendida tem NH mas não entra na barra (Known); o NH dela fica só em Ranks.
+            plan._ranks[a.Id] = state.Known.Contains(a.Id) ? state.RankOf(a.Id)
+                : a.Passive && state.Ranks.TryGetValue(a.Id, out var passiveRank) ? passiveRank
+                : 0;
         }
 
         return plan;
     }
 
+    /// <summary>Segunda classe escolhida (T-410); null = ainda não escolheu.</summary>
+    public SecondClassDefinition? SecondClass { get; init; }
+
+    /// <summary>Habilidades da segunda classe, na ordem dos dados (vazio sem segunda classe). Somam no mesmo orçamento de pontos.</summary>
+    public IReadOnlyList<AbilityDefinition> SecondAbilities { get; init; } = [];
+
+    /// <summary>A habilidade é da segunda classe (os NH dela liberam nos níveis da segunda classe: 21, 24... e 35, 37, 40).</summary>
+    public bool IsSecond(string abilityId) => SecondAbilities.Any(a => a.Id == abilityId);
+
     /// <summary>Menor NH neste plano: com <see cref="Enforce"/> tudo pode ficar no NH0; no modo de teste, <see cref="MinRank"/>.</summary>
     public int Floor(AbilityDefinition a) => Enforce ? 0 : MinRank(a);
 
-    /// <summary>Nível do personagem exigido para o NH <paramref name="rank"/> da habilidade.</summary>
-    public int RequiredLevel(AbilityDefinition a, int rank) => Rules.RequiredLevel(a.Signature, rank);
+    /// <summary>Nível do personagem exigido para o NH <paramref name="rank"/> da habilidade (da classe base ou da segunda).</summary>
+    public int RequiredLevel(AbilityDefinition a, int rank) => Rules.RequiredLevel(a.Signature, rank, IsSecond(a.Id));
 
     /// <summary>Por que não dá para subir o NH agora (mesma ordem de checagem do Core); null = dá.</summary>
     public ProgressionRejectReason? RaiseBlocker(string abilityId)
     {
-        if (Abilities.FirstOrDefault(a => a.Id == abilityId) is not { } ability)
+        if (Abilities.Concat(SecondAbilities).FirstOrDefault(a => a.Id == abilityId) is not { } ability)
         {
             return ProgressionRejectReason.NotLearnable;
         }

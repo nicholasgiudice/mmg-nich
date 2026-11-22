@@ -548,8 +548,16 @@ public partial class Hud : Control
                 case LevelUp up when up.Entity == me:
                     Announce($"Nível {up.Level}!  {up.AttributePoints} pontos de atributo (C) · {up.SkillPoints} de habilidade (K)", 4.0);
                     break;
+                case SecondClassChosen chosen when chosen.Entity == me:
+                    // T-410: a escolha definitiva foi aceita.
+                    var chosenName = _content.Classes.Values.SelectMany(c => c.SecondClasses)
+                        .FirstOrDefault(s => s.Id == chosen.SecondClassId)?.Name ?? chosen.SecondClassId;
+                    Announce($"Segunda classe: {chosenName}!  +{chosen.AttributePoints} pontos de atributo (C)", 4.0);
+                    _skills.SetMessage($"Agora você é {chosenName}.", HudTheme.Heal);
+                    break;
                 case ProgressionRejected r when r.Entity == me:
-                    var text = ProgressionText.Reason(r.Reason);
+                    // T-410: a recusa da escolha da segunda classe tem frase própria (o Id é a segunda classe pedida).
+                    var text = SecondClassText.IsSecondClassRequest(r.Id) ? SecondClassText.Rejection(r.Reason) : ProgressionText.Reason(r.Reason);
                     _character.SetMessage(text);
                     _skills.SetMessage(text);
                     if (!_character.Visible && !_skills.Visible)
@@ -776,6 +784,7 @@ public partial class Hud : Control
         }
 
         LoadHotbar(self, abilities);
+        PlaceNewSecondClassAbilities(self, abilities);
         // T-409: duas linhas. Embaixo: M1 fixo, 1–5 da barra do jogador (T-081) e Q (poção) só se ela não estiver na
         // barra. Em cima: 6 a 0, os espaços da segunda classe.
         var bottom = new List<(string? Id, string Key, int Index)>();
@@ -862,6 +871,37 @@ public partial class Hud : Control
         var saved = HotbarKey is { } key ? HotbarStore.Load(key) : null;
         Hotbar.Load(saved, HotbarLayout.Defaults(cls.Abilities),
             id => _content.Abilities.ContainsKey(id) || (_content.Items.TryGetValue(id, out var item) && item.IsConsumable));
+        _secondLearned = null;
+    }
+
+    /// <summary>Habilidades ativas da segunda classe já aprendidas na última olhada; null = ainda não olhou (barra recém-carregada).</summary>
+    private HashSet<string>? _secondLearned;
+
+    /// <summary>
+    /// T-410: uma habilidade ativa da segunda classe que acabou de ser aprendida vai para o primeiro espaço vazio de 6 a 0,
+    /// como as da classe base entram na barra padrão. Só na hora em que é aprendida: se o jogador tirar da barra, ela não
+    /// volta sozinha. Passivas não vão para a barra.
+    /// </summary>
+    private void PlaceNewSecondClassAbilities(EntitySnapshot self, AbilityState abilities)
+    {
+        if (!Hotbar.Loaded || !_content.Classes.TryGetValue(self.TryGet<UnitInfo>()?.DefinitionId ?? "", out var cls))
+        {
+            return;
+        }
+
+        var secondId = self.TryGet<Game.Core.Combat.Progression.CharacterProgress>()?.SecondClass;
+        var learned = (cls.SecondClasses.FirstOrDefault(s => s.Id == secondId)?.Abilities ?? [])
+            .Where(id => abilities.Known.Contains(id) && !(_content.Abilities.GetValueOrDefault(id)?.Passive ?? true))
+            .ToHashSet(StringComparer.Ordinal);
+        if (_secondLearned is not null)
+        {
+            foreach (var id in learned.Where(id => !_secondLearned.Contains(id)))
+            {
+                Hotbar.PlaceInFirstEmpty(id, HotbarLayout.RowSize);
+            }
+        }
+
+        _secondLearned = learned;
     }
 
     /// <summary>T-323: id da primeira poção de vida do inventário (a da tecla Q); null = nenhuma.</summary>
@@ -983,9 +1023,11 @@ public partial class Hud : Control
         {
             _content.Statuses.TryGetValue(st.StatusId, out var def);
             var name = def?.Name ?? st.StatusId;
-            var secs = ((st.ExpiresAtTick - now) / World.TickRate).ToString("0.0", Pt);
+            // T-410: o status de uma passiva não acaba (fim no infinito): só o nome, sem contagem.
+            var permanent = st.ExpiresAtTick == Game.Core.Combat.Status.StatusManager.PermanentTick;
+            var secs = permanent ? "" : " " + ((st.ExpiresAtTick - now) / World.TickRate).ToString("0.0", Pt) + "s";
             var stacks = st.Stacks > 1 ? $" ×{st.Stacks}" : "";
-            var text = Escape($"{name}{stacks} {secs}s");
+            var text = Escape($"{name}{stacks}{secs}");
             parts.Add(def is not null && def.Tags.Any(_removableTags.Contains)
                 ? $"[color=#{HudTheme.Removable.ToHtml(false)}][b]◆ {text}[/b][/color]"
                 : text);

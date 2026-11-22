@@ -30,8 +30,17 @@ public partial class SkillPanel : ProgressionPanel
 
     private static readonly Color BasicBorder = new(0.55f, 0.75f, 1f, 0.8f);
 
+    /// <summary>T-410: moldura das passivas (não vão para a barra).</summary>
+    private static readonly Color PassiveBorder = new(0.62f, 0.45f, 0.95f, 0.95f);
+
     /// <summary>Habilidade com o detalhe aberto ao lado da grade; null = fechado.</summary>
     private string? _detailId;
+
+    /// <summary>T-410: segunda classe com a confirmação aberta; null = mostrando as opções.</summary>
+    private string? _confirmId;
+
+    /// <summary>T-410: aba da segunda classe aberta (senão, a da classe base).</summary>
+    private bool _secondTab;
 
     /// <summary>Janela de pedra e ouro (T-097).</summary>
     protected override bool StoneWindow => true;
@@ -42,7 +51,8 @@ public partial class SkillPanel : ProgressionPanel
         var p = self.TryGet<CharacterProgress>();
         var st = self.TryGet<AbilityState>();
         return string.Join(",", s?.Level, s?.Str, s?.Dex, s?.Agi, s?.Int, s?.Vit, s?.WeaponDamage, p?.SkillPoints,
-            st is null ? "" : string.Join(";", st.Known.Select(id => id + st.RankOf(id))), _detailId);
+            st is null ? "" : string.Join(";", st.Known.Select(id => id + st.RankOf(id))), _detailId, p?.SecondClass, _confirmId, _secondTab,
+            st is null ? "" : string.Join(";", st.Ranks.Select(kv => kv.Key + kv.Value)));
     }
 
     protected override void Build(VBoxContainer box, EntitySnapshot self)
@@ -59,7 +69,11 @@ public partial class SkillPanel : ProgressionPanel
         }
 
         var level = stats?.Level ?? 1;
-        var plan = SkillPlan.FromState(cls, Content, state, level);
+        var plan = SkillPlan.FromState(cls, Content, state, level, progress?.SecondClass);
+        if (plan.SecondClass is not null)
+        {
+            _confirmId = null; // já escolheu: a confirmação não volta
+        }
         if (progress is null)
         {
             box.AddChild(Small("Encontro de teste: personagem sem progressão. Os NH vêm do menu e não recebem pontos aqui.", 12,
@@ -78,6 +92,84 @@ public partial class SkillPanel : ProgressionPanel
             box.AddChild(Small($"Usados {plan.PointsUsed} de {plan.PointBudget} (nível {level}).", 11, 0.6f));
         }
 
+        // T-410: duas abas, classe base e segunda classe (as duas juntas não cabem na altura da tela).
+        if (cls.SecondClasses.Count > 0)
+        {
+            box.AddChild(Tabs(plan, progress, level));
+        }
+
+        if (_secondTab && cls.SecondClasses.Count > 0)
+        {
+            SecondClassSection(box, self, cls, plan, progress, stats, level);
+        }
+        else
+        {
+            BaseClassGrid(box, self, cls, plan, progress, stats, level);
+        }
+
+        // T-323: as poções são itens do inventário (I), de onde vão para a barra; não aparecem mais aqui.
+        box.AddChild(Small("Arraste um ícone para a barra (teclas 1 a 0). Habilidade não aprendida e passiva não vão para a barra. "
+            + "Poções: arraste do inventário (I).", 11, 0.6f,
+            Columns * CellWidth));
+
+        if (progress is not null && stats is not null)
+        {
+            var footer = new HBoxContainer();
+            footer.AddChild(new Control { SizeFlagsHorizontal = SizeFlags.ExpandFill });
+            var reset = ResetButton(self, AnySpent(progress, stats, Content));
+            HudTheme.StoneButton(reset);
+            footer.AddChild(reset);
+            box.AddChild(footer);
+        }
+    }
+
+    /// <summary>
+    /// T-410: as abas "Classe base" e "Segunda classe". A da segunda classe leva o nome dela depois da escolha e avisa
+    /// quando a escolha está liberada.
+    /// </summary>
+    private HBoxContainer Tabs(SkillPlan plan, CharacterProgress? progress, int level)
+    {
+        var tabs = new HBoxContainer();
+        tabs.AddThemeConstantOverride("separation", 6);
+        var canChoose = plan.SecondClass is null && progress is not null && level >= Content.Rules.Progression.SecondClassLevel;
+        var secondLabel = plan.SecondClass is { } chosen ? $"Segunda classe: {chosen.Name}"
+            : canChoose ? "Segunda classe (escolher!)" : "Segunda classe";
+        foreach (var (text, second) in new[] { ("Classe base", false), (secondLabel, true) })
+        {
+            var tab = new Button { Text = text, ToggleMode = true, ButtonPressed = _secondTab == second, FocusMode = FocusModeEnum.None };
+            HudTheme.StoneButton(tab);
+            tab.AddThemeFontSizeOverride("font_size", 13);
+            if (_secondTab == second)
+            {
+                // A aba aberta em dourado; as outras no texto de pedra de sempre.
+                tab.AddThemeColorOverride("font_color", HudTheme.Suggested);
+                tab.AddThemeColorOverride("font_pressed_color", HudTheme.Suggested);
+                tab.Modulate = Colors.White;
+            }
+            else
+            {
+                tab.Modulate = new Color(1, 1, 1, 0.75f);
+                if (second && canChoose)
+                {
+                    tab.AddThemeColorOverride("font_color", HudTheme.Removable);
+                }
+            }
+
+            tab.Pressed += () =>
+            {
+                _secondTab = second;
+                Refresh();
+            };
+            tabs.AddChild(tab);
+        }
+
+        return tabs;
+    }
+
+    /// <summary>A grade da classe base: ataque básico e as habilidades, com o detalhe ao lado.</summary>
+    private void BaseClassGrid(VBoxContainer box, EntitySnapshot self, ClassDefinition cls, SkillPlan plan,
+        CharacterProgress? progress, CharacterStats? stats, int level)
+    {
         var row = new HBoxContainer();
         row.AddThemeConstantOverride("separation", 10);
         box.AddChild(row);
@@ -107,21 +199,188 @@ public partial class SkillPanel : ProgressionPanel
                     r => plan.RequiredLevel(ability, r), level));
             }
         }
+    }
 
-        // T-323: as poções são itens do inventário (I), de onde vão para a barra; não aparecem mais aqui.
-        box.AddChild(Small("Arraste um ícone para a barra (teclas 1 a 6). Habilidade não aprendida não vai para a barra. "
-            + "Poções: arraste do inventário (I).", 11, 0.6f,
-            Columns * CellWidth));
-
-        if (progress is not null && stats is not null)
+    /// <summary>
+    /// T-410: a parte da segunda classe. Antes do nível dela, diz quando libera; no nível, sem escolha, as opções lado a
+    /// lado (nome, papel e as habilidades com o NH1) e, ao escolher uma, a confirmação de que é definitiva; depois da
+    /// escolha, a grade das habilidades dela, como a da classe base.
+    /// </summary>
+    private void SecondClassSection(VBoxContainer box, EntitySnapshot self, ClassDefinition cls, SkillPlan plan,
+        CharacterProgress? progress, CharacterStats? stats, int level)
+    {
+        if (cls.SecondClasses.Count == 0)
         {
-            var footer = new HBoxContainer();
-            footer.AddChild(new Control { SizeFlagsHorizontal = SizeFlags.ExpandFill });
-            var reset = ResetButton(self, AnySpent(progress, stats, Content));
-            HudTheme.StoneButton(reset);
-            footer.AddChild(reset);
-            box.AddChild(footer);
+            return;
         }
+
+        var rules = Content.Rules.Progression;
+        if (plan.SecondClass is { } chosen)
+        {
+            box.AddChild(SectionHeader($"Segunda classe: {chosen.Name}", SecondClassText.Role(chosen.Id)));
+            var row = new HBoxContainer();
+            row.AddThemeConstantOverride("separation", 10);
+            box.AddChild(row);
+            var grid = new GridContainer { Columns = Columns, SizeFlagsVertical = SizeFlags.ShrinkBegin };
+            grid.AddThemeConstantOverride("h_separation", 6);
+            grid.AddThemeConstantOverride("v_separation", 6);
+            row.AddChild(grid);
+            foreach (var ability in plan.SecondAbilities)
+            {
+                grid.AddChild(AbilityCell(self, ability, plan, progress, stats, level));
+                if (_detailId == ability.Id)
+                {
+                    row.AddChild(Detail(ability, ability.Passive ? "passiva" : ability.Signature ? "assinatura" : null,
+                        plan.RankOf(ability.Id), SkillPlan.MaxRank(ability), stats, r => plan.RequiredLevel(ability, r), level));
+                }
+            }
+
+            return;
+        }
+
+        var options = cls.SecondClasses.ToList();
+        box.AddChild(SectionHeader("Segunda classe", ""));
+        if (progress is null)
+        {
+            box.AddChild(Small("Encontro de teste: personagem sem progressão, sem segunda classe.", 12, 0.7f, Columns * CellWidth));
+            return;
+        }
+
+        if (level < rules.SecondClassLevel)
+        {
+            var locked = Small(SecondClassText.Locked(rules.SecondClassLevel) + " Opções: "
+                + string.Join(" ou ", options.Select(o => o.Name)) + ".", 13, 0.9f, Columns * CellWidth);
+            locked.AddThemeColorOverride("font_color", HudTheme.Warning);
+            box.AddChild(locked);
+            return;
+        }
+
+        if (_confirmId is { } pendingId && options.FirstOrDefault(o => o.Id == pendingId) is { } pick)
+        {
+            var text = Small(SecondClassText.Confirm(pick.Name), 14, 1f, Columns * CellWidth);
+            text.HorizontalAlignment = HorizontalAlignment.Center;
+            text.AddThemeColorOverride("font_color", HudTheme.Warning);
+            box.AddChild(text);
+            var buttons = new HBoxContainer { Alignment = BoxContainer.AlignmentMode.Center };
+            buttons.AddThemeConstantOverride("separation", 12);
+            var yes = new Button { Text = $"Escolher {pick.Name}", FocusMode = FocusModeEnum.None };
+            HudTheme.StoneButton(yes);
+            yes.Pressed += () =>
+            {
+                _confirmId = null;
+                Send?.Invoke(new ChooseSecondClassIntent(self.Id, pick.Id));
+                Refresh();
+            };
+            var no = new Button { Text = "Cancelar", FocusMode = FocusModeEnum.None };
+            HudTheme.StoneButton(no);
+            no.Pressed += () =>
+            {
+                _confirmId = null;
+                Refresh();
+            };
+            buttons.AddChild(yes);
+            buttons.AddChild(no);
+            box.AddChild(buttons);
+            return;
+        }
+
+        box.AddChild(Small("Escolha uma das duas. A escolha é definitiva.", 12, 0.85f, Columns * CellWidth));
+        var cards = new HBoxContainer();
+        cards.AddThemeConstantOverride("separation", 8);
+        box.AddChild(cards);
+        foreach (var option in options)
+        {
+            cards.AddChild(OptionCard(option, stats));
+        }
+    }
+
+    /// <summary>Título de uma parte da tela (dourado) e, embaixo, o papel em texto menor.</summary>
+    private static VBoxContainer SectionHeader(string title, string role)
+    {
+        var column = new VBoxContainer();
+        column.AddThemeConstantOverride("separation", 0);
+        var label = Small(title, 16, 1f);
+        label.AddThemeColorOverride("font_color", HudTheme.Suggested);
+        column.AddChild(label);
+        if (role.Length > 0)
+        {
+            column.AddChild(Small(role, 12, 0.75f, Columns * CellWidth));
+        }
+
+        return column;
+    }
+
+    /// <summary>T-410: uma opção de segunda classe: nome, papel, as habilidades com o resumo do NH1 e o botão de escolher.</summary>
+    private PanelContainer OptionCard(SecondClassDefinition option, CharacterStats? stats)
+    {
+        var width = (Columns * CellWidth / 2) - 4;
+        var card = new PanelContainer { CustomMinimumSize = new Vector2(width, 0), SizeFlagsVertical = SizeFlags.ShrinkBegin };
+        card.AddThemeStyleboxOverride("panel", HudTheme.SkillCell() is { } stone ? stone : FlatCell(HudTheme.Suggested));
+        var margin = new MarginContainer();
+        foreach (var side in new[] { "left", "right", "top", "bottom" })
+        {
+            margin.AddThemeConstantOverride("margin_" + side, 6);
+        }
+
+        var column = new VBoxContainer();
+        column.AddThemeConstantOverride("separation", 4);
+        margin.AddChild(column);
+        card.AddChild(margin);
+
+        var name = Small(option.Name, 16, 1f);
+        name.AddThemeColorOverride("font_color", HudTheme.Suggested);
+        name.HorizontalAlignment = HorizontalAlignment.Center;
+        column.AddChild(name);
+        var role = Small(SecondClassText.Role(option.Id), 11, 0.8f, width - 12);
+        role.HorizontalAlignment = HorizontalAlignment.Center;
+        column.AddChild(role);
+
+        foreach (var id in option.Abilities)
+        {
+            if (Content.AbilityAt(id, 1) is not { } def)
+            {
+                continue;
+            }
+
+            var line = new HBoxContainer();
+            line.AddThemeConstantOverride("separation", 4);
+            var summary = AbilityText.Describe(def, Content, stats).Split('\n')[^1]; // efeito do NH1 (a primeira linha é custo e recarga)
+            if (summary.Length == 0 && def.Passive)
+            {
+                summary = "Sempre ativa; não vai para a barra.";
+            }
+            var tip = $"{def.Name}{(def.Passive ? " — passiva" : def.Signature ? " — assinatura" : "")}\n{AbilityText.Describe(def, Content, stats)}";
+            line.AddChild(new SkillIcon
+            {
+                Icon = IconCatalog.Shared.For(id),
+                Fallback = def.Name,
+                CustomMinimumSize = new Vector2(28, 28),
+                Size = new Vector2(28, 28),
+                TooltipText = tip,
+            });
+            var text = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+            text.AddThemeConstantOverride("separation", 0);
+            var title = Small(def.Name + (def.Passive ? " · passiva" : def.Signature ? " · assinatura" : ""), 11, 1f, width - 48);
+            if (def.Passive)
+            {
+                title.AddThemeColorOverride("font_color", PassiveBorder);
+            }
+
+            text.AddChild(title);
+            text.AddChild(Small(summary, 10, 0.65f, width - 48));
+            line.AddChild(text);
+            column.AddChild(line);
+        }
+
+        var choose = new Button { Text = $"Escolher {option.Name}", FocusMode = FocusModeEnum.None };
+        HudTheme.StoneButton(choose);
+        choose.Pressed += () =>
+        {
+            _confirmId = option.Id;
+            Refresh();
+        };
+        column.AddChild(choose);
+        return card;
     }
 
     private Control AbilityCell(EntitySnapshot self, AbilityDefinition ability, SkillPlan plan, CharacterProgress? progress,
@@ -134,7 +393,7 @@ public partial class SkillPanel : ProgressionPanel
         var current = rank > 0 ? Content.AbilityAt(ability.Id, rank) : null;
         var nextDef = next <= max ? Content.AbilityAt(ability.Id, next) : null;
 
-        var title = $"{ability.Name}{(ability.Signature ? " — assinatura" : "")}\n"
+        var title = $"{ability.Name}{(ability.Passive ? " — passiva (sempre ativa, não vai para a barra)" : ability.Signature ? " — assinatura" : "")}\n"
             + (rank > 0 ? $"NH {SkillPlan.Roman(rank)} de {SkillPlan.Roman(max)}" : $"Não aprendida (NH até {SkillPlan.Roman(max)})");
         var tip = Tip(title, current, stats, nextDef is null ? null : (next, nextDef));
         if (rank == 0 && nextDef is not null)
@@ -167,8 +426,10 @@ public partial class SkillPanel : ProgressionPanel
             }
         }
 
-        return Cell(current ?? ability, IconCatalog.Shared.For(ability.Id), ability.Signature ? HudTheme.Suggested : new Color(1, 1, 1, 0.12f),
-            null, tip, draggable: rank > 0, plus, req, dim: rank == 0, pips, DetailButton(ability.Id));
+        var border = ability.Passive ? PassiveBorder : ability.Signature ? HudTheme.Suggested : new Color(1, 1, 1, 0.12f);
+        return Cell(current ?? ability, IconCatalog.Shared.For(ability.Id), border,
+            null, tip, draggable: rank > 0 && !ability.Passive, plus, req, dim: rank == 0, pips, DetailButton(ability.Id),
+            tag: ability.Passive ? "Passiva" : null);
     }
 
     /// <summary>
@@ -177,7 +438,7 @@ public partial class SkillPanel : ProgressionPanel
     /// (básico ou assinatura) vira um contorno fino por dentro dela.
     /// </summary>
     private static PanelContainer Cell(AbilityDefinition def, Texture2D? icon, Color border, string? below, string tip, bool draggable,
-        Button? plus, Label? req, bool dim = false, (int Rank, int Max)? pips = null, Button? detail = null)
+        Button? plus, Label? req, bool dim = false, (int Rank, int Max)? pips = null, Button? detail = null, string? tag = null)
     {
         var cell = new PanelContainer { CustomMinimumSize = new Vector2(CellWidth, 0), TooltipText = tip };
         var column = new VBoxContainer { MouseFilter = MouseFilterEnum.Ignore };
@@ -236,6 +497,15 @@ public partial class SkillPanel : ProgressionPanel
         var name = Small(def.Name, 11, 1f, CellWidth - 8);
         name.HorizontalAlignment = HorizontalAlignment.Center;
         column.AddChild(name);
+        if (tag is not null)
+        {
+            // T-410: "Passiva", na cor da moldura dela.
+            var kind = Small(tag, 10, 1f);
+            kind.HorizontalAlignment = HorizontalAlignment.Center;
+            kind.AddThemeColorOverride("font_color", border);
+            column.AddChild(kind);
+        }
+
         column.AddChild(pips is { } p ? Pips(p.Rank, p.Max) : BelowLine(below ?? ""));
         if (req is not null)
         {
