@@ -26,6 +26,8 @@ public sealed record ServerOptions
           --max-delta-age <ticks>   base de delta mais velha aceita; além disso vai snapshot completo (padrão 40)
           --log-level <nível>       verbose · debug · info · warning · error · fatal (padrão info; env MMO_LOG_LEVEL)
           --dev-login               aceita entrada só com nome, sem token de jogo (testes locais e bots; env MMO_DEV_LOGIN=true)
+          --dev-tools               ferramenta de teste: subir de nível e desfazer a segunda classe pelo cliente (T-405;
+                                    env MMO_DEV_TOOLS=true). Só em servidor de teste: nunca num servidor aberto a jogadores
           --save-interval <s>       segundos entre gravações periódicas dos personagens (padrão 120)
           --world                   mundo aberto (T-214): todas as zonas de data/zones.json em vez de uma sala de encontro
                                     (env MMO_WORLD=true); --encounter, --bots e --restart-after não valem
@@ -62,6 +64,12 @@ public sealed record ServerOptions
 
     /// <summary>Aceita <c>Hello</c> sem token de jogo, só com nome (T-212: testes locais e bots de rede).</summary>
     public bool DevLogin { get; init; }
+
+    /// <summary>
+    /// Ferramenta de teste (T-405): aceita <c>DevToolRequest</c> (subir de nível, desfazer a segunda classe, redistribuir
+    /// grátis). Desligada por padrão; só em servidor de teste.
+    /// </summary>
+    public bool DevTools { get; init; }
 
     /// <summary>Mundo aberto com as zonas de <c>data/zones.json</c> (T-214) em vez da sala de encontro.</summary>
     public bool World { get; init; }
@@ -102,6 +110,11 @@ public sealed record ServerOptions
             o = o with { DevLogin = bool.Parse(devEnv) };
         }
 
+        if (env("MMO_DEV_TOOLS") is { Length: > 0 } toolsEnv)
+        {
+            o = o with { DevTools = bool.Parse(toolsEnv) };
+        }
+
         if (env("MMO_WORLD") is { Length: > 0 } worldEnv)
         {
             o = o with { World = bool.Parse(worldEnv) };
@@ -126,6 +139,7 @@ public sealed record ServerOptions
                 "--max-delta-age" => o with { MaxDeltaAgeTicks = Math.Clamp(int.Parse(Next(), CultureInfo.InvariantCulture), 1, Game.Protocol.SnapshotReconstructor.History) },
                 "--log-level" => o with { LogLevel = ParseLogLevel(Next()) },
                 "--dev-login" => o with { DevLogin = true },
+                "--dev-tools" => o with { DevTools = true },
                 "--world" => o with { World = true },
                 "--start-zone" => o with { StartZone = Next() },
                 "--max-instances" => o with { MaxInstances = int.Parse(Next(), CultureInfo.InvariantCulture) },

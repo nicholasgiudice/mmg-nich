@@ -19,7 +19,7 @@ namespace Game.Server.Tests;
 /// <summary>Mundo aberto em memória (T-214): zonas reais de <c>data/zones.json</c>, transporte em memória.</summary>
 internal sealed class WorldRig : IDisposable
 {
-    public WorldRig(ICharacterStore? store = null, bool devLogin = true, ContentCatalog? content = null, ServerOptions? options = null)
+    public WorldRig(ICharacterStore? store = null, bool devLogin = true, ContentCatalog? content = null, ServerOptions? options = null, Serilog.ILogger? log = null)
     {
         Content = content ?? TestRig.RealContent.Value;
         if (store is not null)
@@ -28,7 +28,7 @@ internal sealed class WorldRig : IDisposable
         }
 
         var accounts = Persistence is null ? null : new AccountLogin(new Game.Auth.GameTicketReplayGuard(AccountRig.Key, "game.test"), Persistence);
-        Server = new WorldServer(Content, (options ?? new ServerOptions()) with { World = true, DevLogin = devLogin }, Transport, Logger.None, accounts);
+        Server = new WorldServer(Content, (options ?? new ServerOptions()) with { World = true, DevLogin = devLogin }, Transport, log ?? Logger.None, accounts);
         Transport.Start(Server);
     }
 

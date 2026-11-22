@@ -45,6 +45,8 @@ public static class ProtocolVersion
     /// 16 (T-403): evento <c>SecondClassChosen</c> (segunda classe escolhida).
     /// 17 (T-404): <c>CharacterProgress</c> leva a segunda classe (<c>SecondClass</c>, string opcional no fim) e o
     /// <c>NetIntent</c> ganha o tipo <c>ChooseSecondClass</c> (id da segunda classe em <c>AbilityId</c>).
+    /// 18 (T-405): mensagens <c>DevToolRequest</c> e <c>DevToolResult</c> (ferramenta de teste) e <c>DevTools</c> no fim do
+    /// <c>Welcome</c>.
     /// </summary>
-    public const int Current = 17;
+    public const int Current = 18;
 }

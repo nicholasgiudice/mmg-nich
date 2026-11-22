@@ -352,6 +352,70 @@ public static class Leveling
         return null;
     }
 
+    /// <summary>
+    /// T-405 (ferramenta de teste do servidor): XP que falta para sair do <paramref name="level"/> (com
+    /// <paramref name="experience"/> no nível) e chegar exatamente ao <paramref name="target"/>, limitado ao nível máximo.
+    /// 0 se já está nele ou acima. Dada por <see cref="GrantExperience"/>, sobe pelo mesmo caminho da XP de monstro.
+    /// </summary>
+    public static int ExperienceToReach(ProgressionRules rules, int level, int experience, int target)
+    {
+        target = Math.Min(target, rules.MaxLevel);
+        if (level >= target)
+        {
+            return 0;
+        }
+
+        long xp = Math.Max(0, rules.XpToNext(level) - experience);
+        for (var l = level + 1; l < target; l++)
+        {
+            xp += rules.XpToNext(l);
+        }
+
+        return (int)Math.Min(xp, int.MaxValue);
+    }
+
+    /// <summary>
+    /// T-405 (ferramenta de teste do servidor): volta o personagem para antes da escolha da segunda classe. Saem os NH das
+    /// habilidades da segunda classe (os pontos de habilidade voltam) e os
+    /// <see cref="ProgressionRules.SecondClassAttributePoints"/> pontos de atributo da escolha; se eles já estavam
+    /// distribuídos, a distribuição de atributos inteira volta (como em <see cref="ResetPoints"/>, só os atributos). Não
+    /// confere combate (quem chama decide). False se não tem progressão ou não escolheu segunda classe.
+    /// </summary>
+    public static bool UndoSecondClass(World world, Entity e)
+    {
+        if (e.TryGet<CharacterProgress>() is not { } p || e.TryGet<CharacterStats>() is not { } s
+            || e.TryGet<AbilityState>() is not { } st || ClassOf(world, e) is not { } cls
+            || SecondClassOf(cls, p.SecondClass) is not { } second)
+        {
+            return false;
+        }
+
+        foreach (var id in st.Ranks.Keys.Where(id => IsSecondClassAbility(cls, second, id)).ToList())
+        {
+            p.SkillPoints += st.Ranks[id];
+            st.Ranks.Remove(id);
+        }
+
+        var rules = world.Content.Rules.Progression;
+        p.SecondClass = null;
+        p.AttributePoints -= rules.SecondClassAttributePoints;
+        if (p.AttributePoints < 0)
+        {
+            foreach (var attr in Enum.GetValues<AttributeKind>())
+            {
+                AddToStat(s, attr, -p.Allocated(attr));
+                p.SetAllocated(attr, 0);
+            }
+
+            p.AttributePoints = rules.AttributePointsAt(s.Level, false);
+        }
+
+        RebuildKnown(world.Content, cls, null, st);
+        SyncPassives(world, e);
+        RefreshDerived(world, e);
+        return true;
+    }
+
     /// <summary>Causou ou recebeu dano (ou curou/protegeu quem lutava) há menos de <see cref="ProgressionRules.CombatTimeoutTicks"/>.</summary>
     public static bool InCombat(World world, Entity e) =>
         e.TryGet<CombatActivity>() is { } a && world.Tick - a.LastCombatTick < world.Content.Rules.Progression.CombatTimeoutTicks;

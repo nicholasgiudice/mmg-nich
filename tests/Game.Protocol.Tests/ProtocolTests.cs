@@ -83,7 +83,27 @@ public class ProtocolTests(ITestOutputHelper output)
         Assert.Equal(23, ProtocolSerializer.Serialize(new LogoutRequest())[0]);
         Assert.Equal(24, ProtocolSerializer.Serialize(new LogoutCancel())[0]);
         Assert.Equal(25, ProtocolSerializer.Serialize(new LogoutStatus(LogoutState.Done, 0))[0]);
-        Assert.Equal(17, ProtocolVersion.Current);
+        Assert.Equal(18, ProtocolVersion.Current);
+    }
+
+    [Fact]
+    public void Dev_tool_messages_round_trip_with_their_union_tags()
+    {
+        foreach (var action in Enum.GetValues<DevToolAction>())
+        {
+            Assert.Equal(new DevToolRequest(action), RoundTrip(new DevToolRequest(action)));
+        }
+
+        foreach (var outcome in Enum.GetValues<DevToolOutcome>())
+        {
+            Assert.Equal(new DevToolResult(DevToolAction.ToMaxLevel, outcome, 40), RoundTrip(new DevToolResult(DevToolAction.ToMaxLevel, outcome, 40)));
+        }
+
+        // T-405: tags novas da união; o Welcome leva no fim se a ferramenta está ligada (padrão: desligada).
+        Assert.Equal(26, ProtocolSerializer.Serialize(new DevToolRequest(DevToolAction.LevelUp1))[0]);
+        Assert.Equal(27, ProtocolSerializer.Serialize(new DevToolResult(DevToolAction.LevelUp1, DevToolOutcome.Done, 2))[0]);
+        Assert.True(RoundTrip(new Welcome(new EntityId(7), 10, "zone.city", "map.city", 1, 0, DevTools: true)).DevTools);
+        Assert.False(new Welcome(new EntityId(7), 10, "zone.city", "map.city", 1).DevTools);
     }
 
     [Fact]

@@ -15,15 +15,15 @@ namespace Game.Core.Tests;
 /// </summary>
 public class SecondClassTests
 {
-    private const string Second = "second_class.test_a";
-    private const string Strike = "test.sc_strike";
+    internal const string Second = "second_class.test_a";
+    internal const string Strike = "test.sc_strike";
     private const string Shout = "test.sc_shout";
-    private const string Passive = "test.sc_passive";
+    internal const string Passive = "test.sc_passive";
     private const string Signature = "test.sc_signature";
-    private const string Status1 = "status.test_passive_1";
+    internal const string Status1 = "status.test_passive_1";
     private const string Status2 = "status.test_passive_2";
 
-    private static readonly ContentCatalog Content = BuildContent();
+    internal static readonly ContentCatalog Content = BuildContent();
     private static readonly ProgressionRules Rules = Content.Rules.Progression;
     private static readonly ClassDefinition Warrior = Content.Classes["class.warrior"];
 
