@@ -66,6 +66,16 @@ public class ApiTests
         Assert.Equal(HttpStatusCode.Unauthorized, (await otherIp.PostAsJsonAsync("/sessions", new { email = "", password = "" })).StatusCode);
     }
 
+    [Fact]
+    public async Task Online_status_is_public_and_answers_503_without_database()
+    {
+        await using var api = new ApiFactory();
+        var res = await api.CreateClient().GetAsync("/status");
+
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, res.StatusCode);
+        Assert.Equal("status_unavailable", await CodeOf(res));
+    }
+
     internal static async Task<string?> CodeOf(HttpResponseMessage res) =>
         (await res.Content.ReadFromJsonAsync<Dictionary<string, object>>())?["code"]?.ToString();
 }

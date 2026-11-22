@@ -22,6 +22,7 @@ public class ModelTests
 
         Assert.Equal("characters", character.GetTableName());
         Assert.Equal("accounts", db.Model.FindEntityType(typeof(Account))!.GetTableName());
+        Assert.Equal("server_status", db.Model.FindEntityType(typeof(ServerStatus))!.GetTableName());
         Assert.Equal("normalized_name", character.FindProperty(nameof(Character.NormalizedName))!.GetColumnName());
         Assert.Equal("jsonb", character.FindProperty(nameof(Character.Progression))!.GetColumnType());
 

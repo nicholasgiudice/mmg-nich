@@ -246,6 +246,7 @@ Criada na T-211. ASP.NET Core minimal API no serviço `api` do Compose (porta 80
 | Método e caminho | Autenticação | O que faz |
 |---|---|---|
 | `GET /` | — | saúde (`{"status":"ok"}`) |
+| `GET /status` | — | jogadores online `{online}` (contador da tela de login): soma o que cada servidor de jogo grava em `server_status` a cada 15 s, ignorando relatos com mais de 60 s; guardado por 5 s; banco fora → 503 |
 | `POST /accounts` | — | cadastro `{email, password}` → 201 |
 | `POST /sessions` | — | login `{email, password}` → `{token, expiresAt}` (sessão de 15 min) |
 | `GET /characters` | sessão | personagens da conta (`id, name, classId, level, zoneId`) |

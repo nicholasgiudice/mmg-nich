@@ -31,6 +31,7 @@
     <Compile Include="..\..\client\scripts\Match\MatchTracker.cs" Link="Client\MatchTracker.cs" />
     <Compile Include="..\..\client\scripts\Hud\InstanceText.cs" Link="Client\InstanceText.cs" />
     <Compile Include="..\..\client\scripts\Account\LoginMemory.cs" Link="Client\LoginMemory.cs" />
+    <Compile Include="..\..\client\scripts\Account\OnlineCounterText.cs" Link="Client\OnlineCounterText.cs" />
     <Compile Include="..\..\client\scripts\Hud\ShopQuantity.cs" Link="Client\ShopQuantity.cs" />
     <Compile Include="..\..\client\scripts\Hud\SkillDetailText.cs" Link="Client\SkillDetailText.cs" />
     <Compile Include="..\..\client\scripts\Hud\MiniMapView.cs" Link="Client\MiniMapView.cs" />

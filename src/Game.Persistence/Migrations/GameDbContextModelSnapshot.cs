@@ -141,6 +141,26 @@ namespace Game.Persistence.Migrations
                     b.ToTable("characters", (string)null);
                 });
 
+            modelBuilder.Entity("Game.Persistence.ServerStatus", b =>
+                {
+                    b.Property<string>("ServerId")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("server_id");
+
+                    b.Property<int>("OnlinePlayers")
+                        .HasColumnType("integer")
+                        .HasColumnName("online_players");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("ServerId");
+
+                    b.ToTable("server_status", (string)null);
+                });
+
             modelBuilder.Entity("Game.Persistence.Character", b =>
                 {
                     b.HasOne("Game.Persistence.Account", "Account")

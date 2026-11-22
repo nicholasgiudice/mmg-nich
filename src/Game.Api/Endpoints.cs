@@ -42,6 +42,7 @@ public static class Endpoints
     public static void Map(WebApplication app)
     {
         app.MapGet("/", () => Results.Ok(new { service = "mmo-api", status = "ok" }));
+        app.MapGet("/status", Status);
 
         app.MapPost("/accounts", CreateAccount).RequireRateLimiting(AuthRateLimit);
         app.MapPost("/sessions", Login).RequireRateLimiting(AuthRateLimit);
@@ -55,6 +56,20 @@ public static class Endpoints
 
     public static IResult Error(int status, string code, string title) =>
         Results.Problem(statusCode: status, title: title, extensions: new Dictionary<string, object?> { ["code"] = code });
+
+    /// <summary>Contador de jogadores online (tela de login): público, sem sessão. Banco fora do ar = 503.</summary>
+    private static async Task<IResult> Status(OnlineCounter counter, ILogger<OnlineCounter> log, CancellationToken ct)
+    {
+        try
+        {
+            return Results.Ok(new StatusResponse(await counter.CountAsync(ct)));
+        }
+        catch (Exception ex) when (ex is Npgsql.NpgsqlException or InvalidOperationException or TimeoutException)
+        {
+            log.LogWarning("Contador de online indisponível: {Error}", ex.Message);
+            return Error(503, "status_unavailable", "Contador de jogadores indisponível.");
+        }
+    }
 
     private static async Task<IResult> CreateAccount(CredentialsRequest req, GameRepository repo, Passwords passwords, CancellationToken ct)
     {

@@ -52,3 +52,16 @@ public sealed class Character
 
     public static string Normalize(string name) => name.Trim().ToUpperInvariant();
 }
+
+/// <summary>
+/// Situação de um servidor de jogo (contador de jogadores online): uma linha por servidor, que ele mesmo atualiza de tempos
+/// em tempos. A API soma as linhas recentes; linha velha é de servidor que caiu sem avisar e não conta.
+/// </summary>
+public sealed class ServerStatus
+{
+    public const int MaxServerIdLength = 64;
+
+    public required string ServerId { get; set; }
+    public int OnlinePlayers { get; set; }
+    public DateTimeOffset UpdatedAt { get; set; }
+}

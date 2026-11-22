@@ -41,6 +41,15 @@ public sealed record ApiOptions
     /// <summary>Cadastros e logins por IP por minuto.</summary>
     public int AuthRequestsPerMinute { get; init; } = 10;
 
+    /// <summary>
+    /// Relato de servidor de jogo mais velho que isto não entra no contador de online (o servidor caiu sem avisar). O servidor
+    /// relata a cada 15 s; a folga cobre alguns relatos perdidos.
+    /// </summary>
+    public TimeSpan ServerStatusMaxAge { get; init; } = TimeSpan.FromSeconds(60);
+
+    /// <summary>Por quanto tempo <c>GET /status</c> reaproveita a última contagem antes de consultar o banco de novo.</summary>
+    public TimeSpan OnlineCacheLifetime { get; init; } = TimeSpan.FromSeconds(5);
+
     public static ApiOptions FromConfiguration(IConfiguration c) => new()
     {
         ConnectionString = c[Persistence.GameDatabase.ConnectionEnv] is { Length: > 0 } cs

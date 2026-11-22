@@ -13,6 +13,7 @@ builder.Services.AddSingleton(sp => new GameRepository(
     Game.Persistence.GameDatabase.Options(sp.GetRequiredService<ApiOptions>().ConnectionString), sp.GetRequiredService<TimeProvider>()));
 builder.Services.AddSingleton(sp => PlayableClasses.Load(sp.GetRequiredService<ApiOptions>().DataDir));
 builder.Services.AddSingleton<Passwords>();
+builder.Services.AddSingleton<OnlineCounter>();
 builder.Services.AddProblemDetails();
 
 builder.Services.AddAuthentication(SessionAuthenticationHandler.SchemeName)

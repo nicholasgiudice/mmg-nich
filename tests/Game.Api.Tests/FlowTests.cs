@@ -119,6 +119,32 @@ public class FlowTests(ApiDatabase db) : IClassFixture<ApiDatabase>
     }
 
     [PostgresFact]
+    public async Task Status_sums_fresh_game_server_reports_and_caches_for_a_few_seconds()
+    {
+        var api = new ApiFactory(db.ConnectionString);
+        await using var _ = api;
+        var http = api.CreateClient();
+        var servers = new GameRepository(GameDatabase.Options(db.ConnectionString), api.Time);
+        var a = $"game.a.{Guid.NewGuid():N}";
+        var b = $"game.b.{Guid.NewGuid():N}";
+        var stale = $"game.old.{Guid.NewGuid():N}";
+
+        api.Time.Advance(TimeSpan.FromMinutes(-2));
+        await servers.ReportServerStatusAsync(stale, 50); // servidor que caiu sem avisar: relato de 2 min atrás
+        api.Time.Advance(TimeSpan.FromMinutes(2));
+        await servers.ReportServerStatusAsync(a, 3);
+        await servers.ReportServerStatusAsync(b, 4);
+
+        Assert.Equal(new StatusResponse(7), await http.GetFromJsonAsync<StatusResponse>("/status"));
+
+        // Dentro do cache a contagem é a mesma; depois dele, a nova.
+        await servers.ReportServerStatusAsync(a, 10);
+        Assert.Equal(7, (await http.GetFromJsonAsync<StatusResponse>("/status"))!.Online);
+        api.Time.Advance(TimeSpan.FromSeconds(5));
+        Assert.Equal(14, (await http.GetFromJsonAsync<StatusResponse>("/status"))!.Online);
+    }
+
+    [PostgresFact]
     public async Task Session_expires_after_15_minutes()
     {
         var api = new ApiFactory(db.ConnectionString);

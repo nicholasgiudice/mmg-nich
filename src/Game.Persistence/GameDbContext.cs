@@ -2,11 +2,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Game.Persistence;
 
-/// <summary>Banco do jogo (T-210): tabelas <c>accounts</c> e <c>characters</c>, colunas em snake_case.</summary>
+/// <summary>Banco do jogo (T-210): tabelas <c>accounts</c>, <c>characters</c> e <c>server_status</c>, colunas em snake_case.</summary>
 public sealed class GameDbContext(DbContextOptions<GameDbContext> options) : DbContext(options)
 {
     public DbSet<Account> Accounts => Set<Account>();
     public DbSet<Character> Characters => Set<Character>();
+    public DbSet<ServerStatus> ServerStatuses => Set<ServerStatus>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -32,6 +33,13 @@ public sealed class GameDbContext(DbContextOptions<GameDbContext> options) : DbC
             c.Property(x => x.ZoneId).HasMaxLength(64);
             c.Property(x => x.Progression).HasColumnType("jsonb");
             c.Property(x => x.Version).IsRowVersion(); // Npgsql: uint + IsRowVersion = coluna de sistema xmin
+        });
+
+        modelBuilder.Entity<ServerStatus>(s =>
+        {
+            s.ToTable("server_status");
+            s.HasKey(x => x.ServerId);
+            s.Property(x => x.ServerId).HasMaxLength(ServerStatus.MaxServerIdLength);
         });
 
         foreach (var entity in modelBuilder.Model.GetEntityTypes())
