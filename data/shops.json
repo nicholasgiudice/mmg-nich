@@ -6,7 +6,9 @@
       "name": "Templo",
       "offers": [
         { "item": "consumable.minor_healing_potion" },
-        { "item": "consumable.minor_mana_potion" }
+        { "item": "consumable.minor_mana_potion" },
+        { "item": "consumable.greater_healing_potion" },
+        { "item": "consumable.greater_mana_potion" }
       ]
     },
     {

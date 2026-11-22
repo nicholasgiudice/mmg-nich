@@ -139,6 +139,16 @@
       "y": 204,
       "source": "P_Red01.png (recolorido para azul, T-320)"
     },
+    "consumable.greater_healing_potion": {
+      "x": 238,
+      "y": 204,
+      "source": "P_Red07.png"
+    },
+    "consumable.greater_mana_potion": {
+      "x": 34,
+      "y": 340,
+      "source": "P_Red07.png (vermelhos recoloridos para azul, rolha mantida)"
+    },
     "weapon.sword": {
       "x": 68,
       "y": 102,

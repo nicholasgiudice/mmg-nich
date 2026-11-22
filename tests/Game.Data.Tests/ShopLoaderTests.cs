@@ -88,11 +88,11 @@ public class ShopLoaderTests
     }
 
     [Fact]
-    public void Temple_sells_both_potions_and_the_smith_common_weapons_and_armor_from_level_2_to_6()
+    public void Temple_sells_minor_and_greater_potions_and_the_smith_common_weapons_and_armor_from_level_2_to_6()
     {
         var db = Real();
         Assert.Equal(
-            ["consumable.minor_healing_potion", "consumable.minor_mana_potion"],
+            ["consumable.greater_healing_potion", "consumable.greater_mana_potion", "consumable.minor_healing_potion", "consumable.minor_mana_potion"],
             db.Shops["shop.temple"].Offers.Select(o => o.Item).Order(StringComparer.Ordinal));
 
         var smith = db.Shops["shop.smith"].Offers;
