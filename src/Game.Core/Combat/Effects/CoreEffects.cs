@@ -27,8 +27,39 @@ public static class CoreEffects
         // T-201: base + escala pelas estatísticas da fonte; crítico só para quem tem estatísticas.
         var crit = Stats.StatMath.RollCrit(c.World, c.Source);
         var value = Stats.StatMath.Scaled(e.Base, e.Scaling, c.Source) * Stats.StatMath.MonsterPower(c.World, c.Source)
-            * TagBonus(c.Target!, e) * c.Power * CritFactor(c.World, crit);
-        DamageResolver.Deal(c.World, c.Source, c.Target!, c.SourceId, value, e.School, melee: c.Ability?.IsMelee ?? false, critical: crit);
+            * TagBonus(c.Target!, e) * LowHealthBonus(c.Target!, e) * c.Power * CritFactor(c.World, crit);
+        DamageResolver.Deal(
+            c.World, c.Source, c.Target!, c.SourceId, value, e.School, melee: c.Ability?.IsMelee ?? false, critical: crit,
+            threatMultiplier: e.ThreatMultiplier);
+        if (e.ResetCooldownOnKill && !c.Target!.IsAlive)
+        {
+            ResetCooldown(c);
+        }
+    }
+
+    /// <summary>
+    /// T-407 (Execução): 1 + <c>lowHealthBonus.bonus</c> se o alvo está abaixo de <c>belowHealth</c> da vida máxima agora
+    /// (antes deste dano); senão 1.
+    /// </summary>
+    public static double LowHealthBonus(Entity target, DamageEffect e) =>
+        e.LowHealthBonus is { } b && target.TryGet<Health>() is { Max: > 0 } h && h.Current < b.BelowHealth * h.Max
+            ? 1 + b.Bonus
+            : 1;
+
+    /// <summary>
+    /// T-407 (Execução NH5): o golpe matou, a recarga da habilidade de origem volta a zero (pronta neste tick). Com cargas,
+    /// a carga em recarga volta no tick seguinte (<c>RechargeCooldownCharges</c>). Sem habilidade (status, área) não faz nada.
+    /// O cliente vê a recarga nova pelo <c>AbilityState</c> do snapshot.
+    /// </summary>
+    private static void ResetCooldown(EffectContext c)
+    {
+        if (c.Ability is not { } ability || c.Source?.TryGet<AbilityState>() is not { } st
+            || !st.ReadyAtTick.TryGetValue(ability.Id, out var ready) || ready <= c.World.Tick)
+        {
+            return;
+        }
+
+        st.ReadyAtTick[ability.Id] = c.World.Tick;
     }
 
     private static double CritFactor(World world, bool crit) => crit ? world.Content.Rules.Stats.CritMultiplier : 1;
@@ -118,6 +149,13 @@ public static class CoreEffects
             var first = c.Targets.FirstOrDefault(t => t.IsAlive && t.Id != c.Source.Id);
             var srcPos = c.Source.TryGet<Transform>()?.Position ?? Vector2.Zero;
             var toTarget = first?.TryGet<Transform>() is { } ft ? ft.Position - srcPos : Vector2.Zero;
+            if (e.Direction == DisplacementDirection.TowardTarget && first is not null && toTarget.LengthSquared() > 1e-8f)
+            {
+                // T-406: avançar até o alvo (inimigo ou aliado) para no contato, sem passar dele.
+                var contact = (c.Source.TryGet<Collider>()?.Radius ?? 0f) + (first.TryGet<Collider>()?.Radius ?? 0f);
+                distance = Math.Min(distance, Math.Max(0f, toTarget.Length() - contact));
+            }
+
             var dir = e.Direction switch
             {
                 DisplacementDirection.Aim => c.AimDirection,
@@ -138,6 +176,11 @@ public static class CoreEffects
                 continue;
             }
 
+            if (e.Kind == DisplacementKind.Knockback && Status.StatusManager.IsKnockbackImmune(c.World, t) && !IsAlly(c.Source, t))
+            {
+                continue; // T-406: imune a empurrão de inimigo (Bastião NH5)
+            }
+
             var away = sourcePos.HasValue ? tr.Position - sourcePos.Value : Vector2.Zero;
             var dir = e.Direction switch
             {
@@ -150,6 +193,9 @@ public static class CoreEffects
             Move(c, t, dir, distance, e.Kind);
         }
     }
+
+    private static bool IsAlly(Entity? source, Entity target) =>
+        source is not null && source.TryGet<FactionTag>() is { } a && target.TryGet<FactionTag>() is { } b && a.Faction == b.Faction;
 
     private static Vector2 Or(Vector2 v, Vector2 fallback) => v.LengthSquared() > 1e-8f ? Vector2.Normalize(v) : fallback;
 
@@ -172,10 +218,16 @@ public static class DamageResolver
     /// <paramref name="melee"/>: golpe corpo a corpo (reflexo da Guarda Firme, T-061). <paramref name="applyModifiers"/> false =
     /// ignora multiplicadores de causado/recebido (dano devolvido, que já vem calculado).
     /// Depois do dano, avisa as reações registradas (<see cref="IDamageReaction"/>).
+    /// <para>Desvio (T-406): se o alvo tem status com <c>redirect</c>, a fração desviada sai do valor base antes de tudo
+    /// (antes dos modificadores e escudos do alvo) e é aplicada no protetor como um novo dano do mesmo atacante, com a defesa
+    /// e os modificadores do protetor e a redução do status; esse dano não é desviado de novo. Dano sem modificadores
+    /// (<paramref name="applyModifiers"/> false, já calculado) não é desviado.</para>
+    /// <paramref name="threatMultiplier"/>: ameaça = este número × dano, no lugar de <c>rules.threat.damageMultiplier</c>.
+    /// Retorna o dano final no alvo (sem a parte desviada).
     /// </summary>
     public static float Deal(
         World world, Entity? source, Entity target, string sourceId, double baseAmount, DamageSchool school,
-        bool melee = false, bool applyModifiers = true, bool critical = false)
+        bool melee = false, bool applyModifiers = true, bool critical = false, double? threatMultiplier = null)
     {
         var health = target.TryGet<Health>();
         if (health is null || !health.IsAlive || target.IsRemoved)
@@ -183,6 +235,41 @@ public static class DamageResolver
             return 0;
         }
 
+        var shares = applyModifiers && baseAmount > 0 ? Status.DamageRedirect.Shares(world, target) : [];
+        if (shares.Count == 0)
+        {
+            return Apply(world, source, target, health, sourceId, baseAmount, school, melee, applyModifiers, critical, threatMultiplier);
+        }
+
+        var kept = baseAmount * (1 - shares.Sum(x => x.Fraction));
+        var amount = Apply(world, source, target, health, sourceId, kept, school, melee, applyModifiers, critical, threatMultiplier);
+        foreach (var share in shares)
+        {
+            if (share.Protector.TryGet<Health>() is not { IsAlive: true } ph || share.Protector.IsRemoved)
+            {
+                continue;
+            }
+
+            var part = baseAmount * share.Fraction * (1 - share.Redirect.Reduction);
+            var taken = Apply(
+                world, source, share.Protector, ph, sourceId, part, school, melee: false, applyModifiers: true, critical, threatMultiplier,
+                redirected: true);
+            world.Events.Publish(new Status.DamageRedirected(
+                source?.Id ?? EntityId.None, target.Id, share.Protector.Id, sourceId, share.Status.StatusId, taken));
+        }
+
+        return amount;
+    }
+
+    /// <summary>
+    /// O dano num alvo, sem desvio: modificadores, defesa, escudos, vida, eventos e reações. <paramref name="redirected"/>:
+    /// a parte desviada para um protetor (T-406); ela e o dano sem modificadores (reflexos) vão às reações como indiretos
+    /// (<see cref="DamageReport.Indirect"/>, T-407: não geram vida).
+    /// </summary>
+    private static float Apply(
+        World world, Entity? source, Entity target, Health health, string sourceId, double baseAmount, DamageSchool school,
+        bool melee, bool applyModifiers, bool critical, double? threatMultiplier, bool redirected = false)
+    {
         var svc = world.Combat;
         var dealt = source is null || !applyModifiers ? 1.0 : svc.DamageDealtMultiplier(world, source, target, school);
         var taken = applyModifiers ? svc.DamageTakenMultiplier(world, target, source, school) : 1.0;
@@ -215,7 +302,10 @@ public static class DamageResolver
         health.Current -= applied;
         var killed = health.Current <= 0;
         world.Events.Publish(new DamageDealt(
-            source?.Id ?? EntityId.None, target.Id, sourceId, school, amount, absorbed, applied, overkill, killed, critical));
+            source?.Id ?? EntityId.None, target.Id, sourceId, school, amount, absorbed, applied, overkill, killed, critical)
+        {
+            ThreatMultiplier = threatMultiplier,
+        });
         if (killed)
         {
             CastControl.Cancel(world, target, CastInterruptReason.Died, source?.Id);
@@ -224,7 +314,7 @@ public static class DamageResolver
 
         if (amount > 0)
         {
-            svc.AfterDamage(world, new DamageReport(source, target, sourceId, school, amount, melee));
+            svc.AfterDamage(world, new DamageReport(source, target, sourceId, school, amount, melee, Indirect: redirected || !applyModifiers));
         }
 
         return amount;

@@ -86,7 +86,7 @@ Base: os ~775 monstros até o 15 levam de 8 a 9 horas. Um nível alto leva de 2 
 
 ## 4. Como a segunda classe funciona
 
-- **Quando:** no nível 20, falando com um mestre da classe na Cidade.
+- **Quando:** no nível 20, falando com um mestre da classe na Cidade. **Decisão da fase 4 (T-403, 2026-11-21):** por enquanto a escolha é feita pela tela de habilidades (T-410), em qualquer lugar fora de combate; o mestre da classe na Cidade fica para quando os mapas forem refeitos.
 - **Escolha definitiva:** não dá para trocar. A tela de escolha mostra as duas opções com as habilidades e pede confirmação.
 - **Pontos:** a partir do 21, os pontos podem ir para qualquer habilidade, da base ou da segunda classe.
 - **Barra:** 10 teclas. As teclas 6–0 aparecem vazias até a segunda classe.
@@ -136,11 +136,13 @@ Custo 20, recarga 12 s, alcance 8, alvo: um aliado. Avança até o aliado e, pel
 
 | NH | Dano desviado | Duração | Outros efeitos |
 |---|---|---|---|
-| 1 | 30% | 4 s | — |
-| 2 | 35% | 4 s | — |
-| 3 | 35% | 5 s | o aliado ganha **escudo** 20 + 1 × VIT (80) |
-| 4 | 40% | 5 s | escudo 20 + 1 × VIT |
-| 5 | 40% | 6 s | escudo 40 + 2 × VIT (160) e recarga **9 s** |
+| 1 | 30% | **6 s** (era 4) | — |
+| 2 | 35% | **6 s** (era 4) | — |
+| 3 | 35% | **7 s** (era 5) | o aliado ganha **escudo** 20 + 1 × VIT (80), pela mesma duração |
+| 4 | 40% | **7 s** (era 5) | escudo 20 + 1 × VIT |
+| 5 | 40% | **8 s** (era 6) | escudo 40 + 2 × VIT (160) e recarga **9 s** |
+
+Durações +2 s em todos os NH na T-408 (reforço do Guardião em grupo, decisão do designer de 2026-11-22). O vínculo vale com o Guardião a até 8 tiles do aliado.
 
 #### Golpe de Escudo — atordoa e prende a atenção
 
@@ -158,15 +160,17 @@ Contra elites e chefes, o atordoamento é reduzido pela regra de controle (× 0,
 
 #### Bastião — o grupo perto dele apanha menos
 
-Custo 40, recarga 20 s, raio 5 em volta do Guardião. Todos os aliados no raio (com ele) recebem menos dano pela duração.
+Custo **20** (era 40; T-408), recarga 20 s, raio 5 em volta do Guardião. Todos os aliados no raio (com ele) recebem menos dano pela duração.
 
 | NH | Redução de dano | Duração | Outros efeitos |
 |---|---|---|---|
-| 1 | 15% | 6 s | — |
-| 2 | 18% | 6 s | — |
-| 3 | 20% | 8 s | raio **7** |
-| 4 | 23% | 8 s | raio 7 |
-| 5 | 25% | 8 s | raio 7 e os aliados **não são empurrados** |
+| 1 | **25%** (era 15%) | 6 s | — |
+| 2 | **28%** (era 18%) | 6 s | — |
+| 3 | **30%** (era 20%) | 8 s | raio **7** |
+| 4 | **33%** (era 23%) | 8 s | raio 7 |
+| 5 | **35%** (era 25%) | 8 s | raio 7 e os aliados **não são empurrados** |
+
+Redução +10 pontos em todos os NH na T-408 (reforço do Guardião em grupo). Vale para todo dano, inclusive de estados e áreas (veneno, poça), em quem está no raio quando o Guardião usa.
 
 #### Inabalável — não para de pé
 
@@ -208,7 +212,7 @@ Custo 20, recarga 10 s, alcance 8, alvo: um monstro.
 
 #### Fúria — mais dano, mais exposto
 
-Custo 30, recarga 20 s, só no Berserker. Pela duração, causa mais dano, anda mais rápido e **recebe 20% mais dano**.
+**Sem custo** (era 30; T-408), recarga 20 s, só no Berserker. Pela duração, causa mais dano, anda mais rápido e **recebe 20% mais dano**.
 
 | NH | Dano causado | Velocidade | Duração | Outros efeitos |
 |---|---|---|---|---|
@@ -220,7 +224,7 @@ Custo 30, recarga 20 s, só no Berserker. Pela duração, causa mais dano, anda 
 
 #### Execução — golpe que termina o serviço
 
-Custo 30, recarga 8 s, arco de 90° e alcance 1,9. Causa dano extra em alvo com pouca vida.
+Custo **20** (era 30; T-408), recarga 8 s, arco de 90° e alcance 1,9. Causa dano extra em alvo com pouca vida.
 
 | NH | Valor | Dano extra | Outros efeitos | Perfil nível 21 |
 |---|---|---|---|---|
@@ -246,7 +250,7 @@ Os valores são a média da versão ativa (15% a 25% por 6 a 8 s, a cada 18 s), 
 
 #### Tempestade de Aço (assinatura, nível 35) — gira enquanto anda
 
-Custo 90, recarga 75 s. Por 4 s, gira sem parar, acertando todos num raio de 3 a cada 0,5 s (8 giros), andando 20% mais devagar.
+Custo **80** (era 90; T-408), recarga 75 s. Por 4 s, gira sem parar, acertando todos num raio de 3 a cada 0,5 s (8 giros), andando 20% mais devagar.
 
 | NH | Valor por giro | Outros efeitos | Perfil nível 21, total |
 |---|---|---|---|
@@ -270,6 +274,27 @@ Custo 90, recarga 75 s. Por 4 s, gira sem parar, acertando todos num raio de 3 a
 | Tempestade de Aço | vários acertos com intervalo, Sangramento | **área que acompanha quem anda** (a verificar no Core) |
 
 O Berserker usa quase só o que já existe. O Guardião traz o **desvio de dano**, que o Sacerdote (Elo da Vida) também vai usar.
+
+### Ajustes do simulador (T-408)
+
+Os dados estão em `data/abilities_guardian.json` e `data/abilities_berserker.json`, com os números das tabelas acima. Na primeira rodada mudaram só **custos de Mana**, porque o Guerreiro fica com **88 de Mana** até o 40 (não põe INT) e 5/s de regeneração, e a base já gasta tudo isso (Golpe Pesado e Golpe Circular acertam o grupo inteiro e rendem mais por Mana que qualquer habilidade nova de alvo único). Medidas em `tasks/reports/balance-v0.19.md`.
+
+| Habilidade | Antes | Depois | Por quê |
+|---|---|---|---|
+| Tempestade de Aço | 90 | **80** | 90 não cabe em 88 de Mana (pendência da T-402); 80, como a Muralha Viva e o Juramento |
+| Fúria | 30 | **sem custo** | o preço é se expor (+20% de dano recebido), como o Inabalável é sem custo; com os custos do design, o Berserker levava **118–130%** do tempo do Guerreiro só com a base (a Mana da Fúria e da Execução saía do Golpe Pesado e do Golpe Circular) |
+| Execução | 30 | **20** | com a Fúria sem custo e a Execução a 30, o Berserker ficava em 94–103% do tempo da base; com 20, em **74–82%** (meta: no máximo 85%) |
+| Bastião | 40 | **20** | com 40, o bot só conseguia usá-lo uma vez por luta de grupo (a Mana ia para as habilidades mais baratas); com 20, fica em ~30% do tempo nos aliados |
+
+**Reforço do Guardião (segunda rodada, decisão do designer de 2026-11-22: manter a meta de 15% e reforçar o Guardião).** Com os números do design, os outros membros do grupo recebiam 12–16% menos dano por segundo vivo, sem margem. Foram testados, um de cada vez e juntos: raio do Bastião 7/9, vínculo da Interceptação de 12 tiles, Juramento a 40 de Mana, Bastião mais longo ou mais frequente, Interceptação mais forte ou mais longa. O menor reforço que passa nos três lotes de sementes:
+
+| Habilidade | Antes | Depois | Medido (outros membros, nv30 / nv40) |
+|---|---|---|---|
+| Interceptação | duração 4/4/5/5/6 s | **6/6/7/7/8 s** | sozinha: 16–20%, sem folga no 30 |
+| Bastião | redução 15/18/20/23/25% | **25/28/30/33/35%** | sozinho: 12–25% |
+| As duas juntas | 12–16% | **19–26%** | vitória do grupo igual ou maior |
+
+Raio maior, vínculo mais longo e Juramento mais barato mexem 1–3 pontos, dentro do ruído; ficaram como no design. Detalhes no relatório, §4.
 
 ## 6. Arqueiro em detalhe
 

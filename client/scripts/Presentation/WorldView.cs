@@ -38,6 +38,10 @@ public partial class WorldView : Node2D
     private SpriteCatalog _sprites = SpriteCatalog.Empty;
     private EffectCatalog _effects = EffectCatalog.Empty;
 
+    /// <summary>Linhas dos status que ligam duas unidades (T-412, Interceptação).</summary>
+    private LinkView? _linkView;
+    private readonly List<(EntityId Protected, EntityId Protector, Color Color)> _links = new();
+
     /// <summary>Projéteis desenhados neste frame: o impacto no alvo espera a chegada (s).</summary>
     private readonly Dictionary<(EntityId Source, EntityId Target), double> _flights = new();
 
@@ -116,6 +120,14 @@ public partial class WorldView : Node2D
                     }
 
                     Projectiles(used.Source, used.Targets, used.AbilityId, authority.ControlledEntity);
+                    if (_effects.Burst(used.AbilityId) is { } burst && userView is not null)
+                    {
+                        // Raio do NH de quem usou (o Bastião passa de 5 para 7 no NH3); sem alcance nos dados, o do effects.json.
+                        var rank = latest?.Entities.FirstOrDefault(s => s.Id == used.Source)?.TryGet<AbilityState>()?.RankOf(used.AbilityId) ?? 1;
+                        var reach = _content.AbilityAt(used.AbilityId, rank)?.Effects.OfType<ExtraTargetsEffect>()
+                            .Select(x => (float)x.Radius).DefaultIfEmpty(burst.Radius).Max() ?? burst.Radius;
+                        AddChild(BurstView.Create(userView.Position, burst with { Radius = reach }));
+                    }
 
                     if (MultiHit(latest, used.Source, used.AbilityId) is { } first)
                     {
@@ -174,6 +186,7 @@ public partial class WorldView : Node2D
             ?? Faction.Player;
         var seen = _seen;
         seen.Clear();
+        _links.Clear();
         RenderGroundItems(latest, authority.ControlledEntity, seen);
         foreach (var state in latest.Entities)
         {
@@ -224,6 +237,15 @@ public partial class WorldView : Node2D
             view.ApplyShield(_effects.Shield, state.TryGet<ShieldState>() is { Total: > 0 });
             var (chips, marks) = StatusVisuals.From(state.TryGet<StatusEffects>(), _content, now);
             view.ApplyStatus(chips, marks);
+            var auras = StatusVisuals.Auras(state.TryGet<StatusEffects>(), _effects, now);
+            view.ApplyAuras(auras.Select(a => a.Aura).ToList());
+            foreach (var (aura, protector) in auras)
+            {
+                if (aura.Kind == AuraKind.Link && !protector.IsNone && protector != state.Id)
+                {
+                    _links.Add((state.Id, protector, aura.Color));
+                }
+            }
             view.SetVanishWarning(state.TryGet<AbilityState>()?.Cast is { } cast
                 && _content.Abilities.TryGetValue(cast.AbilityId, out var castDef) && castDef.Tags.Contains("ai.vanish"));
             view.SetCast(SelectedEntity == state.Id && state.TryGet<AbilityState>()?.Cast is { } selectedCast
@@ -241,6 +263,21 @@ public partial class WorldView : Node2D
         foreach (var id in _views.Keys.Where(id => !seen.Contains(id)).ToList())
         {
             RemoveView(id);
+        }
+
+        if (_linkView is null)
+        {
+            _linkView = new LinkView { Name = "Links" };
+            AddChild(_linkView);
+        }
+
+        _linkView.Begin();
+        foreach (var (target, protector, color) in _links)
+        {
+            if (_views.TryGetValue(target, out var a) && _views.TryGetValue(protector, out var b) && a.IsAlive && b.IsAlive)
+            {
+                _linkView.Add(a.Position, b.Position, color);
+            }
         }
 
         foreach (var id in _ground.Keys.Where(id => !seen.Contains(id)).ToList())
@@ -532,6 +569,8 @@ public partial class WorldView : Node2D
         _previousById.Clear();
         _indexedPrevious = null;
         SelectedEntity = null;
+        _links.Clear();
+        _linkView?.Begin();
     }
 
     private void RemoveView(EntityId id)

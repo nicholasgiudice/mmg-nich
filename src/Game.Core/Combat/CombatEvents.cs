@@ -21,6 +21,9 @@ public enum AbilityRejectReason
     InvalidTarget,
     OutOfRange,
     NoLineOfSight,
+
+    /// <summary>T-403: habilidade passiva (vale sempre; não se usa).</summary>
+    Passive,
 }
 
 public enum CastInterruptReason
@@ -68,7 +71,14 @@ public sealed record CastInterrupted(EntityId Entity, string AbilityId, CastInte
 /// <summary>Dano aplicado. <paramref name="Critical"/> = acerto crítico (T-201).</summary>
 public sealed record DamageDealt(
     EntityId Source, EntityId Target, string SourceId, DamageSchool School, float Amount, float Absorbed,
-    float Applied, float Overkill, bool Killed, bool Critical = false) : GameEvent;
+    float Applied, float Overkill, bool Killed, bool Critical = false) : GameEvent
+{
+    /// <summary>
+    /// Ameaça = este número × <see cref="Amount"/>, no lugar de <c>rules.threat.damageMultiplier</c> (T-406, efeito de dano com
+    /// <c>threatMultiplier</c>). Null = a regra padrão. Só o servidor usa (a IA roda nele): fica fora da rede.
+    /// </summary>
+    internal double? ThreatMultiplier { get; init; }
+}
 
 /// <summary>Cura. Amount = valor após arredondamento; Effective = vida realmente recuperada; Overheal = excedente.</summary>
 public sealed record HealApplied(

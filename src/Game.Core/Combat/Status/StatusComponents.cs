@@ -28,6 +28,15 @@ public sealed class StatusInstance
     /// </summary>
     public Vector2? Origin { get; set; }
 
+    /// <summary>
+    /// Quem recebe o dano desviado por este status (T-406, <c>redirect</c>), quando não é quem aplicou. None = <see cref="Source"/>.
+    /// Renovar o status atualiza.
+    /// </summary>
+    public EntityId RedirectTo { get; set; }
+
+    /// <summary>Protetor do desvio de dano: <see cref="RedirectTo"/> ou, sem ele, quem aplicou.</summary>
+    public EntityId Protector => RedirectTo.IsNone ? Source : RedirectTo;
+
     public StatusInstance Clone() => new()
     {
         Id = Id,
@@ -39,6 +48,7 @@ public sealed class StatusInstance
         NextPeriodicTick = (long[])NextPeriodicTick.Clone(),
         DamageTaken = DamageTaken,
         Origin = Origin,
+        RedirectTo = RedirectTo,
     };
 }
 
@@ -80,6 +90,7 @@ public sealed class StatusEffects : IComponent, IReplicated
             hasher.Add(a.ExpiresAtTick);
             hasher.Add(a.Stacks);
             hasher.Add(a.DamageTaken);
+            hasher.Add(a.RedirectTo.Value);
             hasher.Add(a.Origin is { } o ? 1 : 0);
             if (a.Origin is { } origin)
             {

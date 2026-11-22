@@ -262,6 +262,23 @@ Custo 90, recarga 120 s. Cura todos os aliados a até 8 tiles (inclui o Clérigo
 | 2 | 1 | cura 78 + 5,2 × INT | — | 140 |
 | 3 | 1 | cura 96 + 6,4 × INT | também **levanta um aliado caído** próximo com 30% da vida | 173 |
 
+## Segunda classe do Guerreiro (fase 4)
+
+Guardião e Berserker, no nível 20. As tabelas finais (efeitos e valores por NH) são as de `design/segunda-classe-v0.1.md` §5; os dados estão em `data/abilities_guardian.json` e `data/abilities_berserker.json` (T-408). NH1 no nível 21, depois 24, 27, 30 e 33; a assinatura no 35, 37 e 40. Com o simulador mudaram os custos abaixo e, no Guardião, a duração da Interceptação (+2 s: 6/6/7/7/8 s) e a redução do Bastião (+10 pontos: 25/28/30/33/35%) (`tasks/reports/balance-v0.19.md`):
+
+| Habilidade | Id | Custo | Recarga |
+|---|---|---|---|
+| Interceptação | `guardian.interception` | 20 | 12 s (9 s no NH5) |
+| Golpe de Escudo | `guardian.shield_bash` | 25 | 8 s |
+| Bastião | `guardian.bastion` | **20** (era 40) | 20 s |
+| Inabalável | `guardian.steadfast` | — | 25 s (20 s do NH4) |
+| Juramento (assinatura) | `guardian.oath` | 80 | 90 s |
+| Investida | `berserker.charge` | 20 | 10 s (7 s no NH5) |
+| Fúria | `berserker.fury` | **—** (era 30) | 20 s |
+| Execução | `berserker.execution` | **20** (era 30) | 8 s |
+| Sede de Sangue (passiva) | `berserker.blood_thirst` | — | — |
+| Tempestade de Aço (assinatura) | `berserker.steel_storm` | **80** (era 90) | 75 s |
+
 ## Depois do MVP
 
 Habilidades fora da barra de 5 teclas (especializações): Guerreiro — Investida, Interceptação; Arqueiro — Armadilha de Contenção, Flecha Perfurante, Tiro Debilitante; Mago — Combustão, Dissipar Magia; Clérigo — Bênção, Oração Restauradora. Recebem tabela de níveis quando entrarem no jogo.

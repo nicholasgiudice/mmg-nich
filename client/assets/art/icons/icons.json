@@ -278,6 +278,56 @@
       "x": 170,
       "y": 204,
       "source": "S_Holy01.png"
+    },
+    "guardian.interception": {
+      "x": 0,
+      "y": 374,
+      "source": "pixellab:108059eb-dda5-46a3-9a59-ccdeeb21dd9c#0"
+    },
+    "berserker.fury": {
+      "x": 34,
+      "y": 408,
+      "source": "pixellab:0ea7d7c0-317a-4432-8cb7-fc75c7ed3a4d#4"
+    },
+    "guardian.shield_bash": {
+      "x": 34,
+      "y": 374,
+      "source": "pixellab:108059eb-dda5-46a3-9a59-ccdeeb21dd9c#5"
+    },
+    "guardian.bastion": {
+      "x": 68,
+      "y": 374,
+      "source": "pixellab:108059eb-dda5-46a3-9a59-ccdeeb21dd9c#9"
+    },
+    "guardian.steadfast": {
+      "x": 102,
+      "y": 374,
+      "source": "pixellab:108059eb-dda5-46a3-9a59-ccdeeb21dd9c#15"
+    },
+    "guardian.oath": {
+      "x": 136,
+      "y": 374,
+      "source": "pixellab:d4d95f63-1c76-492e-8829-294e582f75c5#0"
+    },
+    "berserker.charge": {
+      "x": 0,
+      "y": 408,
+      "source": "pixellab:0ea7d7c0-317a-4432-8cb7-fc75c7ed3a4d#0"
+    },
+    "berserker.execution": {
+      "x": 68,
+      "y": 408,
+      "source": "pixellab:0ea7d7c0-317a-4432-8cb7-fc75c7ed3a4d#11"
+    },
+    "berserker.blood_thirst": {
+      "x": 102,
+      "y": 408,
+      "source": "pixellab:0ea7d7c0-317a-4432-8cb7-fc75c7ed3a4d#13"
+    },
+    "berserker.steel_storm": {
+      "x": 136,
+      "y": 408,
+      "source": "pixellab:d4d95f63-1c76-492e-8829-294e582f75c5#8"
     }
   }
 }

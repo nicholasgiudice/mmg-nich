@@ -90,6 +90,21 @@ public partial class AreaView : Node2D
 
                 break;
 
+            case Kind.Spin:
+                // T-412, Tempestade de Aço: lâminas girando em volta de quem a usa (a área acompanha o dono).
+                DrawCircle(Vector2.Zero, r, new Color(color, 0.10f * a));
+                var spin = (float)_time * 9f;
+                for (var i = 0; i < 4; i++)
+                {
+                    var from = spin + i * Mathf.Tau / 4;
+                    DrawArc(Vector2.Zero, r * 0.82f, from, from + 0.9f, 10, new Color(color, 0.95f * a), 4f);
+                    DrawArc(Vector2.Zero, r * 0.55f, from + 0.4f, from + 1.1f, 8, new Color(color, 0.55f * a), 2f);
+                    var tip = Vector2.FromAngle(from + 0.9f) * r * 0.82f;
+                    DrawCircle(tip, 2.5f, new Color(1f, 0.45f, 0.3f, a));
+                }
+
+                break;
+
             case Kind.None:
                 break;
 
@@ -160,6 +175,7 @@ public partial class AreaView : Node2D
         Pool,
         Web,
         Trap,
+        Spin,
     }
 
     private static (Color, Kind) Style(string areaId, bool hostile) => areaId switch
@@ -167,6 +183,7 @@ public partial class AreaView : Node2D
         "area.venom_pool" => (new Color(0.45f, 0.85f, 0.25f), Kind.Pool),
         "area.sticky_web" => (new Color(0.92f, 0.92f, 0.85f), Kind.Web),
         "area.containment_trap" => (new Color(0.95f, 0.75f, 0.30f), Kind.Trap),
+        _ when areaId.StartsWith("area.steel_storm", StringComparison.Ordinal) => (new Color(0.85f, 0.88f, 0.95f), Kind.Spin),
         _ when areaId.Contains("trap", StringComparison.Ordinal) => (new Color(0.95f, 0.75f, 0.30f), Kind.Trap),
         _ when areaId.Contains("web", StringComparison.Ordinal) => (new Color(0.92f, 0.92f, 0.85f), Kind.Web),
         _ => (hostile ? new Color(0.75f, 0.35f, 0.95f) : new Color(0.35f, 0.65f, 1.0f), Kind.Pool),

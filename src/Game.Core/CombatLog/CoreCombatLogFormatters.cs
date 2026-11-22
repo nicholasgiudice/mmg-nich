@@ -56,12 +56,20 @@ public static class CoreCombatLogFormatters
             return c.Entry(e, LogCategory.Dano, text, e.Source, e.Target);
         });
 
+        // T-406: desvio de dano (Interceptação, Juramento). O dano no protetor já sai na linha do DamageDealt.
+        f.Register<DamageRedirected>((c, e) => c.Entry(e, LogCategory.Dano,
+            $"{c.Name(e.Protector)} protegeu {c.Name(e.Target)} com {c.SourceLabel(e.StatusId)}: " +
+            $"{CombatLogContext.Number(e.Amount)} de dano desviado",
+            e.Protector, e.Target));
+
         f.Register<HealApplied>((c, e) =>
         {
             var over = e.Overheal > 0 ? $" ({CombatLogContext.Number(e.Overheal)} excedentes)" : "";
-            var text =
-                $"{c.Origin(e.Source, e.SourceId)} curou {c.Name(e.Target)} em " +
-                $"{CombatLogContext.Number(e.Effective)} de vida{(e.Critical ? " (crítico)" : "")}{over}";
+            var crit = e.Critical ? " (crítico)" : "";
+            // T-407: cura em si mesmo (vida pelo dano, poção) mostra a habilidade: "Berserker recuperou 10 de vida com Sede de Sangue".
+            var text = !e.Source.IsNone && e.Source == e.Target
+                ? $"{c.Name(e.Target)} recuperou {CombatLogContext.Number(e.Effective)} de vida com {c.SourceLabel(e.SourceId)}{crit}{over}"
+                : $"{c.Origin(e.Source, e.SourceId)} curou {c.Name(e.Target)} em {CombatLogContext.Number(e.Effective)} de vida{crit}{over}";
             return c.Entry(e, LogCategory.Cura, text, e.Source, e.Target);
         });
 
@@ -105,7 +113,9 @@ public static class CoreCombatLogFormatters
         {
             var status = c.SourceLabel(e.StatusId);
             var stacks = e.Stacks > 1 ? $", {e.Stacks} acúmulos" : "";
-            var duration = $"({CombatLogContext.Seconds(e.ExpiresAtTick - e.Tick)} s{stacks})";
+            var duration = e.ExpiresAtTick == StatusManager.PermanentTick
+                ? $"(permanente{stacks})" // T-403: passivas
+                : $"({CombatLogContext.Seconds(e.ExpiresAtTick - e.Tick)} s{stacks})";
             var text = e.Source.IsNone || e.Source == e.Target
                 ? $"{c.Name(e.Target)} recebeu {status} {duration}"
                 : $"{c.Name(e.Source)} aplicou {status} em {c.Name(e.Target)} {duration}";

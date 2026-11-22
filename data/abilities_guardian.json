@@ -1,0 +1,391 @@
+{
+  "$schema": "./schemas/game-data.schema.json",
+  "abilities": [
+    {
+      "id": "guardian.interception",
+      "name": "Interceptação",
+      "tags": ["defensive", "group", "dash"],
+      "cost": { "resource": "mana", "amount": 20 },
+      "cooldown": 12,
+      "targeting": { "type": "unit", "range": 8, "faction": "ally" },
+      "effects": [
+        { "type": "displacement", "kind": "dash", "distance": 8, "direction": "toward_target" },
+        { "type": "apply_status", "status": "status.intercepted", "duration": 6 }
+      ],
+      "ranks": [
+        {
+          "rank": 2,
+          "effects": [
+            { "type": "displacement", "kind": "dash", "distance": 8, "direction": "toward_target" },
+            { "type": "apply_status", "status": "status.intercepted_35", "duration": 6 }
+          ]
+        },
+        {
+          "rank": 3,
+          "effects": [
+            { "type": "displacement", "kind": "dash", "distance": 8, "direction": "toward_target" },
+            { "type": "apply_status", "status": "status.intercepted_35", "duration": 7 },
+            { "type": "shield", "amount": 20, "scaling": { "vit": 1 }, "duration": 7 }
+          ]
+        },
+        {
+          "rank": 4,
+          "effects": [
+            { "type": "displacement", "kind": "dash", "distance": 8, "direction": "toward_target" },
+            { "type": "apply_status", "status": "status.intercepted_40", "duration": 7 },
+            { "type": "shield", "amount": 20, "scaling": { "vit": 1 }, "duration": 7 }
+          ]
+        },
+        {
+          "rank": 5,
+          "cooldown": 9,
+          "effects": [
+            { "type": "displacement", "kind": "dash", "distance": 8, "direction": "toward_target" },
+            { "type": "apply_status", "status": "status.intercepted_40", "duration": 8 },
+            { "type": "shield", "amount": 40, "scaling": { "vit": 2 }, "duration": 8 }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "guardian.shield_bash",
+      "name": "Golpe de Escudo",
+      "tags": ["melee", "control"],
+      "cost": { "resource": "mana", "amount": 25 },
+      "cooldown": 8,
+      "targeting": { "type": "melee_arc", "range": 1.9, "angle": 60 },
+      "effects": [
+        {
+          "type": "damage",
+          "school": "physical",
+          "base": 10.0,
+          "scaling": { "weapon": 0.8, "vit": 1.5 },
+          "threatMultiplier": 3
+        },
+        { "type": "apply_status", "status": "status.stunned", "duration": 1 }
+      ],
+      "ranks": [
+        {
+          "rank": 2,
+          "effects": [
+            {
+              "type": "damage",
+              "school": "physical",
+              "base": 12.0,
+              "scaling": { "weapon": 0.96, "vit": 1.8 },
+              "threatMultiplier": 3
+            },
+            { "type": "apply_status", "status": "status.stunned", "duration": 1 }
+          ]
+        },
+        {
+          "rank": 3,
+          "effects": [
+            {
+              "type": "damage",
+              "school": "physical",
+              "base": 14.0,
+              "scaling": { "weapon": 1.12, "vit": 2.1 },
+              "threatMultiplier": 3
+            },
+            { "type": "apply_status", "status": "status.stunned", "duration": 1.5 }
+          ]
+        },
+        {
+          "rank": 4,
+          "effects": [
+            {
+              "type": "damage",
+              "school": "physical",
+              "base": 16.0,
+              "scaling": { "weapon": 1.28, "vit": 2.4 },
+              "threatMultiplier": 3
+            },
+            { "type": "apply_status", "status": "status.stunned", "duration": 1.5 }
+          ]
+        },
+        {
+          "rank": 5,
+          "targeting": { "type": "melee_arc", "range": 1.9, "angle": 120 },
+          "effects": [
+            {
+              "type": "damage",
+              "school": "physical",
+              "base": 18.0,
+              "scaling": { "weapon": 1.44, "vit": 2.7 },
+              "threatMultiplier": 3
+            },
+            { "type": "apply_status", "status": "status.stunned", "duration": 1.5 }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "guardian.bastion",
+      "name": "Bastião",
+      "tags": ["defensive", "group"],
+      "cost": { "resource": "mana", "amount": 20 },
+      "cooldown": 20,
+      "targeting": { "type": "self" },
+      "effects": [
+        { "type": "apply_status", "status": "status.bastion", "duration": 6 },
+        {
+          "type": "extra_targets",
+          "radius": 5,
+          "count": 0,
+          "affects": "ally",
+          "effects": [{ "type": "apply_status", "status": "status.bastion", "duration": 6 }]
+        }
+      ],
+      "ranks": [
+        {
+          "rank": 2,
+          "effects": [
+            { "type": "apply_status", "status": "status.bastion_28", "duration": 6 },
+            {
+              "type": "extra_targets",
+              "radius": 5,
+              "count": 0,
+              "affects": "ally",
+              "effects": [{ "type": "apply_status", "status": "status.bastion_28", "duration": 6 }]
+            }
+          ]
+        },
+        {
+          "rank": 3,
+          "effects": [
+            { "type": "apply_status", "status": "status.bastion_30", "duration": 8 },
+            {
+              "type": "extra_targets",
+              "radius": 7,
+              "count": 0,
+              "affects": "ally",
+              "effects": [{ "type": "apply_status", "status": "status.bastion_30", "duration": 8 }]
+            }
+          ]
+        },
+        {
+          "rank": 4,
+          "effects": [
+            { "type": "apply_status", "status": "status.bastion_33", "duration": 8 },
+            {
+              "type": "extra_targets",
+              "radius": 7,
+              "count": 0,
+              "affects": "ally",
+              "effects": [{ "type": "apply_status", "status": "status.bastion_33", "duration": 8 }]
+            }
+          ]
+        },
+        {
+          "rank": 5,
+          "effects": [
+            { "type": "apply_status", "status": "status.bastion_35", "duration": 8 },
+            {
+              "type": "extra_targets",
+              "radius": 7,
+              "count": 0,
+              "affects": "ally",
+              "effects": [{ "type": "apply_status", "status": "status.bastion_35", "duration": 8 }]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "guardian.steadfast",
+      "name": "Inabalável",
+      "tags": ["defensive", "cleanse"],
+      "cooldown": 25,
+      "targeting": { "type": "self" },
+      "effects": [
+        { "type": "remove_status", "tags": ["stun", "root", "freeze", "slow"], "count": 0, "target": "self" },
+        { "type": "apply_status", "status": "status.steadfast", "duration": 3 }
+      ],
+      "ranks": [
+        {
+          "rank": 2,
+          "effects": [
+            { "type": "remove_status", "tags": ["stun", "root", "freeze", "slow"], "count": 0, "target": "self" },
+            { "type": "apply_status", "status": "status.steadfast", "duration": 4 }
+          ]
+        },
+        {
+          "rank": 3,
+          "effects": [
+            { "type": "remove_status", "tags": ["stun", "root", "freeze", "slow"], "count": 0, "target": "self" },
+            { "type": "apply_status", "status": "status.steadfast_strong", "duration": 4 }
+          ]
+        },
+        { "rank": 4, "cooldown": 20 },
+        {
+          "rank": 5,
+          "effects": [
+            { "type": "remove_status", "tags": ["stun", "root", "freeze", "slow"], "count": 0, "target": "self" },
+            { "type": "apply_status", "status": "status.steadfast_strong", "duration": 5 },
+            {
+              "type": "extra_targets",
+              "radius": 4,
+              "count": 0,
+              "affects": "ally",
+              "effects": [{ "type": "remove_status", "tags": ["stun", "root", "freeze", "slow"], "count": 0 }]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "guardian.oath",
+      "name": "Juramento",
+      "tags": ["defensive", "group", "signature"],
+      "signature": true,
+      "cost": { "resource": "mana", "amount": 80 },
+      "cooldown": 90,
+      "targeting": { "type": "self" },
+      "effects": [
+        {
+          "type": "extra_targets",
+          "radius": 6,
+          "count": 0,
+          "affects": "ally",
+          "effects": [{ "type": "apply_status", "status": "status.oath", "duration": 8 }]
+        }
+      ],
+      "ranks": [
+        {
+          "rank": 2,
+          "effects": [
+            {
+              "type": "extra_targets",
+              "radius": 6,
+              "count": 0,
+              "affects": "ally",
+              "effects": [{ "type": "apply_status", "status": "status.oath_60", "duration": 8 }]
+            }
+          ]
+        },
+        {
+          "rank": 3,
+          "effects": [
+            {
+              "type": "extra_targets",
+              "radius": 8,
+              "count": 0,
+              "affects": "ally",
+              "effects": [{ "type": "apply_status", "status": "status.oath_70", "duration": 10 }]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "statuses": [
+    {
+      "id": "status.intercepted",
+      "name": "Interceptado",
+      "tags": ["buff", "redirect"],
+      "defaultDuration": 6,
+      "stacking": "refresh",
+      "redirect": { "fraction": 0.3, "maxDistance": 8 }
+    },
+    {
+      "id": "status.intercepted_35",
+      "name": "Interceptado",
+      "tags": ["buff", "redirect"],
+      "defaultDuration": 6,
+      "stacking": "refresh",
+      "redirect": { "fraction": 0.35, "maxDistance": 8 }
+    },
+    {
+      "id": "status.intercepted_40",
+      "name": "Interceptado",
+      "tags": ["buff", "redirect"],
+      "defaultDuration": 7,
+      "stacking": "refresh",
+      "redirect": { "fraction": 0.4, "maxDistance": 8 }
+    },
+    {
+      "id": "status.bastion",
+      "name": "Bastião",
+      "tags": ["buff", "bastion"],
+      "defaultDuration": 6,
+      "stacking": "refresh",
+      "modifiers": { "damageTakenMultiplier": 0.75 }
+    },
+    {
+      "id": "status.bastion_28",
+      "name": "Bastião",
+      "tags": ["buff", "bastion"],
+      "defaultDuration": 6,
+      "stacking": "refresh",
+      "modifiers": { "damageTakenMultiplier": 0.72 }
+    },
+    {
+      "id": "status.bastion_30",
+      "name": "Bastião",
+      "tags": ["buff", "bastion"],
+      "defaultDuration": 6,
+      "stacking": "refresh",
+      "modifiers": { "damageTakenMultiplier": 0.7 }
+    },
+    {
+      "id": "status.bastion_33",
+      "name": "Bastião",
+      "tags": ["buff", "bastion"],
+      "defaultDuration": 6,
+      "stacking": "refresh",
+      "modifiers": { "damageTakenMultiplier": 0.67 }
+    },
+    {
+      "id": "status.bastion_35",
+      "name": "Bastião",
+      "tags": ["buff", "bastion"],
+      "defaultDuration": 6,
+      "stacking": "refresh",
+      "modifiers": { "damageTakenMultiplier": 0.65 },
+      "flags": { "knockbackImmune": true }
+    },
+    {
+      "id": "status.steadfast",
+      "name": "Inabalável",
+      "tags": ["buff", "steadfast"],
+      "defaultDuration": 3,
+      "stacking": "refresh",
+      "immuneToTags": ["stun", "root", "freeze", "slow"],
+      "modifiers": { "damageTakenMultiplier": 0.9 }
+    },
+    {
+      "id": "status.steadfast_strong",
+      "name": "Inabalável",
+      "tags": ["buff", "steadfast"],
+      "defaultDuration": 4,
+      "stacking": "refresh",
+      "immuneToTags": ["stun", "root", "freeze", "slow"],
+      "modifiers": { "damageTakenMultiplier": 0.8 }
+    },
+    {
+      "id": "status.oath",
+      "name": "Juramento",
+      "tags": ["buff", "redirect"],
+      "defaultDuration": 8,
+      "stacking": "refresh",
+      "redirect": { "fraction": 0.5, "maxDistance": 6, "reduction": 0.4 }
+    },
+    {
+      "id": "status.oath_60",
+      "name": "Juramento",
+      "tags": ["buff", "redirect"],
+      "defaultDuration": 8,
+      "stacking": "refresh",
+      "redirect": { "fraction": 0.6, "maxDistance": 6, "reduction": 0.45 }
+    },
+    {
+      "id": "status.oath_70",
+      "name": "Juramento",
+      "tags": ["buff", "redirect"],
+      "defaultDuration": 10,
+      "stacking": "refresh",
+      "redirect": { "fraction": 0.7, "maxDistance": 8, "reduction": 0.5 }
+    }
+  ]
+}
