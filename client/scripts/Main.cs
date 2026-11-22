@@ -116,6 +116,7 @@ public partial class Main : Node2D
         _gameMenu.SwitchRequested += () => Leave(LeaveAction.SwitchCharacter);
         _gameMenu.QuitRequested += () => Leave(LeaveAction.QuitGame);
         _gameMenu.CancelRequested += CancelLeave;
+        _gameMenu.DevToolRequested += RequestDevTool;
 
         foreach (var action in InputActions.All.Where(a => !InputMap.HasAction(a)))
         {
@@ -392,7 +393,7 @@ public partial class Main : Node2D
                 if (_zone is not null && _authority is NetAuthority)
                 {
                     // T-396: no mundo aberto, o menu com trocar de personagem e sair do jogo; o mundo não pausa.
-                    _gameMenu.Open(withAccount: _settings.Online?.Ticket is not null);
+                    _gameMenu.Open(withAccount: _settings.Online?.Ticket is not null, devTools: ((NetAuthority)_authority).DevTools);
                 }
                 else
                 {
@@ -484,6 +485,17 @@ public partial class Main : Node2D
         net.RequestLogout();
         _gameMenu.ShowSending();
         GD.Print($"[zone] pedido para sair ({action})");
+    }
+
+    /// <summary>T-411: pedido da ferramenta de teste (o menu só mostra a entrada com o servidor em <c>--dev-tools</c>).</summary>
+    private void RequestDevTool(Game.Protocol.DevToolAction action)
+    {
+        if (_authority is NetAuthority net && net.Status == NetStatus.Playing)
+        {
+            net.RequestDevTool(action);
+            _gameMenu.ShowDevToolSending();
+            GD.Print($"[dev-tools] pedido {action}");
+        }
     }
 
     private void CancelLeave()
@@ -617,6 +629,21 @@ public partial class Main : Node2D
             foreach (var message in net.TakePartyMessages())
             {
                 _hud.PartyMessage(message);
+            }
+        }
+
+        // T-411: respostas da ferramenta de teste, no aviso do menu do Esc (ou sobre o personagem, se o menu fechou).
+        foreach (var result in net.TakeDevToolResults())
+        {
+            var (text, ok) = DevToolText.Result(result);
+            GD.Print($"[dev-tools] {result.Action}: {result.Outcome} (nível {result.Level})");
+            if (_gameMenu.IsOpen)
+            {
+                _gameMenu.ShowNote(text, ok);
+            }
+            else if (net.ControlledEntity is { } me)
+            {
+                _worldView.ShowText(me, text, ok ? Hud.HudTheme.Heal : Hud.HudTheme.Warning);
             }
         }
 

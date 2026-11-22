@@ -32,4 +32,18 @@ Sai da `main` (a T-405 já está nela, com protocolo 19). Não há deploy na VPS
 
 ## Resultado
 
-_(preencher ao concluir)_
+**Feito** (Windows, 2026-11-22), na branch `task/T-411-botao-de-teste-no-esc`, saída de `integra/fase-4-main` (a fase 4 inteira na `main`, com a T-405 e o protocolo 19). Não subiu `ProtocolVersion`.
+
+- **Entrada no menu do Esc:** "Teste (desenvolvimento)", por último e separada das outras por uma linha. Só aparece quando o `Welcome` do servidor diz que a ferramenta está ligada (`Welcome.DevTools`, T-405); sem ela, a entrada nem existe. Abre a lista: +1 nível, +5 níveis, ir ao nível 20, ir ao nível 40, desfazer a segunda classe, redistribuir pontos (grátis) e Voltar. O título da janela muda para "Teste".
+- **Desfazer a segunda classe** pede confirmação ("As habilidades dela saem e os pontos voltam. Depois dá para escolher outra.", Desfazer / Cancelar). Os outros pedidos saem direto.
+- **Só envia o pedido:** `NetAuthority.RequestDevTool` manda `DevToolRequest`; o nível, os pontos e a segunda classe mudam pelo estado replicado de sempre. O `DevToolResult` aparece no aviso de cima da janela: verde quando feito ("Agora no nível 20.", "Segunda classe desfeita. Os pontos voltaram."), laranja quando recusado, com o motivo (em combate, morto, ferramenta desligada, sem segunda classe, já no nível, sem progressão). Com o menu fechado, a resposta aparece sobre o personagem.
+- **Código:** `GameMenu` (entrada, lista e confirmação; evento `DevToolRequested`; `Open(withAccount, devTools)`; `ShowNote`), `NetAuthority` (`DevTools`, `RequestDevTool`, `TakeDevToolResults`), `Main` (liga o menu ao `NetAuthority` e mostra as respostas) e `client/scripts/Match/DevToolText.cs` (novo: rótulos, confirmação e textos das respostas, sem Godot).
+- **Testes:** `tests/Game.Client.Tests/DevToolTextTests.cs` (a entrada só com `Welcome.DevTools`; um botão com rótulo para cada pedido do servidor; só o desfazer pede confirmação; cada resposta tem a sua frase). 111 testes de cliente passando.
+- **Prévia no jogo** (servidor local `--world --dev-login --dev-tools`, cliente em `127.0.0.1:7777`), em `tasks/reports/interface/menu-teste/`: `1-menu-com-teste.png` (menu com a entrada), `2-pedidos.png` (lista), `3-nivel-20.png` ("Ir ao nível 20": nível 20, 95 pontos de atributo e 20 de habilidade, aviso "Agora no nível 20."), `4-confirmar-desfazer.png` (confirmação) e `5-recusa.png` (desfazer sem segunda classe: "Ainda não há segunda classe para desfazer.").
+
+**Desvios**
+- `client/scripts/Match/DevToolText.cs` é arquivo novo fora das áreas listadas (o mínimo, para os textos serem testáveis sem Godot); entra no projeto de testes do cliente por link, como os outros.
+
+**Pendências**
+- Captura aprovada pelo designer.
+- Os critérios "+1 sobe um" e "desfazer volta para antes da escolha" precisam da T-410 para escolher a segunda classe pela tela; a ida ao 20 e a recusa foram conferidas no jogo, e o servidor tem os testes da T-405 para os outros pedidos.
