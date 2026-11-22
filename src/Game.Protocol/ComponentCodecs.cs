@@ -135,6 +135,7 @@ public static class ComponentCodecs
                     w.I(st.Stacks);
                     w.F(st.DamageTaken);
                     w.VOpt(st.Origin);
+                    w.Id(st.RedirectTo);
                     w.I(st.NextPeriodicTick.Length);
                     foreach (var n in st.NextPeriodicTick)
                     {
@@ -201,6 +202,7 @@ public static class ComponentCodecs
                 w.I(p.AllocatedAgi);
                 w.I(p.AllocatedInt);
                 w.I(p.AllocatedVit);
+                w.S(p.SecondClass);
                 break;
             case Inventory inv:
                 w.I(inv.Capacity);
@@ -333,6 +335,7 @@ public static class ComponentCodecs
                         st.Stacks = r.I();
                         st.DamageTaken = r.F();
                         st.Origin = r.VOpt();
+                        st.RedirectTo = r.Id();
                         var periodic = new long[Wire.Count(ref r)];
                         for (var k = 0; k < periodic.Length; k++)
                         {
@@ -410,6 +413,7 @@ public static class ComponentCodecs
                     AllocatedAgi = r.I(),
                     AllocatedInt = r.I(),
                     AllocatedVit = r.I(),
+                    SecondClass = r.SOpt(),
                 };
             case 16:
                 {

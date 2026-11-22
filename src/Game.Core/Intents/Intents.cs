@@ -23,6 +23,12 @@ public sealed record RaiseSkillRankIntent(EntityId Entity, string AbilityId) : I
 /// <summary>Devolve todos os pontos de atributo e de habilidade (T-203). Só fora de combate.</summary>
 public sealed record ResetPointsIntent(EntityId Entity) : Intent(Entity);
 
+/// <summary>
+/// Escolhe a segunda classe (T-403, id <c>second_class.*</c>): nível ≥ <c>progression.secondClassLevel</c>, fora de
+/// combate, uma vez só (definitiva; não há intenção de desfazer). Tratada pelo <c>ProgressionSystem</c>.
+/// </summary>
+public sealed record ChooseSecondClassIntent(EntityId Entity, string SecondClassId) : Intent(Entity);
+
 /// <summary>Equipa o item do espaço do inventário (T-204). Tratada pelo <c>ItemSystem</c>.</summary>
 public sealed record EquipItemIntent(EntityId Entity, int InventorySlot) : Intent(Entity);
 

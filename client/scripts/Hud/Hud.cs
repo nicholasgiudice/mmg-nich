@@ -44,11 +44,15 @@ public partial class Hud : Control
     private PopupMenu _worldMenu = null!;
     private EntityId _worldMenuTarget;
     private readonly List<UnitFrame> _partyFrames = new();
-    private HBoxContainer _abilityBar = null!;
-    private readonly List<AbilitySlot> _slots = new();
+    /// <summary>T-409: a barra em duas linhas, 6–0 em cima de M1, 1–5 e Q.</summary>
+    private VBoxContainer _abilityBar = null!;
+    private HBoxContainer _barTop = null!;
+    private HBoxContainer _barBottom = null!;
+    private readonly List<AbilitySlot> _slotsTop = new();
+    private readonly List<AbilitySlot> _slotsBottom = new();
     private HudBar _playerCast = null!;
 
-    /// <summary>Barra de atalhos 1–6 do jogador (T-081); a mesma instância vai para o <c>PlayerInput</c>.</summary>
+    /// <summary>Barra de atalhos 1–0 do jogador (T-081, T-409); a mesma instância vai para o <c>PlayerInput</c>.</summary>
     public HotbarLayout Hotbar { get; } = new();
 
     /// <summary>Personagem cuja barra é carregada e guardada (<see cref="HotbarStore"/>); defina antes da primeira renderização.</summary>
@@ -187,8 +191,14 @@ public partial class Hud : Control
         // T-383: sem quadro do alvo no topo da tela. A vida do alvo fica na barra sobre a cabeça dele e a conjuração
         // numa barra fina logo abaixo (EntityView); o topo fica só para o painel do chefe.
 
-        _abilityBar = new HBoxContainer();
+        _abilityBar = new VBoxContainer();
         _abilityBar.AddThemeConstantOverride("separation", 4);
+        _barTop = new HBoxContainer { Alignment = BoxContainer.AlignmentMode.Center };
+        _barTop.AddThemeConstantOverride("separation", 4);
+        _barBottom = new HBoxContainer { Alignment = BoxContainer.AlignmentMode.Center };
+        _barBottom.AddThemeConstantOverride("separation", 4);
+        _abilityBar.AddChild(_barTop);
+        _abilityBar.AddChild(_barBottom);
         AddChild(_abilityBar);
 
         _playerCast = new HudBar { Size = new Vector2(260, 16), MouseFilter = MouseFilterEnum.Ignore, Visible = false };
@@ -766,34 +776,44 @@ public partial class Hud : Control
         }
 
         LoadHotbar(self, abilities);
-        // M1 fixo, 1–6 da barra do jogador (T-081) e Q (poção) só se ela não estiver na barra.
-        var entries = new List<(string? Id, string Key, int Index)>();
+        // T-409: duas linhas. Embaixo: M1 fixo, 1–5 da barra do jogador (T-081) e Q (poção) só se ela não estiver na
+        // barra. Em cima: 6 a 0, os espaços da segunda classe.
+        var bottom = new List<(string? Id, string Key, int Index)>();
+        var top = new List<(string? Id, string Key, int Index)>();
         if (abilities.BasicAttackId is { } basic)
         {
-            entries.Add((basic, "M1", -1));
+            bottom.Add((basic, "M1", -1));
         }
 
         for (var i = 0; i < HotbarLayout.Size; i++)
         {
-            entries.Add((Hotbar[i], (i + 1).ToString(CultureInfo.InvariantCulture), i));
+            (i < HotbarLayout.RowSize ? bottom : top).Add((Hotbar[i], HotbarLayout.KeyLabel(i), i));
         }
 
         // T-323: Q usa a primeira poção de vida do inventário; aparece só se ela não está na barra.
         if (QuickConsumable(self) is { } q && Hotbar.IndexOf(q) < 0)
         {
-            entries.Add((q, "Q", -1));
+            bottom.Add((q, "Q", -1));
         }
 
-        while (_slots.Count < entries.Count)
+        FillBarRow(_barBottom, _slotsBottom, bottom, self, abilities, byId, selected, aimPoint, now);
+        FillBarRow(_barTop, _slotsTop, top, self, abilities, byId, selected, aimPoint, now);
+    }
+
+    private void FillBarRow(HBoxContainer row, List<AbilitySlot> slots, List<(string? Id, string Key, int Index)> entries,
+        EntitySnapshot self, AbilityState abilities, IReadOnlyDictionary<EntityId, EntitySnapshot> byId, EntityId? selected,
+        Vec2 aimPoint, double now)
+    {
+        while (slots.Count < entries.Count)
         {
             var slot = new AbilitySlot { MouseFilter = MouseFilterEnum.Pass };
-            _slots.Add(slot);
-            _abilityBar.AddChild(slot);
+            slots.Add(slot);
+            row.AddChild(slot);
         }
 
-        for (var i = 0; i < _slots.Count; i++)
+        for (var i = 0; i < slots.Count; i++)
         {
-            var slot = _slots[i];
+            var slot = slots[i];
             slot.Visible = i < entries.Count;
             if (i >= entries.Count)
             {

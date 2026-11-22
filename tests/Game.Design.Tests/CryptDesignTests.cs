@@ -67,28 +67,29 @@ public class CryptDesignTests(ITestOutputHelper output)
         Assert.True(s.WinRate >= 0.80, $"{group}: {Fmt(s)}");
     }
 
-    /// <summary>A meta da T-351 na Sala do Vigia real (30 × 24, selos nas bordas).</summary>
-    [Fact(Skip = PlaytestRebalance.Pending)]
-    public void A_group_of_four_with_rares_beats_the_watcher_in_the_real_room_50_to_80_percent_in_4_to_6_minutes()
+    /// <summary>A meta do Vigia (<see cref="WatcherDesignTests"/>; 80–99% desde a T-402) na Sala do Vigia real (30 × 24, selos nas bordas).</summary>
+    [Fact]
+    public void A_group_of_four_with_rares_beats_the_watcher_in_the_real_room_80_to_99_percent_in_4_to_6_minutes()
     {
         var batches = new[] { 14, 15 }.Select(Boss).ToList();
         var report = string.Join("; ", batches.Select(Fmt));
         output.WriteLine(report);
 
-        Assert.InRange(batches.Average(s => s.WinRate), 0.50, 0.80);
+        Assert.InRange(batches.Average(s => s.WinRate), 0.80, 0.99);
         Assert.All(batches, s =>
         {
-            Assert.True(s.WinRate is >= 0.40 and <= 0.90, report);
+            Assert.True(s.WinRate >= 0.70, report);
             Assert.True(s.TimeToWinMean is >= 240 and <= 360, report);
         });
     }
 
     /// <summary>
     /// Duração esperada de uma ida completa, pela rota segura ou pela de risco: lutas (tempo médio de vitória) + pausa por
-    /// grupo + caminhada da entrada ao chefe passando por todos os grupos da rota + o chefe no nível 14.
+    /// grupo + caminhada da entrada ao chefe passando por todos os grupos da rota + o chefe no nível 14. Era 25–40 min; com o
+    /// balanceamento do playtest de 2026-11-16 as lutas ficaram mais curtas e a rota segura cai para ~24 min (balance-v0.18 §4).
     /// </summary>
-    [Fact(Skip = PlaytestRebalance.Pending)]
-    public void A_full_run_takes_25_to_40_minutes()
+    [Fact]
+    public void A_full_run_takes_20_to_40_minutes()
     {
         var crypt = Content.Zones[Zone];
         var map = EntityFactory.BuildMap(Content.Arenas[crypt.Arena]);
@@ -117,7 +118,7 @@ public class CryptDesignTests(ITestOutputHelper output)
         }
 
         output.WriteLine(string.Join("\n", lines));
-        Assert.All(minutes, m => Assert.InRange(m, 25, 40));
+        Assert.All(minutes, m => Assert.InRange(m, 20, 40));
     }
 
     private static Vector2 Pos(PositionDefinition p) => new((float)p.X, (float)p.Y);

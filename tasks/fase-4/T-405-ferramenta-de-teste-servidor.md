@@ -39,4 +39,44 @@ Sai da branch da T-404. **T-406, T-407, T-404, T-405 e T-411 entram juntas** na 
 
 ## Resultado
 
-_(preencher ao concluir)_
+Concluída em 2026-11-22, na VPS, branch `task/T-405-ferramenta-de-teste-servidor` (saída de `task/T-404-servidor-segunda-classe`, `ae917c8`). Não entra na trilha sozinha: vai na rodada do protocolo (seção 6f). Sem push e sem deploy.
+
+### Formato das mensagens novas (para a T-411)
+
+| O quê | Formato |
+|---|---|
+| Ferramenta ligada? | `Welcome` ganha `bool DevTools = false` **no fim** (depois de `InstanceId`). `true` só com o servidor em `--dev-tools`; vem em todo `Welcome` (também nos de troca de zona). O cliente só mostra o botão do menu do Esc com `DevTools == true`. |
+| Pedido (cliente → servidor) | `DevToolRequest(DevToolAction Action)`, tag **26** da união `INetMessage`, canal confiável. `DevToolAction` (byte): `LevelUp1`, `LevelUp5`, `ToSecondClassLevel` (vai ao 20), `ToMaxLevel` (vai ao 40), `UndoSecondClass`, `FreeReset`. A entidade é sempre a da conexão. |
+| Resposta (servidor → cliente) | `DevToolResult(DevToolAction Action, DevToolOutcome Outcome, int Level)`, tag **27**, sempre uma por pedido. `Level` = nível depois do pedido (0 sem progressão). `DevToolOutcome` (byte): `Done`, `Disabled` (servidor sem `--dev-tools`), `InCombat` (em combate ou conjurando), `Dead`, `NoProgression`, `AlreadyAtLevel` (já no nível pedido, acima dele ou no máximo), `NoSecondClass` (desfazer sem segunda classe). |
+| O que muda no personagem | chega pelo caminho de sempre: `XpGained` (monstro `EntityId.None`, fonte `dev.tools`) e um `LevelUp` por nível; `PointsReset` no `FreeReset`; o `UndoSecondClass` não tem evento próprio: o `CharacterProgress` replicado chega com `SecondClass = null` e os pontos novos (e o `DevToolResult` com `Done`). |
+| `ProtocolVersion` | **17 → 18** |
+
+### O que foi feito
+
+- **Opção:** `--dev-tools` / `MMO_DEV_TOOLS` (`ServerOptions.DevTools`, padrão `false`), no `--help`. Ligada, o `Program` escreve `Warning` ao subir ("Ferramenta de teste ativa: … Nunca num servidor aberto a jogadores"), como o `--dev-login`. `deploy/compose.yml`: `MMO_DEV_TOOLS: ${GAME_DEV_TOOLS:-false}`. Escolha para ligar num servidor do Compose: `GAME_DEV_TOOLS=true` no `deploy/.env` (o mais simples; não mexe no `deploy-dev.sh`).
+- **Servidor:** `src/Game.Server/DevTools.cs` (`DevTools.Apply`) tem as regras, usadas pelo `WorldServer` e pela `ZoneRoom`. O pedido entra numa fila por conexão (até 8) e é aplicado no tick seguinte, antes das intenções; os eventos saem com esse tick. Sem `--dev-tools`: `Disabled` e `Warning` no log com nome, conexão, personagem (ou "sem conta") e ação. Com: recusa morto (`Dead`) e em combate ou conjurando (`InCombat`, a mesma regra da redistribuição, `Leveling.InCombat`); aceito, grava na hora (`SaveNow`, motivo "ferramenta de teste") quando há conta. Com `--dev-login` não há banco: só muda o personagem em memória.
+- **Subir de nível:** `Leveling.ExperienceToReach` calcula a XP que falta para chegar exatamente ao nível pedido (limitado a `maxLevel`) e `Leveling.GrantExperience` dá essa XP, o mesmo método da XP de monstro. O personagem fica no começo do nível pedido (XP 0 no nível).
+- **Desfazer a segunda classe:** `Leveling.UndoSecondClass` tira a segunda classe, os NH das habilidades dela (pontos de habilidade de volta, barra e passivas refeitas) e os `secondClassAttributePoints` (+5). Se os +5 já estavam distribuídos (pontos livres < 5), devolve **todos** os pontos de atributo, como o `ResetPoints`, mas só os atributos. Os NH da classe base ficam.
+- **Redistribuir grátis:** chama o `Leveling.ResetPoints`, que no Core já é grátis (não há custo em ouro no código nem em `data/`; o "1ª vez grátis, depois ouro" do design ainda não existe). Com custo um dia, a ferramenta continua sem custo, porque não passa pelo caminho que cobraria.
+- **Documentação:** seção "Ferramenta de teste (T-405)" em `src/Game.Server/README.md`, com o comando do playtest local (`dotnet run --project src/Game.Server -c Release -- --world --dev-login --dev-tools --port 7777`, cliente em `127.0.0.1:7777` pela entrada sem conta) e o aviso do log. Conferido rodando o servidor: sobe com protocolo v18 e os dois avisos.
+- **Testes:**
+  - `tests/Game.Server.Tests/DevToolServerTests.cs`: opção desligada por padrão (argumento e variável); **sem a opção cada tipo de pedido é recusado** (`Disabled`), nada muda e o log registra quem pediu, no mundo e na sala; **+1, +5, ir ao 20, +1 e ir ao 40** dão o mesmo nível, os mesmos pontos de atributo e de habilidade, a mesma XP para o próximo e a mesma vida máxima que um segundo personagem na mesma zona subindo com XP de monstros normais do próprio nível, um `LevelUp` por nível chega ao cliente, e nada passa do 40 (`AlreadyAtLevel`); +5 no 38 para no 40; **desfazer a segunda classe** com os +5 distribuídos devolve todos os pontos e deixa escolher o Berserker depois do Guardião (o cliente vê `SecondClass` null); redistribuição grátis; em combate cada pedido é recusado; com banco cada pedido aceito grava (nível 20 na linha, `secondClass` some depois de desfazer) e o recusado não grava; na sala, pedido aceito grava e personagem de encontro sem progressão dá `NoProgression`. Sem banco (`--dev-login`), os testes do mundo aberto mostram o pedido funcionando só em memória.
+  - `tests/Game.Core.Tests/DevToolSupportTests.cs`: `ExperienceToReach` (limites e teto), a XP de uma vez contra a XP de monstro aos pedaços (1→2, 2→7, 1→20, 20→40, 1→40), desfazer com e sem os +5 distribuídos usando a segunda classe de teste com habilidades e passiva (NH e passiva saem, os NH da base ficam, o build continua válido), e desfazer sem segunda classe.
+  - `tests/Game.Protocol.Tests/ProtocolTests.cs`: round trip das duas mensagens com as tags 26 e 27, `Welcome.DevTools` e versão 18.
+
+### Desvios e decisões
+
+- **Playtest local, sem deploy (mudança de plano do designer):** não mexi no `scripts/deploy-dev.sh` e não fiz deploy. `GAME_DEV_TOOLS` fica `false` no `compose.yml`.
+- **`deploy/.env.example`** (fora das áreas listadas): uma linha comentada `# GAME_DEV_TOOLS=false`, junto das outras `GAME_*`, para documentar onde ligar.
+- **Testes existentes tocados:** `WorldRig` ganhou um parâmetro opcional de log (para conferir o aviso de recusa); em `SecondClassTests` o conteúdo de teste e algumas constantes passaram de `private` a `internal`, para os testes novos do Core usarem a mesma segunda classe de teste.
+- As ações "ir ao 20" e "ir ao 40" se chamam `ToSecondClassLevel` e `ToMaxLevel` e leem `progression.secondClassLevel` e `progression.maxLevel`: os números ficam em `data/`, não no código.
+- A comparação com "XP de monstro" dá a XP em pedaços do tamanho que a morte de um monstro normal do próprio nível dá a quem lutou sozinho (`rules.Share(rules.MonsterXp(…), 1)`, a mesma conta do `ProgressionSystem.AwardKill`), pelo mesmo `GrantExperience`. Não mata monstros de verdade no teste.
+- A ferramenta vale também na sala de encontro (`ZoneRoom`), porque lá também precisa recusar sem a opção. Na sala, só personagens com conta têm progressão.
+- Desfazer a segunda classe não publica evento novo do Core (seria tag nova em `EventCodecs`): o cliente fica sabendo pelo `DevToolResult` e pelo `CharacterProgress` replicado.
+- Os testes com PostgreSQL real (`PostgresAccountTests`) foram pulados, como sempre nesta VPS sem banco de teste. A gravação foi testada com o `FakeStore`.
+
+### Pendências
+
+- Rodada do protocolo (T-403, T-406, T-407, T-404, T-405, T-408, T-411): a T-405 usa 18 em cima do 17 da T-404; o número final e as tags 26/27 da união saem na integração, se outra tarefa da rodada também acrescentar mensagens.
+- T-411: botão no menu do Esc, só com `Welcome.DevTools`; mandar `DevToolRequest` e mostrar o `DevToolResult` (texto para cada `DevToolOutcome`).
+- Antes de abrir o jogo a jogadores de fora: conferir que nenhum servidor sobe com `--dev-tools` / `GAME_DEV_TOOLS=true`.

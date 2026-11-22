@@ -1,5 +1,6 @@
 using Game.Bots;
 using Game.Core.Combat;
+using Game.Core.Combat.Progression;
 using Game.Core.Definitions;
 using Game.Core.Simulation.Components;
 using MmoRpgClient.Authority;
@@ -36,7 +37,17 @@ public static class MatchSetup
     /// Depuração (T-345, <c>--enemy-health=f</c>): os inimigos começam com esta fração da vida (0..1), para ver as fases
     /// finais de um chefe. Null = vida cheia.
     /// </param>
-    public static MatchWorld Create(ContentCatalog content, MatchSettings settings, int? enemyLevel = null, float? enemyHealth = null)
+    /// <param name="playerLevel">
+    /// Depuração (T-412, <c>--level=n</c>): o jogador começa no nível n, como personagem com progressão (os pontos de
+    /// atributo ficam livres). Null = o jogador do encontro, sem progressão.
+    /// </param>
+    /// <param name="secondClass">
+    /// Depuração (T-412, <c>--second-class=id</c>): quem tem a classe base dela (o jogador ou um bot do grupo) começa com
+    /// esta segunda classe e NH1 em cada habilidade dela que o nível deixa; sem <paramref name="playerLevel"/>, no nível
+    /// seguinte ao da segunda classe.
+    /// </param>
+    public static MatchWorld Create(ContentCatalog content, MatchSettings settings, int? enemyLevel = null, float? enemyHealth = null,
+        int? playerLevel = null, string? secondClass = null)
     {
         if (!content.Encounters.TryGetValue(settings.EncounterId, out var encounter))
         {
@@ -75,7 +86,25 @@ public static class MatchSetup
         }
 
         var setup = EncounterSetup.Create(settings.Seed, content, encounter);
-        var controlled = setup.Players[controlledIndex];
+        var spawned = setup.Players.ToList();
+        if (playerLevel is not null || secondClass is not null)
+        {
+            // --level vale para o jogador; --second-class, para quem tem a classe dela (o jogador ou um bot, como o Guerreiro
+            // bot que vira Guardião numa partida jogada com o Mago).
+            for (var i = 0; i < spawned.Count; i++)
+            {
+                var cls = content.Classes[encounter.Players[i].Class];
+                var second = secondClass is not null && cls.SecondClasses.Any(s => s.Id == secondClass) ? secondClass : null;
+                if (i == controlledIndex || second is not null)
+                {
+                    var promoteTo = playerLevel ?? content.Rules.Progression.SecondClassLevel + 1;
+                    spawned[i] = Promote(setup.World, spawned[i], cls, withRanks[i].Ranks, promoteTo, second);
+                }
+            }
+        }
+
+        var controlled = spawned[controlledIndex];
+
         if (enemyHealth is { } fraction)
         {
             foreach (var enemy in setup.World.Entities.Where(e => e.TryGet<FactionTag>()?.Faction == Faction.Monster && e.Has<Health>()).ToList())
@@ -86,7 +115,7 @@ public static class MatchSetup
         }
 
         var director = new BotDirector(setup.World, new TelegraphHazardSource()) { Seed = settings.Seed };
-        foreach (var bot in setup.Players.Where(p => p.Id != controlled.Id))
+        foreach (var bot in spawned.Where(p => p.Id != controlled.Id))
         {
             director.Add(bot, BotStrategies.Create(BotStrategy), BotSettings);
         }
@@ -94,6 +123,39 @@ public static class MatchSetup
         var map = setup.World.Map ?? EntityFactory.BuildMap(content.Arenas[encounter.Arena]);
         var authority = new LocalAuthority(setup.World, controlled.Id, director.Tick);
         return new MatchWorld(authority, map, encounter, playerClass, director.Bots.Count);
+    }
+
+    /// <summary>
+    /// Depuração (T-412): troca o jogador do encontro (que não tem progressão) por um personagem com progressão
+    /// (<see cref="Leveling.SpawnCharacter"/>, o caminho do personagem salvo) no mesmo lugar: o nível pedido, os NH do plano e,
+    /// com <paramref name="secondClass"/>, a segunda classe com NH1 em cada habilidade dela que o nível deixa. Os pontos de
+    /// atributo ficam livres. Build que não vale: fica o jogador do encontro, com aviso.
+    /// </summary>
+    private static Game.Core.Simulation.Entity Promote(Game.Core.Simulation.World world, Game.Core.Simulation.Entity player,
+        ClassDefinition cls, IReadOnlyDictionary<string, int> ranks, int level, string? secondClass)
+    {
+        var rules = world.Content.Rules.Progression;
+        level = Math.Clamp(level, 1, rules.MaxLevel);
+        var skillRanks = ranks.ToDictionary(kv => kv.Key, kv => kv.Value);
+        var second = secondClass is not null && level >= rules.SecondClassLevel ? Leveling.SecondClassOf(cls, secondClass) : null;
+        foreach (var id in second?.Abilities ?? [])
+        {
+            if (world.Content.Abilities.TryGetValue(id, out var ability) && rules.RequiredLevel(ability.Signature, 1, true) <= level)
+            {
+                skillRanks[id] = 1;
+            }
+        }
+
+        var build = new CharacterBuild { Level = level, SkillRanks = skillRanks, SecondClass = second?.Id };
+        if (Leveling.Validate(world.Content, cls, build) is { } error)
+        {
+            Godot.GD.PushWarning($"--level/--second-class ignorados: {error}");
+            return player;
+        }
+
+        var position = player.Get<Transform>().Position;
+        world.Remove(player.Id);
+        return Leveling.SpawnCharacter(world, cls, position, build);
     }
 
     /// <summary>Classe sugerida de um encontro (a do primeiro jogador).</summary>

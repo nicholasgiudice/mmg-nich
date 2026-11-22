@@ -41,6 +41,7 @@ public static class EventCodecs
         [typeof(ShieldExpired)] = 23,
         [typeof(Displaced)] = 24,
         [typeof(ChainJumped)] = 25,
+        [typeof(DamageRedirected)] = 26,
         [typeof(StatusApplied)] = 30,
         [typeof(StatusRefreshed)] = 31,
         [typeof(StatusStacked)] = 32,
@@ -67,6 +68,7 @@ public static class EventCodecs
         [typeof(SkillRankRaised)] = 93,
         [typeof(PointsReset)] = 94,
         [typeof(ProgressionRejected)] = 95,
+        [typeof(SecondClassChosen)] = 96,
         [typeof(ItemDropped)] = 100,
         [typeof(ItemPickedUp)] = 101,
         [typeof(ItemEquipped)] = 102,
@@ -123,6 +125,9 @@ public static class EventCodecs
                 w.Id(x.Source); w.Id(x.Entity); w.S(x.SourceId); w.E(x.Kind); w.V(x.From); w.V(x.To); w.F(x.Distance);
                 break;
             case ChainJumped x: w.Id(x.Source); w.Id(x.From); w.Id(x.To); w.S(x.SourceId); w.I(x.Jump); break;
+            case DamageRedirected x:
+                w.Id(x.Attacker); w.Id(x.Target); w.Id(x.Protector); w.S(x.SourceId); w.S(x.StatusId); w.F(x.Amount);
+                break;
 
             case StatusApplied x:
                 w.Id(x.Source); w.Id(x.Target); w.S(x.StatusId); w.I(x.InstanceId); w.I(x.Stacks); w.L(x.ExpiresAtTick);
@@ -172,6 +177,7 @@ public static class EventCodecs
             case SkillRankRaised x: w.Id(x.Entity); w.S(x.AbilityId); w.I(x.Rank); break;
             case PointsReset x: w.Id(x.Entity); w.I(x.AttributePoints); w.I(x.SkillPoints); break;
             case ProgressionRejected x: w.Id(x.Entity); w.S(x.Id); w.E(x.Reason); break;
+            case SecondClassChosen x: w.Id(x.Entity); w.S(x.SecondClassId); w.I(x.AttributePoints); break;
 
             case ItemDropped x: w.Id(x.Item); w.Id(x.Source); w.S(x.BaseId); w.I(x.Level); w.E(x.Rarity); break;
             case ItemPickedUp x: w.Id(x.Entity); w.Id(x.Item); w.S(x.BaseId); w.I(x.InventorySlot); break;
@@ -216,6 +222,7 @@ public static class EventCodecs
             23 => new ShieldExpired(r.Id(), r.I(), r.F(), r.E<ShieldEndReason>()),
             24 => new Displaced(r.Id(), r.Id(), r.S(), r.E<DisplacementKind>(), r.V(), r.V(), r.F()),
             25 => new ChainJumped(r.Id(), r.Id(), r.Id(), r.S(), r.I()),
+            26 => new DamageRedirected(r.Id(), r.Id(), r.Id(), r.S(), r.S(), r.F()),
 
             30 => new StatusApplied(r.Id(), r.Id(), r.S(), r.I(), r.I(), r.L(), r.I()),
             31 => new StatusRefreshed(r.Id(), r.Id(), r.S(), r.I(), r.I(), r.L()),
@@ -249,6 +256,7 @@ public static class EventCodecs
             93 => new SkillRankRaised(r.Id(), r.S(), r.I()),
             94 => new PointsReset(r.Id(), r.I(), r.I()),
             95 => new ProgressionRejected(r.Id(), r.S(), r.E<ProgressionRejectReason>()),
+            96 => new SecondClassChosen(r.Id(), r.S(), r.I()),
 
             100 => new ItemDropped(r.Id(), r.Id(), r.S(), r.I(), r.E<ItemRarity>()),
             101 => new ItemPickedUp(r.Id(), r.Id(), r.S(), r.I()),

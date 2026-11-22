@@ -58,6 +58,11 @@ try
         Log.Warning("Login de desenvolvimento ativo: entra quem mandar só um nome (--dev-login)");
     }
 
+    if (options.DevTools)
+    {
+        Log.Warning("Ferramenta de teste ativa: qualquer jogador pode subir de nível e desfazer a segunda classe (--dev-tools). Nunca num servidor aberto a jogadores");
+    }
+
     using var transport = new LiteNetTransport(options.Port, Log.Logger, options.MaxConnections);
     IGameHost room;
     if (options.World)

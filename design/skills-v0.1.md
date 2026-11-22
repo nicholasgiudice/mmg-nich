@@ -2,6 +2,8 @@
 
 Status: **proposta para revisão do designer** (T-034, 2026-10-19). Complementa `design/progression-v0.1.md` §7, que define as regras (1 ponto de habilidade por nível do personagem, requisito de nível `2n − 1` por NH, assinatura nos níveis 12, 13 e 15).
 
+**Segunda classe (T-401):** as habilidades da segunda classe, escolhida no nível 20, seguem outra escada de nível: normais no 21 (NH1), 24, 27, 30 e 33 (NH5); assinatura no 35, 37 e 40. A escada de valor por NH é a mesma (× 1,0 / 1,2 / 1,4 / 1,6 / 1,8; assinatura × 1,0 / 1,3 / 1,6), e o NH1 da segunda classe vale cerca de 1,4 vez o NH1 de uma habilidade parecida da base. As tabelas das habilidades da segunda classe ficam em `design/segunda-classe-v0.1.md`; este documento cobre a classe base.
+
 **Situação no jogo:** hoje só existe o **NH1** de cada habilidade (é o que o protótipo usa). Os níveis 2 a 5 estão só neste documento; a implementação está planejada na trilha de habilidades (`tasks/README.md`, T-060 a T-064).
 
 ## Como ler as tabelas
@@ -259,6 +261,23 @@ Custo 90, recarga 120 s. Cura todos os aliados a até 8 tiles (inclui o Clérigo
 | 1 | 1 | cura 60 + 4 × INT | — | 108 |
 | 2 | 1 | cura 78 + 5,2 × INT | — | 140 |
 | 3 | 1 | cura 96 + 6,4 × INT | também **levanta um aliado caído** próximo com 30% da vida | 173 |
+
+## Segunda classe do Guerreiro (fase 4)
+
+Guardião e Berserker, no nível 20. As tabelas finais (efeitos e valores por NH) são as de `design/segunda-classe-v0.1.md` §5; os dados estão em `data/abilities_guardian.json` e `data/abilities_berserker.json` (T-408). NH1 no nível 21, depois 24, 27, 30 e 33; a assinatura no 35, 37 e 40. Com o simulador mudaram os custos abaixo e, no Guardião, a duração da Interceptação (+2 s: 6/6/7/7/8 s) e a redução do Bastião (+10 pontos: 25/28/30/33/35%) (`tasks/reports/balance-v0.19.md`):
+
+| Habilidade | Id | Custo | Recarga |
+|---|---|---|---|
+| Interceptação | `guardian.interception` | 20 | 12 s (9 s no NH5) |
+| Golpe de Escudo | `guardian.shield_bash` | 25 | 8 s |
+| Bastião | `guardian.bastion` | **20** (era 40) | 20 s |
+| Inabalável | `guardian.steadfast` | — | 25 s (20 s do NH4) |
+| Juramento (assinatura) | `guardian.oath` | 80 | 90 s |
+| Investida | `berserker.charge` | 20 | 10 s (7 s no NH5) |
+| Fúria | `berserker.fury` | **—** (era 30) | 20 s |
+| Execução | `berserker.execution` | **20** (era 30) | 8 s |
+| Sede de Sangue (passiva) | `berserker.blood_thirst` | — | — |
+| Tempestade de Aço (assinatura) | `berserker.steel_storm` | **80** (era 90) | 75 s |
 
 ## Depois do MVP
 

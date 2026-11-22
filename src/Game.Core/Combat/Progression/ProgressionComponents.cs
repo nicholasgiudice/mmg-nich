@@ -26,6 +26,9 @@ public sealed class CharacterProgress : IComponent, IReplicated
     public int AllocatedInt { get; set; }
     public int AllocatedVit { get; set; }
 
+    /// <summary>Segunda classe escolhida (T-403, id <c>second_class.*</c>); null = ainda não escolheu. Definitiva.</summary>
+    public string? SecondClass { get; set; }
+
     public int AllocatedTotal => AllocatedStr + AllocatedDex + AllocatedAgi + AllocatedInt + AllocatedVit;
 
     public int Allocated(AttributeKind a) => a switch
@@ -60,6 +63,7 @@ public sealed class CharacterProgress : IComponent, IReplicated
         AllocatedAgi = AllocatedAgi,
         AllocatedInt = AllocatedInt,
         AllocatedVit = AllocatedVit,
+        SecondClass = SecondClass,
     };
 
     public void WriteHash(StateHasher hasher)
@@ -73,6 +77,10 @@ public sealed class CharacterProgress : IComponent, IReplicated
         hasher.Add(AllocatedAgi);
         hasher.Add(AllocatedInt);
         hasher.Add(AllocatedVit);
+        if (SecondClass is { } second)
+        {
+            hasher.Add(second); // T-403: só entra no hash quando há (o estado de quem não escolheu não muda)
+        }
     }
 }
 

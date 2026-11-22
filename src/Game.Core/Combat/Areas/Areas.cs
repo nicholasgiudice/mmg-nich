@@ -70,6 +70,9 @@ public enum AreaExpireReason
 
     /// <summary>Armadilha (<c>on_enter_once</c>) disparada.</summary>
     Triggered,
+
+    /// <summary>Área presa ao dono (<c>followOwner</c>, T-407): o dono morreu ou sumiu.</summary>
+    OwnerDied,
 }
 
 /// <summary>ArmedAtTick (T-017): tick em que a área passa a disparar (= tick de criação se não há tempo de armar).</summary>
@@ -115,6 +118,17 @@ public static class AreaService
             (c, e) =>
             {
                 var def = c.World.Content.Areas[e.Area];
+                if (def.FollowOwner)
+                {
+                    // T-407: área presa a quem a criou nasce em cima dele.
+                    if (c.Source is { IsAlive: true } src && src.TryGet<Transform>() is { } st)
+                    {
+                        Spawn(c.World, def, src, st.Position);
+                    }
+
+                    return;
+                }
+
                 var pos = c.AimPoint
                     ?? c.Targets.FirstOrDefault(t => t.IsAlive && t.Has<Transform>())?.Get<Transform>().Position
                     ?? c.Source?.TryGet<Transform>()?.Position;
@@ -132,6 +146,8 @@ public static class AreaService
 /// Áreas com <c>armTime</c> só disparam depois de armadas (evento <see cref="AreaArmed"/>); a primeira aplicação periódica só ocorre depois de armada.
 /// <c>on_enter_once</c>: dispara no primeiro tick em que algum afetado está dentro, aplica a todos os que estão dentro e some.
 /// Alvos: entidades vivas com facção e vida cujo corpo toca o círculo.
+/// <c>followOwner</c> (T-407): antes de tudo, a área vai para a posição atual do dono (o movimento roda antes); dono morto
+/// ou removido acaba com a área (<see cref="AreaExpireReason.OwnerDied"/>).
 /// </summary>
 public sealed class AreaSystem : ISimulationSystem
 {
@@ -145,8 +161,19 @@ public sealed class AreaSystem : ISimulationSystem
             }
 
             var def = world.Content.Areas[area.AreaId];
-            var pos = entity.Get<Transform>().Position;
             var owner = world.Find(area.Owner);
+            if (def.FollowOwner)
+            {
+                if (owner is null || !owner.IsAlive || owner.IsRemoved || owner.TryGet<Transform>() is not { } ot)
+                {
+                    Expire(world, entity, area, AreaExpireReason.OwnerDied);
+                    continue;
+                }
+
+                entity.Get<Transform>().Position = ot.Position;
+            }
+
+            var pos = entity.Get<Transform>().Position;
 
             var armed = world.Tick >= area.ArmedAtTick;
             if (armed && !area.ArmedAnnounced)

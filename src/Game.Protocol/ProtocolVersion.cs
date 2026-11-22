@@ -42,6 +42,14 @@ public static class ProtocolVersion
     /// participantes (<c>FreeAtTick</c>).
     /// 15 (T-395): mensagens <c>LogoutRequest</c>, <c>LogoutCancel</c> e <c>LogoutStatus</c> (sair do mundo para trocar de
     /// personagem, com espera em combate).
+    /// 16 (T-403): evento <c>SecondClassChosen</c> (segunda classe escolhida).
+    /// 17 (T-406): evento <c>DamageRedirected</c> (dano desviado para um protetor) e o status ativo leva quem recebe o
+    /// desvio (<c>RedirectTo</c>). A T-403 e a T-406 subiram para 16 em paralelo; na integração (T-408) ficou 16 para a
+    /// T-403 e 17 para a T-406.
+    /// 18 (T-404): <c>CharacterProgress</c> leva a segunda classe (<c>SecondClass</c>, string opcional no fim) e o
+    /// <c>NetIntent</c> ganha o tipo <c>ChooseSecondClass</c> (id da segunda classe em <c>AbilityId</c>).
+    /// 19 (T-405): mensagens <c>DevToolRequest</c> e <c>DevToolResult</c> (ferramenta de teste) e <c>DevTools</c> no fim do
+    /// <c>Welcome</c>. A T-404 e a T-405 foram feitas em cima da T-403 (17 e 18); na integração em main ficaram 18 e 19.
     /// </summary>
-    public const int Current = 15;
+    public const int Current = 19;
 }

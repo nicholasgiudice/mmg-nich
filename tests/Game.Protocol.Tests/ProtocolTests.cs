@@ -83,7 +83,55 @@ public class ProtocolTests(ITestOutputHelper output)
         Assert.Equal(23, ProtocolSerializer.Serialize(new LogoutRequest())[0]);
         Assert.Equal(24, ProtocolSerializer.Serialize(new LogoutCancel())[0]);
         Assert.Equal(25, ProtocolSerializer.Serialize(new LogoutStatus(LogoutState.Done, 0))[0]);
-        Assert.Equal(15, ProtocolVersion.Current);
+        Assert.True(ProtocolVersion.Current >= 15);
+    }
+
+    [Fact]
+    public void Redirected_damage_and_the_status_link_cross_the_network()
+    {
+        // T-406: evento novo (tag 26) e o protetor do status ativo; versão 17 (16 da T-403 + 17 da T-406).
+        Assert.Equal((ushort)26, EventCodecs.Tags[typeof(Game.Core.Combat.Status.DamageRedirected)]);
+        Assert.True(ProtocolVersion.Current >= 17);
+
+        var status = new Game.Core.Definitions.StatusDefinition
+        {
+            Id = "status.link",
+            Name = "Elo",
+            DefaultDurationTicks = 100,
+            Redirect = new Game.Core.Definitions.RedirectDefinition { Fraction = 0.3, MaxDistance = 6 },
+        };
+        var world = WorldBuilder.CreateDefault(5, null, new ContentCatalog(statuses: [status]));
+        var caster = world.Spawn(new Transform(), new Health(100));
+        var ally = world.Spawn(new Transform(), new Health(100));
+        Game.Core.Combat.Status.StatusManager.Apply(world, caster, ally, status.Id, redirectTo: new EntityId(77));
+
+        var snap = world.Snapshot(SnapshotScope.Replicated);
+        var msg = RoundTrip(SnapshotMessage.From(snap));
+
+        var back = msg.Entities[1].Components.OfType<Game.Core.Combat.Status.StatusEffects>().Single();
+        Assert.Equal(new EntityId(77), back.Active[0].RedirectTo);
+        Assert.Equal(snap.Entities[1].Components.Select(Hash), msg.Entities[1].Components.Select(Hash));
+    }
+
+    [Fact]
+    public void Dev_tool_messages_round_trip_with_their_union_tags()
+    {
+        foreach (var action in Enum.GetValues<DevToolAction>())
+        {
+            Assert.Equal(new DevToolRequest(action), RoundTrip(new DevToolRequest(action)));
+        }
+
+        foreach (var outcome in Enum.GetValues<DevToolOutcome>())
+        {
+            Assert.Equal(new DevToolResult(DevToolAction.ToMaxLevel, outcome, 40), RoundTrip(new DevToolResult(DevToolAction.ToMaxLevel, outcome, 40)));
+        }
+
+        // T-405: tags novas da união; versão 19 (18 da T-404 e 19 da T-405, depois do 17 da T-406); o Welcome leva no fim se a ferramenta está ligada (padrão: desligada).
+        Assert.Equal(26, ProtocolSerializer.Serialize(new DevToolRequest(DevToolAction.LevelUp1))[0]);
+        Assert.Equal(27, ProtocolSerializer.Serialize(new DevToolResult(DevToolAction.LevelUp1, DevToolOutcome.Done, 2))[0]);
+        Assert.True(RoundTrip(new Welcome(new EntityId(7), 10, "zone.city", "map.city", 1, 0, DevTools: true)).DevTools);
+        Assert.False(new Welcome(new EntityId(7), 10, "zone.city", "map.city", 1).DevTools);
+        Assert.Equal(19, ProtocolVersion.Current);
     }
 
     [Fact]
@@ -106,6 +154,7 @@ public class ProtocolTests(ITestOutputHelper output)
             new UseItemIntent(new EntityId(99), 4),
             new BuyIntent(new EntityId(99), new EntityId(7), 12, 3),
             new SellIntent(new EntityId(99), new EntityId(7), 28, 15),
+            new ChooseSecondClassIntent(new EntityId(99), "second_class.guardian"), // T-404
         };
 
         for (var i = 0; i < intents.Length; i++)
@@ -123,6 +172,8 @@ public class ProtocolTests(ITestOutputHelper output)
         Assert.Null(new NetIntent(NetIntentKind.PickUpItem, default, null, null, null).ToIntent(me));
         Assert.Null(new NetIntent(NetIntentKind.Buy, default, null, null, null, Slot: 1, Quantity: 1).ToIntent(me)); // T-321: sem NPC
         Assert.Null(new NetIntent(NetIntentKind.Sell, default, null, null, null, Slot: 1, Quantity: 1).ToIntent(me));
+        Assert.Null(new NetIntent(NetIntentKind.ChooseSecondClass, default, null, null, null).ToIntent(me)); // T-404: sem id
+        Assert.Null(new NetIntent(NetIntentKind.ChooseSecondClass, default, "", null, null).ToIntent(me));
     }
 
     [Fact]
@@ -211,6 +262,26 @@ public class ProtocolTests(ITestOutputHelper output)
         Assert.Equal((40, 1, 3, 12), (progress.Experience, progress.AttributePoints, progress.SkillPoints, progress.AllocatedDex));
         Assert.Equal(8, msg.Entities[1].Components.OfType<UnitInfo>().Single().Level);
         Assert.Equal(hero.Id, msg.Entities[0].Id);
+        Assert.Null(progress.SecondClass); // T-404: ainda sem segunda classe
+    }
+
+    [Fact]
+    public void Character_progress_round_trips_the_second_class()
+    {
+        var content = RealContent();
+        var world = WorldBuilder.CreateDefault(5, null, content);
+        Game.Core.Combat.Progression.Leveling.SpawnCharacter(world, content.Classes["class.warrior"], new Vector2(1, 1), new Game.Core.Combat.Progression.CharacterBuild
+        {
+            Level = 20,
+            SecondClass = "second_class.berserker",
+        });
+
+        var snap = world.Snapshot(SnapshotScope.Replicated);
+        var msg = RoundTrip(SnapshotMessage.From(snap));
+
+        Assert.Equal(snap.Entities[0].Components.Select(Hash), msg.Entities[0].Components.Select(Hash));
+        var progress = msg.Entities[0].Components.OfType<Game.Core.Combat.Progression.CharacterProgress>().Single();
+        Assert.Equal("second_class.berserker", progress.SecondClass);
     }
 
     [Fact]

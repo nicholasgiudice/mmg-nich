@@ -1,5 +1,6 @@
 using System.Numerics;
 using Game.Core.Combat.Stats;
+using Game.Core.Combat.Status;
 using Game.Core.Definitions;
 using Game.Core.Simulation;
 using Game.Core.Simulation.Components;
@@ -16,6 +17,9 @@ public sealed record CharacterBuild
     public int Experience { get; init; }
     public AttributeSet Allocated { get; init; } = new();
     public IReadOnlyDictionary<string, int> SkillRanks { get; init; } = new Dictionary<string, int>();
+
+    /// <summary>Segunda classe escolhida (T-403; id <c>second_class.*</c> da classe base); null = ainda não escolheu.</summary>
+    public string? SecondClass { get; init; }
 }
 
 /// <summary>
@@ -45,13 +49,28 @@ public static class Leveling
             return $"XP {build.Experience} inválida para o nível {build.Level}";
         }
 
+        SecondClassDefinition? second = null;
+        if (build.SecondClass is { } secondId)
+        {
+            second = SecondClassOf(cls, secondId);
+            if (second is null)
+            {
+                return $"segunda classe '{secondId}' não é da classe '{cls.Id}'";
+            }
+
+            if (build.Level < rules.SecondClassLevel)
+            {
+                return $"segunda classe exige nível {rules.SecondClassLevel}";
+            }
+        }
+
         var a = build.Allocated;
         if (a.Str < 0 || a.Dex < 0 || a.Agi < 0 || a.Int < 0 || a.Vit < 0)
         {
             return "pontos de atributo negativos";
         }
 
-        if (a.Str + a.Dex + a.Agi + a.Int + a.Vit > rules.AttributePointsAt(build.Level))
+        if (a.Str + a.Dex + a.Agi + a.Int + a.Vit > rules.AttributePointsAt(build.Level, second is not null))
         {
             return "mais pontos de atributo do que o nível dá";
         }
@@ -64,9 +83,9 @@ public static class Leveling
                 continue;
             }
 
-            if (!IsLearnable(cls, id) || !content.Abilities.TryGetValue(id, out var ability))
+            if (!IsLearnable(cls, second, id) || !content.Abilities.TryGetValue(id, out var ability))
             {
-                return $"'{id}' não é habilidade da classe";
+                return $"'{id}' não é habilidade da classe" + (second is null ? " (nem de segunda classe escolhida)" : $" nem de '{second.Id}'");
             }
 
             if (rank < 0 || rank > ability.HighestRank)
@@ -74,9 +93,10 @@ public static class Leveling
                 return $"NH {rank} fora de 0..{ability.HighestRank} em '{id}'";
             }
 
-            if (build.Level < rules.RequiredLevel(ability.Signature, rank))
+            var required = rules.RequiredLevel(ability.Signature, rank, IsSecondClassAbility(cls, second, id));
+            if (build.Level < required)
             {
-                return $"NH {rank} de '{id}' exige nível {rules.RequiredLevel(ability.Signature, rank)}";
+                return $"NH {rank} de '{id}' exige nível {required}";
             }
 
             spent += rank;
@@ -100,7 +120,8 @@ public static class Leveling
         var rules = world.Content.Rules.Progression;
         var ranks = build.SkillRanks.Where(kv => kv.Value > 0).ToDictionary(kv => kv.Key, kv => kv.Value);
         var e = EntityFactory.SpawnPlayer(world, cls, position, ranks);
-        RebuildKnown(cls, e.Get<AbilityState>());
+        var second = build.SecondClass is { } secondId ? SecondClassOf(cls, secondId) : null;
+        RebuildKnown(world.Content, cls, second, e.Get<AbilityState>());
 
         var stats = e.Get<CharacterStats>();
         stats.Level = build.Level;
@@ -109,6 +130,7 @@ public static class Leveling
             Experience = build.Level >= rules.MaxLevel ? 0 : build.Experience,
             ExperienceToNext = rules.XpToNext(build.Level),
             SkillPoints = rules.SkillPointsAt(build.Level) - ranks.Values.Sum(),
+            SecondClass = second?.Id,
         };
         foreach (var attr in Enum.GetValues<AttributeKind>())
         {
@@ -117,9 +139,10 @@ public static class Leveling
             AddToStat(stats, attr, points);
         }
 
-        progress.AttributePoints = rules.AttributePointsAt(build.Level) - progress.AllocatedTotal;
+        progress.AttributePoints = rules.AttributePointsAt(build.Level, second is not null) - progress.AllocatedTotal;
         e.Add(progress);
         e.Add(new CombatActivity());
+        SyncPassives(world, e);
 
         RefreshDerived(world, e);
         var health = e.Get<Health>();
@@ -145,7 +168,9 @@ public static class Leveling
             Level = s.Level,
             Experience = p.Experience,
             Allocated = new AttributeSet { Str = p.AllocatedStr, Dex = p.AllocatedDex, Agi = p.AllocatedAgi, Int = p.AllocatedInt, Vit = p.AllocatedVit },
-            SkillRanks = st.Known.Where(id => id != st.BasicAttackId).ToDictionary(id => id, st.RankOf, StringComparer.Ordinal),
+            // T-403: pelos NH, não pela barra (passivas têm NH e não entram na barra).
+            SkillRanks = st.Ranks.Where(kv => kv.Value > 0 && kv.Key != st.BasicAttackId).ToDictionary(kv => kv.Key, kv => kv.Value, StringComparer.Ordinal),
+            SecondClass = p.SecondClass,
         };
     }
 
@@ -212,12 +237,13 @@ public static class Leveling
             return ProgressionRejectReason.NoProgression;
         }
 
-        if (!IsLearnable(cls, abilityId) || !world.Content.Abilities.TryGetValue(abilityId, out var ability))
+        var second = SecondClassOf(cls, p.SecondClass);
+        if (!IsLearnable(cls, second, abilityId) || !world.Content.Abilities.TryGetValue(abilityId, out var ability))
         {
             return ProgressionRejectReason.NotLearnable;
         }
 
-        var current = st.Known.Contains(abilityId) ? st.RankOf(abilityId) : 0;
+        var current = RankOf(st, abilityId);
         var next = current + 1;
         if (next > ability.HighestRank)
         {
@@ -229,7 +255,7 @@ public static class Leveling
             return ProgressionRejectReason.NoSkillPoints;
         }
 
-        if (s.Level < world.Content.Rules.Progression.RequiredLevel(ability.Signature, next))
+        if (s.Level < world.Content.Rules.Progression.RequiredLevel(ability.Signature, next, IsSecondClassAbility(cls, second, abilityId)))
         {
             return ProgressionRejectReason.LevelTooLow;
         }
@@ -238,7 +264,12 @@ public static class Leveling
         st.Ranks[abilityId] = next;
         if (current == 0)
         {
-            RebuildKnown(cls, st);
+            RebuildKnown(world.Content, cls, second, st);
+        }
+
+        if (ability.Passive)
+        {
+            SyncPassives(world, e);
         }
 
         world.Events.Publish(new SkillRankRaised(e.Id, abilityId, next));
@@ -246,8 +277,50 @@ public static class Leveling
     }
 
     /// <summary>
-    /// Redistribuição (fase 2: grátis, só fora de combate): devolve os pontos de atributo e de habilidade; a barra fica só
-    /// com o ataque básico. Null = feito; senão o motivo.
+    /// Escolhe a segunda classe (T-403, <c>design/segunda-classe-v0.1.md</c> §4): só no nível
+    /// <see cref="ProgressionRules.SecondClassLevel"/> ou acima, uma vez (é definitiva), fora de combate e sem conjurar, e só
+    /// entre as da classe base. Dá <see cref="ProgressionRules.SecondClassAttributePoints"/> pontos de atributo. Null =
+    /// feito; senão o motivo.
+    /// </summary>
+    public static ProgressionRejectReason? ChooseSecondClass(World world, Entity e, string secondClassId)
+    {
+        if (e.TryGet<CharacterProgress>() is not { } p || e.TryGet<CharacterStats>() is not { } s
+            || e.TryGet<AbilityState>() is not { } st || ClassOf(world, e) is not { } cls)
+        {
+            return ProgressionRejectReason.NoProgression;
+        }
+
+        if (p.SecondClass is not null)
+        {
+            return ProgressionRejectReason.SecondClassAlreadyChosen;
+        }
+
+        if (SecondClassOf(cls, secondClassId) is not { } second)
+        {
+            return ProgressionRejectReason.NotASecondClass;
+        }
+
+        var rules = world.Content.Rules.Progression;
+        if (s.Level < rules.SecondClassLevel)
+        {
+            return ProgressionRejectReason.LevelTooLow;
+        }
+
+        if (st.IsCasting || InCombat(world, e))
+        {
+            return ProgressionRejectReason.InCombat;
+        }
+
+        p.SecondClass = second.Id;
+        p.AttributePoints += rules.SecondClassAttributePoints;
+        world.Events.Publish(new SecondClassChosen(e.Id, second.Id, p.AttributePoints));
+        return null;
+    }
+
+    /// <summary>
+    /// Redistribuição (fase 2: grátis, só fora de combate): devolve os pontos de atributo e de habilidade (também os da
+    /// segunda classe, que continua escolhida, T-403); a barra fica só com o ataque básico e as passivas se vão. Null =
+    /// feito; senão o motivo.
     /// </summary>
     public static ProgressionRejectReason? ResetPoints(World world, Entity e)
     {
@@ -269,13 +342,78 @@ public static class Leveling
             p.SetAllocated(attr, 0);
         }
 
-        p.AttributePoints = rules.AttributePointsAt(s.Level);
+        p.AttributePoints = rules.AttributePointsAt(s.Level, p.SecondClass is not null);
         p.SkillPoints = rules.SkillPointsAt(s.Level);
         st.Ranks.Clear();
-        RebuildKnown(cls, st);
+        RebuildKnown(world.Content, cls, SecondClassOf(cls, p.SecondClass), st);
+        SyncPassives(world, e);
         RefreshDerived(world, e);
         world.Events.Publish(new PointsReset(e.Id, p.AttributePoints, p.SkillPoints));
         return null;
+    }
+
+    /// <summary>
+    /// T-405 (ferramenta de teste do servidor): XP que falta para sair do <paramref name="level"/> (com
+    /// <paramref name="experience"/> no nível) e chegar exatamente ao <paramref name="target"/>, limitado ao nível máximo.
+    /// 0 se já está nele ou acima. Dada por <see cref="GrantExperience"/>, sobe pelo mesmo caminho da XP de monstro.
+    /// </summary>
+    public static int ExperienceToReach(ProgressionRules rules, int level, int experience, int target)
+    {
+        target = Math.Min(target, rules.MaxLevel);
+        if (level >= target)
+        {
+            return 0;
+        }
+
+        long xp = Math.Max(0, rules.XpToNext(level) - experience);
+        for (var l = level + 1; l < target; l++)
+        {
+            xp += rules.XpToNext(l);
+        }
+
+        return (int)Math.Min(xp, int.MaxValue);
+    }
+
+    /// <summary>
+    /// T-405 (ferramenta de teste do servidor): volta o personagem para antes da escolha da segunda classe. Saem os NH das
+    /// habilidades da segunda classe (os pontos de habilidade voltam) e os
+    /// <see cref="ProgressionRules.SecondClassAttributePoints"/> pontos de atributo da escolha; se eles já estavam
+    /// distribuídos, a distribuição de atributos inteira volta (como em <see cref="ResetPoints"/>, só os atributos). Não
+    /// confere combate (quem chama decide). False se não tem progressão ou não escolheu segunda classe.
+    /// </summary>
+    public static bool UndoSecondClass(World world, Entity e)
+    {
+        if (e.TryGet<CharacterProgress>() is not { } p || e.TryGet<CharacterStats>() is not { } s
+            || e.TryGet<AbilityState>() is not { } st || ClassOf(world, e) is not { } cls
+            || SecondClassOf(cls, p.SecondClass) is not { } second)
+        {
+            return false;
+        }
+
+        foreach (var id in st.Ranks.Keys.Where(id => IsSecondClassAbility(cls, second, id)).ToList())
+        {
+            p.SkillPoints += st.Ranks[id];
+            st.Ranks.Remove(id);
+        }
+
+        var rules = world.Content.Rules.Progression;
+        p.SecondClass = null;
+        p.AttributePoints -= rules.SecondClassAttributePoints;
+        if (p.AttributePoints < 0)
+        {
+            foreach (var attr in Enum.GetValues<AttributeKind>())
+            {
+                AddToStat(s, attr, -p.Allocated(attr));
+                p.SetAllocated(attr, 0);
+            }
+
+            p.AttributePoints = rules.AttributePointsAt(s.Level, false);
+        }
+
+        RebuildKnown(world.Content, cls, null, st);
+        SyncPassives(world, e);
+        RefreshDerived(world, e);
+        return true;
     }
 
     /// <summary>Causou ou recebeu dano (ou curou/protegeu quem lutava) há menos de <see cref="ProgressionRules.CombatTimeoutTicks"/>.</summary>
@@ -315,20 +453,83 @@ public static class Leveling
     public static bool IsLearnable(ClassDefinition cls, string abilityId) =>
         abilityId != cls.BasicAttack && cls.Abilities.Contains(abilityId);
 
+    /// <summary>
+    /// T-403: com a segunda classe escolhida (<paramref name="second"/>, null = nenhuma), recebem pontos também as
+    /// habilidades dela.
+    /// </summary>
+    public static bool IsLearnable(ClassDefinition cls, SecondClassDefinition? second, string abilityId) =>
+        IsLearnable(cls, abilityId) || IsSecondClassAbility(cls, second, abilityId);
+
+    /// <summary>
+    /// T-403: a habilidade é da segunda classe (e não da base): usa os níveis por NH da segunda classe
+    /// (<see cref="ProgressionRules.RequiredLevel(bool, int, bool)"/>).
+    /// </summary>
+    public static bool IsSecondClassAbility(ClassDefinition cls, SecondClassDefinition? second, string abilityId) =>
+        second is not null && abilityId != cls.BasicAttack && !cls.Abilities.Contains(abilityId) && second.Abilities.Contains(abilityId);
+
+    /// <summary>T-403: a segunda classe <paramref name="secondClassId"/> da classe base; null se não é dela (ou se o id é null).</summary>
+    public static SecondClassDefinition? SecondClassOf(ClassDefinition cls, string? secondClassId) =>
+        secondClassId is null ? null : cls.SecondClasses.FirstOrDefault(x => x.Id == secondClassId);
+
+    /// <summary>T-403: segunda classe escolhida pelo personagem; null se não escolheu ou não tem progressão.</summary>
+    public static SecondClassDefinition? SecondClassOf(World world, Entity e) =>
+        e.TryGet<CharacterProgress>() is { SecondClass: { } id } && ClassOf(world, e) is { } cls ? SecondClassOf(cls, id) : null;
+
     private static ClassDefinition? ClassOf(World world, Entity e) =>
         e.TryGet<UnitInfo>() is { } info && world.Content.Classes.TryGetValue(info.DefinitionId, out var cls) ? cls : null;
 
-    /// <summary>Barra: ataque básico + habilidades da classe com NH ≥ 1, na ordem da classe.</summary>
-    private static void RebuildKnown(ClassDefinition cls, AbilityState st)
+    /// <summary>NH que o personagem tem na habilidade; 0 = não aprendida (personagem com progressão: só NH ≥ 1 ficam em Ranks).</summary>
+    private static int RankOf(AbilityState st, string abilityId) => st.Ranks.TryGetValue(abilityId, out var rank) ? rank : 0;
+
+    /// <summary>
+    /// Barra: ataque básico + habilidades com NH ≥ 1, primeiro as da classe base e depois as da segunda classe (T-403),
+    /// cada grupo na ordem dos dados. Passivas não entram.
+    /// </summary>
+    private static void RebuildKnown(ContentCatalog content, ClassDefinition cls, SecondClassDefinition? second, AbilityState st)
     {
         st.Known.Clear();
         st.Known.Add(cls.BasicAttack);
-        foreach (var id in cls.Abilities)
+        foreach (var id in cls.Abilities.Concat(second?.Abilities ?? []))
         {
-            if (IsLearnable(cls, id) && st.Ranks.TryGetValue(id, out var rank) && rank >= 1 && !st.Known.Contains(id))
+            if (IsLearnable(cls, second, id) && RankOf(st, id) >= 1 && !st.Known.Contains(id)
+                && !(content.Abilities.TryGetValue(id, out var ability) && ability.Passive))
             {
                 st.Known.Add(id);
             }
+        }
+    }
+
+    /// <summary>
+    /// T-403: põe no personagem o status permanente de cada passiva com NH ≥ 1, no NH atual, e tira os que não valem mais
+    /// (NH trocado ou voltou a 0). Os status permanentes (<see cref="StatusManager.ApplyPermanent"/>) são só das passivas.
+    /// </summary>
+    private static void SyncPassives(World world, Entity e)
+    {
+        if (e.TryGet<AbilityState>() is not { } st || ClassOf(world, e) is not { } cls)
+        {
+            return;
+        }
+
+        var second = SecondClassOf(world, e);
+        var wanted = new List<string>();
+        foreach (var id in cls.Abilities.Concat(second?.Abilities ?? []))
+        {
+            var rank = RankOf(st, id);
+            if (rank >= 1 && IsLearnable(cls, second, id) && world.Content.AbilityAt(id, rank) is { Passive: true, PassiveStatus: { } status }
+                && !wanted.Contains(status))
+            {
+                wanted.Add(status);
+            }
+        }
+
+        foreach (var stale in StatusManager.Active(world, e).Where(x => StatusManager.IsPermanent(x) && !wanted.Contains(x.StatusId)).ToList())
+        {
+            StatusManager.RemovePermanent(world, e, stale.StatusId);
+        }
+
+        foreach (var status in wanted)
+        {
+            StatusManager.ApplyPermanent(world, e, status);
         }
     }
 

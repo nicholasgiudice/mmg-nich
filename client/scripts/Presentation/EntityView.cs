@@ -73,6 +73,7 @@ public partial class EntityView : Node2D
     private bool _highlighted;
     private float? _castProgress;
     private IReadOnlyList<StatusChip> _chips = Array.Empty<StatusChip>();
+    private IReadOnlyList<StatusAura> _auras = Array.Empty<StatusAura>();
     private ControlMarks _marks;
     private bool _vanishing;
     private double _flash;
@@ -183,6 +184,12 @@ public partial class EntityView : Node2D
     }
 
     /// <summary>Ícones de status e marcas de controle no corpo.</summary>
+    /// <summary>Sinais dos status no corpo (T-412): anel, labaredas ou anel do protegido. Vazio = nada.</summary>
+    public void ApplyAuras(IReadOnlyList<StatusAura> auras)
+    {
+        _auras = _alive ? auras : Array.Empty<StatusAura>();
+    }
+
     public void ApplyStatus(IReadOnlyList<StatusChip> chips, ControlMarks marks)
     {
         if (!_alive)
@@ -266,9 +273,10 @@ public partial class EntityView : Node2D
             _flash = Math.Max(0, _flash - delta);
             QueueRedraw();
         }
-        else if ((_marks & (ControlMarks.Stunned | ControlMarks.Feared)) != 0 || _vanishing || (_selected && TargetMark() is not null))
+        else if ((_marks & (ControlMarks.Stunned | ControlMarks.Feared)) != 0 || _vanishing || (_selected && TargetMark() is not null)
+            || _auras.Count > 0)
         {
-            QueueRedraw(); // estrelas girando, medo pulsando, névoa subindo, marca do alvo pulsando
+            QueueRedraw(); // estrelas girando, medo pulsando, névoa subindo, marca do alvo pulsando, sinais de status
         }
     }
 
@@ -349,6 +357,11 @@ public partial class EntityView : Node2D
             DrawMistWarning();
         }
 
+        if (!veiled)
+        {
+            DrawAuras(front: false);
+        }
+
         if (_sprite is { } sprite)
         {
             DrawSprite(sprite, veiled ? VeiledAlpha : 1f);
@@ -374,6 +387,8 @@ public partial class EntityView : Node2D
         {
             return; // na névoa: sem barra de vida nem status (não é alvo)
         }
+
+        DrawAuras(front: true);
 
         var barPos = new Godot.Vector2(-BarWidth / 2, -HeadPx - 8);
         DrawRect(new Rect2(barPos, new Godot.Vector2(BarWidth, BarHeight)), BarBack);
@@ -410,6 +425,71 @@ public partial class EntityView : Node2D
         }
 
         DrawChips(barPos.Y - 3);
+    }
+
+    /// <summary>
+    /// Sinais dos status (T-412). Atrás do corpo (<paramref name="front"/> false): o anel nos pés e as labaredas, que aparecem
+    /// dos lados do sprite. Na frente: faíscas subindo da fúria, para o sinal não sumir atrás do sprite.
+    /// </summary>
+    private void DrawAuras(bool front)
+    {
+        var t = (float)_time;
+        foreach (var aura in _auras)
+        {
+            switch (aura.Kind)
+            {
+                case AuraKind.Ring when !front:
+                case AuraKind.Link when !front:
+                    var pulse = 0.5f + 0.5f * Mathf.Sin(t * 4f);
+                    var r = _radiusPx + (aura.Kind == AuraKind.Ring ? 5f + pulse * 3f : 3f);
+                    DrawSetTransform(Godot.Vector2.Zero, 0, new Godot.Vector2(1, 0.5f));
+                    if (aura.Kind == AuraKind.Ring)
+                    {
+                        DrawCircle(Godot.Vector2.Zero, r, new Color(aura.Color, 0.14f + 0.08f * pulse));
+                    }
+
+                    DrawArc(Godot.Vector2.Zero, r, 0, Mathf.Tau, 32, new Color(aura.Color, 0.65f + 0.3f * pulse),
+                        aura.Kind == AuraKind.Ring ? 2.5f : 1.5f);
+                    DrawSetTransform(Godot.Vector2.Zero, 0, Godot.Vector2.One);
+                    break;
+
+                case AuraKind.Flames when !front:
+                    // Línguas de fogo em volta do corpo, cada uma com altura e fase próprias.
+                    var height = HeadPx * 1.15f;
+                    var baseY = _radiusPx * 0.25f;
+                    DrawSetTransform(Godot.Vector2.Zero, 0, new Godot.Vector2(1, 0.5f));
+                    DrawCircle(new Godot.Vector2(0, baseY * 2), _radiusPx * 1.5f, new Color(aura.Color, 0.30f));
+                    DrawSetTransform(Godot.Vector2.Zero, 0, Godot.Vector2.One);
+                    for (var i = 0; i < 9; i++)
+                    {
+                        var side = i - 4;
+                        var x = side * _radiusPx * 0.36f;
+                        var flicker = 0.65f + 0.35f * Mathf.Sin(t * (9f + i) + i * 1.9f);
+                        var h = height * (0.45f + 0.55f * (1f - Math.Abs(side) / 5f)) * flicker;
+                        var w = _radiusPx * 0.34f;
+                        DrawColoredPolygon(
+                            [new Godot.Vector2(x - w, baseY), new Godot.Vector2(x + w, baseY), new Godot.Vector2(x, baseY - h)],
+                            new Color(aura.Color, 0.9f));
+                        DrawColoredPolygon(
+                            [new Godot.Vector2(x - w * 0.5f, baseY), new Godot.Vector2(x + w * 0.5f, baseY), new Godot.Vector2(x, baseY - h * 0.55f)],
+                            new Color(1f, 0.82f, 0.3f, 0.95f));
+                    }
+
+                    break;
+
+                case AuraKind.Flames when front:
+                    // Faíscas subindo pela frente do corpo.
+                    for (var i = 0; i < 6; i++)
+                    {
+                        var k = (t * 0.9f + i / 6f) % 1f;
+                        var x = Mathf.Sin(i * 2.3f + t * 2f) * _radiusPx * 0.9f;
+                        var y = -k * HeadPx * 1.2f;
+                        DrawRect(new Rect2(x - 1.5f, y - 1.5f, 3f, 3f), new Color(1f, 0.75f, 0.25f, 1f - k));
+                    }
+
+                    break;
+            }
+        }
     }
 
     /// <summary>Medo (T-345): balão roxo com "!" sobre a cabeça, tremendo, como as estrelas do atordoamento.</summary>

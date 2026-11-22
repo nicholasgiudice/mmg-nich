@@ -8,7 +8,7 @@ dotnet run --project src/Game.Server -- --encounter encounter.four_rats --port 7
 dotnet run --project src/Game.Server -- --help
 ```
 
-- **Opções:** `--data`, `--port` (UDP, padrão 7777), `--encounter` (padrão Matriarca), `--seed`, `--bots` (vagas sem jogador jogam como bots; padrão `true`), `--disconnect-grace` (s até remover quem caiu; padrão 30), `--max-catch-up`, `--max-players`, `--restart-after` (s mostrando o fim do encontro antes de recomeçar; padrão 10, 0 = não recomeça), `--interest-cell` (16 tiles), `--interest-radius` (2 células), `--max-delta-age` (40 ticks), `--log-level` (`verbose` · `debug` · `info` · `warning` · `error` · `fatal`; padrão `info`). Variáveis de ambiente: `MMO_DATA_DIR`, `MMO_PORT`, `MMO_LOG_LEVEL`.
+- **Opções:** `--data`, `--port` (UDP, padrão 7777), `--dev-login`, `--dev-tools` (ferramenta de teste, seção abaixo), `--encounter` (padrão Matriarca), `--seed`, `--bots` (vagas sem jogador jogam como bots; padrão `true`), `--disconnect-grace` (s até remover quem caiu; padrão 30), `--max-catch-up`, `--max-players`, `--restart-after` (s mostrando o fim do encontro antes de recomeçar; padrão 10, 0 = não recomeça), `--interest-cell` (16 tiles), `--interest-radius` (2 células), `--max-delta-age` (40 ticks), `--log-level` (`verbose` · `debug` · `info` · `warning` · `error` · `fatal`; padrão `info`). Variáveis de ambiente: `MMO_DATA_DIR`, `MMO_PORT`, `MMO_LOG_LEVEL`, `MMO_DEV_LOGIN`, `MMO_DEV_TOOLS`.
 - **Console:** `restart` (reinicia o encontro; quem está conectado recebe um `Welcome` novo), `status`, `quit`. Ctrl+C e SIGTERM (`docker compose stop`, systemd) também param: as conexões são avisadas e o log mostra "Servidor parado".
 - **Entrada:** o cliente manda `Hello` com a versão do protocolo e o fingerprint de `data/`; diferente = `Reject`. Cada jogador ocupa uma vaga de jogador do encontro com a classe pedida (vaga da mesma classe; senão a primeira livre, que troca de classe). Sem vaga = `Reject` (`Full`).
 - **Contas (T-212):** com `MMO_DB_CONNECTION`, o `Hello` pode levar o token de jogo da API (`Hello.Ticket`). O servidor valida assinatura, servidor (`MMO_GAME_SERVER_ID`), expiração e uso único com `MMO_GAME_TICKET_KEY`, sem chamar a API. Depois carrega o personagem fora do loop e o põe numa vaga com nível, pontos, NH, equipamento e inventário salvos. Recusas: `Unauthorized` (token), `AlreadyConnected` (personagem já está dentro) e `Unavailable` (banco fora, personagem apagado ou corrompido). Sem token, só entra com `--dev-login` (ou `MMO_DEV_LOGIN=true`): é o login só com nome, de antes, usado pelo cliente atual, pelos testes e pelos bots.
@@ -19,6 +19,27 @@ dotnet run --project src/Game.Server -- --help
 - **Log (Serilog):** conexões, recusas, entradas e saídas, e o tempo de tick a cada 10 s.
 
 Estrutura: `ZoneRoom` (sala e regras), `TickLoop` (relógio de 20 Hz sem deriva, recupera até N ticks e pula o resto com aviso), `Interest/` (`InterestGrid`, `ClientView` com o delta por cliente, `EventEntities`), `Transport/` (`LiteNetTransport` em produção, `InMemoryTransport` nos testes, com perda simulada).
+
+## Ferramenta de teste (T-405)
+
+`--dev-tools` (ou `MMO_DEV_TOOLS=true`; no Compose, `GAME_DEV_TOOLS=true` em `deploy/.env`) liga a ferramenta do designer para testar as segundas classes sem as áreas do 16 ao 40 (`design/segunda-classe-v0.1.md` §4.2). **Desligada por padrão; nunca num servidor aberto a jogadores.** Ligada, o servidor avisa no log ao subir:
+
+```
+[WRN] Ferramenta de teste ativa: qualquer jogador pode subir de nível e desfazer a segunda classe (--dev-tools). Nunca num servidor aberto a jogadores
+```
+
+- O `Welcome` leva `DevTools = true`: só então o cliente mostra o botão (menu do Esc, T-411).
+- O cliente manda `DevToolRequest(Action)`: `LevelUp1` (+1 nível), `LevelUp5` (+5), `ToSecondClassLevel` (nível 20, `progression.secondClassLevel`), `ToMaxLevel` (nível 40, `progression.maxLevel`), `UndoSecondClass` (tira a segunda classe, devolve os NH dela e os +5 de atributo; se os +5 já foram distribuídos, devolve todos os pontos de atributo) e `FreeReset` (a redistribuição normal, sem custo).
+- Subir de nível dá a XP que falta por `Leveling.GrantExperience`, o mesmo caminho da XP de monstro: mesmos pontos, mesma vida, um `LevelUp` por nível. Nada passa do nível máximo.
+- Resposta sempre: `DevToolResult(Action, Outcome, Level)`. `Outcome`: `Done`, `Disabled` (servidor sem `--dev-tools`; o log registra quem pediu), `InCombat` (em combate ou conjurando, como a redistribuição), `Dead`, `NoProgression` (personagem de encontro da sala), `AlreadyAtLevel`, `NoSecondClass`.
+- Aceito, o personagem com conta é gravado na hora. Com `--dev-login`, o personagem não tem banco: o pedido só muda o personagem em memória (some ao sair).
+- Funciona no mundo aberto e na sala de encontro (lá, só personagens com conta têm progressão).
+
+Playtest local (Windows ou VPS, sem banco): suba o servidor e, no cliente, entre sem conta (`MenuScreen`) em `127.0.0.1:7777`.
+
+```bash
+dotnet run --project src/Game.Server -c Release -- --world --dev-login --dev-tools --port 7777
+```
 
 ## Mundo aberto (T-214)
 

@@ -37,7 +37,7 @@ internal sealed class FakeStore : ICharacterStore
         return t;
     }
 
-    public Character Add(string classId = "class.warrior", Guid? account = null, string progression = "{}")
+    public Character Add(string classId = "class.warrior", Guid? account = null, string progression = "{}", int level = 1, int progressionVersion = 1)
     {
         var c = new Character
         {
@@ -47,6 +47,8 @@ internal sealed class FakeStore : ICharacterStore
             ClassId = classId,
             ZoneId = "zone.city",
             Progression = progression,
+            Level = level,
+            ProgressionVersion = progressionVersion,
             Version = _version,
         };
         lock (_lock)
@@ -397,7 +399,7 @@ public class AccountTests
         }
 
         var saved = store.Row(row.Id);
-        Assert.Equal(2, saved.ProgressionVersion);
+        Assert.Equal(CharacterDocument.Version, saved.ProgressionVersion);
         Assert.Contains("\"gold\":123", saved.Progression);
 
         using var b = new AccountRig(store);
@@ -440,7 +442,7 @@ public class AccountTests
             a.Flush();
         }
 
-        Assert.Equal(2, store.Row(row.Id).ProgressionVersion);
+        Assert.Equal(CharacterDocument.Version, store.Row(row.Id).ProgressionVersion);
         using var b = new AccountRig(store);
         var back = b.Entity(b.Join(AccountRig.Ticket(row)));
         Assert.Equal(0, Consumables.CountOf(back, Potion));

@@ -12,17 +12,22 @@ public class ProgressionLoaderTests
     [Fact]
     public void Progression_rules_load_and_default_to_the_design_values()
     {
-        var r = Load("""{ "rules": { "progression": { "maxLevel": 20, "participationWindow": 10, "xpByRank": { "boss": 40 } } } }""");
+        var r = Load("""{ "rules": { "progression": { "maxLevel": 45, "participationWindow": 10, "xpByRank": { "boss": 40 } } } }""");
 
         Assert.True(r.Success, Errors(r));
         var p = r.Database!.Rules.Progression;
-        Assert.Equal(20, p.MaxLevel);
+        Assert.Equal(45, p.MaxLevel);
         Assert.Equal(200, p.ParticipationWindowTicks);
         Assert.Equal(40, p.XpByRank.Boss);
         Assert.Equal(5, p.XpByRank.Elite);
         Assert.Equal(100, p.CombatTimeoutTicks);
         Assert.Equal([1, 3, 5, 7, 9], p.SkillRankLevels);
         Assert.Equal([12, 13, 15], p.SignatureRankLevels);
+        Assert.Equal(20, p.SecondClassLevel);
+        Assert.Equal(5, p.SecondClassAttributePoints);
+        Assert.Equal([21, 24, 27, 30, 33], p.SecondClassRankLevels);
+        Assert.Equal([35, 37, 40], p.SecondClassSignatureRankLevels);
+        Assert.Equal(40, Load("{}").Database!.Rules.Progression.MaxLevel);
         Assert.Equal(new ProgressionRules().XpToNext(4), Load("{}").Database!.Rules.Progression.XpToNext(4));
     }
 
@@ -34,7 +39,19 @@ public class ProgressionLoaderTests
     [InlineData("""{ "participationWindow": 0 }""", "participationWindow")]
     [InlineData("""{ "skillRankLevels": [1, 3, 5, 7] }""", "skillRankLevels")]
     [InlineData("""{ "skillRankLevels": [1, 3, 2, 7, 9] }""", "skillRankLevels[2]")]
-    [InlineData("""{ "signatureRankLevels": [12, 13, 16] }""", "signatureRankLevels[2]")]
+    [InlineData("""{ "signatureRankLevels": [12, 13, 41] }""", "signatureRankLevels[2]")]
+    [InlineData("""{ "secondClassLevel": 0 }""", "secondClassLevel")]
+    [InlineData("""{ "secondClassLevel": 41 }""", "secondClassLevel")]
+    [InlineData("""{ "secondClassLevel": 21 }""", "secondClassLevel")]
+    [InlineData("""{ "secondClassAttributePoints": -1 }""", "secondClassAttributePoints")]
+    [InlineData("""{ "secondClassRankLevels": [21, 24, 27, 30] }""", "secondClassRankLevels")]
+    [InlineData("""{ "secondClassRankLevels": [21, 24, 22, 30, 33] }""", "secondClassRankLevels[2]")]
+    [InlineData("""{ "secondClassRankLevels": [0, 24, 27, 30, 33] }""", "secondClassRankLevels[0]")]
+    [InlineData("""{ "secondClassRankLevels": [21, 24, 27, 30, 41] }""", "secondClassRankLevels[4]")]
+    [InlineData("""{ "secondClassSignatureRankLevels": [35, 37] }""", "secondClassSignatureRankLevels")]
+    [InlineData("""{ "secondClassSignatureRankLevels": [35, 34, 40] }""", "secondClassSignatureRankLevels[1]")]
+    [InlineData("""{ "secondClassSignatureRankLevels": [35, 37, 41] }""", "secondClassSignatureRankLevels[2]")]
+    [InlineData("""{ "maxLevel": 30 }""", "secondClassSignatureRankLevels[0]")]
     public void Invalid_progression_rules_are_errors(string section, string field)
     {
         var r = Load($$"""{ "rules": { "progression": {{section}} } }""");
@@ -101,6 +118,7 @@ public class ProgressionLoaderTests
         Assert.Equal(9, db.Monsters["monster.skeleton_guard"].Level);
         Assert.Equal(8, db.Monsters["monster.forest_matriarch"].Level);
         Assert.Equal(MonsterRank.Boss, db.Monsters["monster.forest_matriarch"].Rank);
-        Assert.Equal(15, db.Rules.Progression.MaxLevel);
+        Assert.Equal(40, db.Rules.Progression.MaxLevel);
+        Assert.Equal(20, db.Rules.Progression.SecondClassLevel);
     }
 }

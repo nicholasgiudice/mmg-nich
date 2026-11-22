@@ -36,6 +36,8 @@ namespace Game.Protocol;
 [MemoryPackUnion(23, typeof(LogoutRequest))]
 [MemoryPackUnion(24, typeof(LogoutCancel))]
 [MemoryPackUnion(25, typeof(LogoutStatus))]
+[MemoryPackUnion(26, typeof(DevToolRequest))]
+[MemoryPackUnion(27, typeof(DevToolResult))]
 public partial interface INetMessage;
 
 // ---------------- cliente → servidor ----------------
@@ -81,9 +83,11 @@ public sealed partial record Ping(long ClientTimeMs) : INetMessage;
 /// No mundo aberto (T-214), <paramref name="EncounterId"/> é o id da zona (<c>zone.*</c>) e cada troca de zona (portão,
 /// renascer) chega como um <c>Welcome</c> novo, com a arena da zona e época nova.
 /// <paramref name="InstanceId"/> (T-350): numa instância de dungeon, o id da cópia (≥ 1); 0 = zona aberta ou sala.
+/// <paramref name="DevTools"/> (T-405): o servidor aceita a ferramenta de teste (<see cref="DevToolRequest"/>; servidor com
+/// <c>--dev-tools</c>). False = o cliente não mostra o botão.
 /// </summary>
 [MemoryPackable]
-public sealed partial record Welcome(EntityId ControlledEntity, long Tick, string EncounterId, string ArenaId, int Epoch, int InstanceId = 0) : INetMessage;
+public sealed partial record Welcome(EntityId ControlledEntity, long Tick, string EncounterId, string ArenaId, int Epoch, int InstanceId = 0, bool DevTools = false) : INetMessage;
 
 public enum RejectReason : byte
 {

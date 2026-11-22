@@ -19,7 +19,19 @@
         "warrior.taunt",
         "warrior.living_wall"
       ],
-      "startingInventory": [{ "item": "consumable.minor_healing_potion", "count": 5 }]
+      "startingInventory": [{ "item": "consumable.minor_healing_potion", "count": 5 }],
+      "secondClasses": [
+        {
+          "id": "second_class.guardian",
+          "name": "Guardião",
+          "abilities": ["guardian.interception", "guardian.shield_bash", "guardian.bastion", "guardian.steadfast", "guardian.oath"]
+        },
+        {
+          "id": "second_class.berserker",
+          "name": "Berserker",
+          "abilities": ["berserker.charge", "berserker.fury", "berserker.execution", "berserker.blood_thirst", "berserker.steel_storm"]
+        }
+      ]
     },
     {
       "id": "class.archer",

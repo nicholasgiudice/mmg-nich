@@ -17,6 +17,7 @@ public static class StatusModule
         s.Modifiers.Add(new StatusModifierSource());
         s.DamageReactions.Add(new FrontalReflectReaction());
         s.DamageReactions.Add(new ReflectAndBreakReaction());
+        s.DamageReactions.Add(new LifestealReaction()); // T-407
     }
 }
 

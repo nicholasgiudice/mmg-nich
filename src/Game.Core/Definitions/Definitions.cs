@@ -34,6 +34,24 @@ public sealed record ClassDefinition
 
     /// <summary>Regras de geração de recurso por evento (T-010).</summary>
     public IReadOnlyList<ResourceRuleDefinition> ResourceRules { get; init; } = [];
+
+    /// <summary>
+    /// Segundas classes que o personagem desta classe pode escolher no nível <c>progression.secondClassLevel</c>
+    /// (T-403, <c>design/segunda-classe-v0.1.md</c> §4). Vazio = a classe não tem segunda classe.
+    /// </summary>
+    public IReadOnlyList<SecondClassDefinition> SecondClasses { get; init; } = [];
+}
+
+/// <summary>
+/// Segunda classe (T-403): escolhida uma vez, de forma definitiva, entre as da classe base. As habilidades recebem pontos
+/// como as da base, com os níveis por NH da segunda classe (<c>progression.secondClassRankLevels</c>), e entram na barra
+/// depois das da base (passivas não entram). Id: <c>second_class.*</c>.
+/// </summary>
+public sealed record SecondClassDefinition
+{
+    public required string Id { get; init; }
+    public required string Name { get; init; }
+    public IReadOnlyList<string> Abilities { get; init; } = [];
 }
 
 public sealed record AbilityDefinition
@@ -78,6 +96,16 @@ public sealed record AbilityDefinition
     /// </summary>
     public IReadOnlyList<AbilityRankDefinition> Ranks { get; init; } = [];
 
+    /// <summary>
+    /// Passiva (T-403, <c>design/segunda-classe-v0.1.md</c> §4): recebe pontos e NH, mas não entra na barra, não pode ser
+    /// usada e não tem custo, recarga nem alvo (targeting <c>self</c>). Com NH ≥ 1, o personagem mantém o status
+    /// permanente <see cref="PassiveStatus"/> do NH atual.
+    /// </summary>
+    public bool Passive { get; init; }
+
+    /// <summary>Status permanente de uma passiva (T-403); um NH pode trocar por outro.</summary>
+    public string? PassiveStatus { get; init; }
+
     public const int MaxRank = 5;
     public const int MaxSignatureRank = 3;
 
@@ -113,6 +141,9 @@ public sealed record AbilityRankDefinition
     public IReadOnlyList<EffectDefinition>? Effects { get; init; }
     public AbilityHitsDefinition? Hits { get; init; }
     public int? CooldownCharges { get; init; }
+
+    /// <summary>Status permanente da passiva neste NH (T-403); null herda.</summary>
+    public string? PassiveStatus { get; init; }
 }
 
 /// <summary>
@@ -200,6 +231,54 @@ public sealed record StatusBreakDefinition
     public bool Interrupt { get; init; }
 }
 
+/// <summary>
+/// Desvio de dano (T-406: Interceptação, Juramento; depois o Elo da Vida): parte do dano que quem tem o status receberia
+/// vai para o protetor (quem aplicou o status, ou a entidade que o efeito escolheu). A parte desviada sai do dano antes de
+/// tudo, não passa pelos escudos nem pelos modificadores de quem tem o status, passa pela defesa e pelos modificadores do
+/// protetor e é reduzida por <see cref="Reduction"/>. Dano desviado não é desviado de novo; protetor morto, longe demais
+/// (<see cref="MaxDistance"/>) ou o próprio alvo não recebe nada.
+/// </summary>
+public sealed record RedirectDefinition
+{
+    /// <summary>Fração do dano desviada para o protetor, em (0, 1]. Vários desvios no mesmo alvo somam até 1.</summary>
+    public required double Fraction { get; init; }
+
+    /// <summary>Redução sobre a parte desviada, em [0, 1) (Juramento: o Guardião recebe o dano desviado 40% menor). 0 = nenhuma.</summary>
+    public double Reduction { get; init; }
+
+    /// <summary>Distância máxima (tiles) entre o alvo e o protetor para o desvio valer.</summary>
+    public required double MaxDistance { get; init; }
+}
+
+/// <summary>
+/// Vida pelo dano causado (T-407: Sede de Sangue; depois o Selo da Luz e o Julgamento do Inquisidor): quem tem o status cura
+/// <see cref="Fraction"/> (× acúmulos) do dano final que causa em outra entidade. A cura passa pela cura recebida
+/// (<c>healingTakenMultiplier</c>) e não é crítica. Dano refletido, dano desviado e dano em si mesmo não geram vida.
+/// </summary>
+public sealed record LifestealDefinition
+{
+    /// <summary>Fração do dano final que volta como vida, em (0, 1].</summary>
+    public required double Fraction { get; init; }
+
+    /// <summary>
+    /// Com vida atual abaixo desta fração da vida máxima (estritamente), a fração é multiplicada por
+    /// <see cref="BelowHealthMultiplier"/>. 0 = nunca. Em [0, 1].
+    /// </summary>
+    public double BelowHealth { get; init; }
+
+    /// <summary>Multiplicador da fração com pouca vida (2 = dobra). Pelo menos 1.</summary>
+    public double BelowHealthMultiplier { get; init; } = 2;
+
+    /// <summary>Ao matar um inimigo (facção diferente) com o dano, cura também esta fração da vida máxima. 0 = nada. Em [0, 1].</summary>
+    public double KillHeal { get; init; }
+
+    /// <summary>
+    /// Habilidade a que a cura é atribuída no evento <c>HealApplied</c> e no log (a que deu o status, ex.:
+    /// <c>berserker.bloodthirst</c>). Null = o próprio status.
+    /// </summary>
+    public string? Ability { get; init; }
+}
+
 public sealed record StatusFlags
 {
     public bool Stunned { get; init; }
@@ -218,6 +297,12 @@ public sealed record StatusFlags
     /// Use com a tag <c>control</c> para valerem as regras de controle (rank, retorno decrescente, imunidade).
     /// </summary>
     public bool Feared { get; init; }
+
+    /// <summary>
+    /// Imune a empurrão (T-406, Bastião NH5): <c>displacement</c> do tipo <c>knockback</c> vindo de inimigos (ou sem fonte)
+    /// não move quem tem o status. Empurrão de aliado e avanço próprio continuam valendo.
+    /// </summary>
+    public bool KnockbackImmune { get; init; }
 }
 
 public sealed record PeriodicEffectDefinition
@@ -251,6 +336,12 @@ public sealed record StatusDefinition
 
     /// <summary>Quebra por dano recebido ou por interrupção (T-341).</summary>
     public StatusBreakDefinition? Breaks { get; init; }
+
+    /// <summary>Desvia parte do dano recebido para um protetor (T-406).</summary>
+    public RedirectDefinition? Redirect { get; init; }
+
+    /// <summary>Vida pelo dano causado (T-407).</summary>
+    public LifestealDefinition? Lifesteal { get; init; }
 }
 
 public sealed record AreaDefinition
@@ -266,6 +357,12 @@ public sealed record AreaDefinition
     public AreaMode Mode { get; init; } = AreaMode.Periodic;
     public FactionFilter Affects { get; init; } = FactionFilter.Enemy;
     public IReadOnlyList<EffectDefinition> Effects { get; init; } = [];
+
+    /// <summary>
+    /// Presa ao dono (T-407, Tempestade de Aço): nasce na posição de quem a criou e, a cada tick, acompanha a posição atual
+    /// dele (inclusive para acertar). Acaba com a duração ou quando o dono morre ou some (<c>AreaExpireReason.OwnerDied</c>).
+    /// </summary>
+    public bool FollowOwner { get; init; }
 }
 
 public sealed record AiProfileDefinition

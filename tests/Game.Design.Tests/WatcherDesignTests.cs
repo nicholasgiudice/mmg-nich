@@ -37,21 +37,21 @@ public class WatcherDesignTests(ITestOutputHelper output)
     private static CharacterProfile Profile(int level) => CharacterProfile.Expected(level) with { Gear = ItemRarity.Rare };
 
     /// <summary>
-    /// Grupo de 4 nos níveis 14 e 15 com raros: a vitória média dos dois níveis fica entre 50% e 80% e cada nível vence em 4–6
-    /// min. Há um degrau entre os níveis (vida, atributos e itens; a assinatura quase não pesa: balance-v0.13 §3 e §4), então cada nível individual
-    /// só precisa ficar entre 40% e 90%.
+    /// Grupo de 4 nos níveis 14 e 15 com raros: a vitória média dos dois níveis fica entre 80% e 99% e cada nível vence em 4–6
+    /// min; cada nível individual fica entre 70% e 100%. Era 50–80% (cada nível 40–90%) até o balanceamento do playtest de
+    /// 2026-11-16, aprovado pelo designer, que levou o grupo a 96–99% (balance-v0.18 §4).
     /// </summary>
-    [Fact(Skip = PlaytestRebalance.Pending)]
-    public void A_group_of_four_with_rares_beats_the_watcher_50_to_80_percent_in_4_to_6_minutes()
+    [Fact]
+    public void A_group_of_four_with_rares_beats_the_watcher_80_to_99_percent_in_4_to_6_minutes()
     {
         var batches = new[] { 14, 15 }.Select(l => Group(l, "save", Runs, FullGroup)).ToList();
         var report = string.Join("; ", batches.Select(Fmt));
         output.WriteLine(report);
 
-        Assert.InRange(batches.Average(s => s.WinRate), 0.50, 0.80);
+        Assert.InRange(batches.Average(s => s.WinRate), 0.80, 0.99);
         Assert.All(batches, s =>
         {
-            Assert.True(s.WinRate is >= 0.40 and <= 0.90, report);
+            Assert.True(s.WinRate >= 0.70, report);
             Assert.True(s.TimeToWinMean is >= 240 and <= 360, report);
         });
     }

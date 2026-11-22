@@ -10,6 +10,15 @@ public static class StatusManager
 {
     public const string ControlTag = "control";
 
+    /// <summary>
+    /// <see cref="StatusInstance.ExpiresAtTick"/> de um status permanente (T-403, passivas): não expira, não é tirado por
+    /// purificação, por <see cref="RemoveAll"/> (renascer pela Milagre) nem por <see cref="Remove"/>, e continua no
+    /// personagem morto. Só <see cref="RemovePermanent"/> tira.
+    /// </summary>
+    public const long PermanentTick = long.MaxValue;
+
+    public static bool IsPermanent(StatusInstance s) => s.ExpiresAtTick == PermanentTick;
+
     // ---------- consulta ----------
 
     /// <summary>Ativo no tick atual (expiração exata: com duração D aplicada no tick T, ativo em T..T+D-1).</summary>
@@ -58,6 +67,9 @@ public static class StatusManager
         return Vector2.Normalize(away);
     }
 
+    /// <summary>Tem status com a marca <c>knockbackImmune</c> (T-406, Bastião NH5): empurrão de inimigo não o move.</summary>
+    public static bool IsKnockbackImmune(World world, Entity e) => Active(world, e).Any(s => Def(world, s).Flags.KnockbackImmune);
+
     /// <summary>Tem status com a marca <c>untargetable</c> (T-340): ninguém além dele mesmo o alcança com habilidades.</summary>
     public static bool IsUntargetable(World world, Entity e) => Active(world, e).Any(s => Def(world, s).Flags.Untargetable);
 
@@ -95,7 +107,13 @@ public static class StatusManager
     /// <paramref name="durationTicks"/> null = duração padrão da definição. Controle (tag "control") passa pelas regras de rank e retorno decrescente.
     /// </summary>
     /// <param name="origin">Ponto de origem (T-351, medo); null = a posição da fonte.</param>
-    public static StatusInstance? Apply(World world, Entity? source, Entity target, string statusId, int? durationTicks = null, Vector2? origin = null)
+    /// <param name="redirectTo">
+    /// Protetor de um status com <c>redirect</c> (T-406) quando não é a fonte (ex.: Elo da Vida liga o alvo a outro aliado);
+    /// null = quem aplicou.
+    /// </param>
+    public static StatusInstance? Apply(
+        World world, Entity? source, Entity target, string statusId, int? durationTicks = null, Vector2? origin = null,
+        EntityId? redirectTo = null)
     {
         if (!target.IsAlive)
         {
@@ -150,6 +168,7 @@ public static class StatusManager
                 ExpiresAtTick = expires,
                 NextPeriodicTick = def.Periodic.Select(p => world.Tick + p.IntervalTicks).ToArray(),
                 Origin = origin,
+                RedirectTo = redirectTo ?? EntityId.None,
             };
             effects.Active.RemoveAll(s => s.StatusId == statusId); // restos expirados ainda não limpos
             effects.Active.Add(inst);
@@ -158,9 +177,10 @@ public static class StatusManager
         else
         {
             inst.Source = sourceId;
-            inst.ExpiresAtTick = expires;
+            inst.ExpiresAtTick = IsPermanent(inst) ? PermanentTick : expires; // T-403: aplicar de novo não tira a permanência
             inst.DamageTaken = 0;
             inst.Origin = origin;
+            inst.RedirectTo = redirectTo ?? EntityId.None;
             if (def.Stacking == StackingMode.Stack && inst.Stacks < def.MaxStacks)
             {
                 inst.Stacks++;
@@ -184,6 +204,61 @@ public static class StatusManager
         }
 
         return inst;
+    }
+
+    /// <summary>
+    /// T-403: põe o status como permanente (passivas; o <c>Leveling</c> é quem chama). Sem fonte além do próprio alvo, sem
+    /// regras de controle nem imunidade, e vale também com o alvo morto. Se o status já está ativo, só passa a ser
+    /// permanente (sem evento novo). Retorna a instância.
+    /// </summary>
+    public static StatusInstance ApplyPermanent(World world, Entity target, string statusId)
+    {
+        if (!world.Content.Statuses.TryGetValue(statusId, out var def))
+        {
+            throw new InvalidOperationException($"Unknown status '{statusId}' (not in ContentCatalog.Statuses)");
+        }
+
+        var effects = target.TryGet<StatusEffects>();
+        if (effects is null)
+        {
+            effects = new StatusEffects();
+            target.Add(effects);
+        }
+
+        if (effects.Active.FirstOrDefault(s => s.StatusId == statusId && IsActive(world, s)) is { } existing)
+        {
+            existing.ExpiresAtTick = PermanentTick;
+            return existing;
+        }
+
+        var inst = new StatusInstance
+        {
+            Id = effects.NextInstanceId++,
+            StatusId = statusId,
+            Source = target.Id,
+            AppliedAtTick = world.Tick,
+            ExpiresAtTick = PermanentTick,
+            NextPeriodicTick = def.Periodic.Select(p => world.Tick + p.IntervalTicks).ToArray(),
+        };
+        effects.Active.RemoveAll(s => s.StatusId == statusId);
+        effects.Active.Add(inst);
+        world.Events.Publish(new StatusApplied(target.Id, target.Id, statusId, inst.Id, 1, PermanentTick, int.MaxValue));
+        return inst;
+    }
+
+    /// <summary>T-403: tira um status permanente (passiva que voltou a NH 0 ou trocou de NH). False se não havia.</summary>
+    public static bool RemovePermanent(World world, Entity target, string statusId)
+    {
+        var fx = target.TryGet<StatusEffects>();
+        var s = fx?.Active.FirstOrDefault(x => x.StatusId == statusId && IsPermanent(x));
+        if (fx is null || s is null)
+        {
+            return false;
+        }
+
+        fx.Active.Remove(s);
+        world.Events.Publish(new StatusRemoved(target.Id, s.StatusId, s.Id, target.Id));
+        return true;
     }
 
     /// <summary>Algum status ativo do alvo dá imunidade (<c>immuneToTags</c>, T-061) a uma das tags de <paramref name="def"/>?</summary>
@@ -256,7 +331,7 @@ public static class StatusManager
                 break;
             }
 
-            if (IsActive(world, s) && Def(world, s).Tags.Any(t => tags.Contains(t)))
+            if (IsActive(world, s) && !IsPermanent(s) && Def(world, s).Tags.Any(t => tags.Contains(t)))
             {
                 fx.Active.Remove(s);
                 world.Events.Publish(new StatusRemoved(target.Id, s.StatusId, s.Id, by));
@@ -267,7 +342,7 @@ public static class StatusManager
         return removed;
     }
 
-    /// <summary>Remove todos os status ativos (ex.: ao levantar um caído, T-061). Retorna quantos removeu.</summary>
+    /// <summary>Remove todos os status ativos (ex.: ao levantar um caído, T-061), menos os permanentes (T-403). Retorna quantos removeu.</summary>
     public static int RemoveAll(World world, Entity target, EntityId by)
     {
         var fx = target.TryGet<StatusEffects>();
@@ -277,7 +352,7 @@ public static class StatusManager
         }
 
         var removed = 0;
-        foreach (var s in fx.Active.ToList())
+        foreach (var s in fx.Active.Where(s => !IsPermanent(s)).ToList())
         {
             fx.Active.Remove(s);
             if (IsActive(world, s))
@@ -294,7 +369,7 @@ public static class StatusManager
     public static bool Remove(World world, Entity target, string statusId, EntityId by)
     {
         var fx = target.TryGet<StatusEffects>();
-        var s = fx?.Active.FirstOrDefault(x => x.StatusId == statusId && IsActive(world, x));
+        var s = fx?.Active.FirstOrDefault(x => x.StatusId == statusId && IsActive(world, x) && !IsPermanent(x));
         if (fx is null || s is null)
         {
             return false;

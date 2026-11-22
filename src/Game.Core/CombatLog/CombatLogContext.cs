@@ -52,7 +52,7 @@ public sealed class CombatLogContext
         return _knownNames.TryGetValue(id, out var known) ? known : $"Entidade {id}";
     }
 
-    /// <summary>Nome de uma habilidade ou status pelo id (áreas não têm nome: cai no próprio id).</summary>
+    /// <summary>Nome de uma habilidade, status, item ou segunda classe pelo id (áreas não têm nome: cai no próprio id).</summary>
     public string SourceLabel(string sourceId)
     {
         var content = Content;
@@ -71,7 +71,8 @@ public sealed class CombatLogContext
             return item.Name;
         }
 
-        return sourceId;
+        // T-403: segunda classe (evento SecondClassChosen).
+        return content.Classes.Values.SelectMany(c => c.SecondClasses).FirstOrDefault(x => x.Id == sourceId)?.Name ?? sourceId;
     }
 
     /// <summary>Origem de um efeito: nome da entidade que o causou, ou o nome da habilidade/status/área se não houver entidade.</summary>

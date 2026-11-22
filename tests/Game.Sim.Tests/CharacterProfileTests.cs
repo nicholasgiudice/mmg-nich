@@ -33,6 +33,9 @@ public class CharacterProfileTests
     {
         var c = Content.Classes[cls];
         var rules = Content.Rules.Progression;
+        // T-402: do 1 ao nível máximo. Sem segunda classe (T-403), a classe base tem 23 NH: do nível 24 em diante sobram pontos
+        // de habilidade, e os pontos de atributo não contam os +5 da segunda classe.
+        var baseRanks = c.Abilities.Where(id => Leveling.IsLearnable(c, id)).Sum(id => Content.Abilities[id].HighestRank);
         for (var level = 1; level <= rules.MaxLevel; level++)
         {
             foreach (var plan in new[] { RankProfiles.Focused, RankProfiles.Spread })
@@ -41,7 +44,7 @@ public class CharacterProfileTests
                 {
                     var build = CharacterProfiles.BuildFor(Content, c, new CharacterProfile { Level = level, Skills = plan, Attributes = attrs });
                     Assert.Null(Leveling.Validate(Content, c, build));
-                    Assert.Equal(rules.SkillPointsAt(level), build.SkillRanks.Values.Sum());
+                    Assert.Equal(Math.Min(rules.SkillPointsAt(level), baseRanks), build.SkillRanks.Values.Sum());
                     var a = build.Allocated;
                     Assert.Equal(rules.AttributePointsAt(level), a.Str + a.Dex + a.Agi + a.Int + a.Vit);
                 }
@@ -107,6 +110,40 @@ public class CharacterProfileTests
         Assert.True(s.Armor > 0);
         Assert.Equal(e.Get<Health>().Max, e.Get<Health>().Current);
         Assert.Equal(e.Get<ResourcePool>().Max, e.Get<ResourcePool>().Current);
+    }
+
+    [Theory]
+    [MemberData(nameof(Classes))]
+    public void Profiles_from_level_21_to_40_spawn_with_the_level_numbers_and_win_a_duel_of_their_level(string cls)
+    {
+        var rules = Content.Rules.Progression;
+        var previous = LevelCurve.Measure(Content, cls, 20);
+        for (var level = 21; level <= rules.MaxLevel; level++)
+        {
+            var stats = LevelCurve.Measure(Content, cls, level);
+            Assert.Equal((level, rules.AttributePointsAt(level)), (stats.Level, stats.AttributePoints));
+            Assert.True(stats.Health > previous.Health, $"vida não cresce no nível {level}");
+            Assert.True(stats.Stats.WeaponDamage >= previous.Stats.WeaponDamage, $"arma diminui no nível {level}"); // cajado e maça arredondam (0,6 e 0,9 por nível)
+            Assert.True(stats.Abilities.Sum(a => a.Total) > previous.Abilities.Sum(a => a.Total), $"habilidades não crescem no nível {level}");
+            previous = stats;
+        }
+
+        foreach (var level in new[] { 21, 30, rules.MaxLevel })
+        {
+            var kill = LevelCurve.Kill(Content, cls, level, "monster.grey_wolf", runs: 2, parallelism: 1);
+            Assert.Equal(1.0, kill.Batch.WinRate);
+            Assert.True(kill.XpPerMinute > 0);
+        }
+    }
+
+    [Fact]
+    public void Expected_archer_stays_below_the_attack_speed_cap_up_to_level_40()
+    {
+        // T-402 (balance-v0.18 §3): com o teto antigo (+50%, AGI 100) o Arqueiro esperado batia no máximo no nível 39.
+        var r = Content.Rules.Stats;
+        var top = LevelCurve.Measure(Content, "class.archer", Content.Rules.Progression.MaxLevel);
+        Assert.True(top.AttackSpeedBonus < r.AttackSpeedMax, $"AGI {top.Stats.Agi}: +{top.AttackSpeedBonus:P0} de {r.AttackSpeedMax:P0}");
+        Assert.True(top.Crit < r.CritMax);
     }
 
     [Fact]

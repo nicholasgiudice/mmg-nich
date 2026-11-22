@@ -32,6 +32,36 @@ public sealed record DamageEffect : EffectDefinition
 
     /// <summary>Bônus por tag do alvo (T-017): <c>{ "undead": 0.5 }</c> = +50% contra alvos com a tag. Bônus de tags diferentes somam.</summary>
     public IReadOnlyDictionary<string, double> BonusVsTags { get; init; } = new Dictionary<string, double>();
+
+    /// <summary>
+    /// Ameaça gerada = este número × o dano causado, em vez de <c>rules.threat.damageMultiplier</c> (T-406: Golpe de Escudo
+    /// gera 3 vezes a ameaça do dano). Null = a regra padrão.
+    /// </summary>
+    public double? ThreatMultiplier { get; init; }
+
+    /// <summary>
+    /// Dano extra em alvo com pouca vida (T-407, Execução): conferido no momento do acerto, antes do dano. Null = nenhum.
+    /// </summary>
+    public LowHealthBonusDefinition? LowHealthBonus { get; init; }
+
+    /// <summary>
+    /// Se este dano matar o alvo, a recarga da habilidade de origem volta a zero (T-407, Execução NH5). Só vale para dano de
+    /// habilidade (não de status nem de área). Habilidade com cargas recupera uma carga no tick seguinte.
+    /// </summary>
+    public bool ResetCooldownOnKill { get; init; }
+}
+
+/// <summary>
+/// Bônus de dano pela vida do alvo (T-407): com vida atual abaixo de <see cref="BelowHealth"/> × vida máxima (estritamente),
+/// o dano é multiplicado por 1 + <see cref="Bonus"/> (0,5 = +50%).
+/// </summary>
+public sealed record LowHealthBonusDefinition
+{
+    /// <summary>Fração da vida máxima, em (0, 1].</summary>
+    public required double BelowHealth { get; init; }
+
+    /// <summary>Bônus sobre o dano, maior que 0 (0,5 = +50%).</summary>
+    public required double Bonus { get; init; }
 }
 
 public sealed record HealEffect : EffectDefinition

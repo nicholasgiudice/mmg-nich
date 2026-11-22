@@ -1,5 +1,6 @@
 using Game.Core.Combat;
 using Game.Core.Combat.Status;
+using Game.Core.Simulation;
 using Godot;
 
 namespace MmoRpgClient.Presentation;
@@ -78,6 +79,30 @@ public static class StatusVisuals
         }
 
         return (chips, marks);
+    }
+
+    /// <summary>
+    /// Sinais dos status ativos no corpo (T-412), pela lista de <see cref="EffectCatalog.Aura"/>, sem repetir o mesmo
+    /// sinal. Para <see cref="AuraKind.Link"/>, vem junto quem protege (a outra ponta da linha).
+    /// </summary>
+    public static IReadOnlyList<(StatusAura Aura, EntityId Protector)> Auras(StatusEffects? effects, EffectCatalog catalog, double now)
+    {
+        if (effects is null || effects.Active.Count == 0)
+        {
+            return Array.Empty<(StatusAura, EntityId)>();
+        }
+
+        var auras = new List<(StatusAura, EntityId)>();
+        foreach (var st in effects.Active)
+        {
+            if (st.ExpiresAtTick > now && catalog.Aura(st.StatusId) is { } aura
+                && !auras.Any(a => a.Item1 == aura && (aura.Kind != AuraKind.Link || a.Item2 == st.Protector)))
+            {
+                auras.Add((aura, st.Protector));
+            }
+        }
+
+        return auras;
     }
 
     private static string Abbreviate(string name, int stacks)

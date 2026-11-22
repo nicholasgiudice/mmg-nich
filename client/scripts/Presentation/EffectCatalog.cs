@@ -30,6 +30,25 @@ public sealed record EffectAnimation(Texture2D Texture, IReadOnlyList<Rect2> Fra
 /// <summary>Arte de uma área no chão: um quadro do tamanho da área (<c>fill</c>) ou vários espalhados (<c>scatter</c>).</summary>
 public sealed record AreaEffect(EffectAnimation Animation, bool Scatter);
 
+/// <summary>Como um status aparece no personagem (T-412), desenhado sem arte do pacote.</summary>
+public enum AuraKind
+{
+    /// <summary>Anel dourado pulsando nos pés (proteção: Bastião, Juramento, Inabalável).</summary>
+    Ring,
+
+    /// <summary>Labaredas em volta do corpo (fúria).</summary>
+    Flames,
+
+    /// <summary>Linha do protegido até quem o protege (Interceptação: o dano desviado), mais um anel fino nos pés.</summary>
+    Link,
+}
+
+/// <summary>Sinal de um status no personagem enquanto ele dura (T-412).</summary>
+public sealed record StatusAura(AuraKind Kind, Color Color);
+
+/// <summary>Onda que sai do lançador ao usar uma habilidade em volta dele (T-412: Bastião, Juramento), até o raio.</summary>
+public sealed record CastBurst(Color Color, float Radius);
+
 /// <summary>
 /// Efeitos visuais por cima da apresentação (T-054), lidos de <c>assets/art/effects/effects.json</c>: impacto por
 /// escola de dano ou pela fonte, projétil por habilidade, arte das áreas e a bolha de escudo. Só visual: o Core não sabe
@@ -43,8 +62,16 @@ public sealed class EffectCatalog
     private readonly List<(string Prefix, EffectAnimation Animation)> _sources = new();
     private readonly Dictionary<string, EffectAnimation> _projectiles = new(StringComparer.Ordinal);
     private readonly List<(string Prefix, AreaEffect Effect)> _areas = new();
+    private readonly List<(string Prefix, StatusAura Aura)> _auras = new();
+    private readonly Dictionary<string, CastBurst> _bursts = new(StringComparer.Ordinal);
 
     public EffectAnimation? Shield { get; private set; }
+
+    /// <summary>Sinal do status no personagem (prefixo do id: <c>status.fury</c> vale para <c>status.fury_24</c>).</summary>
+    public StatusAura? Aura(string statusId) => Prefixed(_auras, statusId);
+
+    /// <summary>Onda em volta do lançador ao usar a habilidade, ou null.</summary>
+    public CastBurst? Burst(string abilityId) => _bursts.GetValueOrDefault(abilityId);
 
     /// <summary>Impacto de um dano: pela fonte (habilidade/área) se houver, senão pela escola.</summary>
     public EffectAnimation? Impact(string sourceId, DamageSchool school) =>
@@ -129,6 +156,24 @@ public sealed class EffectCatalog
             {
                 catalog._areas.Add((prefix, new AreaEffect(a, (string?)node["mode"] != "fill")));
             }
+        }
+
+        foreach (var (prefix, node) in root["auras"]?.AsObject() ?? [])
+        {
+            if (Enum.TryParse<AuraKind>((string?)node!["style"], ignoreCase: true, out var kind))
+            {
+                catalog._auras.Add((prefix, new StatusAura(kind, Color.FromHtml((string?)node["color"] ?? "#ffffff"))));
+            }
+            else
+            {
+                GD.PushWarning($"Efeitos: estilo de aura desconhecido em {prefix}.");
+            }
+        }
+
+        foreach (var (ability, node) in root["bursts"]?.AsObject() ?? [])
+        {
+            catalog._bursts[ability] = new CastBurst(Color.FromHtml((string?)node!["color"] ?? "#ffffff"),
+                (float?)node["radius"] ?? 5f);
         }
 
         return catalog;

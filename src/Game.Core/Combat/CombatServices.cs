@@ -44,8 +44,13 @@ public interface IModifierSource
     Vector2? ForcedDirection(World world, Entity entity) => null;
 }
 
-/// <summary>Um dano já aplicado (Amount &gt; 0, antes de escudos), para reações como o reflexo da Guarda Firme (T-061).</summary>
-public sealed record DamageReport(Entity? Source, Entity Target, string SourceId, DamageSchool School, float Amount, bool Melee);
+/// <summary>
+/// Um dano já aplicado (Amount &gt; 0, antes de escudos), para reações como o reflexo da Guarda Firme (T-061).
+/// <paramref name="Indirect"/> (T-407): dano refletido (sem modificadores) ou a parte desviada para um protetor (T-406);
+/// não gera vida pelo dano.
+/// </summary>
+public sealed record DamageReport(
+    Entity? Source, Entity Target, string SourceId, DamageSchool School, float Amount, bool Melee, bool Indirect = false);
 
 /// <summary>Reage a dano já aplicado (T-061). Chamado por <see cref="Effects.DamageResolver.Deal"/>.</summary>
 public interface IDamageReaction

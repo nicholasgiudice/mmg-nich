@@ -15,14 +15,14 @@
       "critMax": 0.4,
       "critMultiplier": 1.5,
       "attackSpeedPerAgi": 0.005,
-      "attackSpeedMax": 0.5,
+      "attackSpeedMax": 0.6,
       "defenseBase": 40,
       "defensePerAttackerLevel": 8,
       "defenseMax": 0.6
     },
     "monsters": { "healthPerLevel": 0.4, "powerPerLevel": 0.17, "boss": { "healthPerLevel": 0.3, "powerPerLevel": 0.38 } },
     "progression": {
-      "maxLevel": 15,
+      "maxLevel": 40,
       "xpCurveBase": 68,
       "xpCurveExponent": 1.8,
       "xpPerMonsterLevel": 6,
@@ -41,7 +41,11 @@
       "attributePointsPerLevel": 5,
       "skillPointsPerLevel": 1,
       "skillRankLevels": [1, 3, 5, 7, 9],
-      "signatureRankLevels": [12, 13, 15]
+      "signatureRankLevels": [12, 13, 15],
+      "secondClassLevel": 20,
+      "secondClassAttributePoints": 5,
+      "secondClassRankLevels": [21, 24, 27, 30, 33],
+      "secondClassSignatureRankLevels": [35, 37, 40]
     },
     "party": { "maxMembers": 4, "inviteTimeout": 30 },
     "logout": { "combatDelay": 10 }

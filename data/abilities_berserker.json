@@ -1,0 +1,331 @@
+{
+  "$schema": "./schemas/game-data.schema.json",
+  "abilities": [
+    {
+      "id": "berserker.charge",
+      "name": "Investida",
+      "tags": ["melee", "dash", "control"],
+      "cost": { "resource": "mana", "amount": 20 },
+      "cooldown": 10,
+      "targeting": { "type": "unit", "range": 8 },
+      "effects": [
+        { "type": "displacement", "kind": "dash", "distance": 8, "direction": "toward_target" },
+        { "type": "damage", "school": "physical", "base": 8, "scaling": { "weapon": 0.6, "str": 1.4 } },
+        { "type": "apply_status", "status": "status.stunned", "duration": 0.5 }
+      ],
+      "ranks": [
+        {
+          "rank": 2,
+          "effects": [
+            { "type": "displacement", "kind": "dash", "distance": 8, "direction": "toward_target" },
+            { "type": "damage", "school": "physical", "base": 10, "scaling": { "weapon": 0.72, "str": 1.68 } },
+            { "type": "apply_status", "status": "status.stunned", "duration": 0.5 }
+          ]
+        },
+        {
+          "rank": 3,
+          "effects": [
+            { "type": "displacement", "kind": "dash", "distance": 8, "direction": "toward_target" },
+            { "type": "damage", "school": "physical", "base": 11, "scaling": { "weapon": 0.84, "str": 1.96 } },
+            { "type": "apply_status", "status": "status.stunned", "duration": 1 }
+          ]
+        },
+        {
+          "rank": 4,
+          "effects": [
+            { "type": "displacement", "kind": "dash", "distance": 8, "direction": "toward_target" },
+            { "type": "damage", "school": "physical", "base": 13, "scaling": { "weapon": 0.96, "str": 2.24 } },
+            { "type": "apply_status", "status": "status.stunned", "duration": 1 }
+          ]
+        },
+        {
+          "rank": 5,
+          "cooldown": 7,
+          "effects": [
+            { "type": "displacement", "kind": "dash", "distance": 8, "direction": "toward_target" },
+            { "type": "damage", "school": "physical", "base": 14, "scaling": { "weapon": 1.08, "str": 2.52 } },
+            { "type": "apply_status", "status": "status.stunned", "duration": 1 },
+            { "type": "apply_status", "status": "status.charge_momentum", "duration": 3, "target": "self" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "berserker.fury",
+      "name": "Fúria",
+      "tags": ["buff", "fury"],
+      "cooldown": 20,
+      "targeting": { "type": "self" },
+      "effects": [{ "type": "apply_status", "status": "status.fury", "duration": 8 }],
+      "ranks": [
+        { "rank": 2, "effects": [{ "type": "apply_status", "status": "status.fury_24", "duration": 8 }] },
+        { "rank": 3, "effects": [{ "type": "apply_status", "status": "status.fury_28", "duration": 10 }] },
+        { "rank": 4, "effects": [{ "type": "apply_status", "status": "status.fury_32", "duration": 10 }] },
+        { "rank": 5, "effects": [{ "type": "apply_status", "status": "status.fury_36", "duration": 10 }] }
+      ]
+    },
+    {
+      "id": "berserker.execution",
+      "name": "Execução",
+      "tags": ["melee", "execute"],
+      "cost": { "resource": "mana", "amount": 20 },
+      "cooldown": 8,
+      "targeting": { "type": "melee_arc", "range": 1.9, "angle": 90 },
+      "effects": [
+        {
+          "type": "damage",
+          "school": "physical",
+          "base": 20,
+          "scaling": { "weapon": 1.3, "str": 3.2 },
+          "lowHealthBonus": { "belowHealth": 0.3, "bonus": 0.5 }
+        }
+      ],
+      "ranks": [
+        {
+          "rank": 2,
+          "effects": [
+            {
+              "type": "damage",
+              "school": "physical",
+              "base": 24,
+              "scaling": { "weapon": 1.56, "str": 3.84 },
+              "lowHealthBonus": { "belowHealth": 0.3, "bonus": 0.5 }
+            }
+          ]
+        },
+        {
+          "rank": 3,
+          "effects": [
+            {
+              "type": "damage",
+              "school": "physical",
+              "base": 28,
+              "scaling": { "weapon": 1.82, "str": 4.48 },
+              "lowHealthBonus": { "belowHealth": 0.3, "bonus": 0.75 }
+            }
+          ]
+        },
+        {
+          "rank": 4,
+          "effects": [
+            {
+              "type": "damage",
+              "school": "physical",
+              "base": 32,
+              "scaling": { "weapon": 2.08, "str": 5.12 },
+              "lowHealthBonus": { "belowHealth": 0.3, "bonus": 0.75 }
+            }
+          ]
+        },
+        {
+          "rank": 5,
+          "effects": [
+            {
+              "type": "damage",
+              "school": "physical",
+              "base": 36,
+              "scaling": { "weapon": 2.34, "str": 5.76 },
+              "lowHealthBonus": { "belowHealth": 0.35, "bonus": 0.75 },
+              "resetCooldownOnKill": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "berserker.blood_thirst",
+      "name": "Sede de Sangue",
+      "tags": ["passive", "lifesteal"],
+      "passive": true,
+      "passiveStatus": "status.blood_thirst",
+      "targeting": { "type": "self" },
+      "ranks": [
+        { "rank": 2, "passiveStatus": "status.blood_thirst_6" },
+        { "rank": 3, "passiveStatus": "status.blood_thirst_7" },
+        { "rank": 4, "passiveStatus": "status.blood_thirst_8" },
+        { "rank": 5, "passiveStatus": "status.blood_thirst_10" }
+      ]
+    },
+    {
+      "id": "berserker.steel_storm",
+      "name": "Tempestade de Aço",
+      "tags": ["melee", "aoe", "signature"],
+      "signature": true,
+      "cost": { "resource": "mana", "amount": 80 },
+      "cooldown": 75,
+      "targeting": { "type": "self" },
+      "effects": [
+        { "type": "spawn_area", "area": "area.steel_storm" },
+        { "type": "apply_status", "status": "status.steel_storm", "duration": 4, "target": "self" }
+      ],
+      "ranks": [
+        {
+          "rank": 2,
+          "effects": [
+            { "type": "spawn_area", "area": "area.steel_storm_2" },
+            { "type": "apply_status", "status": "status.steel_storm", "duration": 4, "target": "self" }
+          ]
+        },
+        {
+          "rank": 3,
+          "effects": [
+            { "type": "spawn_area", "area": "area.steel_storm_3" },
+            { "type": "apply_status", "status": "status.steel_storm", "duration": 4, "target": "self" }
+          ]
+        }
+      ]
+    }
+  ],
+  "statuses": [
+    {
+      "id": "status.charge_momentum",
+      "name": "Embalo da Investida",
+      "tags": ["buff", "focus"],
+      "defaultDuration": 3,
+      "stacking": "refresh",
+      "empower": {
+        "abilities": ["warrior.sword_strike", "warrior.heavy_strike", "warrior.whirlwind", "berserker.execution"],
+        "multiplier": 1.3
+      }
+    },
+    {
+      "id": "status.fury",
+      "name": "Fúria",
+      "tags": ["buff", "fury"],
+      "defaultDuration": 8,
+      "stacking": "refresh",
+      "modifiers": { "damageDealtMultiplier": 1.2, "speedMultiplier": 1.1, "damageTakenMultiplier": 1.2 }
+    },
+    {
+      "id": "status.fury_24",
+      "name": "Fúria",
+      "tags": ["buff", "fury"],
+      "defaultDuration": 8,
+      "stacking": "refresh",
+      "modifiers": { "damageDealtMultiplier": 1.24, "speedMultiplier": 1.1, "damageTakenMultiplier": 1.2 }
+    },
+    {
+      "id": "status.fury_28",
+      "name": "Fúria",
+      "tags": ["buff", "fury"],
+      "defaultDuration": 8,
+      "stacking": "refresh",
+      "modifiers": { "damageDealtMultiplier": 1.28, "speedMultiplier": 1.15, "damageTakenMultiplier": 1.2 }
+    },
+    {
+      "id": "status.fury_32",
+      "name": "Fúria",
+      "tags": ["buff", "fury"],
+      "defaultDuration": 8,
+      "stacking": "refresh",
+      "modifiers": { "damageDealtMultiplier": 1.32, "speedMultiplier": 1.15, "damageTakenMultiplier": 1.2 }
+    },
+    {
+      "id": "status.fury_36",
+      "name": "Fúria",
+      "tags": ["buff", "fury"],
+      "defaultDuration": 8,
+      "stacking": "refresh",
+      "modifiers": {
+        "damageDealtMultiplier": 1.36,
+        "speedMultiplier": 1.15,
+        "damageTakenMultiplier": 1.2,
+        "controlDurationMultiplier": 0.5
+      }
+    },
+    {
+      "id": "status.blood_thirst",
+      "name": "Sede de Sangue",
+      "tags": ["buff", "passive", "lifesteal"],
+      "defaultDuration": 1,
+      "lifesteal": { "fraction": 0.05, "ability": "berserker.blood_thirst" }
+    },
+    {
+      "id": "status.blood_thirst_6",
+      "name": "Sede de Sangue",
+      "tags": ["buff", "passive", "lifesteal"],
+      "defaultDuration": 1,
+      "lifesteal": { "fraction": 0.06, "ability": "berserker.blood_thirst" }
+    },
+    {
+      "id": "status.blood_thirst_7",
+      "name": "Sede de Sangue",
+      "tags": ["buff", "passive", "lifesteal"],
+      "defaultDuration": 1,
+      "lifesteal": {
+        "fraction": 0.07,
+        "ability": "berserker.blood_thirst",
+        "belowHealth": 0.3,
+        "belowHealthMultiplier": 2
+      }
+    },
+    {
+      "id": "status.blood_thirst_8",
+      "name": "Sede de Sangue",
+      "tags": ["buff", "passive", "lifesteal"],
+      "defaultDuration": 1,
+      "lifesteal": {
+        "fraction": 0.08,
+        "ability": "berserker.blood_thirst",
+        "belowHealth": 0.3,
+        "belowHealthMultiplier": 2
+      }
+    },
+    {
+      "id": "status.blood_thirst_10",
+      "name": "Sede de Sangue",
+      "tags": ["buff", "passive", "lifesteal"],
+      "defaultDuration": 1,
+      "lifesteal": {
+        "fraction": 0.1,
+        "ability": "berserker.blood_thirst",
+        "belowHealth": 0.3,
+        "belowHealthMultiplier": 2,
+        "killHeal": 0.05
+      }
+    },
+    {
+      "id": "status.steel_storm",
+      "name": "Tempestade de Aço",
+      "tags": ["buff", "steel_storm"],
+      "defaultDuration": 4,
+      "stacking": "refresh",
+      "modifiers": { "speedMultiplier": 0.8 }
+    }
+  ],
+  "areas": [
+    {
+      "id": "area.steel_storm",
+      "radius": 3,
+      "duration": 4,
+      "interval": 0.5,
+      "mode": "periodic",
+      "affects": "enemy",
+      "followOwner": true,
+      "effects": [{ "type": "damage", "school": "physical", "base": 6, "scaling": { "weapon": 0.5, "str": 1.2 } }]
+    },
+    {
+      "id": "area.steel_storm_2",
+      "radius": 3,
+      "duration": 4,
+      "interval": 0.5,
+      "mode": "periodic",
+      "affects": "enemy",
+      "followOwner": true,
+      "effects": [{ "type": "damage", "school": "physical", "base": 8, "scaling": { "weapon": 0.65, "str": 1.56 } }]
+    },
+    {
+      "id": "area.steel_storm_3",
+      "radius": 3,
+      "duration": 4,
+      "interval": 0.5,
+      "mode": "periodic",
+      "affects": "enemy",
+      "followOwner": true,
+      "effects": [
+        { "type": "damage", "school": "physical", "base": 10, "scaling": { "weapon": 0.8, "str": 1.92 } },
+        { "type": "apply_status", "status": "status.bleed" }
+      ]
+    }
+  ]
+}

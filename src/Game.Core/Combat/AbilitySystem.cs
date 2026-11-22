@@ -9,7 +9,7 @@ namespace Game.Core.Combat;
 
 public sealed record AbilityCheck(AbilityRejectReason? Reason, AbilityDefinition? Ability, TargetResolution? Resolution);
 
-/// <summary>Validação de uma tentativa de uso. Ordem: vivo, conjurando, gates, conhecida, recarga, recurso, alvo, alcance, LoS.</summary>
+/// <summary>Validação de uma tentativa de uso. Ordem: vivo, conjurando, passiva (T-403), gates, conhecida, recarga, recurso, alvo, alcance, LoS.</summary>
 public static class AbilityValidator
 {
     /// <param name="itemUse">
@@ -31,6 +31,11 @@ public static class AbilityValidator
 
         // T-060: a definição efetiva depende do NH que a entidade tem na habilidade.
         var ability = world.Content.AbilityAt(abilityId, st?.RankOf(abilityId) ?? 1);
+        if (ability is { Passive: true })
+        {
+            return new AbilityCheck(AbilityRejectReason.Passive, ability, null); // T-403
+        }
+
         var isBasic = st?.IsBasicAttack(abilityId) ?? false;
         var gate = world.Combat.CheckGates(world, caster, abilityId, ability, isBasic);
         if (gate is not null)

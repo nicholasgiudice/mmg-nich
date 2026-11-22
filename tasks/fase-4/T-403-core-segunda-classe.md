@@ -59,4 +59,47 @@ Testes no Core para cada caso:
 
 ## Resultado
 
-_(preencher ao concluir)_
+Concluída em 2026-11-21, na VPS, branch `task/T-403-core-segunda-classe`.
+
+### Nomes para a T-404 (servidor, protocolo, gravação) e a T-410 (tela)
+
+| O quê | Nome |
+|---|---|
+| Dados: segundas classes da classe base | `classes[].secondClasses[]` → `ClassDefinition.SecondClasses` (`SecondClassDefinition`: `Id`, `Name`, `Abilities`) |
+| Dados: passiva | `abilities[].passive` → `AbilityDefinition.Passive`; `abilities[].passiveStatus` (e `ranks[].passiveStatus`) → `PassiveStatus` |
+| Intenção | `ChooseSecondClassIntent(Entity, SecondClassId)` (em `Game.Core.Intents`), tratada pelo `ProgressionSystem` |
+| Lógica | `Leveling.ChooseSecondClass(world, e, id)`; ajudantes `Leveling.SecondClassOf(cls, id)`, `Leveling.SecondClassOf(world, e)`, `Leveling.IsLearnable(cls, second, id)`, `Leveling.IsSecondClassAbility(cls, second, id)` |
+| Evento | `SecondClassChosen(Entity, SecondClassId, AttributePoints)` |
+| Recusas novas | `ProgressionRejectReason.SecondClassAlreadyChosen`, `ProgressionRejectReason.NotASecondClass` (nível baixo usa `LevelTooLow`; em combate ou conjurando, `InCombat`); `AbilityRejectReason.Passive` (usar uma passiva) |
+| Componente (replicável) | `CharacterProgress.SecondClass` (`string?`; entra no hash só quando há) |
+| Gravação | `CharacterBuild.SecondClass` (`string?`); `SpawnCharacter` lê e `BuildOf` escreve |
+| Estado permanente | `StatusManager.PermanentTick` (`long.MaxValue` em `ExpiresAtTick`), `StatusManager.IsPermanent`, `ApplyPermanent`, `RemovePermanent` |
+
+### O que foi feito
+
+- **Dados:** `data/classes.json` dá ao Guerreiro `second_class.guardian` (Guardião) e `second_class.berserker` (Berserker), ainda sem habilidades (a T-408 preenche). Schema atualizado (`secondClasses`, `passive`, `passiveStatus`).
+- **Validação (`Game.Data`):** ids de segunda classe válidos e únicos entre todas as classes, nome obrigatório, habilidades existentes, sem repetir, fora da lista da base e sem o ataque básico, no máximo uma assinatura. Passiva: sem custo, recarga, conjuração, telegráfo, efeitos, acertos nem cargas, com targeting `self`, em todos os NH, e com `passiveStatus` existente; só passiva pode ter `passiveStatus`.
+- **Escolha:** nível ≥ `secondClassLevel`, sem segunda classe, fora de combate e sem conjurar, só entre as da classe base; dá `secondClassAttributePoints`. Definitiva: não há intenção de desfazer (a T-405 faz isso pela ferramenta de teste). Ordem das recusas: já escolhida, não é da classe, nível, combate.
+- **Pontos e NH:** `IsLearnable` passa a aceitar as habilidades da segunda classe escolhida; o NH delas usa `secondClassRankLevels` e `secondClassSignatureRankLevels`; `AttributePointsAt(nível, segundaClasse)` em `Validate`, `SpawnCharacter` e `ResetPoints`. `Validate` recusa segunda classe de outra base, segunda classe abaixo do nível 20 e NH de habilidade de segunda classe sem ela escolhida. `ResetPoints` devolve também os pontos da segunda classe e mantém a escolha.
+- **Barra:** ataque básico, depois a base e depois a segunda classe, cada grupo na ordem dos dados, sem passivas.
+- **Passivas:** recebem pontos como as outras; não entram na barra; `UseAbilityIntent` é recusado com `AbilityRejectReason.Passive` (antes dos gates). Com NH ≥ 1, o personagem tem o status `passiveStatus` do NH atual como **permanente**; subir de NH troca o status, redistribuir tira. `SpawnCharacter` aplica, então o renascimento no servidor (que recria o personagem pelo que foi salvo) e a troca de zona mantêm o estado. Morto, o status continua (o `StatusSystem` não mexe em mortos).
+- **Simulador:** `CharacterProfile.SecondClass` (classe base → segunda classe) e `CharacterProfile.SecondClassRanks` (classe base → NH, somados aos da base). Com segunda classe, os pontos de atributo do perfil contam os +5.
+- **Log de combate:** `SecondClassChosen` tem texto; status permanente aparece como "(permanente)"; os novos motivos de recusa têm texto; `SourceLabel` acha o nome da segunda classe.
+- **Testes:** `tests/Game.Core.Tests/SecondClassTests.cs` (todos os critérios de aceite), `tests/Game.Data.Tests/SecondClassLoaderTests.cs` (carga e validação), `tests/Game.Sim.Tests/SecondClassProfileTests.cs` (perfil). `BuildComparer` dos testes de progressão passou a comparar a segunda classe.
+
+### Desvios e decisões
+
+- **Protocolo (fora das áreas da tarefa):** o teste `Every_game_event_of_the_core_has_a_codec` exige formato de rede para todo evento do Core, e não há jeito de marcar um evento como só do servidor. Mudança mínima em `src/Game.Protocol/`: codec do `SecondClassChosen` (tag 96, depois de `ProgressionRejected`) e `ProtocolVersion` **15 → 16**; `tests/Game.Protocol.Tests/ProtocolTests.cs` passou a esperar 16. O codec do `CharacterProgress` (campo `SecondClass`), o da intenção e o resto continuam com a T-404. Por isso a T-403 entra na `main` junto com a rodada do protocolo.
+- **Estados (área da T-407):** em `StatusManager`, status permanente = `ExpiresAtTick == PermanentTick`, sem campo novo (o hash e o formato de rede não mudam). `ApplyPermanent` ignora imunidade e regras de controle e vale com o alvo morto; `RemovePermanent` é o único jeito de tirar. `Remove`, `RemoveAll` (renascer pela Milagre) e `RemoveByTags` (purificação) pulam os permanentes; `Apply` do mesmo status não tira a permanência. Status permanente é só das passivas: `SyncPassives` tira qualquer permanente que nenhuma passiva pede. `DamageResolver` e efeitos não foram tocados.
+- **Passiva "sem alvo":** `targeting` continua obrigatório no JSON (não quis abrir uma exceção no schema e na carga); a passiva usa `{ "type": "self" }` e a validação recusa qualquer outro.
+- `BuildOf` lê os NH de `AbilityState.Ranks`, não mais da barra, porque a passiva tem NH e não fica na barra.
+- `AbilityRejectReason.Passive` e os novos `ProgressionRejectReason` ficam no fim dos enums (o protocolo serializa o número).
+- Recusa por nível na escolha reusa `LevelTooLow` (o texto passou a ser "nível insuficiente", que serve aos dois casos).
+- Design: registrada em `design/segunda-classe-v0.1.md` §4 a decisão de escolher pela tela de habilidades nesta fase.
+
+### Pendências
+
+- T-404: codec do `CharacterProgress.SecondClass` e da `ChooseSecondClassIntent`, gravação de `CharacterBuild.SecondClass`.
+- T-405: desfazer a segunda classe na ferramenta de teste.
+- T-408: habilidades do Guardião e do Berserker (a Sede de Sangue como passiva).
+- T-402: os perfis automáticos (`SkillRanks`) ainda só distribuem pontos na base; com `SecondClassRanks`, quem monta o perfil precisa deixar pontos livres.

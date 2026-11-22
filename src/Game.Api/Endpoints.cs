@@ -12,9 +12,34 @@ public sealed record SessionResponse(string Token, DateTimeOffset ExpiresAt);
 
 public sealed record NewCharacterRequest(string? Name, string? ClassId);
 
-public sealed record CharacterSummary(Guid Id, string Name, string ClassId, int Level, string ZoneId)
+/// <summary>Personagem na lista da conta. <see cref="SecondClass"/> (T-404): id da segunda classe escolhida; null = não escolheu.</summary>
+public sealed record CharacterSummary(Guid Id, string Name, string ClassId, int Level, string ZoneId, string? SecondClass = null)
 {
-    public static CharacterSummary Of(Character c) => new(c.Id, c.Name, c.ClassId, c.Level, c.ZoneId);
+    public static CharacterSummary Of(Character c) => new(c.Id, c.Name, c.ClassId, c.Level, c.ZoneId, SecondClassOf(c));
+
+    /// <summary>
+    /// Lê <c>secondClass</c> do documento de progressão (versão 3 em diante, gravado pelo servidor de jogo,
+    /// <c>CharacterDocument</c>). Documento antigo ou ilegível = sem segunda classe: a lista não falha por causa dele.
+    /// </summary>
+    public static string? SecondClassOf(Character c)
+    {
+        if (c.ProgressionVersion < 3)
+        {
+            return null;
+        }
+
+        try
+        {
+            using var doc = System.Text.Json.JsonDocument.Parse(c.Progression);
+            return doc.RootElement.ValueKind == System.Text.Json.JsonValueKind.Object
+                && doc.RootElement.TryGetProperty("secondClass", out var v) && v.ValueKind == System.Text.Json.JsonValueKind.String
+                && v.GetString() is { Length: > 0 } id ? id : null;
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            return null;
+        }
+    }
 }
 
 public sealed record PlayResponse(string Ticket, DateTimeOffset ExpiresAt, string Server, string? Address);

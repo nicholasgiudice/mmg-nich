@@ -2,7 +2,7 @@ using MmoRpgClient.Input;
 
 namespace Game.Client.Tests;
 
-/// <summary>T-081: barra de atalhos 1–6 configurável (padrão, carregar, pôr, trocar, esvaziar e guardar).</summary>
+/// <summary>T-081: barra de atalhos configurável (padrão, carregar, pôr, trocar, esvaziar e guardar); 1–0 desde a T-409.</summary>
 public class HotbarLayoutTests
 {
     private static readonly string[] Abilities = ["a.one", "a.two", "a.three", "a.four", "a.five", "a.six", "a.seven"];
@@ -15,13 +15,40 @@ public class HotbarLayoutTests
     }
 
     [Fact]
-    public void DefaultsPutTheClassAbilitiesInOneToSixWithoutThePotion()
+    public void DefaultsPutTheClassAbilitiesInOrderWithoutThePotion()
     {
         var bar = Loaded();
 
         Assert.True(bar.Loaded);
-        Assert.Equal(["a.one", "a.two", "a.three", "a.four", "a.five", "a.six"], bar.Slots);
-        Assert.Equal(new string?[] { "a.one", "a.two", null, null, null, null }, HotbarLayout.Defaults(["a.one", "a.two"]));
+        Assert.Equal(["a.one", "a.two", "a.three", "a.four", "a.five", "a.six", "a.seven", null, null, null], bar.Slots);
+        Assert.Equal(new string?[] { "a.one", "a.two", null, null, null, null, null, null, null, null }, HotbarLayout.Defaults(["a.one", "a.two"]));
+    }
+
+    [Fact]
+    public void ASixSlotBarSavedBeforeTheTenKeyBarKeepsItsPlacesAndTheRestIsEmpty()
+    {
+        // T-409: barra guardada no formato antigo, de 6 espaços.
+        var bar = Loaded(HotbarLayout.Parse("a.three|a.one||consumable.minor_healing_potion|a.five|a.two"));
+
+        Assert.Equal(["a.three", "a.one", null, "consumable.minor_healing_potion", "a.five", "a.two", null, null, null, null], bar.Slots);
+        Assert.Equal("a.three|a.one||consumable.minor_healing_potion|a.five|a.two||||", bar.Serialize());
+    }
+
+    [Fact]
+    public void KeyLabelsGoFromOneToNineAndThenZero()
+    {
+        Assert.Equal(["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"], Enumerable.Range(0, HotbarLayout.Size).Select(HotbarLayout.KeyLabel));
+    }
+
+    [Fact]
+    public void TheLastSlotsTakeAnAbilityLikeTheFirstOnes()
+    {
+        var bar = Loaded();
+
+        bar.Set(9, "a.one");
+
+        Assert.Null(bar[0]);
+        Assert.Equal("a.one", bar[9]);
     }
 
     [Fact]
@@ -40,7 +67,7 @@ public class HotbarLayoutTests
     {
         var bar = Loaded(["a.four", "gone.ability", null, "a.four", "", "a.one"], exists: id => id != "gone.ability");
 
-        Assert.Equal(["a.four", null, null, null, null, "a.one"], bar.Slots);
+        Assert.Equal(["a.four", null, null, null, null, "a.one", null, null, null, null], bar.Slots);
     }
 
     [Fact]
@@ -66,7 +93,7 @@ public class HotbarLayoutTests
         bar.Swap(0, 3);
         bar.Clear(1);
 
-        Assert.Equal(["a.four", null, "a.three", "a.one", "a.five", "a.six"], bar.Slots);
+        Assert.Equal(["a.four", null, "a.three", "a.one", "a.five", "a.six", "a.seven", null, null, null], bar.Slots);
     }
 
     [Fact]
@@ -78,7 +105,7 @@ public class HotbarLayoutTests
         var text = bar.Serialize();
         var again = Loaded(HotbarLayout.Parse(text));
 
-        Assert.Equal("a.one|a.two||a.four|a.five|a.six", text);
+        Assert.Equal("a.one|a.two||a.four|a.five|a.six|a.seven|||", text);
         Assert.Equal(bar.Slots, again.Slots);
         Assert.Null(HotbarLayout.Parse(""));
     }
