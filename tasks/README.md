@@ -506,7 +506,7 @@ Detalhadas pela T-390 a partir de `design/segunda-classe-v0.1.md` e do playtest 
 - **Escolha pela tela de habilidades**, fora de combate, em qualquer lugar (T-403, T-410). O mestre da classe na Cidade, do design, fica para quando os mapas forem refeitos.
 - **Sem migração de banco:** a segunda classe vai no documento de progressão do personagem (jsonb, com versão), como o resto da progressão (T-404).
 - **Mecânicas antes dos dados:** as peças novas do Core (desvio de dano, vida pelo dano, dano pela vida do alvo, área que acompanha) são tarefas próprias com dados de teste (T-406, T-407). Elas também servem às classes seguintes (o desvio de dano ao Elo da Vida do Sacerdote; a vida pelo dano ao Inquisidor).
-- **Ferramenta de teste desligada por padrão** (`--dev-tools`), ligada só no servidor de teste (T-405).
+- **Ferramenta de teste desligada por padrão** (`--dev-tools`), ligada só no servidor local de teste (T-405).
 - **Fora desta fase:** áreas e mapas novos, monstros novos, as outras segundas classes e a operação (fase 5).
 
 ### Índice
@@ -547,11 +547,14 @@ Detalhadas pela T-390 a partir de `design/segunda-classe-v0.1.md` e do playtest 
 - toda tarefa da fase 4 sai de **`trilha/segundas-classes`** (ou da branch de outra tarefa, quando a tarefa diz) e é integrada **nela**, nunca na `main`. Onde as tarefas e o `AGENTS.md` dizem "`main`", leia `trilha/segundas-classes`;
 - a **T-401** chegou a entrar na `main` e foi desfeita lá com um `git revert` do merge dela. A trilha tem o **revert desse revert**, então continua com a T-401, e o merge final da trilha na `main` traz a T-401 de volta sem passo extra;
 - para trazer correções da `main` para a trilha, faça merge da `main` na trilha normalmente. **Nunca** faça merge da trilha na `main` antes do fim;
-- o servidor de teste roda a `main`. Para um playtest da trilha (T-413), rode o `deploy-dev.sh` a partir da trilha só no dia do teste, publique o cliente da trilha, e depois volte o servidor e o cliente para a `main`.
+- o servidor de teste da VPS continua com a `main`, e **a trilha não vai para a VPS** (decisão do designer, 2026-11-22). Os testes da trilha (T-410, T-411 e o playtest T-413) são **locais, no Windows**, a partir de um checkout da trilha:
+  - servidor: `dotnet run --project src/Game.Server -c Release -- --world --dev-login --dev-tools --port 7777`;
+  - cliente: o projeto do Godot da trilha, pela tela de entrada sem conta, no endereço `127.0.0.1:7777` (vários clientes no mesmo PC, ou na rede local pelo IP do PC, para testar em grupo);
+  - com `--dev-login` não há banco: o personagem começa no nível 1 e não é gravado. A ferramenta do Esc sobe de nível na hora; a gravação da segunda classe é coberta pelos testes de servidor da T-404.
 
 **Cuidados de integração**
-- **Protocolo (revisto em 2026-11-21):** a T-406 também subiu `ProtocolVersion` (para 16), por causa do evento novo de desvio de dano. Por isso, **T-406, T-407, T-404, T-405 e T-411 entram na trilha numa rodada só**, para a trilha nunca ficar com um servidor e um cliente de versões diferentes. Nenhuma delas entra sozinha. O deploy (`deploy-dev.sh` com `GAME_DEV_TOOLS` ligado, cliente novo com `export-client.ps1` e `deploy-download.ps1`) só acontece no dia do playtest. A T-407 sai da branch da T-406; a T-405 da T-404; a T-411 da T-405. Cada uma sobe o número a partir da sua base; na integração, o conflito é só o número e o comentário de `ProtocolVersion`, e o valor final é o maior + 1 se houver mudança nova de protocolo depois do merge (confira com os testes de protocolo).
-- A T-410 não sobe o protocolo, mas precisa da T-404 na `main` (e da T-408): integre depois da rodada acima, com outro cliente novo.
+- **Protocolo (revisto em 2026-11-21):** a T-406 também subiu `ProtocolVersion` (para 16), por causa do evento novo de desvio de dano. Por isso, **T-403, T-406, T-407, T-404, T-405, T-408 e T-411 entram na trilha numa rodada só** (a T-408 mescla a T-403 e a T-407), para a trilha nunca ficar com um servidor e um cliente de versões diferentes. Nenhuma delas entra sozinha. Não há deploy: os testes da trilha são locais (acima). A T-407 sai da branch da T-406; a T-405 da T-404; a T-411 da T-405. Cada uma sobe o número a partir da sua base; na integração, o conflito é só o número e o comentário de `ProtocolVersion`, e o valor final é o maior + 1 se houver mudança nova de protocolo depois do merge (confira com os testes de protocolo).
+- A T-410 não sobe o protocolo, mas precisa da T-404 e da T-408 na trilha: integre depois da rodada acima.
 - A T-403 e a T-404 mexem em `Leveling` e no documento do personagem; a T-405 também. Uma de cada vez, na ordem.
 - A T-406 e a T-407 mexem em `DamageResolver`, estados e efeitos: a T-407 sai **da branch da T-406** (que não está na `main`).
 - A T-408 (dados) precisa das mecânicas da T-407 e da segunda classe da T-403: sai da branch da T-407 com a T-403 mesclada (ou da `main`, se a rodada do protocolo já tiver entrado), e entra na `main` na mesma rodada ou logo depois dela.

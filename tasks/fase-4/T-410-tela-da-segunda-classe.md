@@ -30,7 +30,7 @@ Não sobe `ProtocolVersion`. Pode entrar na `trilha/segundas-classes` depois da 
 
 ## Critérios de aceite
 
-- personagem de nível 20 escolhe o Guardião pela tela, a barra ganha as habilidades aprendidas, e a tela mostra a segunda classe depois de sair e voltar (servidor de teste, com a ferramenta da T-405 para chegar ao 20);
+- personagem de nível 20 escolhe o Guardião pela tela, a barra ganha as habilidades aprendidas e a tela passa a mostrar a segunda classe (servidor local com `--dev-tools`, seção 6f de `tasks/README.md`, com a ferramenta da T-405 para chegar ao 20). O servidor local não grava o personagem; manter a segunda classe depois de sair e voltar é coberto pelos testes de servidor da T-404;
 - a confirmação aparece antes de enviar; cancelar não envia nada;
 - passivas não vão para a barra (teste de cliente ou captura);
 - capturas aprovadas pelo designer;

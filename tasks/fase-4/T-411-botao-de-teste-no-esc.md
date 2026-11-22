@@ -21,11 +21,11 @@ Design em `design/segunda-classe-v0.1.md`, seção 4.2. Decisão do designer: a 
 
 ## Integração
 
-Sai da branch da T-405. **T-406, T-407, T-404, T-405 e T-411 entram juntas** na `trilha/segundas-classes`. O deploy com a ferramenta ligada e o cliente novo (`export-client.ps1` e `deploy-download.ps1`) só acontecem no dia do playtest da trilha (seção 6f de `tasks/README.md`).
+Sai da branch da T-405. **T-403, T-406, T-407, T-404, T-405, T-408 e T-411 entram juntas** na `trilha/segundas-classes`. Não há deploy na VPS: teste com o servidor local (`--world --dev-login --dev-tools`, seção 6f de `tasks/README.md`).
 
 ## Critérios de aceite
 
-- no servidor de teste com a ferramenta ligada: "ir ao nível 20" leva o personagem ao 20 com os pontos certos; "+1 nível" sobe um; "desfazer a segunda classe" volta para antes da escolha;
+- no servidor local com a ferramenta ligada: "ir ao nível 20" leva o personagem ao 20 com os pontos certos; "+1 nível" sobe um; "desfazer a segunda classe" volta para antes da escolha;
 - contra um servidor sem a ferramenta, a entrada não aparece (teste de cliente ou captura);
 - captura aprovada pelo designer;
 - `./scripts/check.sh --fast` passa no Windows.
