@@ -21,10 +21,21 @@ public partial class GameMenu : Control
     private readonly Button _effects = new();
     private readonly Button _cancel = new() { Text = "Cancelar" };
 
+    // T-411: ferramenta de teste (só com o servidor em --dev-tools).
+    private readonly Button _testEntry = new() { Text = "Teste (desenvolvimento)" };
+    private readonly HSeparator _testSeparator = new();
+    private readonly VBoxContainer _tests = new();
+    private readonly VBoxContainer _confirm = new();
+    private readonly Label _confirmText = new() { HorizontalAlignment = HorizontalAlignment.Center };
+    private Game.Protocol.DevToolAction _pending;
+
     public event Action? ContinueRequested;
     public event Action? SwitchRequested;
     public event Action? QuitRequested;
     public event Action? CancelRequested;
+
+    /// <summary>T-411: um pedido da ferramenta de teste (já confirmado, quando pede confirmação).</summary>
+    public event Action<Game.Protocol.DevToolAction>? DevToolRequested;
 
     public bool IsOpen => Visible;
 
@@ -88,6 +99,36 @@ public partial class GameMenu : Control
         };
         _choices.AddChild(Styled(_effects, small: true));
 
+        // T-411: separada das outras, por último; abre a lista de pedidos.
+        _choices.AddChild(_testSeparator);
+        _testEntry.Pressed += ShowTests;
+        _choices.AddChild(Styled(_testEntry, small: true));
+
+        _tests.AddThemeConstantOverride("separation", 6);
+        _tests.Visible = false;
+        box.AddChild(_tests);
+        foreach (var action in DevToolText.Actions)
+        {
+            var button = new Button { Text = DevToolText.Label(action) };
+            button.Pressed += () => Request(action);
+            _tests.AddChild(Styled(button, small: true));
+        }
+
+        _tests.AddChild(Styled(MenuButton("Voltar", ShowChoices), small: true));
+
+        _confirm.AddThemeConstantOverride("separation", 8);
+        _confirm.Visible = false;
+        box.AddChild(_confirm);
+        _confirmText.AddThemeFontSizeOverride("font_size", 15);
+        _confirmText.AddThemeColorOverride("font_color", HudTheme.StoneText);
+        _confirm.AddChild(_confirmText);
+        _confirm.AddChild(MenuButton("Desfazer", () =>
+        {
+            ShowTests();
+            DevToolRequested?.Invoke(_pending);
+        }));
+        _confirm.AddChild(MenuButton("Cancelar", ShowTests));
+
         _leaving.AddThemeConstantOverride("separation", 10);
         _leaving.Visible = false;
         box.AddChild(_leaving);
@@ -99,14 +140,30 @@ public partial class GameMenu : Control
         _leaving.AddChild(Styled(_cancel));
     }
 
-    /// <summary>Abre com as escolhas. <paramref name="withAccount"/>: "Trocar de personagem"; sem conta, "Voltar ao menu".</summary>
-    public void Open(bool withAccount)
+    /// <summary>
+    /// Abre com as escolhas. <paramref name="withAccount"/>: "Trocar de personagem"; sem conta, "Voltar ao menu".
+    /// <paramref name="devTools"/> (T-411): o servidor tem a ferramenta de teste; sem ela, a entrada "Teste" nem aparece.
+    /// </summary>
+    public void Open(bool withAccount, bool devTools = false)
     {
         _switch.Text = withAccount ? "Trocar de personagem" : "Voltar ao menu";
         _effects.Text = Presentation.EffectSettings.Label;
+        _testEntry.Visible = _testSeparator.Visible = devTools;
         _note.Visible = false;
         ShowChoices();
         Visible = true;
+        Layout();
+    }
+
+    /// <summary>T-411: o pedido saiu e espera a resposta do servidor.</summary>
+    public void ShowDevToolSending() => ShowNote("Enviando...", ok: true);
+
+    /// <summary>T-411: a resposta do servidor à ferramenta de teste, no aviso de cima (verde se feito, laranja se recusado).</summary>
+    public void ShowNote(string text, bool ok)
+    {
+        _note.Text = text;
+        _note.AddThemeColorOverride("font_color", ok ? HudTheme.Heal : HudTheme.Warning);
+        _note.Visible = true;
         Layout();
     }
 
@@ -132,9 +189,7 @@ public partial class GameMenu : Control
     public void ShowCancelled()
     {
         ShowChoices();
-        _note.Text = "Saída cancelada.";
-        _note.Visible = true;
-        Layout();
+        ShowNote("Saída cancelada.", ok: false);
     }
 
     public override void _Process(double delta)
@@ -148,13 +203,44 @@ public partial class GameMenu : Control
     private void ShowChoices()
     {
         _choices.Visible = true;
+        _tests.Visible = false;
+        _confirm.Visible = false;
         _leaving.Visible = false;
+        _title.Text = "Menu";
+        Layout();
+    }
+
+    private void ShowTests()
+    {
+        _choices.Visible = false;
+        _confirm.Visible = false;
+        _tests.Visible = true;
+        _title.Text = "Teste";
+        Layout();
+    }
+
+    private void Request(Game.Protocol.DevToolAction action)
+    {
+        if (DevToolText.NeedsConfirmation(action))
+        {
+            _pending = action;
+            _confirmText.Text = DevToolText.ConfirmUndo;
+            _tests.Visible = false;
+            _note.Visible = false;
+            _confirm.Visible = true;
+            Layout();
+            return;
+        }
+
+        DevToolRequested?.Invoke(action);
     }
 
     private void ShowLeaving()
     {
         _note.Visible = false;
         _choices.Visible = false;
+        _tests.Visible = false;
+        _confirm.Visible = false;
         _leaving.Visible = true;
         Layout();
     }

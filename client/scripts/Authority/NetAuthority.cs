@@ -303,6 +303,35 @@ public sealed class NetAuthority : IGameAuthority, ICombatLogSource, IDisposable
         }
     }
 
+    // ---------------- ferramenta de teste (T-405/T-411) ----------------
+
+    private readonly List<DevToolResult> _devToolResults = new();
+
+    /// <summary>O servidor está com <c>--dev-tools</c> (último <see cref="Welcome"/>): o menu do Esc mostra a entrada de teste.</summary>
+    public bool DevTools => MmoRpgClient.Match.DevToolText.Enabled(Welcome);
+
+    /// <summary>Pede à ferramenta de teste do servidor; a resposta chega em <see cref="TakeDevToolResults"/>.</summary>
+    public void RequestDevTool(DevToolAction action)
+    {
+        if (_peer is not null && Status == NetStatus.Playing)
+        {
+            SendRaw(ProtocolSerializer.Serialize(new DevToolRequest(action)), ReliableChannel, DeliveryMethod.ReliableOrdered);
+        }
+    }
+
+    /// <summary>Respostas da ferramenta de teste desde a última chamada.</summary>
+    public IReadOnlyList<DevToolResult> TakeDevToolResults()
+    {
+        if (_devToolResults.Count == 0)
+        {
+            return Array.Empty<DevToolResult>();
+        }
+
+        var results = _devToolResults.ToArray();
+        _devToolResults.Clear();
+        return results;
+    }
+
     /// <summary>Desiste da saída em espera; o servidor responde <see cref="LogoutState.Cancelled"/>.</summary>
     public void CancelLogout()
     {
@@ -417,6 +446,9 @@ public sealed class NetAuthority : IGameAuthority, ICombatLogSource, IDisposable
                 break;
             case LogoutStatus logout:
                 Logout = logout;
+                break;
+            case DevToolResult devTool:
+                _devToolResults.Add(devTool);
                 break;
         }
     }
