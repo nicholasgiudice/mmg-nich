@@ -5,7 +5,7 @@
 - **Depende de:** T-410, T-411, T-412
 - **Libera:** detalhar as outras três classes (seção 7 de `tasks/README.md`)
 - **Áreas que pode alterar:** `tasks/reports/`
-- **Branch:** sai de `trilha/segundas-classes` e é integrada nela, não na `main` (seção 6f de `tasks/README.md`).
+- **Branch:** sai da `main` e é integrada na `main` (a fase 4 entrou na `main` em 2026-11-22; seção 6f de `tasks/README.md`).
 
 ## Contexto
 
@@ -13,7 +13,7 @@ Fecha o bloco do Guerreiro da fase 4 (`design/segunda-classe-v0.1.md`). O objeti
 
 Não há áreas acima do nível 15. O teste usa a ferramenta do menu do Esc (T-411) para subir de nível, contra os monstros que existem (Ruínas, Cripta e o Vigia), que ficam fáceis para um personagem alto: o que se avalia é a classe, não o desafio.
 
-**O teste é local, no Windows, sem deploy na VPS** (decisão do designer, 2026-11-22; seção 6f de `tasks/README.md`): servidor com `dotnet run --project src/Game.Server -c Release -- --world --dev-login --dev-tools --port 7777` a partir de um checkout da trilha, e o cliente da trilha pela tela de entrada sem conta, em `127.0.0.1:7777`. Sem banco, o personagem começa no nível 1 e não é gravado: cada sessão de teste recomeça pela ferramenta do Esc.
+**O teste é local, no Windows, sem deploy na VPS** (decisão do designer, 2026-11-22; seção 6f de `tasks/README.md`): servidor com `dotnet run --project src/Game.Server -c Release -- --world --dev-login --dev-tools --port 7777` a partir da `main`, e o cliente pela tela de entrada sem conta, em `127.0.0.1:7777`. Sem banco, o personagem começa no nível 1 e não é gravado: cada sessão de teste recomeça pela ferramenta do Esc.
 
 ## Requisitos
 

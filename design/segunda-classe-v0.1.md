@@ -120,7 +120,7 @@ Pedido do designer (2026-11-21): enquanto não há áreas do 16 ao 40, ele preci
 - **Desfazer a segunda classe:** como a escolha é definitiva, o teste precisa de um jeito de voltar atrás. A ferramenta também volta o personagem para antes da escolha, devolvendo os pontos gastos nela.
 - **Redistribuir pontos:** a redistribuição na Cidade já existe (1ª vez grátis, depois ouro). A ferramenta pode deixá-la grátis no servidor de teste.
 - O personagem é gravado normalmente quando o servidor tem banco; no servidor de teste isso não atrapalha ninguém.
-- **Onde testar (decisão do designer, 2026-11-22):** os testes da trilha são **locais, no Windows**, com o servidor rodando `--world --dev-login --dev-tools`, sem deploy na VPS. Sem banco, o personagem começa no nível 1 e não é gravado; a ferramenta resolve isso subindo de nível na hora. Comando em `tasks/README.md`, seção 6f.
+- **Onde testar (decisão do designer, 2026-11-22):** os testes da fase 4 são **locais, no Windows**, com o servidor rodando `--world --dev-login --dev-tools`, sem deploy na VPS. Sem banco, o personagem começa no nível 1 e não é gravado; a ferramenta resolve isso subindo de nível na hora. Comando em `tasks/README.md`, seção 6f.
 
 ## 5. Guerreiro em detalhe (primeira classe a entregar)
 

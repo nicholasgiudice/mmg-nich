@@ -56,7 +56,7 @@ Fluxo para você:
 | **1 — Rede mínima** | Servidor dedicado na VPS, 4 jogadores na mesma arena, login de desenvolvimento | **Concluída** (T-111: playtest online aprovado; seção 6b) |
 | **2 — Persistência e progressão** | Contas, personagens, inventário, Cidade + Campos online; atributos, níveis, equipamento e habilidades reformuladas (`design/progression-v0.1.md`) | **Concluída** (T-230: playtest aprovado com correções para a fase 3; seção 6d) |
 | **3 — Primeiro mapa completo** | Floresta, Ruínas, Cripta instanciada, Vigia Sem Rosto; grupo, lista de batalha, ouro, lojas e mapas maiores (playtest v0.2) | **Concluída** (T-380: playtest aprovado; seção 6e) |
-| **4 — Segundas classes** | Nível 40, segunda classe no nível 20 com duas opções por classe, passivas, barra de 10 teclas; Guerreiro primeiro (`design/segunda-classe-v0.1.md`) | **Detalhada** no bloco do Guerreiro (T-390; seção 6f); as outras classes em esboço. Em andamento na branch `trilha/segundas-classes`, que só entra na `main` com as quatro classes prontas |
+| **4 — Segundas classes** | Nível 40, segunda classe no nível 20 com duas opções por classe, passivas, barra de 10 teclas; Guerreiro primeiro (`design/segunda-classe-v0.1.md`) | **Detalhada** no bloco do Guerreiro (T-390; seção 6f); as outras classes em esboço. Em andamento direto na `main` (desde 2026-11-22; antes, na branch `trilha/segundas-classes`) |
 | **5 — Operação** | CI/CD, métricas, testes de carga, produção separada | Esboço |
 | **Depois** | Áreas e mapas novos do nível 16 ao 40 | Ainda sem esboço |
 
@@ -543,18 +543,19 @@ Detalhadas pela T-390 a partir de `design/segunda-classe-v0.1.md` e do playtest 
 | 5 | — | T-411, depois T-410 |
 | 6 | — | T-413 |
 
-**Branch da trilha (decisão do designer, 2026-11-21).** A fase 4 só vai para a `main` quando as **quatro classes** estiverem prontas. Até lá:
-- toda tarefa da fase 4 sai de **`trilha/segundas-classes`** (ou da branch de outra tarefa, quando a tarefa diz) e é integrada **nela**, nunca na `main`. Onde as tarefas e o `AGENTS.md` dizem "`main`", leia `trilha/segundas-classes`;
-- a **T-401** chegou a entrar na `main` e foi desfeita lá com um `git revert` do merge dela. A trilha tem o **revert desse revert**, então continua com a T-401, e o merge final da trilha na `main` traz a T-401 de volta sem passo extra;
-- para trazer correções da `main` para a trilha, faça merge da `main` na trilha normalmente. **Nunca** faça merge da trilha na `main` antes do fim;
-- o servidor de teste da VPS continua com a `main`, e **a trilha não vai para a VPS** (decisão do designer, 2026-11-22). Os testes da trilha (T-410, T-411 e o playtest T-413) são **locais, no Windows**, a partir de um checkout da trilha:
+**Fase 4 na `main` (decisão do designer, 2026-11-22).** A fase 4 ficou numa branch própria (`trilha/segundas-classes`) até 2026-11-22, quando o designer decidiu testar na `main`. A trilha e as tarefas prontas (T-401 a T-409 e T-412) entraram na `main` juntas, com `ProtocolVersion` **19** (16 T-403, 17 T-406, 18 T-404, 19 T-405). Daqui em diante:
+- as tarefas da fase 4 saem da `main` e são integradas na `main`, como nas fases anteriores. A branch `trilha/segundas-classes` não recebe mais nada;
+- a T-401, que tinha sido desfeita na `main` com um `git revert`, voltou com o merge da trilha;
+- os testes da fase 4 continuam **locais, no Windows**, a partir da `main`, sem deploy na VPS:
   - servidor: `dotnet run --project src/Game.Server -c Release -- --world --dev-login --dev-tools --port 7777`;
-  - cliente: o projeto do Godot da trilha, pela tela de entrada sem conta, no endereço `127.0.0.1:7777` (vários clientes no mesmo PC, ou na rede local pelo IP do PC, para testar em grupo);
-  - com `--dev-login` não há banco: o personagem começa no nível 1 e não é gravado. A ferramenta do Esc sobe de nível na hora; a gravação da segunda classe é coberta pelos testes de servidor da T-404.
+  - cliente: o projeto do Godot, pela tela de entrada sem conta, no endereço `127.0.0.1:7777` (vários clientes no mesmo PC, ou na rede local pelo IP do PC, para testar em grupo);
+  - com `--dev-login` não há banco: o personagem começa no nível 1 e não é gravado. A ferramenta do Esc (T-411) sobe de nível na hora; a gravação da segunda classe é coberta pelos testes de servidor da T-404;
+  - sem a T-411, o encontro local do cliente já aceita `--level=n` e `--second-class=id` (T-412) para jogar com a segunda classe;
+- o servidor de teste da VPS ainda roda a versão antiga do protocolo: um deploy da `main` exige o cliente novo junto (`export-client.ps1` e `deploy-download.ps1`), e o `--dev-tools` só se o designer pedir.
 
 **Cuidados de integração**
-- **Protocolo (revisto em 2026-11-21):** a T-406 também subiu `ProtocolVersion` (para 16), por causa do evento novo de desvio de dano. Por isso, **T-403, T-406, T-407, T-404, T-405, T-408 e T-411 entram na trilha numa rodada só** (a T-408 mescla a T-403 e a T-407), para a trilha nunca ficar com um servidor e um cliente de versões diferentes. Nenhuma delas entra sozinha. Não há deploy: os testes da trilha são locais (acima). A T-407 sai da branch da T-406; a T-405 da T-404; a T-411 da T-405. Cada uma sobe o número a partir da sua base; na integração, o conflito é só o número e o comentário de `ProtocolVersion`, e o valor final é o maior + 1 se houver mudança nova de protocolo depois do merge (confira com os testes de protocolo).
-- A T-410 não sobe o protocolo, mas precisa da T-404 e da T-408 na trilha: integre depois da rodada acima.
+- **Protocolo:** resolvido na entrada da fase 4 na `main` (versão 19, acima). A T-411 só usa as mensagens da T-405 e não precisa subir o número; se subir, é a partir de 19.
+- A T-410 não sobe o protocolo; a T-404 e a T-408 já estão na `main`.
 - A T-403 e a T-404 mexem em `Leveling` e no documento do personagem; a T-405 também. Uma de cada vez, na ordem.
 - A T-406 e a T-407 mexem em `DamageResolver`, estados e efeitos: a T-407 sai **da branch da T-406** (que não está na `main`).
 - A T-408 (dados) precisa das mecânicas da T-407 e da segunda classe da T-403: sai da branch da T-407 com a T-403 mesclada (ou da `main`, se a rodada do protocolo já tiver entrado), e entra na `main` na mesma rodada ou logo depois dela.

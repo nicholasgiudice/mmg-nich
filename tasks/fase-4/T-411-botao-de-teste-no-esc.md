@@ -5,7 +5,7 @@
 - **Depende de:** T-404, T-405 (sai da branch da T-405)
 - **Libera:** T-413
 - **Áreas que pode alterar:** `client/scripts/Match/GameMenu.cs`, `client/scripts/Main.cs` (só para ligar o menu às mensagens novas), `client/scripts/Authority/` (enviar as mensagens novas), `tests/Game.Client.Tests/`, `tasks/reports/interface/`
-- **Branch:** sai de `trilha/segundas-classes` e é integrada nela, não na `main` (seção 6f de `tasks/README.md`).
+- **Branch:** sai da `main` e é integrada na `main` (a fase 4 entrou na `main` em 2026-11-22; seção 6f de `tasks/README.md`).
 
 ## Contexto
 
@@ -21,7 +21,7 @@ Design em `design/segunda-classe-v0.1.md`, seção 4.2. Decisão do designer: a 
 
 ## Integração
 
-Sai da branch da T-405. **T-403, T-406, T-407, T-404, T-405, T-408 e T-411 entram juntas** na `trilha/segundas-classes`. Não há deploy na VPS: teste com o servidor local (`--world --dev-login --dev-tools`, seção 6f de `tasks/README.md`).
+Sai da `main` (a T-405 já está nela, com protocolo 19). Não há deploy na VPS: teste com o servidor local (`--world --dev-login --dev-tools`, seção 6f de `tasks/README.md`).
 
 ## Critérios de aceite
 
