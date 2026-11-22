@@ -34,15 +34,18 @@ try
     Log.Information("Servidor de zona — protocolo v{Version}, conteúdo {Fingerprint}, dados em {Data}", ProtocolVersion.Current, content.Fingerprint, options.DataDir);
 
     // Contas (T-212): com banco configurado, entra com o token de jogo da API; sem ele, só --dev-login.
-    using var persistence = Environment.GetEnvironmentVariable(GameDatabase.ConnectionEnv) is { Length: > 0 } connection
-        ? new CharacterPersistence(new RepositoryCharacterStore(new GameRepository(GameDatabase.Options(connection))), Log.Logger)
+    var repository = Environment.GetEnvironmentVariable(GameDatabase.ConnectionEnv) is { Length: > 0 } connection
+        ? new GameRepository(GameDatabase.Options(connection))
         : null;
+    using var persistence = repository is not null ? new CharacterPersistence(new RepositoryCharacterStore(repository), Log.Logger) : null;
     AccountLogin? accounts = null;
-    if (persistence is not null)
+    ServerStatusReporter? onlineReporter = null;
+    if (repository is not null && persistence is not null)
     {
         var serverId = Environment.GetEnvironmentVariable("MMO_GAME_SERVER_ID") is { Length: > 0 } id ? id : "game.dev";
         var key = SignedToken.KeyFromBase64(Environment.GetEnvironmentVariable(GameTicket.KeyEnv), GameTicket.KeyEnv);
         accounts = new AccountLogin(new GameTicketReplayGuard(key, serverId), persistence);
+        onlineReporter = new ServerStatusReporter(serverId, repository, Log.Logger);
         Log.Information("Contas ativas: servidor {Server}, gravação a cada {Interval} s", serverId, options.SaveIntervalSeconds);
     }
     else if (!options.DevLogin)
@@ -108,6 +111,8 @@ try
         },
         Log.Logger);
     var lastReport = Stopwatch.GetTimestamp();
+    var lastOnlineReport = Stopwatch.GetTimestamp();
+    onlineReporter?.Report(room.PlayerCount);
 
     loop.Run(
         () =>
@@ -132,6 +137,13 @@ try
                         Log.Information("Comandos: restart · status · quit");
                         break;
                 }
+            }
+
+            // Contador de online da tela de login: o número vai para o banco e a API soma (GET /status).
+            if (onlineReporter is not null && Stopwatch.GetElapsedTime(lastOnlineReport) >= ServerStatusReporter.Interval)
+            {
+                lastOnlineReport = Stopwatch.GetTimestamp();
+                onlineReporter.Report(room.PlayerCount);
             }
 
             if (Stopwatch.GetElapsedTime(lastReport) >= TimeSpan.FromSeconds(10))
@@ -159,6 +171,11 @@ try
         {
             Log.Error("Prazo de gravação esgotado: {Count} personagem(ns) sem gravar", persistence.PendingSaves);
         }
+    }
+
+    if (onlineReporter is not null && !onlineReporter.ReportStopped(TimeSpan.FromSeconds(5)))
+    {
+        Log.Warning("Não deu para zerar o contador de online; a API o descarta sozinha em 1 minuto");
     }
 
     Log.Information("Servidor parado");

@@ -43,6 +43,13 @@ public sealed class ApiClient
     /// <summary>E-mail da sessão atual (para mostrar na tela).</summary>
     public string? Email { get; private set; }
 
+    /// <summary>Jogadores online agora (<c>GET /status</c>, sem sessão), para o contador da tela de login.</summary>
+    public async Task<int> OnlinePlayers()
+    {
+        using var response = await Send(HttpMethod.Get, "status", null, auth: false);
+        return (await Read<StatusResponse>(response)).Online;
+    }
+
     public async Task Register(string email, string password)
     {
         using var response = await Send(HttpMethod.Post, "accounts", new { email, password }, auth: false);
@@ -170,6 +177,8 @@ public sealed class ApiClient
         ?? throw new ApiException("bad_response", "Resposta vazia do servidor de contas.");
 
     private sealed record SessionResponse(string Token, DateTimeOffset ExpiresAt);
+
+    private sealed record StatusResponse(int Online);
 
     private sealed record Problem(string? Title, [property: JsonPropertyName("code")] string? Code);
 }

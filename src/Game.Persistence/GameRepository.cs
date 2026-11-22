@@ -160,6 +160,39 @@ public sealed class GameRepository(DbContextOptions<GameDbContext> options, Time
         }
     }
 
+    /// <summary>Grava quantos jogadores o servidor tem agora (cria a linha na primeira vez).</summary>
+    public async Task ReportServerStatusAsync(string serverId, int onlinePlayers, CancellationToken ct = default)
+    {
+        var now = Now();
+        var online = Math.Max(0, onlinePlayers);
+        await using var db = Db();
+        if (await db.ServerStatuses.Where(s => s.ServerId == serverId)
+                .ExecuteUpdateAsync(s => s.SetProperty(x => x.OnlinePlayers, online).SetProperty(x => x.UpdatedAt, now), ct) == 1)
+        {
+            return;
+        }
+
+        db.ServerStatuses.Add(new ServerStatus { ServerId = serverId, OnlinePlayers = online, UpdatedAt = now });
+        try
+        {
+            await db.SaveChangesAsync(ct);
+        }
+        catch (DbUpdateException ex) when (IsUniqueViolation(ex))
+        {
+            // Outro relato do mesmo servidor criou a linha antes: atualiza a que já existe.
+            await using var retry = Db();
+            await retry.ServerStatuses.Where(s => s.ServerId == serverId)
+                .ExecuteUpdateAsync(s => s.SetProperty(x => x.OnlinePlayers, online).SetProperty(x => x.UpdatedAt, now), ct);
+        }
+    }
+
+    /// <summary>Jogadores online somando os servidores que relataram a partir de <paramref name="since"/>.</summary>
+    public async Task<int> CountOnlinePlayersAsync(DateTimeOffset since, CancellationToken ct = default)
+    {
+        await using var db = Db();
+        return await db.ServerStatuses.Where(s => s.UpdatedAt >= since).SumAsync(s => s.OnlinePlayers, ct);
+    }
+
     private GameDbContext Db() => new(options);
 
     // timestamptz guarda microssegundos; truncar aqui mantém a entidade devolvida igual à que volta do banco.

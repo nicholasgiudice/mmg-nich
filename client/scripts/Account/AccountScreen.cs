@@ -50,6 +50,14 @@ public partial class AccountScreen : Control
     private bool _busy;
     private double _elapsed;
 
+    // Contador de jogadores online (só na tela de login), abaixo do painel; consulta GET /status a cada 30 s.
+    private readonly Label _online = new() { HorizontalAlignment = HorizontalAlignment.Center, Visible = false, MouseFilter = MouseFilterEnum.Ignore };
+    private ApiClient? _statusApi;
+    private string _onlineApi = "";
+    private int? _onlineCount;
+    private double _onlineAge;
+    private bool _onlineBusy;
+
     public override void _Ready()
     {
         foreach (var arg in OS.GetCmdlineUserArgs())
@@ -76,6 +84,8 @@ public partial class AccountScreen : Control
         column.AddThemeConstantOverride("separation", 12);
         _hasLogo = AddLogo(column);
         column.AddChild(frame);
+        StyleOnlineCounter();
+        column.AddChild(_online);
         AddChild(column);
         try
         {
@@ -113,6 +123,12 @@ public partial class AccountScreen : Control
     public override void _Process(double delta)
     {
         _elapsed += delta;
+        _onlineAge += delta;
+        if (_online.Visible && _onlineAge >= OnlineCounterText.RefreshSeconds)
+        {
+            Forget(RefreshOnline());
+        }
+
         if (_args.TryGetValue("capture", out var path) && _elapsed > 2.5)
         {
             _args.Remove("capture");
@@ -182,6 +198,7 @@ public partial class AccountScreen : Control
         var password = Field("Senha", "");
         password.Secret = true;
         var remember = RememberBox(memory.Remember);
+        ShowOnlineCounter(api);
         password.TextSubmitted += _ => Forget(Login(api, game, email.Text, password.Text, register: false, remember.ButtonPressed));
 
         var buttons = Row();
@@ -356,6 +373,70 @@ public partial class AccountScreen : Control
         name.TextSubmitted += _ => Forget(Create(name.Text, ids[classes.GetSelectedItems().FirstOrDefault()]));
         AddStatus();
         name.GrabFocus();
+    }
+
+    // ---------------- contador de online ----------------
+
+    /// <summary>Texto claro com contorno escuro, legível sobre a imagem de fundo.</summary>
+    private void StyleOnlineCounter()
+    {
+        _online.AddThemeFontSizeOverride("font_size", 16);
+        _online.AddThemeConstantOverride("outline_size", 6);
+        _online.AddThemeColorOverride("font_outline_color", new Color(0, 0, 0, 0.85f));
+        PaintOnlineCounter();
+    }
+
+    /// <summary>Mostra o contador da API <paramref name="apiUrl"/> e já consulta (o último número aparece enquanto isso).</summary>
+    private void ShowOnlineCounter(string apiUrl)
+    {
+        if (_onlineApi != apiUrl)
+        {
+            _onlineApi = apiUrl;
+            _statusApi = null;
+            _onlineCount = null;
+        }
+
+        _online.Visible = true;
+        PaintOnlineCounter();
+        Forget(RefreshOnline());
+    }
+
+    private async Task RefreshOnline()
+    {
+        if (_onlineBusy)
+        {
+            return;
+        }
+
+        _onlineBusy = true;
+        _onlineAge = 0;
+        int count;
+        try
+        {
+            _statusApi ??= s_api?.BaseUrl == _onlineApi.Trim().TrimEnd('/') ? s_api : new ApiClient(_onlineApi.Trim());
+            count = await _statusApi.OnlinePlayers();
+        }
+        catch (Exception ex) when (ex is ApiException or UriFormatException or System.Text.Json.JsonException)
+        {
+            count = OnlineCounterText.Unavailable;
+        }
+        finally
+        {
+            _onlineBusy = false;
+        }
+
+        if (IsInstanceValid(_online))
+        {
+            _onlineCount = count;
+            PaintOnlineCounter();
+        }
+    }
+
+    private void PaintOnlineCounter()
+    {
+        var live = OnlineCounterText.IsLive(_onlineCount);
+        _online.Text = (live ? "● " : "") + OnlineCounterText.Describe(_onlineCount);
+        _online.AddThemeColorOverride("font_color", live ? new Color(0.55f, 0.95f, 0.55f) : new Color(HudTheme.StoneText, 0.75f));
     }
 
     // ---------------- ações ----------------
@@ -571,6 +652,7 @@ public partial class AccountScreen : Control
 
     private void Clear(string title)
     {
+        _online.Visible = false;
         foreach (var child in _root.GetChildren())
         {
             _root.RemoveChild(child);

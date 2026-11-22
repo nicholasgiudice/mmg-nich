@@ -18,6 +18,7 @@ public class RepositoryTests(PostgresFixture db) : IClassFixture<PostgresFixture
         await using var ctx = new GameDbContext(db.Options);
         Assert.Empty(await ctx.Database.GetPendingMigrationsAsync());
         Assert.Contains("20261023020840_InitialCreate", await ctx.Database.GetAppliedMigrationsAsync());
+        Assert.Contains("20261122172458_AddServerStatus", await ctx.Database.GetAppliedMigrationsAsync());
     }
 
     [PostgresFact]
@@ -133,6 +134,34 @@ public class RepositoryTests(PostgresFixture db) : IClassFixture<PostgresFixture
 
         await repo.DeleteCharacterAsync(account.Id, created.Id);
         Assert.Equal(SaveStatus.NotFound, await repo.SaveCharacterAsync(stored));
+    }
+
+    [PostgresFact]
+    public async Task Server_status_upserts_and_counts_only_recent_reports()
+    {
+        var time = new FixedTime(new DateTimeOffset(2026, 11, 22, 12, 0, 0, TimeSpan.Zero));
+        var repo = new GameRepository(db.Options, time);
+        var a = Unique("game.a.");
+        var b = Unique("game.b.");
+
+        await repo.ReportServerStatusAsync(a, 5);
+        await repo.ReportServerStatusAsync(a, 2); // atualiza a mesma linha
+        await repo.ReportServerStatusAsync(b, -3); // número negativo vira 0
+        Assert.Equal(2, await repo.CountOnlinePlayersAsync(time.Now.AddMinutes(-1)));
+
+        time.Now = time.Now.AddMinutes(2);
+        await repo.ReportServerStatusAsync(b, 4);
+        Assert.Equal(4, await repo.CountOnlinePlayersAsync(time.Now.AddMinutes(-1))); // o relato de a ficou velho
+
+        await using var ctx = new GameDbContext(db.Options);
+        Assert.Equal(1, await ctx.ServerStatuses.CountAsync(s => s.ServerId == a));
+    }
+
+    private sealed class FixedTime(DateTimeOffset now) : TimeProvider
+    {
+        public DateTimeOffset Now { get; set; } = now;
+
+        public override DateTimeOffset GetUtcNow() => Now;
     }
 
     [PostgresFact]
