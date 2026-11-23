@@ -55,7 +55,7 @@ public partial class AreaView : Node2D
         var (color, kind) = Style(_state.AreaId, _hostile);
         if (kind == Kind.Hidden)
         {
-            return; // T-424: a área de cura da Consagração fica embaixo da de dano, que é a desenhada
+            return; // áreas que só acompanham outra no mesmo lugar (a cura da Consagração, T-424; o veneno da Nuvem Tóxica, T-434): a outra já desenha
         }
 
         var a = _alpha;
@@ -112,6 +112,10 @@ public partial class AreaView : Node2D
 
             case Kind.Consecrate:
                 DrawConsecration(r, color, a);
+                break;
+
+            case Kind.Cloud:
+                DrawCloud(r, color, a);
                 break;
 
             case Kind.None:
@@ -197,6 +201,53 @@ public partial class AreaView : Node2D
         }
     }
 
+    /// <summary>
+    /// T-434, Nuvem Tóxica: gás verde baixo, de bolotas que se mexem devagar e se misturam, com bolhas subindo. Sem arte
+    /// do pacote: só círculos, para ficar simples e ler de longe.
+    /// </summary>
+    private void DrawCloud(float r, Color color, float a)
+    {
+        DrawCircle(Vector2.Zero, r, new Color(color.Darkened(0.55f), 0.30f * a));
+        var t = (float)_time;
+        const int puffs = 12;
+        var rim = new Color(color.Darkened(0.5f), 0.55f * a);
+        var body = new Color(color, 0.42f * a);
+        var shine = new Color(color.Lightened(0.45f), 0.35f * a);
+        // Bolotas espalhadas por igual (ângulo de ouro), girando devagar; primeiro as bordas escuras, depois o miolo, para
+        // as bolotas se fundirem numa nuvem só com um contorno recortado.
+        var spots = new (Vector2 At, float Size)[puffs];
+        for (var i = 0; i < puffs; i++)
+        {
+            var angle = i * 2.39996f + t * 0.18f + _seed;
+            var dist = Mathf.Sqrt((i + 0.5f) / puffs) * r * 0.66f;
+            var size = r * 0.30f * (0.9f + 0.1f * Mathf.Sin(t * 1.6f + i * 1.3f));
+            spots[i] = (Vector2.FromAngle(angle) * dist, size);
+        }
+
+        foreach (var (at, size) in spots)
+        {
+            DrawCircle(at, size + 2f, rim);
+        }
+
+        foreach (var (at, size) in spots)
+        {
+            DrawCircle(at, size, body);
+        }
+
+        foreach (var (at, size) in spots)
+        {
+            DrawCircle(at + new Vector2(-size * 0.25f, -size * 0.3f), size * 0.45f, shine);
+        }
+
+        for (var i = 0; i < 7; i++)
+        {
+            var k = (t * 0.45f + i / 7f) % 1f;
+            var x = Mathf.Sin(i * 2.9f) * r * 0.6f;
+            var y = Mathf.Cos(i * 1.7f) * r * 0.45f - k * Units.PixelsPerUnit * 0.8f;
+            DrawCircle(new Vector2(x, y), 2f + 1.5f * (1f - k), new Color(color.Lightened(0.6f), 0.8f * (1f - k) * a));
+        }
+    }
+
     private void DrawDashedRing(float r, Color color)
     {
         const int dashes = 16;
@@ -218,7 +269,10 @@ public partial class AreaView : Node2D
         /// <summary>T-424: chão consagrado (dourado).</summary>
         Consecrate,
 
-        /// <summary>T-424: não desenha (a cura da Consagração, por baixo da área de dano).</summary>
+        /// <summary>Gás no chão (T-434, Nuvem Tóxica).</summary>
+        Cloud,
+
+        /// <summary>Não desenha nada, nem o contorno: área que acompanha outra no mesmo lugar (a cura da Consagração, T-424; o veneno da Nuvem Tóxica, T-434).</summary>
         Hidden,
     }
 
@@ -227,6 +281,8 @@ public partial class AreaView : Node2D
         "area.venom_pool" => (new Color(0.45f, 0.85f, 0.25f), Kind.Pool),
         "area.sticky_web" => (new Color(0.92f, 0.92f, 0.85f), Kind.Web),
         "area.containment_trap" => (new Color(0.95f, 0.75f, 0.30f), Kind.Trap),
+        _ when areaId.StartsWith("area.toxic_cloud_venom", StringComparison.Ordinal) => (Colors.Transparent, Kind.Hidden),
+        _ when areaId.StartsWith("area.toxic_cloud", StringComparison.Ordinal) => (new Color(0.62f, 0.86f, 0.18f), Kind.Cloud),
         _ when areaId.StartsWith("area.steel_storm", StringComparison.Ordinal) => (new Color(0.85f, 0.88f, 0.95f), Kind.Spin),
         _ when areaId.StartsWith("area.consecration_harm", StringComparison.Ordinal) => (new Color(1.0f, 0.80f, 0.32f), Kind.Consecrate),
         _ when areaId.StartsWith("area.consecration_mend", StringComparison.Ordinal) => (Colors.White, Kind.Hidden),

@@ -481,6 +481,51 @@ public partial class EntityView : Node2D
 
                     break;
 
+                case AuraKind.Hobble:
+                    // Corrente nos pés, girando devagar (lento e enfraquecido): a metade de trás atrás do corpo, a da frente
+                    // por cima dos pés, para não sumir embaixo de sprites largos (lobos).
+                    DrawSetTransform(Godot.Vector2.Zero, 0, new Godot.Vector2(1, 0.5f));
+                    var hr = (_radiusPx * 1.5f) + 6f;
+                    const int links = 12;
+                    for (var i = 0; i < links; i++)
+                    {
+                        var from = (i * Mathf.Tau / links) + (t * 0.6f);
+                        var mid = Mathf.PosMod(from + (Mathf.Tau / links * 0.31f), Mathf.Tau);
+                        if (mid < Mathf.Pi != front)
+                        {
+                            continue;
+                        }
+
+                        var to = from + (Mathf.Tau / links * 0.62f);
+                        DrawArc(Godot.Vector2.Zero, hr, from, to, 4, new Color(0.08f, 0.08f, 0.1f, 0.95f), 6f);
+                        DrawArc(Godot.Vector2.Zero, hr, from, to, 4, new Color(aura.Color, 1f), 3.5f);
+                    }
+
+                    DrawSetTransform(Godot.Vector2.Zero, 0, Godot.Vector2.One);
+                    break;
+
+                case AuraKind.Drip when front:
+                    // Gotas de sangue escorrendo do meio do corpo até o chão.
+                    for (var i = 0; i < 4; i++)
+                    {
+                        var k = (t * 0.8f + i / 4f) % 1f;
+                        var x = (i % 2 == 0 ? -1 : 1) * _radiusPx * (0.25f + 0.2f * i / 4f);
+                        var y = -HeadPx * 0.55f + k * HeadPx * 0.6f;
+                        var drop = new Color(aura.Color, 1f - k * 0.6f);
+                        DrawCircle(new Godot.Vector2(x, y), 2.6f, drop);
+                        DrawColoredPolygon([new Godot.Vector2(x - 2.2f, y - 0.5f), new Godot.Vector2(x + 2.2f, y - 0.5f), new Godot.Vector2(x, y - 5.5f)], drop);
+                    }
+
+                    break;
+
+                case AuraKind.Eye when front:
+                    DrawEye(new Godot.Vector2(-_radiusPx - 12f, -HeadPx * 0.85f), aura.Color, t);
+                    break;
+
+                case AuraKind.Stacks when front && aura.Stacks > 0:
+                    DrawStacks(new Godot.Vector2(_radiusPx + 10f, -HeadPx * 0.6f), aura.Color, aura.Stacks);
+                    break;
+
                 case AuraKind.Flames when front:
                     // Faíscas subindo pela frente do corpo.
                     for (var i = 0; i < 6; i++)
@@ -615,6 +660,41 @@ public partial class EntityView : Node2D
                 DrawCircle(c, 1.2f, light);
                 break;
         }
+    }
+
+    /// <summary>T-434, Olho de Falcão: olho dourado (amêndoa com pupila) ao lado da cabeça, com brilho pulsando.</summary>
+    private void DrawEye(Godot.Vector2 c, Color color, float t)
+    {
+        var pulse = 0.5f + 0.5f * Mathf.Sin(t * 5f);
+        DrawCircle(c, 11f + pulse * 2f, new Color(color, 0.18f + 0.12f * pulse));
+        const int n = 12;
+        var outline = new Godot.Vector2[n * 2];
+        for (var i = 0; i < n; i++)
+        {
+            var a = Mathf.Pi * i / (n - 1);
+            outline[i] = c + new Godot.Vector2(-Mathf.Cos(a) * 9f, -Mathf.Sin(a) * 5f);
+            outline[n + i] = c + new Godot.Vector2(Mathf.Cos(a) * 9f, Mathf.Sin(a) * 5f);
+        }
+
+        DrawColoredPolygon(outline, new Color(1f, 0.97f, 0.85f));
+        DrawCircle(c, 4f, color);
+        DrawCircle(c, 1.8f, new Color(0.1f, 0.08f, 0.05f));
+        DrawPolyline([.. outline, outline[0]], new Color(0.25f, 0.15f, 0.02f), 1.5f);
+    }
+
+    /// <summary>T-434, Veneno do Caçador: gota verde com o número de acúmulos, legível de longe.</summary>
+    private void DrawStacks(Godot.Vector2 c, Color color, int stacks)
+    {
+        var dark = new Color(0.05f, 0.12f, 0.02f);
+        DrawCircle(c, 7.5f, dark);
+        DrawColoredPolygon([c + new Godot.Vector2(-6.5f, -2.5f), c + new Godot.Vector2(6.5f, -2.5f), c + new Godot.Vector2(0, -13f)], dark);
+        DrawCircle(c, 6f, color);
+        DrawColoredPolygon([c + new Godot.Vector2(-5f, -2f), c + new Godot.Vector2(5f, -2f), c + new Godot.Vector2(0, -11f)], color);
+        var font = ThemeDB.FallbackFont;
+        var text = stacks.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        var at = c + new Godot.Vector2(-8f, 4.5f);
+        DrawStringOutline(font, at, text, HorizontalAlignment.Center, 16f, 12, 3, dark);
+        DrawString(font, at, text, HorizontalAlignment.Center, 16f, 12, Colors.White);
     }
 
     /// <summary>Medo (T-345): balão roxo com "!" sobre a cabeça, tremendo, como as estrelas do atordoamento.</summary>

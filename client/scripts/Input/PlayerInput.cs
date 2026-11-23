@@ -29,6 +29,9 @@ public sealed class PlayerInput
 
     /// <summary>Definição de uma habilidade no NH que o estado do jogador tem (null = desconhecida).</summary>
     private readonly Func<string, AbilityState?, AbilityDefinition?> _lookup;
+
+    /// <summary>Definições dos status, para o alcance a mais (T-434); null = sem bônus (construtor só com habilidades).</summary>
+    private readonly ContentCatalog? _content;
     private readonly Func<string, bool> _justPressed;
     private readonly Func<string, bool> _pressed;
     private readonly Func<string, bool> _justReleased;
@@ -65,10 +68,19 @@ public sealed class PlayerInput
     /// T-221: definições resolvidas pelo NH atual de cada habilidade no estado do jogador (online, com progressão, os NH
     /// mudam durante a partida).
     /// </summary>
-    public PlayerInput(ContentCatalog content)
-        : this(new Dictionary<string, AbilityDefinition>())
+    /// <param name="content">Definições (habilidades no NH, status para o alcance a mais).</param>
+    /// <param name="justPressed">Como no outro construtor (testes, T-434).</param>
+    /// <param name="pressed">Como no outro construtor.</param>
+    /// <param name="justReleased">Como no outro construtor.</param>
+    public PlayerInput(
+        ContentCatalog content,
+        Func<string, bool>? justPressed = null,
+        Func<string, bool>? pressed = null,
+        Func<string, bool>? justReleased = null)
+        : this(new Dictionary<string, AbilityDefinition>(), justPressed, pressed, justReleased)
     {
         _lookup = (id, state) => content.AbilityAt(id, state?.RankOf(id) ?? 1);
+        _content = content;
 #if GODOT
         _isHealingItem = id => Hud.ItemText.IsHealingConsumable(content, id);
 #endif
@@ -76,6 +88,9 @@ public sealed class PlayerInput
 
     /// <summary>Barra de atalhos 1–6 (T-081); null = as habilidades aprendidas na ordem do estado, como antes.</summary>
     public HotbarLayout? Hotbar { get; set; }
+
+    /// <summary>Alcance a mais (tiles) da habilidade da prévia, vindo de status (T-434: Mira Firme, Olho de Falcão).</summary>
+    public double PreviewRangeBonus { get; private set; }
 
     /// <summary>Habilidade de área cuja tecla está apertada (prévia no chão); null = nenhuma.</summary>
     public AbilityDefinition? PreviewAbility { get; private set; }
@@ -174,7 +189,7 @@ public sealed class PlayerInput
 
         if (tabbed && abilities.BasicAttackId is { } tabBasic)
         {
-            WarnIfOutOfReach(tabBasic, self, units);
+            WarnIfOutOfReach(tabBasic, self, units, authority.CurrentTick);
         }
 
         // T-386: o ataque básico (clique, clique mantido, Espaço e automático) vai no alvo selecionado enquanto ele está
@@ -191,7 +206,7 @@ public sealed class PlayerInput
 
             if (abilities.BasicAttackId is { } basic)
             {
-                WarnIfOutOfReach(basic, self, units);
+                WarnIfOutOfReach(basic, self, units, tick);
                 UseAbility(authority, self, units, basic, hovered, abilities, tick, preferSelected: true);
             }
         }
@@ -209,7 +224,7 @@ public sealed class PlayerInput
             basicSent = true;
             if (_justPressed(InputActions.AttackKey))
             {
-                WarnIfOutOfReach(keyAttack, self, units);
+                WarnIfOutOfReach(keyAttack, self, units, tick);
             }
 
             UseAbility(authority, self, units, keyAttack, hovered, abilities, tick, preferSelected: true);
@@ -219,7 +234,7 @@ public sealed class PlayerInput
         if (!basicSent && AutoAttack && abilities.BasicAttackId is { } autoBasic
             && SelectedTarget is { } autoTarget && units.TryGetValue(autoTarget, out var target)
             && IsAlive(target) && MatchesFaction(self, target, FactionFilter.Enemy)
-            && InReach(autoBasic, self, target) && CanRepeat(autoBasic, abilities, tick))
+            && InReach(autoBasic, self, target, tick) && CanRepeat(autoBasic, abilities, tick))
         {
             UseAbility(authority, self, units, autoBasic, hovered, abilities, tick, preferSelected: true);
         }
@@ -251,7 +266,8 @@ public sealed class PlayerInput
                 if (_pressed(action))
                 {
                     PreviewAbility = def;
-                    PreviewPoint = ClampAim(def!, self.Get<Transform>().Position, AimPoint);
+                    PreviewRangeBonus = RangeBonusOf(def!, self, tick);
+                    PreviewPoint = ClampAim(def!, self.Get<Transform>().Position, AimPoint, PreviewRangeBonus);
                 }
                 else if (_justReleased(action))
                 {
@@ -381,16 +397,16 @@ public sealed class PlayerInput
             : AimPoint;
         if (ability is not null)
         {
-            aim = ClampAim(ability, self.Get<Transform>().Position, aim);
+            aim = ClampAim(ability, self.Get<Transform>().Position, aim, RangeBonusOf(ability, self, tick));
         }
         authority.Send(new UseAbilityIntent(self.Id, abilityId, target, aim));
     }
 
     /// <summary>T-386: avisa (<see cref="OutOfReach"/>) se há um inimigo selecionado, vivo, além do alcance de <paramref name="abilityId"/>.</summary>
-    private void WarnIfOutOfReach(string abilityId, EntitySnapshot self, IReadOnlyDictionary<EntityId, EntitySnapshot> units)
+    private void WarnIfOutOfReach(string abilityId, EntitySnapshot self, IReadOnlyDictionary<EntityId, EntitySnapshot> units, long tick)
     {
         if (SelectedTarget is { } id && units.TryGetValue(id, out var target) && IsAlive(target)
-            && MatchesFaction(self, target, FactionFilter.Enemy) && !InReach(abilityId, self, target))
+            && MatchesFaction(self, target, FactionFilter.Enemy) && !InReach(abilityId, self, target, tick))
         {
             OutOfReach?.Invoke();
         }
@@ -400,7 +416,7 @@ public sealed class PlayerInput
     /// Alvo ao alcance do ataque (só para não enviar à toa; quem decide é a autoridade). Sem definição
     /// conhecida, considera que sim.
     /// </summary>
-    private bool InReach(string abilityId, EntitySnapshot self, EntitySnapshot target)
+    private bool InReach(string abilityId, EntitySnapshot self, EntitySnapshot target, long tick)
     {
         if (_lookup(abilityId, self.TryGet<AbilityState>()) is not { } def)
         {
@@ -409,7 +425,7 @@ public sealed class PlayerInput
 
         var range = def.Targeting switch
         {
-            UnitTargeting u => u.Range,
+            UnitTargeting u => u.Range + RangeBonusOf(def, self, tick), // T-434: com o alcance a mais (Mira Firme, Olho de Falcão)
             MeleeArcTargeting m => m.Range,
             _ => double.MaxValue,
         };
@@ -418,8 +434,18 @@ public sealed class PlayerInput
         return distance <= range;
     }
 
-    /// <summary>Área em ponto além do alcance: mira no ponto mais distante permitido na direção do cursor.</summary>
-    public static Vec2 ClampAim(AbilityDefinition ability, Vec2 origin, Vec2 aim)
+    /// <summary>
+    /// Alcance a mais de <paramref name="ability"/> vindo dos status do jogador no snapshot (T-431, a mesma regra do Core:
+    /// <see cref="RangeBonus.Of"/>). Sem definições de status, 0.
+    /// </summary>
+    private double RangeBonusOf(AbilityDefinition ability, EntitySnapshot self, long tick) =>
+        _content is null ? 0 : RangeBonus.Of(_content, self.TryGet<Game.Core.Combat.Status.StatusEffects>(), tick, ability);
+
+    /// <summary>
+    /// Área em ponto além do alcance: mira no ponto mais distante permitido na direção do cursor. <paramref name="rangeBonus"/>
+    /// = tiles a mais vindos de status (T-434).
+    /// </summary>
+    public static Vec2 ClampAim(AbilityDefinition ability, Vec2 origin, Vec2 aim, double rangeBonus = 0)
     {
         if (ability.Targeting is not CircleAtPointTargeting point)
         {
@@ -427,7 +453,7 @@ public sealed class PlayerInput
         }
 
         var offset = aim - origin;
-        var range = (float)point.Range - 0.01f;
+        var range = (float)(point.Range + rangeBonus) - 0.01f;
         return offset.Length() > range ? origin + Vec2.Normalize(offset) * range : aim;
     }
 

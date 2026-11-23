@@ -16,17 +16,23 @@ public partial class AimPreview : Node2D
     private AbilityDefinition? _ability;
     private Vector2 _playerPx;
     private Vector2 _pointPx;
+    private float _rangeBonus;
 
-    /// <summary>Mostra a prévia (ou esconde com <paramref name="ability"/> null). Posições em pixels.</summary>
-    public void Show(AbilityDefinition? ability, Vector2 playerPx, Vector2 pointPx)
+    /// <summary>
+    /// Mostra a prévia (ou esconde com <paramref name="ability"/> null). Posições em pixels. <paramref name="rangeBonus"/> =
+    /// tiles a mais no alcance e no comprimento da linha, vindos de status (T-434: Mira Firme, Olho de Falcão).
+    /// </summary>
+    public void Show(AbilityDefinition? ability, Vector2 playerPx, Vector2 pointPx, double rangeBonus = 0)
     {
         ZIndex = ZLayers.Telegraphs;
         Visible = ability is not null;
-        if (ability == _ability && playerPx.IsEqualApprox(_playerPx) && pointPx.IsEqualApprox(_pointPx))
+        if (ability == _ability && playerPx.IsEqualApprox(_playerPx) && pointPx.IsEqualApprox(_pointPx)
+            && Mathf.IsEqualApprox(_rangeBonus, (float)rangeBonus))
         {
             return;
         }
 
+        _rangeBonus = (float)rangeBonus;
         _ability = ability;
         _playerPx = playerPx;
         _pointPx = pointPx;
@@ -39,7 +45,7 @@ public partial class AimPreview : Node2D
         switch (_ability?.Targeting)
         {
             case CircleAtPointTargeting point:
-                DrawDashedRing(_playerPx, (float)point.Range * s);
+                DrawDashedRing(_playerPx, ((float)point.Range + _rangeBonus) * s);
                 DrawCircle(_pointPx, (float)point.Radius * s, Fill);
                 DrawArc(_pointPx, (float)point.Radius * s, 0, Mathf.Tau, 48, Edge, 2f);
                 DrawLine(_playerPx, _pointPx, RangeRing, 1f);
@@ -48,7 +54,7 @@ public partial class AimPreview : Node2D
             case LineTargeting line:
                 var dir = (_pointPx - _playerPx).LengthSquared() > 1e-4f ? (_pointPx - _playerPx).Normalized() : Vector2.Down;
                 var side = dir.Orthogonal() * (float)line.Width * s / 2f;
-                var tip = _playerPx + dir * (float)line.Length * s;
+                var tip = _playerPx + (dir * ((float)line.Length + _rangeBonus) * s);
                 Vector2[] rect = [_playerPx + side, tip + side, tip - side, _playerPx - side];
                 DrawColoredPolygon(rect, Fill);
                 DrawPolyline([.. rect, rect[0]], Edge, 2f);

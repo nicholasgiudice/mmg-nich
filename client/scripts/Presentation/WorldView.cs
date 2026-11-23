@@ -42,11 +42,17 @@ public partial class WorldView : Node2D
     private LinkView? _linkView;
     private readonly List<(EntityId Protected, EntityId Protector, Color Color)> _links = new();
 
+    /// <summary>Ponto mirado e alvo de cada uso começado neste lote de eventos (T-434), por quem usou e habilidade.</summary>
+    private readonly Dictionary<(EntityId Source, string AbilityId), (System.Numerics.Vector2? Aim, EntityId? Target)> _aims = new();
+
     /// <summary>Projéteis desenhados neste frame: o impacto no alvo espera a chegada (s).</summary>
     private readonly Dictionary<(EntityId Source, EntityId Target), double> _flights = new();
 
     /// <summary>Lado (pixels) do quadro de impacto.</summary>
     private const float ImpactSizePx = 40f;
+
+    /// <summary>Raio (tiles) do anel de impacto com brilho (T-434), antes da escala.</summary>
+    private const float ImpactRingTiles = 1.2f;
 
     /// <summary>Lado (pixels) do quadro do projétil.</summary>
     private const float ProjectileSizePx = 26f;
@@ -82,10 +88,15 @@ public partial class WorldView : Node2D
     {
         var latest = authority.Latest;
         _flights.Clear();
+        _aims.Clear();
         foreach (var e in events)
         {
             switch (e)
             {
+                case AbilityStarted started:
+                    // T-434: ponto mirado (Praga) e direção da linha (Flecha Perfurante); instantâneas executam no mesmo tick.
+                    _aims[(started.Source, started.AbilityId)] = (started.AimPoint, started.Target);
+                    break;
                 case EntityRemoved removed:
                     RemoveView(removed.Entity);
                     break;
@@ -120,7 +131,11 @@ public partial class WorldView : Node2D
                     }
 
                     Projectiles(used.Source, used.Targets, used.AbilityId, authority.ControlledEntity);
-                    if (_effects.Burst(used.AbilityId) is { } burst && userView is not null)
+                    if (_effects.Burst(used.AbilityId) is { AtAim: true } aimBurst)
+                    {
+                        AimBurst(latest, used, aimBurst);
+                    }
+                    else if (_effects.Burst(used.AbilityId) is { } burst && userView is not null)
                     {
                         // Raio do NH de quem usou (o Bastião passa de 5 para 7 no NH3); sem alcance nos dados, o do effects.json.
                         var rank = latest?.Entities.FirstOrDefault(s => s.Id == used.Source)?.TryGet<AbilityState>()?.RankOf(used.AbilityId) ?? 1;
@@ -148,6 +163,12 @@ public partial class WorldView : Node2D
                         }
                     }
 
+                    Pierce(latest, used, authority.ControlledEntity);
+                    if (_effects.Spread(used.AbilityId) is { } spreadColor)
+                    {
+                        SpreadLines(latest, used, events, spreadColor);
+                    }
+
                     if (MultiHit(latest, used.Source, used.AbilityId) is { } first)
                     {
                         // T-064: habilidade com vários acertos — "×3" uma vez e o rastro de cada acerto em alvo único.
@@ -168,6 +189,9 @@ public partial class WorldView : Node2D
                 case Game.Core.Combat.Effects.ChainJumped jump
                     when _views.TryGetValue(jump.From, out var fromView) && _views.TryGetValue(jump.To, out var toView):
                     AddChild(TrailView.Create(fromView.Position, toView.Position, 7f, ChainColor, lifetime: 0.8));
+                    break;
+                case StatusExpired expired when _effects.Jump(expired.StatusId) is { } jumpColor:
+                    JumpLine(expired, events, jumpColor);
                     break;
                 case EntityRevived revived:
                     ShowText(revived.Entity, "Levantado!", Hud.HudTheme.Heal);
@@ -486,8 +510,147 @@ public partial class WorldView : Node2D
 
             var a = BodyCenter(from);
             var b = BodyCenter(to);
-            AddChild(EffectView.Projectile(anim, a, b, ProjectileSizePx));
+            var style = _effects.ProjectileStyle(abilityId);
+            if (style.Glow is { } glow)
+            {
+                // T-434 (Tiro Certeiro): rastro dourado do arco ao alvo, por baixo da flecha maior.
+                AddChild(TrailView.Create(a, b, 6f * style.Scale, glow, lifetime: 0.35));
+            }
+
+            AddChild(EffectView.Projectile(anim, a, b, ProjectileSizePx * style.Scale, glow: style.Glow));
             _flights[(source, t)] = EffectView.FlightSeconds(a, b);
+            if (style.OnArrive is { } arrive)
+            {
+                // T-434 (Ferida Aberta): sem dano na hora, o impacto sai quando a flecha chega.
+                AddChild(EffectView.Impact(arrive, b, ImpactSizePx, _flights[(source, t)]));
+            }
+        }
+    }
+
+    /// <summary>
+    /// T-434 (Praga): onda que sai do ponto mirado até o raio da área da habilidade no NH de quem usou. Sem ponto mirado,
+    /// sai do primeiro alvo.
+    /// </summary>
+    private void AimBurst(WorldSnapshot? latest, AbilityExecuted used, CastBurst burst)
+    {
+        Godot.Vector2? at = _aims.TryGetValue((used.Source, used.AbilityId), out var aim) && aim.Aim is { } point
+            ? Units.ToPixels(point)
+            : used.Targets.Count > 0 && _views.TryGetValue(used.Targets[0], out var first) ? first.Position : null;
+        if (at is not { } center)
+        {
+            return;
+        }
+
+        var rank = latest?.Entities.FirstOrDefault(x => x.Id == used.Source)?.TryGet<AbilityState>()?.RankOf(used.AbilityId) ?? 1;
+        var radius = _content.AbilityAt(used.AbilityId, rank)?.Targeting is CircleAtPointTargeting circle ? (float)circle.Radius : burst.Radius;
+        AddChild(BurstView.Create(center, burst with { Radius = radius }));
+    }
+
+    /// <summary>
+    /// T-434 (Flecha Perfurante): a flecha vai de quem usou até o fim da linha, na direção mirada (ou do alvo, ou para
+    /// onde olha), passando pelos alvos sem parar. O comprimento é o da linha no NH de quem usou.
+    /// </summary>
+    private void Pierce(WorldSnapshot? latest, AbilityExecuted used, EntityId? me)
+    {
+        if (_effects.Pierce(used.AbilityId) is not { } pierce || !_views.TryGetValue(used.Source, out var from)
+            || (EffectSettings.Reduced && used.Source != me))
+        {
+            return;
+        }
+
+        var self = latest?.Entities.FirstOrDefault(x => x.Id == used.Source);
+        var rank = self?.TryGet<AbilityState>()?.RankOf(used.AbilityId) ?? 1;
+        if (_content.AbilityAt(used.AbilityId, rank)?.Targeting is not LineTargeting line || self?.TryGet<Transform>() is not { } tr)
+        {
+            return;
+        }
+
+        var dir = tr.Facing;
+        if (_aims.TryGetValue((used.Source, used.AbilityId), out var aim))
+        {
+            var toward = aim.Aim ?? (aim.Target is { } t ? latest?.Entities.FirstOrDefault(x => x.Id == t)?.TryGet<Transform>()?.Position : null);
+            if (toward is { } p && System.Numerics.Vector2.DistanceSquared(p, tr.Position) > 0.01f)
+            {
+                dir = p - tr.Position;
+            }
+        }
+
+        if (dir.LengthSquared() < 1e-6f)
+        {
+            return;
+        }
+
+        dir = System.Numerics.Vector2.Normalize(dir);
+        var a = BodyCenter(from);
+        var b = a + (Units.ToPixels(tr.Position + (dir * (float)line.Length)) - Units.ToPixels(tr.Position));
+        if (pierce.Style.Glow is { } glow)
+        {
+            AddChild(TrailView.Create(a, b, 5f * pierce.Style.Scale, glow, lifetime: 0.4));
+        }
+
+        AddChild(EffectView.Projectile(pierce.Animation, a, b, ProjectileSizePx * pierce.Style.Scale, glow: pierce.Style.Glow));
+        foreach (var t in used.Targets)
+        {
+            if (_views.TryGetValue(t, out var hitView))
+            {
+                // O impacto de cada alvo espera a flecha passar por ele.
+                _flights[(used.Source, t)] = EffectView.FlightSeconds(a, BodyCenter(hitView));
+            }
+        }
+    }
+
+    /// <summary>
+    /// T-434 (Flecha Dispersa): linha do alvo até cada monstro que recebeu a cópia dos status neste lote (status com as
+    /// etiquetas do <c>copy_status</c> aplicados, acumulados ou renovados por quem usou em outro alvo).
+    /// </summary>
+    private void SpreadLines(WorldSnapshot? latest, AbilityExecuted used, IReadOnlyList<GameEvent> events, Color color)
+    {
+        if (used.Targets.Count == 0 || !_views.TryGetValue(used.Targets[0], out var origin))
+        {
+            return;
+        }
+
+        var rank = latest?.Entities.FirstOrDefault(x => x.Id == used.Source)?.TryGet<AbilityState>()?.RankOf(used.AbilityId) ?? 1;
+        var tags = _content.AbilityAt(used.AbilityId, rank)?.Effects.OfType<CopyStatusEffect>().SelectMany(c => c.Tags).ToHashSet()
+            ?? [];
+        var copied = new HashSet<EntityId>();
+        foreach (var e in events)
+        {
+            var (source, target, statusId) = e switch
+            {
+                StatusApplied x => (x.Source, x.Target, x.StatusId),
+                StatusStacked x => (x.Source, x.Target, x.StatusId),
+                StatusRefreshed x => (x.Source, x.Target, x.StatusId),
+                _ => (EntityId.None, EntityId.None, ""),
+            };
+            if (source == used.Source && target != used.Targets[0] && !target.IsNone
+                && _content.Statuses.TryGetValue(statusId, out var def) && def.Tags.Any(tags.Contains) && copied.Add(target)
+                && _views.TryGetValue(target, out var to))
+            {
+                AddChild(TrailView.Create(BodyCenter(origin), BodyCenter(to), 8f, color, lifetime: 0.9));
+                AddChild(BurstView.Create(to.Position, new CastBurst(color, 1f)));
+            }
+        }
+    }
+
+    /// <summary>T-434 (Praga): linha de quem perdeu o status que acabou até quem o recebeu no mesmo lote (o pulo).</summary>
+    private void JumpLine(StatusExpired expired, IReadOnlyList<GameEvent> events, Color color)
+    {
+        if (!_views.TryGetValue(expired.Entity, out var from))
+        {
+            return;
+        }
+
+        foreach (var e in events)
+        {
+            if (e is StatusApplied applied && applied.StatusId == expired.StatusId && applied.Target != expired.Entity
+                && _views.TryGetValue(applied.Target, out var to))
+            {
+                AddChild(TrailView.Create(BodyCenter(from), BodyCenter(to), 7f, color, lifetime: 0.9));
+                AddChild(BurstView.Create(to.Position, new CastBurst(color, 1.2f)));
+                ShowText(applied.Target, "Praga", color); // no meio de vários monstros, a linha curta some; o nome não
+                return;
+            }
         }
     }
 
@@ -501,7 +664,13 @@ public partial class WorldView : Node2D
         }
 
         var delay = _flights.GetValueOrDefault((hit.Source, hit.Target));
-        AddChild(EffectView.Impact(anim, BodyCenter(target), ImpactSizePx, delay, EffectSettings.Reduced ? 0.7f : 1f));
+        var style = _effects.ImpactStyle(hit.SourceId);
+        AddChild(EffectView.Impact(anim, BodyCenter(target), ImpactSizePx * style.Scale, delay, EffectSettings.Reduced ? 0.7f : 1f));
+        if (style.Glow is { } glow)
+        {
+            // T-434 (Tiro Certeiro): anel que se abre no chão em volta do alvo quando a flecha chega.
+            AddChild(BurstView.Create(target.Position, new CastBurst(glow, ImpactRingTiles * style.Scale), delay));
+        }
     }
 
     /// <summary>Meio do corpo desenhado (pixels): o pivô fica nos pés.</summary>

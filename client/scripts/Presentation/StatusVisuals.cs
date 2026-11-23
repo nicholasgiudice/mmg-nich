@@ -95,8 +95,29 @@ public static class StatusVisuals
         var auras = new List<(StatusAura, EntityId)>();
         foreach (var st in effects.Active)
         {
-            if (st.ExpiresAtTick > now && catalog.Aura(st.StatusId) is { } aura
-                && !auras.Any(a => a.Item1 == aura && (aura.Kind != AuraKind.Link || a.Item2 == st.Protector)))
+            if (st.ExpiresAtTick <= now || catalog.Aura(st.StatusId) is not { } aura)
+            {
+                continue;
+            }
+
+            if (aura.Kind == AuraKind.Stacks)
+            {
+                // T-434 (Veneno do Caçador): um sinal só, com o maior número de acúmulos entre as instâncias.
+                var i = auras.FindIndex(a => a.Item1.Kind == AuraKind.Stacks && a.Item1.Color == aura.Color);
+                var stacks = Math.Max(st.Stacks, i >= 0 ? auras[i].Item1.Stacks : 0);
+                if (i >= 0)
+                {
+                    auras[i] = (aura with { Stacks = stacks }, st.Protector);
+                }
+                else
+                {
+                    auras.Add((aura with { Stacks = stacks }, st.Protector));
+                }
+
+                continue;
+            }
+
+            if (!auras.Any(a => a.Item1 == aura && (aura.Kind != AuraKind.Link || a.Item2 == st.Protector)))
             {
                 auras.Add((aura, st.Protector));
             }
