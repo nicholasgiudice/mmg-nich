@@ -32,6 +32,7 @@ internal static partial class GameDataValidator
         foreach (var e in c.Arenas) { ValidateArena(e, errors); }
         var abilityDefs = c.Abilities.GroupBy(a => a.Value.Id).ToDictionary(g => g.Key, g => g.First().Value, StringComparer.Ordinal);
         ValidateSecondClasses(c, abilityDefs, errors); // T-403
+        ValidateBasicAttackSwaps(c, abilityDefs, errors); // T-422
         foreach (var e in c.Encounters)
         {
             ValidateEncounter(e, classes, monsters, c.Arenas.GroupBy(a => a.Value.Id).ToDictionary(g => g.Key, g => g.First().Value), abilityDefs, errors);
@@ -448,6 +449,7 @@ internal static partial class GameDataValidator
                         c.Positive("lowHealthBonus.bonus", lhb.Bonus);
                     }
 
+                    ValidateDamageHeals(d, c, refs); // T-422
                     break;
                 case HealEffect h:
                     c.NonNegative("base", h.Base);
@@ -620,6 +622,8 @@ internal static partial class GameDataValidator
         {
             ValidateEffects(x.OnExpire, ctx, "onExpire", refs);
         }
+
+        ValidateInquisitorStatus(x, ctx, refs); // T-422
     }
 
     private static void ValidateRules(RulesDefinition rules, List<LoadError> errors)

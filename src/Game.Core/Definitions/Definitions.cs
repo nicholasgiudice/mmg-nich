@@ -386,6 +386,23 @@ public sealed record StatusDefinition
     /// alvo. Não rodam quando o status é tirado, quando quem o tem morre nem em status permanente.
     /// </summary>
     public IReadOnlyList<EffectDefinition> OnExpire { get; init; } = [];
+
+    // ---- T-422 (Inquisidor) ----
+
+    /// <summary>
+    /// Vida pelo dano para quem bate em quem tem o status (T-422, Selo da Luz): todo aliado de quem aplicou (mesma facção,
+    /// inclusive ele) que causa dano direto em quem tem o status cura uma fração do dano final, pelas mesmas regras de
+    /// <see cref="Lifesteal"/> (cura recebida de quem bateu, sem dano indireto). A cura sai em nome de quem bateu, atribuída a
+    /// <c>ability</c> (ou ao status).
+    /// </summary>
+    public LifestealDefinition? AttackerLifesteal { get; init; }
+
+    /// <summary>
+    /// Troca o ataque básico (T-422, Ira Divina): enquanto o status está ativo, a intenção de ataque básico de quem o tem usa
+    /// esta habilidade (alvo, efeitos e recarga dela), com o id, a recarga e os eventos do ataque básico. Com vários status,
+    /// vale o aplicado por último. Null = não troca.
+    /// </summary>
+    public string? BasicAttack { get; init; }
 }
 
 public sealed record AreaDefinition

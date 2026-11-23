@@ -31,6 +31,7 @@ public static class AbilityValidator
 
         // T-060: a definição efetiva depende do NH que a entidade tem na habilidade.
         var ability = world.Content.AbilityAt(abilityId, st?.RankOf(abilityId) ?? 1);
+        ability = BasicAttackOverride.Resolve(world, caster, st, abilityId, ability); // T-422: ataque básico trocado por status
         if (ability is { Passive: true })
         {
             return new AbilityCheck(AbilityRejectReason.Passive, ability, null); // T-403
@@ -144,6 +145,7 @@ public sealed class AbilitySystem : ISimulationSystem
             }
 
             var ability = world.Content.AbilityAt(cast.AbilityId, st.RankOf(cast.AbilityId));
+            ability = BasicAttackOverride.Resolve(world, e, st, cast.AbilityId, ability); // T-422
             if (!e.IsAlive)
             {
                 CastControl.Cancel(world, e, CastInterruptReason.Died);
@@ -365,7 +367,8 @@ public sealed class AbilitySystem : ISimulationSystem
     /// </summary>
     private static void ExtraHit(World world, Entity caster, PendingHit hit)
     {
-        if (world.Content.AbilityAt(hit.AbilityId, hit.Rank) is not { } ability)
+        if (BasicAttackOverride.Resolve(world, caster, caster.TryGet<AbilityState>(), hit.AbilityId, world.Content.AbilityAt(hit.AbilityId, hit.Rank))
+            is not { } ability) // T-422: ataque básico trocado por status
         {
             return;
         }
