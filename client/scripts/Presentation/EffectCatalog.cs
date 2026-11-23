@@ -41,13 +41,38 @@ public enum AuraKind
 
     /// <summary>Linha do protegido até quem o protege (Interceptação: o dano desviado), mais um anel fino nos pés.</summary>
     Link,
+
+    /// <summary>T-434: corrente pesada nos pés (lento e enfraquecido: Tiro Debilitante).</summary>
+    Hobble,
+
+    /// <summary>T-434: gotas de sangue caindo do corpo (sangramento: Ferida Aberta).</summary>
+    Drip,
+
+    /// <summary>T-434: olho dourado ao lado da cabeça (Olho de Falcão).</summary>
+    Eye,
+
+    /// <summary>T-434: gota com o número de acúmulos ao lado do corpo (Veneno do Caçador).</summary>
+    Stacks,
 }
 
-/// <summary>Sinal de um status no personagem enquanto ele dura (T-412).</summary>
-public sealed record StatusAura(AuraKind Kind, Color Color);
+/// <summary>Sinal de um status no personagem enquanto ele dura (T-412). <c>Stacks</c>: acúmulos, para <see cref="AuraKind.Stacks"/>.</summary>
+public sealed record StatusAura(AuraKind Kind, Color Color, int Stacks = 0);
 
-/// <summary>Onda que sai do lançador ao usar uma habilidade em volta dele (T-412: Bastião, Juramento), até o raio.</summary>
-public sealed record CastBurst(Color Color, float Radius);
+/// <summary>
+/// Tamanho e brilho de um projétil ou impacto (T-434: o Tiro Certeiro é um tiro mais forte que o Disparo). <c>Scale</c>
+/// multiplica o tamanho padrão; <c>Glow</c> = rastro dourado do projétil ou anel que se abre no impacto (null = nada).
+/// </summary>
+/// <c>OnArrive</c>: impacto tocado quando o projétil chega, para habilidade sem dano na hora (Ferida Aberta).
+public sealed record FxStyle(float Scale, Color? Glow, EffectAnimation? OnArrive = null)
+{
+    public static readonly FxStyle Default = new(1f, null);
+}
+
+/// <summary>
+/// Onda que sai do lançador ao usar uma habilidade em volta dele (T-412: Bastião, Juramento), até o raio. Com
+/// <c>AtAim</c> (T-434, Praga), sai do ponto mirado, até o raio da área da habilidade.
+/// </summary>
+public sealed record CastBurst(Color Color, float Radius, bool AtAim = false);
 
 /// <summary>
 /// Efeitos visuais por cima da apresentação (T-054), lidos de <c>assets/art/effects/effects.json</c>: impacto por
@@ -61,6 +86,11 @@ public sealed class EffectCatalog
     private readonly Dictionary<DamageSchool, EffectAnimation> _schools = new();
     private readonly List<(string Prefix, EffectAnimation Animation)> _sources = new();
     private readonly Dictionary<string, EffectAnimation> _projectiles = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, FxStyle> _projectileStyles = new(StringComparer.Ordinal);
+    private readonly List<(string Prefix, FxStyle Style)> _impactStyles = new();
+    private readonly Dictionary<string, (EffectAnimation Animation, FxStyle Style)> _pierces = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, Color> _spreads = new(StringComparer.Ordinal);
+    private readonly List<(string Prefix, Color Color)> _jumps = new();
     private readonly List<(string Prefix, AreaEffect Effect)> _areas = new();
     private readonly List<(string Prefix, StatusAura Aura)> _auras = new();
     private readonly Dictionary<string, CastBurst> _bursts = new(StringComparer.Ordinal);
@@ -78,6 +108,27 @@ public sealed class EffectCatalog
         Prefixed(_sources, sourceId) ?? _schools.GetValueOrDefault(school);
 
     public EffectAnimation? Projectile(string abilityId) => _projectiles.GetValueOrDefault(abilityId);
+
+    /// <summary>Tamanho e rastro do projétil da habilidade (T-434); sem entrada, o padrão.</summary>
+    public FxStyle ProjectileStyle(string abilityId) => _projectileStyles.GetValueOrDefault(abilityId) ?? FxStyle.Default;
+
+    /// <summary>
+    /// Flecha que atravessa a linha inteira (T-434, Flecha Perfurante): animação e estilo, ou null. Vai de quem usou até o
+    /// fim da linha, na direção mirada, sem parar nos alvos.
+    /// </summary>
+    public (EffectAnimation Animation, FxStyle Style)? Pierce(string abilityId) =>
+        _pierces.TryGetValue(abilityId, out var p) ? p : null;
+
+    /// <summary>Cor das linhas do alvo até quem recebeu a cópia dos status (T-434, Flecha Dispersa), ou null.</summary>
+    public Color? Spread(string abilityId) => _spreads.TryGetValue(abilityId, out var c) ? c : null;
+
+    /// <summary>Cor da linha do pulo de um status que acabou para outro alvo (T-434, Praga), por prefixo do id; ou null.</summary>
+    public Color? Jump(string statusId) =>
+        _jumps.Where(j => statusId.StartsWith(j.Prefix, StringComparison.Ordinal)).OrderByDescending(j => j.Prefix.Length)
+            .Select(j => (Color?)j.Color).FirstOrDefault();
+
+    /// <summary>Tamanho e anel do impacto pela fonte do dano (prefixo, T-434); sem entrada, o padrão.</summary>
+    public FxStyle ImpactStyle(string sourceId) => Prefixed(_impactStyles, sourceId) ?? FxStyle.Default;
 
     public AreaEffect? Area(string areaId) => Prefixed(_areas, areaId);
 
@@ -134,20 +185,47 @@ public sealed class EffectCatalog
             }
         }
 
-        foreach (var (prefix, anim) in root["impacts"]?["sources"]?.AsObject() ?? [])
+        // Fonte e projétil: o nome da animação ou, com tamanho e brilho (T-434), { "animation", "scale", "glow" }.
+        foreach (var (prefix, node) in root["impacts"]?["sources"]?.AsObject() ?? [])
         {
-            if (Find((string?)anim) is { } a)
+            if (Find(AnimationName(node)) is { } a)
             {
                 catalog._sources.Add((prefix, a));
+                if (Style(node) is { } style)
+                {
+                    catalog._impactStyles.Add((prefix, style));
+                }
             }
         }
 
-        foreach (var (ability, anim) in root["projectiles"]?.AsObject() ?? [])
+        foreach (var (ability, node) in root["projectiles"]?.AsObject() ?? [])
         {
-            if (Find((string?)anim) is { } a)
+            if (Find(AnimationName(node)) is { } a)
             {
                 catalog._projectiles[ability] = a;
+                if (Style(node) is { } style)
+                {
+                    catalog._projectileStyles[ability] = style;
+                }
             }
+        }
+
+        foreach (var (ability, node) in root["pierces"]?.AsObject() ?? [])
+        {
+            if (Find(AnimationName(node)) is { } a)
+            {
+                catalog._pierces[ability] = (a, Style(node) ?? FxStyle.Default);
+            }
+        }
+
+        foreach (var (ability, node) in root["spreads"]?.AsObject() ?? [])
+        {
+            catalog._spreads[ability] = Color.FromHtml((string?)node ?? "#ffffff");
+        }
+
+        foreach (var (prefix, node) in root["jumps"]?.AsObject() ?? [])
+        {
+            catalog._jumps.Add((prefix, Color.FromHtml((string?)node ?? "#ffffff")));
         }
 
         foreach (var (prefix, node) in root["areas"]?.AsObject() ?? [])
@@ -173,10 +251,17 @@ public sealed class EffectCatalog
         foreach (var (ability, node) in root["bursts"]?.AsObject() ?? [])
         {
             catalog._bursts[ability] = new CastBurst(Color.FromHtml((string?)node!["color"] ?? "#ffffff"),
-                (float?)node["radius"] ?? 5f);
+                (float?)node["radius"] ?? 5f, (string?)node["at"] == "aim");
         }
 
         return catalog;
+
+        static string? AnimationName(JsonNode? node) => node is JsonObject o ? (string?)o["animation"] : (string?)node;
+
+        FxStyle? Style(JsonNode? node) => node is JsonObject o
+            ? new FxStyle((float?)o["scale"] ?? 1f, (string?)o["glow"] is { } glow ? Color.FromHtml(glow) : null,
+                Find((string?)o["impact"]))
+            : null;
 
         EffectAnimation? Find(string? id)
         {

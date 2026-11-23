@@ -338,6 +338,56 @@
       "x": 136,
       "y": 408,
       "source": "pixellab:d4d95f63-1c76-492e-8829-294e582f75c5#8"
+    },
+    "marksman.piercing_arrow": {
+      "x": 0,
+      "y": 510,
+      "source": "pixellab:c695c32c-b080-4694-b02c-d16838cd221b#1"
+    },
+    "marksman.crippling_shot": {
+      "x": 34,
+      "y": 510,
+      "source": "pixellab:c695c32c-b080-4694-b02c-d16838cd221b#4"
+    },
+    "marksman.steady_aim": {
+      "x": 68,
+      "y": 510,
+      "source": "pixellab:497db016-0d03-40d6-b21d-38723e58f9c6#9"
+    },
+    "marksman.true_shot": {
+      "x": 102,
+      "y": 510,
+      "source": "pixellab:497db016-0d03-40d6-b21d-38723e58f9c6#1"
+    },
+    "marksman.hawk_eye": {
+      "x": 136,
+      "y": 510,
+      "source": "pixellab:c695c32c-b080-4694-b02c-d16838cd221b#9"
+    },
+    "hunter.poison_arrow": {
+      "x": 0,
+      "y": 544,
+      "source": "pixellab:497db016-0d03-40d6-b21d-38723e58f9c6#13"
+    },
+    "hunter.open_wound": {
+      "x": 34,
+      "y": 544,
+      "source": "pixellab:c695c32c-b080-4694-b02c-d16838cd221b#14"
+    },
+    "hunter.toxic_cloud": {
+      "x": 68,
+      "y": 544,
+      "source": "pixellab:497db016-0d03-40d6-b21d-38723e58f9c6#4"
+    },
+    "hunter.scatter_arrow": {
+      "x": 102,
+      "y": 544,
+      "source": "pixellab:cc94b6e1-7157-4ebb-bc6a-4ac497b430ba#1"
+    },
+    "hunter.plague": {
+      "x": 136,
+      "y": 544,
+      "source": "pixellab:cc94b6e1-7157-4ebb-bc6a-4ac497b430ba#8"
     }
   }
 }

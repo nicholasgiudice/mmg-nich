@@ -13,10 +13,12 @@ public partial class BurstView : Node2D
     private CastBurst _burst = new(Colors.White, 1f);
     private double _age;
 
-    public static BurstView Create(Vector2 feetPx, CastBurst burst) => new()
+    /// <param name="delay">Segundos até começar (T-434: o anel do impacto espera a flecha chegar).</param>
+    public static BurstView Create(Vector2 feetPx, CastBurst burst, double delay = 0) => new()
     {
         Position = feetPx,
         _burst = burst,
+        _age = -delay,
         ZAsRelative = false,
         ZIndex = ZLayers.Areas,
     };
@@ -35,6 +37,11 @@ public partial class BurstView : Node2D
 
     public override void _Draw()
     {
+        if (_age < 0)
+        {
+            return;
+        }
+
         var k = (float)(_age / LifetimeSeconds);
         var ease = 1f - (1f - k) * (1f - k);
         var r = _burst.Radius * Units.PixelsPerUnit * ease;

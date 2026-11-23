@@ -295,7 +295,7 @@ public partial class Main : Node2D
             if (focus is { } playerPx)
             {
                 _camera.Follow(playerPx, delta);
-                _aimPreview.Show(_input.PreviewAbility, playerPx, Units.ToPixels(_input.PreviewPoint));
+                _aimPreview.Show(_input.PreviewAbility, playerPx, Units.ToPixels(_input.PreviewPoint), _input.PreviewRangeBonus);
             }
 
             var netLine = _authority is NetAuthority n

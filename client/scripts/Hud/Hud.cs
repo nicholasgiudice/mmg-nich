@@ -941,7 +941,7 @@ public partial class Hud : Control
             cdFraction,
             (float)(remaining / World.TickRate),
             noResource,
-            IsOutOfRange(def, self, byId, selected, aimPoint),
+            IsOutOfRange(def, self, byId, selected, aimPoint, _content, (long)Math.Floor(now)),
             abilities.Cast?.AbilityId == id,
             charges,
             isBasic || !abilities.Knows(id) ? "" : Match.SkillPlan.Roman(rank),
@@ -979,7 +979,7 @@ public partial class Hud : Control
 
     /// <summary>Só indicativo (a autoridade decide): alvo único contra o alvo selecionado. Área em ponto nunca fica fora de alcance (T-028: a mira é limitada ao alcance).</summary>
     private static bool IsOutOfRange(AbilityDefinition? def, EntitySnapshot self, IReadOnlyDictionary<EntityId, EntitySnapshot> byId,
-        EntityId? selected, Vec2 aimPoint)
+        EntityId? selected, Vec2 aimPoint, ContentCatalog content, long tick)
     {
         var origin = self.Get<Transform>().Position;
         switch (def?.Targeting)
@@ -987,7 +987,8 @@ public partial class Hud : Control
             case UnitTargeting { Faction: not FactionFilter.Ally } unit
                 when selected is { } sid && byId.TryGetValue(sid, out var t) && t.TryGet<Transform>() is { } tt:
                 var radius = t.TryGet<Collider>()?.Radius ?? 0f;
-                return Vec2.Distance(origin, tt.Position) - radius > unit.Range;
+                // T-434: com o alcance a mais dos status (Mira Firme, Olho de Falcão), como o Core.
+                return Vec2.Distance(origin, tt.Position) - radius > unit.Range + RangeBonus.Of(content, self.TryGet<StatusEffects>(), tick, def);
             default:
                 return false;
         }

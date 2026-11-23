@@ -1,5 +1,5 @@
 {
-  "_comment": "Efeitos visuais (T-054). Quadros por [coluna, linha] na grade da folha. impacts: por escola de dano, ou pelo id da fonte (prefixo). projectiles: por id de habilidade. areas: por id de área (prefixo); mode fill = um quadro do tamanho da área, scatter = vários espalhados. auras (T-412): sinal do status no corpo, por id de status (prefixo); style ring = anel nos pés, flames = labaredas, link = linha até quem protege. bursts (T-412): onda em volta do lançador ao usar a habilidade, até o raio dos alvos extras da habilidade no NH de quem usou (radius só se os dados não tiverem). Créditos em CREDITS.md.",
+  "_comment": "Efeitos visuais (T-054). Quadros por [coluna, linha] na grade da folha. impacts: por escola de dano, ou pelo id da fonte (prefixo). projectiles: por id de habilidade. areas: por id de área (prefixo); mode fill = um quadro do tamanho da área, scatter = vários espalhados. auras (T-412): sinal do status no corpo, por id de status (prefixo); style ring = anel nos pés, flames = labaredas, link = linha até quem protege. bursts (T-412): onda em volta do lançador ao usar a habilidade, até o raio dos alvos extras da habilidade no NH de quem usou (radius só se os dados não tiverem). Fonte de impacto e projétil (T-434): o nome da animação ou { animation, scale = tamanho × o padrão, glow = rastro do projétil / anel do impacto, impact = animação quando o projétil chega }. pierces (T-434): flecha que atravessa a linha inteira da habilidade. spreads (T-434): cor das linhas do alvo até quem recebe a cópia dos status. jumps (T-434): cor da linha do pulo de um status que acaba (prefixo do id). Estilos de aura da T-434: hobble = corrente nos pés, drip = gotas de sangue, eye = olho dourado, stacks = gota com o número de acúmulos. bursts com at = aim: a onda sai do ponto mirado, até o raio da área. Créditos em CREDITS.md.",
   "sheets": {
     "fx": { "texture": "effects/effects.png", "cell": [32, 32] },
     "shield": { "texture": "effects/magic_iceshield.png", "cell": [128, 128] }
@@ -19,14 +19,30 @@
   },
   "impacts": {
     "schools": { "physical": "hit", "arcane": "arcane", "fire": "fire", "frost": "frost", "holy": "holy", "nature": "poison" },
-    "sources": { "berserker.execution": "blood", "area.lightning_field": "lightning", "area.venom_pool": "poison", "area.cataclysm_fire": "fire" }
+    "sources": {
+      "marksman.true_shot": { "animation": "hit", "scale": 1.8, "glow": "#ffd65a" },
+      "status.open_wound": "blood",
+      "berserker.execution": "blood", "area.lightning_field": "lightning", "area.venom_pool": "poison", "area.cataclysm_fire": "fire" }
   },
   "projectiles": {
     "archer.shot": "arrow",
     "archer.power_shot": "arrow",
     "archer.devastating_arrow": "arrow",
+    "marksman.true_shot": { "animation": "arrow", "scale": 1.5, "glow": "#ffd65a" },
+    "marksman.crippling_shot": "arrow",
+    "hunter.open_wound": { "animation": "arrow", "impact": "blood" },
+    "hunter.scatter_arrow": "arrow",
     "road_bandit.shot": "arrow",
     "mage.arcane_missile": "arcane_bolt"
+  },
+  "pierces": {
+    "marksman.piercing_arrow": { "animation": "arrow", "scale": 1.4, "glow": "#dcecff" }
+  },
+  "spreads": {
+    "hunter.scatter_arrow": "#9be04f"
+  },
+  "jumps": {
+    "status.hunter_venom": "#c48cff"
   },
   "areas": {
     "area.venom_pool": { "animation": "poison", "mode": "scatter" },
@@ -39,11 +55,17 @@
     "status.fury": { "style": "flames", "color": "#e5402f" },
     "status.bastion": { "style": "ring", "color": "#e8b84a" },
     "status.oath": { "style": "ring", "color": "#fff0b0" },
-    "status.steadfast": { "style": "ring", "color": "#b8d4ff" }
+    "status.steadfast": { "style": "ring", "color": "#b8d4ff" },
+    "status.crippled": { "style": "hobble", "color": "#9aa8c0" },
+    "status.open_wound": { "style": "drip", "color": "#d0302a" },
+    "status.hawk_eye": { "style": "eye", "color": "#ffc83a" },
+    "status.hunter_venom": { "style": "stacks", "color": "#8fd14f" },
+    "status.plague": { "style": "ring", "color": "#c48cff" }
   },
   "bursts": {
     "guardian.bastion": { "color": "#e8b84a", "radius": 5 },
-    "guardian.oath": { "color": "#fff0b0", "radius": 6 }
+    "guardian.oath": { "color": "#fff0b0", "radius": 6 },
+    "hunter.plague": { "color": "#c48cff", "radius": 6, "at": "aim" }
   },
   "shield": "shield"
 }
