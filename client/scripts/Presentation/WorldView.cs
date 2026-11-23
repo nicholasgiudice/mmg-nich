@@ -45,6 +45,16 @@ public partial class WorldView : Node2D
     /// <summary>Projéteis desenhados neste frame: o impacto no alvo espera a chegada (s).</summary>
     private readonly Dictionary<(EntityId Source, EntityId Target), double> _flights = new();
 
+    /// <summary>Disparos desenhados neste frame por fonte (T-444): cada orbe sai de um ponto.</summary>
+    private readonly Dictionary<EntityId, int> _shotsThisFrame = new();
+
+    /// <summary>Raios das canalizações (T-444).</summary>
+    private BeamView? _beamView;
+    private readonly List<(EntityId Source, EntityId Target, ChannelBeam Beam, float Strength)> _beams = new();
+
+    /// <summary>Meteoros sobre os avisos (T-444): a pedra caindo e o que é preciso para a explosão quando o aviso some.</summary>
+    private readonly Dictionary<EntityId, (MeteorView View, Godot.Vector2 Ground, CastBurst Blast)> _meteors = new();
+
     /// <summary>Lado (pixels) do quadro de impacto.</summary>
     private const float ImpactSizePx = 40f;
 
@@ -82,6 +92,7 @@ public partial class WorldView : Node2D
     {
         var latest = authority.Latest;
         _flights.Clear();
+        _shotsThisFrame.Clear();
         foreach (var e in events)
         {
             switch (e)
@@ -91,7 +102,15 @@ public partial class WorldView : Node2D
                     break;
                 case DamageDealt hit when hit.Amount > 0:
                     ShowText(hit.Target, DamageText(hit), Hud.HudTheme.School(hit.School));
+                    Shot(hit, authority.ControlledEntity);
                     Impact(hit, authority.ControlledEntity);
+                    if (_effects.HitBurst(hit.SourceId) is { } hitBurst && _views.TryGetValue(hit.Target, out var burstTarget)
+                        && (!EffectSettings.Reduced || hit.Source == authority.ControlledEntity || hit.Target == authority.ControlledEntity))
+                    {
+                        // T-444: Combustão (a explosão em cada monstro que queimava) e Sifão (o impacto no alvo).
+                        AddChild(BurstView.Create(burstTarget.Position, hitBurst));
+                    }
+
                     if (hit.Applied > 0 && _views.TryGetValue(hit.Target, out var hitView))
                     {
                         hitView.Flash();
@@ -120,6 +139,8 @@ public partial class WorldView : Node2D
                     }
 
                     Projectiles(used.Source, used.Targets, used.AbilityId, authority.ControlledEntity);
+                    Bolt(latest, used.Source, used.Targets, used.AbilityId, authority.ControlledEntity);
+                    Cone(latest, used.Source, used.Targets, used.AbilityId);
                     if (_effects.Burst(used.AbilityId) is { } burst && userView is not null)
                     {
                         // Raio do NH de quem usou (o Bastião passa de 5 para 7 no NH3); sem alcance nos dados, o do effects.json.
@@ -187,6 +208,7 @@ public partial class WorldView : Node2D
         var seen = _seen;
         seen.Clear();
         _links.Clear();
+        _beams.Clear();
         RenderGroundItems(latest, authority.ControlledEntity, seen);
         foreach (var state in latest.Entities)
         {
@@ -203,6 +225,20 @@ public partial class WorldView : Node2D
                 GetOrCreateGround<TelegraphView>(state.Id).Apply(telegraph, Units.ToPixels(transform.Position),
                     new Godot.Vector2(transform.Facing.X, transform.Facing.Y), (float)((now - telegraph.StartTick) / span),
                     telegraph.SourceFaction != playerFaction);
+                if (_effects.Meteor(telegraph.AbilityId) is { } meteor)
+                {
+                    // T-444, Meteoro: a pedra cai durante o aviso; a explosão sai quando o aviso some (o impacto).
+                    if (!_meteors.TryGetValue(state.Id, out var falling))
+                    {
+                        falling = (MeteorView.Create(meteor.Color), default, meteor with { Radius = telegraph.Radius });
+                        AddChild(falling.View);
+                    }
+
+                    var ground = Units.ToPixels(transform.Position);
+                    falling.View.SetProgress(ground, (float)((now - telegraph.StartTick) / span));
+                    _meteors[state.Id] = falling with { Ground = ground };
+                }
+
                 continue;
             }
 
@@ -237,7 +273,7 @@ public partial class WorldView : Node2D
             view.ApplyShield(_effects.Shield, state.TryGet<ShieldState>() is { Total: > 0 });
             var (chips, marks) = StatusVisuals.From(state.TryGet<StatusEffects>(), _content, now);
             view.ApplyStatus(chips, marks);
-            var auras = StatusVisuals.Auras(state.TryGet<StatusEffects>(), _effects, now);
+            var auras = StatusVisuals.Auras(state.TryGet<StatusEffects>(), _effects, now, _content);
             view.ApplyAuras(auras.Select(a => a.Aura).ToList());
             foreach (var (aura, protector) in auras)
             {
@@ -248,9 +284,20 @@ public partial class WorldView : Node2D
             }
             view.SetVanishWarning(state.TryGet<AbilityState>()?.Cast is { } cast
                 && _content.Abilities.TryGetValue(cast.AbilityId, out var castDef) && castDef.Tags.Contains("ai.vanish"));
+            if (state.TryGet<AbilityState>() is { Cast: { Target: { } beamTarget } beamCast } beamAbilities
+                && _effects.Beam(beamCast.AbilityId) is { } beam)
+            {
+                // T-444: raio da canalização até o alvo; a força é a parte dos pulsos que já saiu (o Raio sobe a cada pulso).
+                var channel = _content.AbilityAt(beamCast.AbilityId, beamAbilities.RankOf(beamCast.AbilityId))?.Channel;
+                var pulses = channel is { Pulses: > 0, IntervalTicks: > 0 }
+                    ? Math.Clamp(Math.Floor((now - beamCast.StartTick) / channel.IntervalTicks) / channel.Pulses, 0, 1)
+                    : 0;
+                _beams.Add((state.Id, beamTarget, beam, (float)pulses));
+            }
+
             view.SetCast(SelectedEntity == state.Id && state.TryGet<AbilityState>()?.Cast is { } selectedCast
                 && selectedCast.EndTick > selectedCast.StartTick
-                ? (float)((now - selectedCast.StartTick) / (selectedCast.EndTick - selectedCast.StartTick))
+                ? ChannelAware(selectedCast, (float)((now - selectedCast.StartTick) / (selectedCast.EndTick - selectedCast.StartTick)))
                 : null);
 
             var from = _previousById.TryGetValue(state.Id, out var prev) ? prev.TryGet<Transform>() ?? transform : transform;
@@ -278,6 +325,28 @@ public partial class WorldView : Node2D
             {
                 _linkView.Add(a.Position, b.Position, color);
             }
+        }
+
+        if (_beamView is null)
+        {
+            _beamView = new BeamView { Name = "Beams" };
+            AddChild(_beamView);
+        }
+
+        _beamView.Begin();
+        foreach (var (source, target, beam, strength) in _beams)
+        {
+            if (_views.TryGetValue(source, out var a) && _views.TryGetValue(target, out var b) && a.IsAlive && b.IsAlive)
+            {
+                _beamView.Add(BodyCenter(a), BodyCenter(b), beam, strength);
+            }
+        }
+
+        foreach (var id in _meteors.Keys.Where(id => !seen.Contains(id)).ToList())
+        {
+            _meteors.Remove(id, out var landed);
+            landed.View.QueueFree();
+            AddChild(BurstView.Create(landed.Ground, landed.Blast));
         }
 
         foreach (var id in _ground.Keys.Where(id => !seen.Contains(id)).ToList())
@@ -472,6 +541,116 @@ public partial class WorldView : Node2D
         }
     }
 
+    /// <summary>
+    /// Projétil desenhado ao usar a habilidade (T-444, Bola de Fogo): de quem usou até o primeiro alvo, e os impactos de
+    /// todos esperam a chegada. Com explosão, um clarão no primeiro alvo no raio da explosão do NH de quem usou (o ponto da
+    /// explosão não vai pela rede; o primeiro alvo é o centro). Sem alvo, a bola voa o comprimento da linha e se apaga.
+    /// </summary>
+    private void Bolt(WorldSnapshot? latest, EntityId source, IReadOnlyList<EntityId> targets, string abilityId, EntityId? me)
+    {
+        if (_effects.Bolt(abilityId) is not { } bolt || !_views.TryGetValue(source, out var from)
+            || (EffectSettings.Reduced && source != me && !targets.Contains(me ?? EntityId.None)))
+        {
+            return;
+        }
+
+        var start = BodyCenter(from);
+        var state = latest?.Entities.FirstOrDefault(s => s.Id == source);
+        var rank = state?.TryGet<AbilityState>()?.RankOf(abilityId) ?? 1;
+        var line = _content.AbilityAt(abilityId, rank)?.Targeting as LineTargeting;
+        var first = targets.Where(t => t != source).Select(t => _views.GetValueOrDefault(t)).FirstOrDefault(v => v is not null);
+        if (first is null)
+        {
+            var facing = state?.TryGet<Transform>()?.Facing ?? System.Numerics.Vector2.UnitY;
+            var end = start + new Godot.Vector2(facing.X, facing.Y).Normalized() * (float)(line?.Length ?? 8) * Units.PixelsPerUnit;
+            AddChild(BoltView.Create(bolt, start, end));
+            return;
+        }
+
+        var hitAt = BodyCenter(first);
+        var view = BoltView.Create(bolt, start, hitAt);
+        view.Target = first;
+        view.TargetOffset = hitAt - first.Position;
+        if (bolt.Explode)
+        {
+            // O clarão sai nos pés do primeiro alvo na hora da chegada (ele anda durante o voo).
+            var blast = new CastBurst(bolt.Color, (float)(line?.ExplodeRadius ?? 2), Blast: true);
+            var offset = view.TargetOffset;
+            view.OnArrive = at => AddChild(BurstView.Create(at - offset, blast));
+        }
+
+        AddChild(view);
+        var flight = BoltView.FlightSeconds(start, hitAt);
+        foreach (var t in targets)
+        {
+            _flights[(source, t)] = flight;
+        }
+    }
+
+    /// <summary>
+    /// Cone de fogo ao usar uma habilidade em arco (T-444, Rajada de Chamas): na direção de quem usou, no alcance e na
+    /// abertura do NH dele (o NH3 abre de 90° para 120°).
+    /// </summary>
+    private void Cone(WorldSnapshot? latest, EntityId source, IReadOnlyList<EntityId> targets, string abilityId)
+    {
+        if (_effects.Cone(abilityId) is not { } color || !_views.TryGetValue(source, out var from))
+        {
+            return;
+        }
+
+        var state = latest?.Entities.FirstOrDefault(s => s.Id == source);
+        var rank = state?.TryGet<AbilityState>()?.RankOf(abilityId) ?? 1;
+        if (_content.AbilityAt(abilityId, rank)?.Targeting is not MeleeArcTargeting arc)
+        {
+            return;
+        }
+
+        // Direção: para o meio dos atingidos (a mira do uso não vem no evento); sem ninguém, para onde quem usou olha.
+        var hit = targets.Where(t => t != source).Select(t => _views.GetValueOrDefault(t)).OfType<EntityView>().ToList();
+        var facing = state?.TryGet<Transform>()?.Facing ?? System.Numerics.Vector2.UnitY;
+        var direction = hit.Count > 0
+            ? hit.Aggregate(Godot.Vector2.Zero, (sum, v) => sum + v.Position) / hit.Count - from.Position
+            : new Godot.Vector2(facing.X, facing.Y);
+        AddChild(ConeView.Create(from.Position - new Godot.Vector2(0, from.HeadPx * 0.35f), direction,
+            (float)arc.Range, (float)arc.Angle, color));
+    }
+
+    /// <summary>
+    /// Disparo desenhado a cada dano de uma fonte (T-444: os orbes do Arcanista, dano com o id do status): de um ponto em
+    /// volta do peito de quem atira até o alvo; o impacto espera a chegada. Os disparos do mesmo instante saem de pontos
+    /// diferentes, como se cada orbe atirasse.
+    /// </summary>
+    private void Shot(DamageDealt hit, EntityId? me)
+    {
+        if (_effects.Shot(hit.SourceId) is not { } bolt || hit.Source == hit.Target
+            || !_views.TryGetValue(hit.Source, out var from) || !_views.TryGetValue(hit.Target, out var to)
+            || (EffectSettings.Reduced && hit.Source != me && hit.Target != me))
+        {
+            return;
+        }
+
+        var index = _shotsThisFrame.GetValueOrDefault(hit.Source);
+        _shotsThisFrame[hit.Source] = index + 1;
+        var angle = index * 2.1f + (float)Time.GetTicksMsec() / 1000f * 2.6f;
+        var start = BodyCenter(from) + new Godot.Vector2(Mathf.Cos(angle), Mathf.Sin(angle) * 0.4f) * (from.RadiusPx * 1.4f + 8f);
+        var end = BodyCenter(to);
+        if (bolt.Reverse)
+        {
+            // T-444, Sifão: a Mana tirada volta do alvo para quem usou; o impacto no alvo não espera.
+            var back = BoltView.Create(bolt, end, BodyCenter(from));
+            back.Target = from;
+            back.TargetOffset = BodyCenter(from) - from.Position;
+            AddChild(back);
+            return;
+        }
+
+        var shot = BoltView.Create(bolt, start, end);
+        shot.Target = to;
+        shot.TargetOffset = end - to.Position;
+        AddChild(shot);
+        _flights[(hit.Source, hit.Target)] = BoltView.FlightSeconds(start, end);
+    }
+
     /// <summary>Impacto no alvo (T-054), pela fonte ou escola do dano; espera o projétil chegar, se houver.</summary>
     private void Impact(DamageDealt hit, EntityId? me)
     {
@@ -484,6 +663,10 @@ public partial class WorldView : Node2D
         var delay = _flights.GetValueOrDefault((hit.Source, hit.Target));
         AddChild(EffectView.Impact(anim, BodyCenter(target), ImpactSizePx, delay, EffectSettings.Reduced ? 0.7f : 1f));
     }
+
+    /// <summary>Progresso da barra fina de conjuração: a canalização (T-444) esvazia em vez de encher.</summary>
+    private float ChannelAware(CastState cast, float progress) =>
+        _content.Abilities.TryGetValue(cast.AbilityId, out var def) && def.Channel is not null ? 1 - progress : progress;
 
     /// <summary>Meio do corpo desenhado (pixels): o pivô fica nos pés.</summary>
     private static Godot.Vector2 BodyCenter(EntityView view) => view.Position + new Godot.Vector2(0, -view.HeadPx * 0.45f);
@@ -571,6 +754,14 @@ public partial class WorldView : Node2D
         SelectedEntity = null;
         _links.Clear();
         _linkView?.Begin();
+        _beams.Clear();
+        _beamView?.Begin();
+        foreach (var (view, _, _) in _meteors.Values)
+        {
+            view.QueueFree();
+        }
+
+        _meteors.Clear();
     }
 
     private void RemoveView(EntityId id)

@@ -59,7 +59,10 @@ public partial class AreaView : Node2D
 
         if (_art is not null && kind == Kind.Pool)
         {
-            DrawCircle(Vector2.Zero, r, new Color(color, (_hostile ? 0.24f : 0.12f) * a)); // hostil: o chão perigoso continua forte
+            // Hostil: o chão perigoso continua forte. T-444: o fogo do Piromante também, para ser lido de longe.
+            var strong = _hostile || _state.AreaId.StartsWith("area.burning_ground", StringComparison.Ordinal)
+                || _state.AreaId.StartsWith("area.meteor_flames", StringComparison.Ordinal);
+            DrawCircle(Vector2.Zero, r, new Color(color, (strong ? 0.26f : 0.12f) * a));
             DrawArt(_art, r, a * EffectSettings.AreaAlpha * (_armed ? 1f : 0.5f));
             kind = Kind.None;
         }
@@ -184,6 +187,8 @@ public partial class AreaView : Node2D
         "area.sticky_web" => (new Color(0.92f, 0.92f, 0.85f), Kind.Web),
         "area.containment_trap" => (new Color(0.95f, 0.75f, 0.30f), Kind.Trap),
         _ when areaId.StartsWith("area.steel_storm", StringComparison.Ordinal) => (new Color(0.85f, 0.88f, 0.95f), Kind.Spin),
+        _ when areaId.StartsWith("area.burning_ground", StringComparison.Ordinal)
+            || areaId.StartsWith("area.meteor_flames", StringComparison.Ordinal) => (new Color(1f, 0.45f, 0.12f), Kind.Pool), // T-444
         _ when areaId.Contains("trap", StringComparison.Ordinal) => (new Color(0.95f, 0.75f, 0.30f), Kind.Trap),
         _ when areaId.Contains("web", StringComparison.Ordinal) => (new Color(0.92f, 0.92f, 0.85f), Kind.Web),
         _ => (hostile ? new Color(0.75f, 0.35f, 0.95f) : new Color(0.35f, 0.65f, 1.0f), Kind.Pool),

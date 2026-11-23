@@ -627,6 +627,14 @@ public sealed class NetAuthority : IGameAuthority, ICombatLogSource, IDisposable
             m *= Math.Pow(def.Modifiers.SpeedMultiplier, s.Stacks);
         }
 
+        // T-444: canalizando uma habilidade que deixa andar (Raio Arcano NH5, Feixe do Vazio), a velocidade é × o
+        // moveSpeedMultiplier dela, como o ChannelSpeed do Core. A canalização vem no AbilityState.Cast do snapshot.
+        if (own.TryGet<AbilityState>() is { Cast: { } cast } abilities && cast.EndTick > tick
+            && _content.AbilityAt(cast.AbilityId, abilities.RankOf(cast.AbilityId))?.Channel?.MoveSpeedMultiplier is { } channel)
+        {
+            m *= channel;
+        }
+
         return (float)Math.Max(0, m);
     }
 

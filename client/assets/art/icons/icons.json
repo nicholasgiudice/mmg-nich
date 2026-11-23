@@ -338,6 +338,56 @@
       "x": 136,
       "y": 408,
       "source": "pixellab:d4d95f63-1c76-492e-8829-294e582f75c5#8"
+    },
+    "pyromancer.combustion": {
+      "x": 0,
+      "y": 442,
+      "source": "pixellab:c6992f0c-c499-4fb7-bca5-69233eb5ed3a#10"
+    },
+    "pyromancer.flame_burst": {
+      "x": 34,
+      "y": 442,
+      "source": "pixellab:bb12a08d-15ed-4cbc-880a-111fc064b5f2#0"
+    },
+    "pyromancer.burning_ground": {
+      "x": 68,
+      "y": 442,
+      "source": "pixellab:bb12a08d-15ed-4cbc-880a-111fc064b5f2#4"
+    },
+    "pyromancer.fireball": {
+      "x": 102,
+      "y": 442,
+      "source": "pixellab:c6992f0c-c499-4fb7-bca5-69233eb5ed3a#0"
+    },
+    "pyromancer.meteor": {
+      "x": 136,
+      "y": 442,
+      "source": "pixellab:bb12a08d-15ed-4cbc-880a-111fc064b5f2#9"
+    },
+    "arcanist.arcane_ray": {
+      "x": 0,
+      "y": 476,
+      "source": "pixellab:c6992f0c-c499-4fb7-bca5-69233eb5ed3a#12"
+    },
+    "arcanist.arcane_mark": {
+      "x": 34,
+      "y": 476,
+      "source": "pixellab:bb12a08d-15ed-4cbc-880a-111fc064b5f2#12"
+    },
+    "arcanist.arcane_orbs": {
+      "x": 68,
+      "y": 476,
+      "source": "pixellab:c6992f0c-c499-4fb7-bca5-69233eb5ed3a#4"
+    },
+    "arcanist.arcane_siphon": {
+      "x": 102,
+      "y": 476,
+      "source": "pixellab:53289bf1-9ef6-48fe-95ad-7eb068555ecb#3"
+    },
+    "arcanist.void_beam": {
+      "x": 136,
+      "y": 476,
+      "source": "pixellab:53289bf1-9ef6-48fe-95ad-7eb068555ecb#12"
     }
   }
 }
