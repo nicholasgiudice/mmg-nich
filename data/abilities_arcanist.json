@@ -1,0 +1,351 @@
+{
+  "$schema": "./schemas/game-data.schema.json",
+  "abilities": [
+    {
+      "id": "arcanist.arcane_ray",
+      "name": "Raio Arcano",
+      "tags": ["ranged", "channel"],
+      "cost": { "resource": "mana", "amount": 40 },
+      "cooldown": 8,
+      "targeting": { "type": "unit", "range": 9, "faction": "enemy" },
+      "effects": [{ "type": "damage", "school": "arcane", "base": 6, "scaling": { "int": 0.5 } }],
+      "channel": { "pulses": 6, "interval": 0.5, "pulseGrowth": 0.15 },
+      "ranks": [
+        { "rank": 2, "effects": [{ "type": "damage", "school": "arcane", "base": 7.2, "scaling": { "int": 0.6 } }] },
+        {
+          "rank": 3,
+          "effects": [{ "type": "damage", "school": "arcane", "base": 8.4, "scaling": { "int": 0.7 } }],
+          "channel": { "pulses": 8, "interval": 0.5, "pulseGrowth": 0.15 }
+        },
+        { "rank": 4, "effects": [{ "type": "damage", "school": "arcane", "base": 9.6, "scaling": { "int": 0.8 } }] },
+        {
+          "rank": 5,
+          "effects": [{ "type": "damage", "school": "arcane", "base": 10.8, "scaling": { "int": 0.9 } }],
+          "channel": { "pulses": 8, "interval": 0.5, "pulseGrowth": 0.15, "moveSpeedMultiplier": 0.5 }
+        }
+      ]
+    },
+    {
+      "id": "arcanist.arcane_mark",
+      "name": "Marca Arcana",
+      "tags": ["ranged", "dot"],
+      "cost": { "resource": "mana", "amount": 15 },
+      "cooldown": 3,
+      "targeting": { "type": "unit", "range": 9, "faction": "enemy" },
+      "effects": [{ "type": "apply_status", "status": "status.arcane_mark_1" }],
+      "ranks": [
+        { "rank": 2, "effects": [{ "type": "apply_status", "status": "status.arcane_mark_2" }] },
+        { "rank": 3, "effects": [{ "type": "apply_status", "status": "status.arcane_mark_3" }] },
+        { "rank": 4, "effects": [{ "type": "apply_status", "status": "status.arcane_mark_4" }] },
+        { "rank": 5, "effects": [{ "type": "apply_status", "status": "status.arcane_mark_5" }] }
+      ]
+    },
+    {
+      "id": "arcanist.arcane_orbs",
+      "name": "Orbes Arcanos",
+      "tags": ["buff", "arcane_orbs"],
+      "cost": { "resource": "mana", "amount": 45 },
+      "cooldown": 16,
+      "targeting": { "type": "self" },
+      "effects": [{ "type": "apply_status", "status": "status.arcane_orbs_1" }],
+      "ranks": [
+        { "rank": 2, "effects": [{ "type": "apply_status", "status": "status.arcane_orbs_2" }] },
+        { "rank": 3, "effects": [{ "type": "apply_status", "status": "status.arcane_orbs_3" }] },
+        { "rank": 4, "effects": [{ "type": "apply_status", "status": "status.arcane_orbs_4" }] },
+        { "rank": 5, "effects": [{ "type": "apply_status", "status": "status.arcane_orbs_5" }] }
+      ]
+    },
+    {
+      "id": "arcanist.arcane_siphon",
+      "name": "Sifão Arcano",
+      "tags": ["ranged", "mana_regen"],
+      "cooldown": 10,
+      "castTime": 1,
+      "targeting": { "type": "unit", "range": 9, "faction": "enemy" },
+      "effects": [
+        { "type": "damage", "school": "arcane", "base": 20, "scaling": { "int": 1.5 } },
+        { "type": "apply_status", "status": "status.arcane_siphon_1", "target": "self" }
+      ],
+      "ranks": [
+        {
+          "rank": 2,
+          "effects": [
+            { "type": "damage", "school": "arcane", "base": 24, "scaling": { "int": 1.8 } },
+            { "type": "apply_status", "status": "status.arcane_siphon_2", "target": "self" }
+          ]
+        },
+        {
+          "rank": 3,
+          "effects": [
+            { "type": "damage", "school": "arcane", "base": 28, "scaling": { "int": 2.1 } },
+            { "type": "apply_status", "status": "status.arcane_mark" },
+            { "type": "apply_status", "status": "status.arcane_siphon_3", "target": "self" }
+          ]
+        },
+        {
+          "rank": 4,
+          "effects": [
+            { "type": "damage", "school": "arcane", "base": 32, "scaling": { "int": 2.4 } },
+            { "type": "apply_status", "status": "status.arcane_mark" },
+            { "type": "apply_status", "status": "status.arcane_siphon_4", "target": "self" }
+          ]
+        },
+        {
+          "rank": 5,
+          "castTime": 0.5,
+          "effects": [
+            { "type": "damage", "school": "arcane", "base": 36, "scaling": { "int": 2.7 } },
+            { "type": "apply_status", "status": "status.arcane_mark" },
+            { "type": "apply_status", "status": "status.arcane_siphon_5", "target": "self" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "arcanist.void_beam",
+      "name": "Feixe do Vazio",
+      "tags": ["ranged", "channel", "signature"],
+      "signature": true,
+      "cost": { "resource": "mana", "amount": 90 },
+      "cooldown": 90,
+      "targeting": { "type": "unit", "range": 9, "faction": "enemy" },
+      "effects": [{ "type": "damage", "school": "arcane", "base": 20, "scaling": { "int": 2 } }],
+      "channel": { "pulses": 8, "interval": 0.5, "moveSpeedMultiplier": 0.5 },
+      "ranks": [
+        { "rank": 2, "effects": [{ "type": "damage", "school": "arcane", "base": 26, "scaling": { "int": 2.6 } }] },
+        {
+          "rank": 3,
+          "effects": [{ "type": "damage", "school": "arcane", "base": 32, "scaling": { "int": 3.2 } }],
+          "channel": {
+            "pulses": 8,
+            "interval": 0.5,
+            "moveSpeedMultiplier": 0.5,
+            "onComplete": [{ "type": "apply_status", "status": "status.void_exposed" }]
+          }
+        }
+      ]
+    }
+  ],
+  "statuses": [
+    {
+      "id": "status.arcane_mark_1",
+      "name": "Marca Arcana",
+      "tags": ["debuff", "arcane_mark", "dot"],
+      "defaultDuration": 10,
+      "stacking": "stack",
+      "maxStacks": 3,
+      "periodic": [
+        { "interval": 1, "effects": [{ "type": "damage", "school": "arcane", "base": 1, "scaling": { "int": 0.12 } }] }
+      ]
+    },
+    {
+      "id": "status.arcane_mark_2",
+      "name": "Marca Arcana",
+      "tags": ["debuff", "arcane_mark", "dot"],
+      "defaultDuration": 10,
+      "stacking": "stack",
+      "maxStacks": 3,
+      "periodic": [
+        {
+          "interval": 1,
+          "effects": [{ "type": "damage", "school": "arcane", "base": 1.2, "scaling": { "int": 0.144 } }]
+        }
+      ]
+    },
+    {
+      "id": "status.arcane_mark_3",
+      "name": "Marca Arcana",
+      "tags": ["debuff", "arcane_mark", "dot"],
+      "defaultDuration": 10,
+      "stacking": "stack",
+      "maxStacks": 4,
+      "periodic": [
+        {
+          "interval": 1,
+          "effects": [{ "type": "damage", "school": "arcane", "base": 1.4, "scaling": { "int": 0.168 } }]
+        }
+      ]
+    },
+    {
+      "id": "status.arcane_mark_4",
+      "name": "Marca Arcana",
+      "tags": ["debuff", "arcane_mark", "dot"],
+      "defaultDuration": 10,
+      "stacking": "stack",
+      "maxStacks": 4,
+      "periodic": [
+        {
+          "interval": 1,
+          "effects": [{ "type": "damage", "school": "arcane", "base": 1.6, "scaling": { "int": 0.192 } }]
+        }
+      ]
+    },
+    {
+      "id": "status.arcane_mark_5",
+      "name": "Marca Arcana",
+      "tags": ["debuff", "arcane_mark", "dot"],
+      "defaultDuration": 10,
+      "stacking": "stack",
+      "maxStacks": 5,
+      "periodic": [
+        {
+          "interval": 1,
+          "effects": [{ "type": "damage", "school": "arcane", "base": 1.8, "scaling": { "int": 0.216 } }]
+        }
+      ]
+    },
+    {
+      "id": "status.arcane_mark",
+      "name": "Marca Arcana",
+      "defaultDuration": 10,
+      "byRank": {
+        "ability": "arcanist.arcane_mark",
+        "statuses": [
+          "status.arcane_mark_1",
+          "status.arcane_mark_2",
+          "status.arcane_mark_3",
+          "status.arcane_mark_4",
+          "status.arcane_mark_5"
+        ]
+      }
+    },
+    {
+      "id": "status.arcane_orbs_1",
+      "name": "Orbes Arcanos",
+      "tags": ["buff", "arcane_orbs"],
+      "defaultDuration": 10,
+      "periodic": [
+        {
+          "interval": 1.5,
+          "effects": [
+            {
+              "type": "current_target",
+              "range": 9,
+              "count": 2,
+              "effects": [{ "type": "damage", "school": "arcane", "base": 2, "scaling": { "int": 0.2 } }]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "status.arcane_orbs_2",
+      "name": "Orbes Arcanos",
+      "tags": ["buff", "arcane_orbs"],
+      "defaultDuration": 10,
+      "periodic": [
+        {
+          "interval": 1.5,
+          "effects": [
+            {
+              "type": "current_target",
+              "range": 9,
+              "count": 2,
+              "effects": [{ "type": "damage", "school": "arcane", "base": 2.4, "scaling": { "int": 0.24 } }]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "status.arcane_orbs_3",
+      "name": "Orbes Arcanos",
+      "tags": ["buff", "arcane_orbs"],
+      "defaultDuration": 10,
+      "periodic": [
+        {
+          "interval": 1.5,
+          "effects": [
+            {
+              "type": "current_target",
+              "range": 9,
+              "count": 3,
+              "effects": [{ "type": "damage", "school": "arcane", "base": 2.8, "scaling": { "int": 0.28 } }]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "status.arcane_orbs_4",
+      "name": "Orbes Arcanos",
+      "tags": ["buff", "arcane_orbs"],
+      "defaultDuration": 10,
+      "periodic": [
+        {
+          "interval": 1.5,
+          "effects": [
+            {
+              "type": "current_target",
+              "range": 9,
+              "count": 3,
+              "effects": [{ "type": "damage", "school": "arcane", "base": 3.2, "scaling": { "int": 0.32 } }]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "status.arcane_orbs_5",
+      "name": "Orbes Arcanos",
+      "tags": ["buff", "arcane_orbs"],
+      "defaultDuration": 10,
+      "periodic": [
+        {
+          "interval": 1.5,
+          "effects": [
+            {
+              "type": "current_target",
+              "range": 9,
+              "count": 4,
+              "effects": [{ "type": "damage", "school": "arcane", "base": 3.6, "scaling": { "int": 0.36 } }]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "status.arcane_siphon_1",
+      "name": "Sifão Arcano",
+      "tags": ["buff", "mana_regen"],
+      "defaultDuration": 5,
+      "stats": { "manaRegen": { "base": 6 } }
+    },
+    {
+      "id": "status.arcane_siphon_2",
+      "name": "Sifão Arcano",
+      "tags": ["buff", "mana_regen"],
+      "defaultDuration": 5,
+      "stats": { "manaRegen": { "base": 7 } }
+    },
+    {
+      "id": "status.arcane_siphon_3",
+      "name": "Sifão Arcano",
+      "tags": ["buff", "mana_regen"],
+      "defaultDuration": 5,
+      "stats": { "manaRegen": { "base": 8 } }
+    },
+    {
+      "id": "status.arcane_siphon_4",
+      "name": "Sifão Arcano",
+      "tags": ["buff", "mana_regen"],
+      "defaultDuration": 5,
+      "stats": { "manaRegen": { "base": 9 } }
+    },
+    {
+      "id": "status.arcane_siphon_5",
+      "name": "Sifão Arcano",
+      "tags": ["buff", "mana_regen"],
+      "defaultDuration": 5,
+      "stats": { "manaRegen": { "base": 10 } }
+    },
+    {
+      "id": "status.void_exposed",
+      "name": "Feixe do Vazio",
+      "tags": ["debuff", "void_exposed"],
+      "defaultDuration": 6,
+      "stacking": "refresh",
+      "modifiers": { "damageTakenMultiplier": 1.15 }
+    }
+  ]
+}

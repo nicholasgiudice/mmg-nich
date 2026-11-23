@@ -330,6 +330,19 @@ Perfil esperado com segunda classe: o do nível, com os +5 pontos de atributo da
 
 **Revisão da T-433 na diferença entre segundas classes:** o **Guardião** (tanque) passa a ter limite de **2,0×** (era 1,6×), pelo mesmo motivo do Sacerdote (cura) sem limite: as metas dele são as do grupo e a vitória solo. Com o Arqueiro, a média caiu: o Arqueiro base (6,7 s) deu lugar a duas segundas classes no Lobo e Salteador (Atirador 6–8 s, Caçador 5–6 s), e o Guardião foi de 1,58× para 1,68× (30) e 1,76× (40). As outras continuam no limite delas (`tasks/reports/balance-v0.21.md` §4).
 
+**Metas do Mago (T-443, `tasks/reports/balance-v0.22.md`).** As metas gerais acima valem também para o Piromante e o Arcanista (o grupo típico do Mago solo são os Três Lobos do nível, com o Mago no lugar do Guerreiro). **Sem as assinaturas** (Cataclismo, Meteoro, Feixe do Vazio), como no tempo para matar da T-402: com elas, o Mago só com a base mata os Três Lobos em ~4 s em qualquer nível (a assinatura decide a luta) e a comparação vira ruído; quem caça um grupo atrás do outro não tem a assinatura (90–120 s) em toda luta. O uso das assinaturas é conferido à parte.
+
+| Situação | Meta |
+|---|---|
+| Piromante × Mago só com a base, grupo típico (Três Lobos do nível), solo | o Piromante vence ≥ 85% e em no máximo **85%** do tempo do Mago só com a base |
+| Piromante, solo, um alvo único forte | vence ≥ 85%; pode ser mais lento que no grupo típico |
+| Arcanista × Mago só com a base, solo, um alvo único forte: a **Aranha Grande** (elite) do nível, sozinha, na arena dos Três Lobos | o Arcanista vence ≥ 85% e em no máximo **85%** do tempo do Mago só com a base. A elite é a Aranha Grande porque o Cavaleiro Espectral (elite de grupo) e a Matriarca (chefe) vencem o Mago sozinho em todos os níveis |
+| Arcanista, grupo típico | vence ≥ 85%; pode ser mais lento que só a base |
+| Mana, grupo típico, com e sem as assinaturas | nenhum dos dois fica "sem Mana" em mais da metade das lutas; "sem Mana" = mais da metade da luta com a Mana abaixo do custo da habilidade mais barata da segunda classe (Rajada de Chamas, 35; Marca Arcana, 15) |
+| Nível 40, com as assinaturas | o bot usa o Meteoro nos Três Lobos (3 no raio) e o Feixe do Vazio na elite, e os dois vencem ≥ 85% |
+
+**Revisão da T-443 na diferença entre segundas classes:** com o Mago, as oito segundas classes estão na média e nenhuma classe base fica nela. O Piromante e o Arcanista (~5 s nos Quatro Ratos, com as assinaturas) entram no lugar do Mago base (6,4 s), a média cai de novo, e o **Guardião** chega a **1,97×** no 40 (limite 2,0×, sem folga) e o **Inquisidor** a **1,89×** no 25 (limite 1,8×; só 2 NH da segunda classe). Nova revisão: o **Guardião** entra na média **sem limite**, como o Sacerdote (as duas de suporte; as metas delas são as do grupo), e o **Inquisidor** vai até **2,0×** (era 1,8×). As outras seis ficam abaixo de 1,6×. Como a meta já foi revista três vezes pelo mesmo motivo (encontros solo de dificuldades diferentes), fica a sugestão de trocá-la por uma medida que não dependa do encontro (`tasks/reports/balance-v0.22.md` §4).
+
 ## 9. Implementação (fase 2, ordem sugerida)
 
 1. Core: componente de atributos/estatísticas, `scaling` nos efeitos (dano, cura, escudo), defesa (armadura/resistência), crítico com o RNG da simulação; dados de perfil por classe. Com perfil nível 1 + equipamento inicial, todos os testes atuais continuam passando.

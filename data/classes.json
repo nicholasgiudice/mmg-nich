@@ -83,7 +83,31 @@
         "mage.lightning_field",
         "mage.arcane_cataclysm"
       ],
-      "startingInventory": [{ "item": "consumable.minor_healing_potion", "count": 5 }]
+      "startingInventory": [{ "item": "consumable.minor_healing_potion", "count": 5 }],
+      "secondClasses": [
+        {
+          "id": "second_class.pyromancer",
+          "name": "Piromante",
+          "abilities": [
+            "pyromancer.combustion",
+            "pyromancer.flame_burst",
+            "pyromancer.burning_ground",
+            "pyromancer.fireball",
+            "pyromancer.meteor"
+          ]
+        },
+        {
+          "id": "second_class.arcanist",
+          "name": "Arcanista",
+          "abilities": [
+            "arcanist.arcane_ray",
+            "arcanist.arcane_mark",
+            "arcanist.arcane_orbs",
+            "arcanist.arcane_siphon",
+            "arcanist.void_beam"
+          ]
+        }
+      ]
     },
     {
       "id": "class.cleric",

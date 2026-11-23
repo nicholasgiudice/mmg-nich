@@ -627,6 +627,28 @@ Custo 90, recarga 90 s, alcance 9. Canaliza 4 s, um pulso a cada 0,5 s (8 pulsos
 | Sifão Arcano | dano, pilha de Marca Arcana | **regeneração de Mana vinda de um estado** (a mesma peça da Inspiração, T-421) |
 | Feixe do Vazio | canalização, mais dano recebido (como a Marca do Caçador) | andar canalizando |
 
+### Ajustes do simulador (T-443)
+
+Os dados estão em `data/abilities_pyromancer.json` e `data/abilities_arcanist.json`, com os números das tabelas acima. **Nenhum número mudou:** com os custos, recargas e valores do design, as metas do Mago passam (`tasks/reports/balance-v0.22.md`). A Mana do Piromante, que preocupava, não falta: o Mago chega ao 21 com ~340 de Mana e ~18/s (534 e 27,7/s no 40), e as lutas do grupo típico acabam antes de ela acabar. Antes e depois:
+
+| Habilidade | Antes (design) | Depois (dados) |
+|---|---|---|
+| Piromante (as 5) | tabelas acima | **iguais** |
+| Arcanista (as 5) | tabelas acima | **iguais** |
+
+O que os dados decidem onde o design não diz:
+
+- **Rajada de Chamas:** cone de 4 tiles (arco de 90°, 120° do NH3), na direção do alvo.
+- **Chão em Chamas:** só a área (sem dano na hora); um pulso por segundo, o primeiro 1 s depois de lançar (6 pulsos em 6 s, 8 no NH5), cada um com a Queimadura do NH.
+- **Bola de Fogo:** linha de 10 tiles e 1 de largura; sem monstro na linha, não explode (T-441).
+- **Meteoro:** a Queimadura do NH do Meteoro (1 a 3); o Chão em Chamas do NH3 é uma área própria de 5 s, raio 3.
+- **Marca Arcana:** as pilhas no máximo só renovam a duração. A pilha do Sifão (NH3+) é a do NH da Marca Arcana de quem lança (NH1 se ela não foi aprendida).
+- **Orbes Arcanos:** atiram no alvo atual, alcance 9 (o do Raio e da Marca), a partir de 1,5 s depois de lançar: 6 disparos de cada orbe em 10 s.
+
+Metas revistas (`design/progression-v0.1.md` §8): as metas do Mago são medidas sem as assinaturas; na diferença entre segundas classes, o Guardião entra sem limite e o Inquisidor vai até 2,0×.
+
+Alerta para o designer (relatório, §5): o Piromante fica muito acima da meta (37–70% do tempo do Mago só com a base contra os Três Lobos, quando a meta é no máximo 85%) e também mais rápido que o Arcanista contra um alvo único forte, ao contrário do papel das duas.
+
 ## 8. Clérigo em detalhe
 
 **Perfil de referência no nível 21:** pontos divididos entre INT e VIT (INT 62, VIT 58) e maça comum do nível 21 (ARMA 22). Nesse perfil, a Cura Direta dá 150 no NH1 e 270 no NH5, e o Golpe Sagrado dá 59.

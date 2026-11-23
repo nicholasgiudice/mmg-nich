@@ -93,8 +93,11 @@ public sealed class AbilityInfo
     public bool TargetsAllies { get; }
     public bool IsSelfCentered { get; }
 
-    /// <summary>Conjuração parada: tem tempo de conjuração e não pode andar enquanto conjura.</summary>
-    public bool NeedsStanding => Definition.CastTimeTicks > 0 && !Definition.CastWhileMoving;
+    /// <summary>
+    /// Conjuração parada: tem tempo de conjuração e não pode andar enquanto conjura, ou (T-443) canalização que andar corta.
+    /// </summary>
+    public bool NeedsStanding =>
+        (Definition.CastTimeTicks > 0 && !Definition.CastWhileMoving) || Definition.Channel is { MoveSpeedMultiplier: null };
 
     public bool IsBackwardDash =>
         Dash is { Direction: DisplacementDirection.Backward or DisplacementDirection.AwayFromSource };

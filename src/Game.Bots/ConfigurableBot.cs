@@ -60,7 +60,14 @@ public sealed partial class ConfigurableBot(BotPlan plan) : IBotController
             // Andar cancelaria a conjuração; conjurar andando (castWhileMoving) segue sem interferência.
             if (ctx.AbilityDef(cast.AbilityId) is { } def && !def.CastWhileMoving)
             {
-                output.Add(new StopIntent(ctx.Self.Id));
+                if (ChannelAllowsMoving(def))
+                {
+                    MoveWhileChanneling(ctx, output); // T-443: canalização que deixa andar
+                }
+                else
+                {
+                    output.Add(new StopIntent(ctx.Self.Id));
+                }
             }
 
             return;
@@ -247,6 +254,14 @@ public sealed partial class ConfigurableBot(BotPlan plan) : IBotController
         {
             target = statusTarget;
             return byStatus;
+        }
+
+        // T-443: mecânicas do Piromante e do Arcanista (Combustão, Bola de Fogo, Chão em Chamas, Rajada, Marca, Orbes, Sifão).
+        if (PlanMageAbility(ctx, info, enemies, focus, out var mageTarget, out var mageAim) is { } byMage)
+        {
+            target = mageTarget;
+            aim = mageAim;
+            return byMage;
         }
 
         switch (info.Role)
