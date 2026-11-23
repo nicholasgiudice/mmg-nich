@@ -15,7 +15,12 @@ Os números são ponto de partida para o simulador, como em `design/progression-
 | Pontos de atributo | **200** no nível 40: 5 por nível a partir do 2 (195) e **+5 ao virar segunda classe** (decisão de 2026-11-21) |
 | Barra | uma tecla por habilidade: **10 teclas** (1–5 da base, 6–0 da segunda classe), mais ataque básico e poção |
 | Passivas | **algumas habilidades viram passivas**, sem que toda classe precise ter: **Sede de Sangue** (Berserker), **Mira Firme** (Atirador de Elite), esta pela distância do alvo, sem ficar parado, e **Flecha Envenenada** (Caçador), que envenena em todo acerto (seção 4.1) |
-| Sacerdote | **Bênção** dá atributos e a nova **Graça Veloz** dá velocidade de movimento, as duas para todos perto do Sacerdote (seção 8) |
+| Sacerdote | **Bênção** dá atributos e a nova **Graça Veloz** dá velocidade de movimento, as duas para todos perto do Sacerdote (seção 8). A **Inspiração** (regeneração de Mana dos aliados) **substitui o Elo da Vida** (decisão de 2026-11-22) |
+| Inquisidor | **aprovado como está** na seção 8 (decisão de 2026-11-22) |
+| Atirador de Elite | **aprovado** (2026-11-22), com duas mudanças: o **Tiro Certeiro sem conjuração** e o **Olho de Falcão de 15 a 20 s** (seção 6) |
+| Caçador | **aprovado como está** na seção 6 (decisão de 2026-11-22) |
+| Piromante | **aprovado como está** na seção 7 (decisão de 2026-11-22) |
+| Arcanista | **aprovado** (2026-11-22), com uma mudança: o **Sifão Arcano aumenta a regeneração de Mana** em vez de devolver Mana na hora, para manter a regra "Mana vem só do tempo" (seção 7) |
 | Curva de XP | a dificuldade continua crescendo como hoje, com **monstros mais fortes que dão mais XP** (seção 3) |
 | Guerreiro | Guardião e Berserker |
 | Arqueiro | Atirador de Elite (alvo único) e Caçador |
@@ -273,7 +278,7 @@ Custo **80** (era 90; T-408), recarga 75 s. Por 4 s, gira sem parar, acertando t
 | Sede de Sangue (passiva) | estado permanente (como o Frenesi dos monstros) | **vida pelo dano causado**; **habilidade passiva** (pontos e NH, sem tecla) |
 | Tempestade de Aço | vários acertos com intervalo, Sangramento | **área que acompanha quem anda** (a verificar no Core) |
 
-O Berserker usa quase só o que já existe. O Guardião traz o **desvio de dano**, que o Sacerdote (Elo da Vida) também vai usar.
+O Berserker usa quase só o que já existe. O Guardião traz o **desvio de dano**. O Elo da Vida do Sacerdote, que também ia usar o desvio, saiu em 2026-11-22 (seção 8).
 
 ### Ajustes do simulador (T-408)
 
@@ -338,11 +343,11 @@ Custo 20, recarga 12 s, alcance 10.
 | 4 | +12% | +1 | — |
 | 5 | +12% | +1 | o crítico contra esses alvos causa **× 1,65** (em vez de × 1,5) |
 
-Os valores são menores que os da versão ativa (+10% a +20% por 6 a 8 s, a cada 15 s), porque agora valem o tempo todo. A versão anterior, que exigia ficar parado, foi descartada: com o Tiro Certeiro já pedindo 1,5 s parado, o Atirador passaria tempo demais sem andar.
+Os valores são menores que os da versão ativa (+10% a +20% por 6 a 8 s, a cada 15 s), porque agora valem o tempo todo. A versão anterior, que exigia ficar parado, foi descartada: com o Tiro Certeiro pedindo 1,5 s parado (na época), o Atirador passaria tempo demais sem andar.
 
-#### Tiro Certeiro — preparação longa, dano muito alto
+#### Tiro Certeiro — dano muito alto que ignora armadura
 
-Custo 35, recarga 10 s, alcance 12, conjuração de 1,5 s parado. Ignora parte da armadura do alvo.
+Custo 35, recarga 10 s, alcance 12, **sem conjuração** (decisão do designer, 2026-11-22; antes, 1,5 s parado). Ignora parte da armadura do alvo.
 
 | NH | Valor | Armadura ignorada | Outros efeitos | Perfil nível 21 |
 |---|---|---|---|---|
@@ -350,17 +355,21 @@ Custo 35, recarga 10 s, alcance 12, conjuração de 1,5 s parado. Ignora parte d
 | 2 | dano 30 + 2,4 × ARMA + 4,8 × DES | 30% | — | 388 |
 | 3 | dano 35 + 2,8 × ARMA + 5,6 × DES | **40%** | — | 452 |
 | 4 | dano 40 + 3,2 × ARMA + 6,4 × DES | 40% | — | 517 |
-| 5 | dano 45 + 3,6 × ARMA + 7,2 × DES | **50%** | conjuração **1 s** | 581 |
+| 5 | dano 45 + 3,6 × ARMA + 7,2 × DES | **50%** | recarga **8 s** | 581 |
+
+Sem a conjuração, o NH5 troca "conjuração de 1 s" por recarga de 8 s. O dano foi feito para um tiro que pedia 1,5 s parado: sem esse preço, o simulador deve dizer se ele precisa cair (tarefa de dados do Arqueiro).
 
 #### Olho de Falcão (assinatura, nível 35) — todo ataque é crítico
 
-Custo 70, recarga 90 s, só no Atirador.
+Custo 70, recarga 90 s, só no Atirador. **Dura perto de 20 s** (decisão do designer, 2026-11-22: 6 a 8 s era pouco para 70 de Mana).
 
 | NH | Duração | Outros efeitos |
 |---|---|---|
-| 1 | 6 s | todo ataque e habilidade de dano é crítico |
-| 2 | 7 s | todos críticos |
-| 3 | **8 s** | todos críticos e **+2 de alcance** |
+| 1 | 15 s | todo ataque e habilidade de dano é crítico |
+| 2 | 17 s | todos críticos |
+| 3 | **20 s** | todos críticos e **+2 de alcance** |
+
+Com 15 a 20 s a cada 90 s, o Atirador fica com todos os golpes críticos de 17% a 22% do tempo. O simulador confere se isso passa das metas (antes, 6 a 8 s).
 
 ### Caçador — venenos e sangramento em vários alvos
 
@@ -433,7 +442,7 @@ Custo 80, recarga 90 s, alcance 9, raio 6. Põe pilhas do Veneno do Caçador em 
 | Flecha Perfurante | linha (como a Flecha Devastadora NH2) | dano menor em quem está atrás |
 | Tiro Debilitante | dano, lentidão, menos dano causado | — |
 | Mira Firme (passiva) | estado permanente | **crítico pela distância até o alvo**, alcance como reforço |
-| Tiro Certeiro | conjuração | **ignorar armadura** |
+| Tiro Certeiro | dano | **ignorar armadura** |
 | Olho de Falcão | reforço próprio | **crítico garantido** (passa do teto de 40%) |
 | Flecha Envenenada (passiva) | veneno, pilhas (como o Sangramento), estado permanente | **efeito em todo acerto** (hoje um efeito só vale dentro da própria habilidade) |
 | Ferida Aberta | sangramento | **dano maior se o alvo andar** |
@@ -555,17 +564,17 @@ Custo 45, recarga 16 s, duração 10 s. Os orbes giram em volta do Arcanista e c
 | 4 | 3 | dano 3,2 + 0,32 × INT | 42 cada, 84/s |
 | 5 | **4** | dano 3,6 + 0,36 × INT | 48 cada, 127/s |
 
-#### Sifão Arcano — dano que devolve Mana
+#### Sifão Arcano — dano que acelera a Mana
 
-Sem custo, recarga 10 s, alcance 9, conjuração 1 s.
+Sem custo, recarga 10 s, alcance 9, conjuração 1 s. **Decisão do designer (2026-11-22):** em vez de devolver Mana na hora, o Sifão dá ao Arcanista **regeneração de Mana a mais por 5 s**, para manter a regra "Mana vem só do tempo" (`design/progression-v0.1.md`, seção 4). O total é o mesmo da versão anterior (30 a 50), só que espalhado em 5 s. Usa a mesma peça da Inspiração do Sacerdote (T-421).
 
-| NH | Valor | Mana devolvida | Outros efeitos | Perfil nível 21 |
+| NH | Valor | Mana por s a mais (5 s) | Outros efeitos | Perfil nível 21 |
 |---|---|---|---|---|
-| 1 | dano 20 + 1,5 × INT | 30 | — | 203 |
-| 2 | dano 24 + 1,8 × INT | 35 | — | 244 |
-| 3 | dano 28 + 2,1 × INT | 40 | põe **1 pilha** de Marca Arcana | 284 |
-| 4 | dano 32 + 2,4 × INT | 45 | põe 1 pilha | 325 |
-| 5 | dano 36 + 2,7 × INT | 50 | põe 1 pilha e conjuração **0,5 s** | 365 |
+| 1 | dano 20 + 1,5 × INT | +6 (30 no total) | — | 203 |
+| 2 | dano 24 + 1,8 × INT | +7 (35) | — | 244 |
+| 3 | dano 28 + 2,1 × INT | +8 (40) | põe **1 pilha** de Marca Arcana | 284 |
+| 4 | dano 32 + 2,4 × INT | +9 (45) | põe 1 pilha | 325 |
+| 5 | dano 36 + 2,7 × INT | +10 (50) | põe 1 pilha e conjuração **0,5 s** | 365 |
 
 #### Feixe do Vazio (assinatura, nível 35) — canalização longa num alvo
 
@@ -590,7 +599,7 @@ Custo 90, recarga 90 s, alcance 9. Canaliza 4 s, um pulso a cada 0,5 s (8 pulsos
 | Raio Arcano | canalização (como a Flecha Devastadora) | **dano que sobe a cada pulso**; andar canalizando (NH5) |
 | Marca Arcana | pilhas (como o Sangramento) | — |
 | Orbes Arcanos | — | **orbes que atiram sozinhos no alvo atual** |
-| Sifão Arcano | dano, Mana (como a poção de Mana) | — |
+| Sifão Arcano | dano, pilha de Marca Arcana | **regeneração de Mana vinda de um estado** (a mesma peça da Inspiração, T-421) |
 | Feixe do Vazio | canalização, mais dano recebido (como a Marca do Caçador) | andar canalizando |
 
 ## 8. Clérigo em detalhe
@@ -639,17 +648,21 @@ Pedido do designer (2026-11-20). Custo 20, recarga 20 s, raio 6 em volta do Sace
 | 4 | **+22%** | 30 s | tira a lentidão |
 | 5 | **+25%** | 30 s | tira a lentidão, raio **8** e imunidade a lentidão por 10 s |
 
-#### Elo da Vida — dois aliados dividem o dano
+#### Inspiração — mais Mana por segundo para os aliados
 
-Custo 30, recarga 18 s, alcance 8. Liga o aliado escolhido ao aliado com mais vida perto dele (até 6 tiles): uma parte do dano que o escolhido receberia vai para o outro.
+Decisão do designer (2026-11-22): **substitui o Elo da Vida**, que repetia o desvio de dano da Interceptação do Guardião. Custo 30, recarga 30 s, raio 6 em volta do Sacerdote. Os aliados que estavam no raio ao lançar, **menos o próprio Sacerdote**, ganham regeneração de Mana a mais pela duração. O bônus escala com a INT do Sacerdote.
 
-| NH | Dano desviado | Duração | Outros efeitos |
-|---|---|---|---|
-| 1 | 25% | 6 s | — |
-| 2 | 30% | 6 s | — |
-| 3 | 30% | **8 s** | — |
-| 4 | 35% | 8 s | — |
-| 5 | **40%** | 8 s | os dois ligados recebem **5% menos dano** |
+Segue a regra **"Mana vem só do tempo"** (`design/progression-v0.1.md`, seção 4): a Inspiração não dá Mana na hora, ela aumenta a regeneração. O Sacerdote fica de fora para a habilidade não pagar o próprio custo.
+
+| NH | Mana por s a mais | Duração | Outros efeitos | Perfil nível 21 |
+|---|---|---|---|---|
+| 1 | +(1,5 + 0,04 × INT) | 12 s | — | +4,0/s, 48 em cada aliado |
+| 2 | +(1,8 + 0,048 × INT) | 12 s | — | +4,8/s, 57 |
+| 3 | +(2,1 + 0,056 × INT) | **15 s** | — | +5,6/s, 84 |
+| 4 | +(2,4 + 0,064 × INT) | 15 s | — | +6,4/s, 96 |
+| 5 | +(2,7 + 0,072 × INT) | 15 s | raio **8** | +7,2/s, 107 |
+
+Para ter ideia do tamanho: todas as classes regeneram 5 de Mana por segundo, mais a INT. No NH1, a Inspiração quase dobra a regeneração do Guerreiro enquanto dura, e os 48 de Mana são meia barra dele (88 no nível 40). Fica ligada 40% do tempo no NH1 e metade a partir do NH3.
 
 **Saiu o Renovar** (cura ao longo do tempo num aliado; aprovado pelo designer em 2026-11-20) para a Graça Veloz caber nas 4 habilidades normais: ele repetia a Oração Restauradora, que já cura ao longo do tempo, e a Cura Direta da base.
 
@@ -732,10 +745,10 @@ Custo 80, recarga 90 s, só no Inquisidor. Pela duração, o Golpe Sagrado acert
 | Habilidade | Já existe no Core | Novo |
 |---|---|---|
 | Oração Restauradora | estado em aliados no raio | **estado que cura por segundo** (hoje o periódico só causa dano; a verificar) |
-| Bênção | estado em aliados no raio | **atributos vindos de um estado** (hoje só o equipamento soma atributos) |
+| Bênção | estado em aliados no raio | **atributos vindos de um estado**, com o valor pela INT de quem lançou (hoje só o equipamento soma atributos, e os números de um estado são fixos) |
 | Graça Veloz | estado em aliados no raio, velocidade, tirar estados, imunidade por etiqueta | — |
-| Elo da Vida | — | **desviar dano** (o mesmo do Guardião) |
-| Santuário | estado em aliados no raio | **vida mínima de 1** |
+| Inspiração | estado em aliados no raio | **regeneração de Mana vinda de um estado** (a mesma peça da Bênção) e **deixar quem lançou de fora** |
+| Santuário | estado em aliados no raio | **vida mínima de 1**; no NH3, **efeito ao acabar o estado** e **cura pela vida máxima do alvo** |
 | Martelo da Justiça | dano, atordoamento | — |
 | Consagração | área no chão | área que **também cura** aliados |
 | Selo da Luz | estado no monstro | **vida pelo dano** (o mesmo da Sede de Sangue), para quem bate no alvo |
@@ -748,10 +761,10 @@ São **40 habilidades novas** (5 por segunda classe), cada uma com dados, regras
 
 | Mecânica nova | Quem usa |
 |---|---|
-| Desviar dano de um aliado | Guardião (Interceptação, Juramento), Sacerdote (Elo da Vida) |
+| Desviar dano de um aliado | Guardião (Interceptação, Juramento) |
 | Vida pelo dano causado | Berserker (Sede de Sangue), Inquisidor (Selo da Luz, Julgamento, Ira Divina) |
 | Estado que cura por segundo | Sacerdote (Oração Restauradora) |
-| Atributos vindos de um estado | Sacerdote (Bênção) |
+| Atributos e regeneração de Mana vindos de um estado | Sacerdote (Bênção, Inspiração), Arcanista (Sifão Arcano) |
 | Dano que depende de um estado ou da vida do alvo | Berserker (Execução), Piromante (Combustão), Caçador (Ferida Aberta) |
 | Copiar ou espalhar estados | Caçador (Flecha Dispersa, Praga), Piromante (Combustão NH5) |
 | Crítico, alcance e armadura como números de reforço | Atirador de Elite (Mira Firme, Tiro Certeiro, Olho de Falcão) |
@@ -767,9 +780,10 @@ São **40 habilidades novas** (5 por segunda classe), cada uma com dados, regras
 
 O designer aprovou o Guardião e o Berserker em 2026-11-20 (seção 5).
 
-1. **Atirador de Elite, Caçador, Piromante, Arcanista, Sacerdote e Inquisidor** como detalhados nas seções 6 a 8.
-2. **Sacerdote:** o designer aprovou a Graça Veloz no lugar do Renovar (2026-11-20) e ainda pode sugerir mais habilidades.
-3. **XP por hora** como meta de cada área (o simulador mede), quando as áreas novas forem planejadas.
+1. ~~Piromante e Arcanista~~: **aprovados em 2026-11-22**. O Piromante ficou como está; no Arcanista, o Sifão Arcano passou a aumentar a regeneração de Mana (seção 7). Tarefas na seção 6i de `tasks/README.md` (T-440).
+2. ~~Atirador de Elite e Caçador~~: **aprovados em 2026-11-22**. O Caçador ficou como está; no Atirador, o Tiro Certeiro ficou sem conjuração e o Olho de Falcão dura de 15 a 20 s (seção 6). Tarefas na seção 6h de `tasks/README.md` (T-430).
+3. ~~Sacerdote e Inquisidor~~: **aprovados em 2026-11-22**. O Inquisidor ficou como está; no Sacerdote, a **Inspiração** entrou no lugar do Elo da Vida (seção 8). Tarefas na seção 6g de `tasks/README.md` (T-420).
+4. **XP por hora** como meta de cada área (o simulador mede), quando as áreas novas forem planejadas.
 
 Decididos em 2026-11-21: **+5 de atributo ao virar segunda classe**; foco só nas classes, com as áreas novas depois; uma **ferramenta para subir de nível** no teste (seção 4.2).
 

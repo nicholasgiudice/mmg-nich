@@ -3,7 +3,7 @@
 - **Ambiente:** Windows
 - **Modelo:** Humano
 - **Depende de:** T-410, T-411, T-412
-- **Libera:** detalhar as outras três classes (seção 7 de `tasks/README.md`)
+- **Libera:** — (o designer decidiu, em 2026-11-22, detalhar o Clérigo sem esperar este playtest; seção 6g de `tasks/README.md`)
 - **Áreas que pode alterar:** `tasks/reports/`
 - **Branch:** sai da `main` e é integrada na `main` (a fase 4 entrou na `main` em 2026-11-22; seção 6f de `tasks/README.md`).
 
