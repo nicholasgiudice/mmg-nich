@@ -442,6 +442,7 @@ internal static partial class GameDataValidator
                     }
 
                     if (d.ThreatMultiplier is { } tm) { c.NonNegative("threatMultiplier", tm); }
+                    ValidateMarksmanDamage(d, c); // T-431
                     if (d.LowHealthBonus is { } lhb)
                     {
                         if (!(lhb.BelowHealth > 0 && lhb.BelowHealth <= 1)) { c.Error("lowHealthBonus.belowHealth", "Deve estar em (0, 1]."); }
@@ -551,6 +552,7 @@ internal static partial class GameDataValidator
         }
 
         if (x.Reflect is { Fraction: < 0 or > 1 }) { ctx.Error("reflect.fraction", "Deve estar em 0..1."); }
+        ValidateMarksmanStatus(x, ctx); // T-431
         if (x.Breaks is { DamageFraction: < 0 }) { ctx.Error("breaks.damageFraction", "Não pode ser negativo."); }
         if (x.Redirect is { } rd)
         {

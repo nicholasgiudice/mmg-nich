@@ -93,7 +93,9 @@ public static class StatMath
 
     public static double ManaRegenBonus(CharacterStats s, StatRules r) => (s.Int * r.ManaRegenPerInt) + s.ManaRegen;
 
-    public static double CritChance(CharacterStats s, StatRules r) => Math.Min(r.CritMax, r.CritBase + (s.Agi * r.CritPerAgi) + s.CritBonus);
+    /// <summary>Chance de crítico; <paramref name="extra"/> (T-431: status de quem ataca) soma antes do teto, como o <c>CritBonus</c>.</summary>
+    public static double CritChance(CharacterStats s, StatRules r, double extra = 0) =>
+        Math.Min(r.CritMax, r.CritBase + (s.Agi * r.CritPerAgi) + s.CritBonus + extra);
 
     /// <summary>Divisor da recarga do ataque básico: 1 + min(AGI × porPonto, máximo).</summary>
     public static double AttackSpeedFactor(CharacterStats s, StatRules r) => 1 + Math.Min(r.AttackSpeedMax, s.Agi * r.AttackSpeedPerAgi);
@@ -142,13 +144,17 @@ public static class StatMath
     /// <summary>Nível da entidade: personagem pelo <see cref="CharacterStats.Level"/>, monstro pelo <see cref="UnitInfo.Level"/> (T-203); sem nenhum, 1.</summary>
     public static int LevelOf(Entity? e) => e?.TryGet<CharacterStats>()?.Level ?? e?.TryGet<UnitInfo>()?.Level ?? 1;
 
-    /// <summary>Fração do dano que a defesa do alvo tira: D / (D + base + porNível × nível do atacante), teto da regra.</summary>
-    public static double DefenseReduction(World world, Entity target, Entity? attacker, DamageSchool school)
+    /// <summary>
+    /// Fração do dano que a defesa do alvo tira: D / (D + base + porNível × nível do atacante), teto da regra.
+    /// <paramref name="ignore"/> (T-431, Tiro Certeiro): fração da defesa ignorada antes da conta (D × (1 − ignore)).
+    /// </summary>
+    public static double DefenseReduction(World world, Entity target, Entity? attacker, DamageSchool school, double ignore = 0)
     {
         var physical = school == DamageSchool.Physical;
         var defense = target.TryGet<CharacterStats>() is { } s
             ? (physical ? s.Armor : s.Resistance)
             : target.TryGet<UnitInfo>() is { } u ? (physical ? u.Armor : u.Resistance) : 0;
+        defense *= 1 - Math.Clamp(ignore, 0, 1);
         if (defense <= 0)
         {
             return 0;

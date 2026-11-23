@@ -378,7 +378,7 @@ public sealed class AbilitySystem : ISimulationSystem
             var origin = caster.Get<Transform>().Position;
             var next = world.Spatial.Nearest(
                 origin,
-                (float)unit.Range + 1f,
+                (float)(unit.Range + RangeBonus.For(world, caster, ability)) + 1f, // T-431: com o alcance a mais
                 x => x.Id != hit.Target && x.Has<Transform>() && TargetResolver.MatchesFaction(caster, x, unit.Faction)
                     && TargetResolver.CanBeHitBy(world, caster, x));
             if (next is null)
