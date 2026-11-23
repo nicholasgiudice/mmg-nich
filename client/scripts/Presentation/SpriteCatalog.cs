@@ -58,6 +58,13 @@ public sealed class SpriteCatalog
 
     public SpriteDefinition? For(string definitionId) => _sprites.GetValueOrDefault(definitionId);
 
+    /// <summary>
+    /// Sprite de um personagem: o da segunda classe (<c>second_class.*</c>), se ela tiver folha própria, senão o da
+    /// classe base.
+    /// </summary>
+    public SpriteDefinition? ForCharacter(string definitionId, string? secondClassId) =>
+        (secondClassId is null ? null : For(secondClassId)) ?? For(definitionId);
+
     public static SpriteCatalog Load(string directory = ArtDirectory)
     {
         var path = $"{directory}/sprites.json";

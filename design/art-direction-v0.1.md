@@ -128,7 +128,7 @@ Combinações usadas na cena de teste (2026-10-31). Para reproduzir, cole o trec
 | Guerreiro | `sex=muscular&body=Body_Color_light&head=Human_Male_light&expression=Neutral_light&hair=High_and_tight_dark_brown&shoulders=Pauldrons_gray&arms=Armour_steel&bracers=Bracers_steel&legs=Pants_charcoal&shoes=Armour_steel&shield=Kite_kite_blue_gray&weapon=Arming_Sword_steel` |
 | Arqueiro | `sex=male&body=Body_Color_light&head=Human_Male_light&expression=Neutral_light&hair=Ponytail_ginger&armour=Leather_leather&legs=Pants_walnut&shoes=Basic_Boots_brown&weapon=Recurve_medium&ammo=Ammo_arrow&quiver=Quiver_quiver` |
 | Mago | `sex=male&body=Body_Color_light&head=Human_Male_light&expression=Neutral_light&hair=Long_gray&beard=Medium_Beard_gray&clothes=Longsleeve_navy&jacket=Frock_coat_blue&legs=Formal_Pants_navy&shoes=Basic_Boots_brown&weapon=Gnarled_staff_medium` |
-| Clérigo | `sex=male&body=Body_Color_light&head=Human_Male_light&expression=Neutral_light&hair=Curly_short_light_brown&clothes=Longsleeve_tan&jacket=Tabard_white&legs=Pants_tan&shoes=Basic_Boots_brown&weapon=Mace_mace` |
+| Clérigo | `sex=male&body=Body_Color_light&head=Human_Male_light&expression=Neutral_light&hair=Curly_short_light_brown&clothes=Longsleeve_tan&jacket=Tabard_white&legs=Pants_tan&shoes=Basic_Boots_brown&weapon=S_staff_light` (era `Mace_mace` até 2026-11-23) |
 | Salteador | `sex=male&body=Body_Color_light&head=Human_Male_light&expression=Neutral_light&armour=Leather_maroon&legs=Pants_brown&shoes=Basic_Boots_walnut&bandana=Bandana_red&weapon=Arming_Sword_iron` |
 | Guarda Esquelético | `sex=male&body=Skeleton_white&head=Skeleton_white&armour=Leather_walnut&weapon=Arming_Sword_iron` |
 
@@ -136,6 +136,27 @@ Ajustes do designer (2026-10-31):
 - Guerreiro com corpo musculoso, sem capacete e com cabelo. O corpo musculoso não aceita armadura de tronco no gerador, então ele usa ombreiras, braçais e proteção de braços e pés.
 - Arqueiro, Mago e Clérigo com cabelo.
 - O Mago estava "sem roupa" porque o manto (*Robe*) do gerador só existe para corpo feminino. Agora usa camisa, sobrecasaca azul, calça e cajado.
+
+### Segundas classes (2026-11-23)
+
+Cada segunda classe é uma evolução visual da base (mesmo rosto e cabelo, equipamento novo), aprovada pelo designer numa prévia do gerador com as quatro famílias lado a lado. A folha vai para `client/assets/art/characters/<id>.png` (com `<id>-credits.txt`), e o cliente usa a entrada `second_class.<id>` do `sprites.json` quando ela existe; senão, a da classe base.
+
+| Segunda classe | Configuração |
+|---|---|
+| Guardião | `sex=male&body=Body_Color_light&head=Human_Male_light&expression=Neutral_light&hair=High_and_tight_dark_brown&armour=Plate_steel&arms=Armour_steel&shoulders=Pauldrons_gray&legs=Armour_steel&shoes=Armour_steel&cape=Solid_blue&shield=Crusader_shield_crusader&weapon=Arming_Sword_steel&hat=Close_helm_steel` |
+| Berserker | `sex=muscular&body=Body_Color_light&head=Human_Male_light&expression=Neutral_light&hair=Long_messy_dark_brown&beard=Medium_Beard_dark_brown&bracers=Bracers_steel&legs=Pants_brown&shoes=Basic_Boots_brown&weapon=Waraxe_waraxe` |
+| Atirador de Elite | `sex=male&body=Body_Color_light&head=Human_Male_light&expression=Neutral_light&hair=Ponytail_ginger&armour=Leather_charcoal&legs=Pants_walnut&shoes=Basic_Boots_brown&hat=Leather_Cap_leather&hat_accessory=Leather_Cap_Feather_red&cape=Solid_maroon&weapon=Great_medium&ammo=Ammo_arrow&quiver=Quiver_quiver` |
+| Caçador | `sex=male&body=Body_Color_light&head=Human_Male_light&expression=Neutral_light&hair=Ponytail_ginger&armour=Leather_leather&legs=Pants_walnut&shoes=Basic_Boots_brown&hat=Hood_forest&cape=Tattered_forest&weapon=Normal_dark&ammo=Ammo_arrow&quiver=Quiver_quiver` |
+| Piromante | `sex=male&body=Body_Color_light&head=Human_Male_light&expression=Neutral_light&hair=Long_gray&beard=Medium_Beard_gray&clothes=Longsleeve_black&jacket=Frock_coat_red&legs=Formal_Pants_black&shoes=Basic_Boots_brown&hat=Wizard_Hat_Base_red&weapon=Loop_staff_red` |
+| Arcanista | `sex=male&body=Body_Color_light&head=Human_Male_light&expression=Neutral_light&hair=Long_gray&beard=Medium_Beard_gray&clothes=Longsleeve_navy&jacket=Frock_coat_purple&legs=Formal_Pants_navy&shoes=Basic_Boots_brown&hat=Celestial_Wizard_Hat_purple&weapon=Diamond_staff_medium` |
+| Sacerdote | `sex=male&body=Body_Color_light&head=Human_Male_light&expression=Neutral_light&hair=Curly_short_light_brown&clothes=Longsleeve_white&jacket=Tabard_white&legs=Pants_white&shoes=Basic_Boots_brown&cape=Solid_yellow&charm=Cross_amulet_gold_yellow&weapon=S_staff_light` |
+| Inquisidor | `sex=male&body=Body_Color_light&head=Human_Male_light&expression=Neutral_light&hair=Curly_short_light_brown&hat=Kettle_helm_iron&armour=Plate_iron&jacket=Tabard_maroon&legs=Pants_charcoal&shoes=Basic_Boots_brown&cape=Solid_black&weapon=S_staff_light` |
+
+Decisões do designer (2026-11-23):
+- Guardião com armadura de placas e elmo fechado. Usa o corpo normal, porque o musculoso não aceita armadura de tronco.
+- Berserker sem armadura, com cabelo longo e barba (chifres e elmo viking foram reprovados).
+- Clérigo, Sacerdote e Inquisidor atacam de longe: trocam a maça pelo cajado S e usam a conjuração para atacar e para as habilidades, como o Mago. O cajado simples (*Simple staff*) foi descartado porque flutua na conjuração.
+- Andando, o golpe sai sem trocar de animação: a caminhada continua (`EntityView`).
 
 Licenças mostradas pelo gerador: quase todas as peças têm OGA-BY 3.0 como opção. Algumas peças do Guerreiro, do Arqueiro e do Mago só oferecem **CC-BY-SA 3.0** (ou CC-BY-SA/GPL). São aceitas pela regra do §7, e a conferência peça a peça é feita pelo CSV de créditos na exportação.
 

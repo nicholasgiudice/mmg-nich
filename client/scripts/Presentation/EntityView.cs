@@ -16,6 +16,7 @@ public partial class EntityView : Node2D
 
     private SpriteDefinition? _sprite;
     private bool _spriteResolved;
+    private string? _spriteSecondClass;
     private bool _casting;
     private double _movingFor;
     private double _attackTime = -1;
@@ -143,10 +144,13 @@ public partial class EntityView : Node2D
     /// <summary>Atualiza dados lentos (vida, nome, cor) a partir do snapshot mais recente.</summary>
     public void ApplyState(EntitySnapshot state, bool controlled, bool selected, SpriteCatalog sprites, bool highlighted = false)
     {
-        if (!_spriteResolved)
+        // A segunda classe pode chegar no meio da sessão (escolha no nível 20): o sprite troca quando ela muda.
+        var secondClass = state.TryGet<Game.Core.Combat.Progression.CharacterProgress>()?.SecondClass;
+        if (!_spriteResolved || secondClass != _spriteSecondClass)
         {
             _spriteResolved = true;
-            _sprite = state.TryGet<UnitInfo>() is { } info ? sprites.For(info.DefinitionId) : null;
+            _spriteSecondClass = secondClass;
+            _sprite = state.TryGet<UnitInfo>() is { } info ? sprites.ForCharacter(info.DefinitionId, secondClass) : null;
         }
 
         _casting = state.TryGet<AbilityState>()?.IsCasting ?? false;
@@ -244,7 +248,7 @@ public partial class EntityView : Node2D
         QueueRedraw();
     }
 
-    /// <summary>Toca a animação de ataque uma vez (habilidade executada).</summary>
+    /// <summary>Toca a animação de ataque uma vez (habilidade executada); andando, a caminhada tem prioridade.</summary>
     public void PlayAttack()
     {
         if (_alive)
@@ -856,12 +860,17 @@ public partial class EntityView : Node2D
 
         if (_attackTime >= 0 && sprite.For("attack") is { } attack)
         {
-            if (_attackTime < attack.DurationSeconds(direction))
+            if (_attackTime >= attack.DurationSeconds(direction))
+            {
+                _attackTime = -1;
+            }
+            else if (_movingFor <= 0)
             {
                 return (attack, _attackTime);
             }
 
-            _attackTime = -1;
+            // Andando, o golpe sai sem trocar de animação: a caminhada continua e o projétil/efeito mostram o ataque.
+            // Se parar no meio, o resto do golpe aparece.
         }
 
         if (_casting && sprite.For("cast") is { } cast)
