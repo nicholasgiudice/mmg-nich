@@ -1007,6 +1007,11 @@ public partial class Hud : Control
         var fraction = (float)((now - cast.StartTick) / (cast.EndTick - cast.StartTick));
         var name = _content.Abilities.TryGetValue(cast.AbilityId, out var def) ? def.Name : cast.AbilityId;
         var left = Math.Max(0, (cast.EndTick - now) / World.TickRate);
+        if (def?.Channel is not null)
+        {
+            fraction = 1 - fraction; // T-444: canalização (do uso ao último pulso) esvazia em vez de encher
+        }
+
         bar.Set(fraction, color, $"{name}  {left.ToString("0.0", Pt)} s");
     }
 

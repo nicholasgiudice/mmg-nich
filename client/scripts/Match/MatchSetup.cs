@@ -47,7 +47,7 @@ public static class MatchSetup
     /// seguinte ao da segunda classe.
     /// </param>
     public static MatchWorld Create(ContentCatalog content, MatchSettings settings, int? enemyLevel = null, float? enemyHealth = null,
-        int? playerLevel = null, string? secondClass = null)
+        int? playerLevel = null, string? secondClass = null, string? secondRanks = null)
     {
         if (!content.Encounters.TryGetValue(settings.EncounterId, out var encounter))
         {
@@ -98,7 +98,8 @@ public static class MatchSetup
                 if (i == controlledIndex || second is not null)
                 {
                     var promoteTo = playerLevel ?? content.Rules.Progression.SecondClassLevel + 1;
-                    spawned[i] = Promote(setup.World, spawned[i], cls, withRanks[i].Ranks, promoteTo, second);
+                    spawned[i] = Promote(setup.World, spawned[i], cls, withRanks[i].Ranks, promoteTo, second,
+                        i == controlledIndex ? secondRanks : null);
                 }
             }
         }
@@ -131,8 +132,15 @@ public static class MatchSetup
     /// com <paramref name="secondClass"/>, a segunda classe com NH1 em cada habilidade dela que o nível deixa. Os pontos de
     /// atributo ficam livres. Build que não vale: fica o jogador do encontro, com aviso.
     /// </summary>
+    /// <summary>T-444: NH de uma habilidade da segunda classe em <c>--rank=id:n,...</c> (para capturar os NH altos), ou null.</summary>
+    private static int? RankFromArgs(string? pairs, string abilityId) =>
+        (pairs ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Where(p => p.StartsWith(abilityId + ":", StringComparison.Ordinal))
+            .Select(p => int.TryParse(p[(abilityId.Length + 1)..], out var n) ? n : (int?)null)
+            .LastOrDefault();
+
     private static Game.Core.Simulation.Entity Promote(Game.Core.Simulation.World world, Game.Core.Simulation.Entity player,
-        ClassDefinition cls, IReadOnlyDictionary<string, int> ranks, int level, string? secondClass)
+        ClassDefinition cls, IReadOnlyDictionary<string, int> ranks, int level, string? secondClass, string? secondRanks = null)
     {
         var rules = world.Content.Rules.Progression;
         level = Math.Clamp(level, 1, rules.MaxLevel);
@@ -142,7 +150,7 @@ public static class MatchSetup
         {
             if (world.Content.Abilities.TryGetValue(id, out var ability) && rules.RequiredLevel(ability.Signature, 1, true) <= level)
             {
-                skillRanks[id] = 1;
+                skillRanks[id] = RankFromArgs(secondRanks, id) ?? 1;
             }
         }
 

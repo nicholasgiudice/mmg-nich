@@ -1,5 +1,6 @@
 using Game.Core.Combat;
 using Game.Core.Combat.Status;
+using Game.Core.Definitions;
 using Game.Core.Simulation;
 using Godot;
 
@@ -85,7 +86,8 @@ public static class StatusVisuals
     /// Sinais dos status ativos no corpo (T-412), pela lista de <see cref="EffectCatalog.Aura"/>, sem repetir o mesmo
     /// sinal. Para <see cref="AuraKind.Link"/>, vem junto quem protege (a outra ponta da linha).
     /// </summary>
-    public static IReadOnlyList<(StatusAura Aura, EntityId Protector)> Auras(StatusEffects? effects, EffectCatalog catalog, double now)
+    public static IReadOnlyList<(StatusAura Aura, EntityId Protector)> Auras(StatusEffects? effects, EffectCatalog catalog, double now,
+        ContentCatalog? content = null)
     {
         if (effects is null || effects.Active.Count == 0)
         {
@@ -95,28 +97,35 @@ public static class StatusVisuals
         var auras = new List<(StatusAura, EntityId)>();
         foreach (var st in effects.Active)
         {
-            if (st.ExpiresAtTick <= now || catalog.Aura(st.StatusId) is not { } aura)
+            if (st.ExpiresAtTick <= now || catalog.Aura(st.StatusId) is not { } found)
             {
                 continue;
             }
 
-            if (aura.Kind == AuraKind.Stacks)
+            if (found.Kind == AuraKind.Stacks)
             {
                 // T-434 (Veneno do Caçador): um sinal só, com o maior número de acúmulos entre as instâncias.
-                var i = auras.FindIndex(a => a.Item1.Kind == AuraKind.Stacks && a.Item1.Color == aura.Color);
+                var i = auras.FindIndex(a => a.Item1.Kind == AuraKind.Stacks && a.Item1.Color == found.Color);
                 var stacks = Math.Max(st.Stacks, i >= 0 ? auras[i].Item1.Stacks : 0);
                 if (i >= 0)
                 {
-                    auras[i] = (aura with { Stacks = stacks }, st.Protector);
+                    auras[i] = (found with { Stacks = stacks }, st.Protector);
                 }
                 else
                 {
-                    auras.Add((aura with { Stacks = stacks }, st.Protector));
+                    auras.Add((found with { Stacks = stacks }, st.Protector));
                 }
 
                 continue;
             }
 
+            // T-444: quantos orbes desenhar e as pilhas da Marca Arcana.
+            var aura = found.Kind switch
+            {
+                AuraKind.Orbs => found with { Count = OrbCount(st.StatusId, content) },
+                AuraKind.Mark => found with { Count = Math.Max(1, st.Stacks) },
+                _ => found,
+            };
             if (!auras.Any(a => a.Item1 == aura && (aura.Kind != AuraKind.Link || a.Item2 == st.Protector)))
             {
                 auras.Add((aura, st.Protector));
@@ -124,6 +133,21 @@ public static class StatusVisuals
         }
 
         return auras;
+    }
+
+    /// <summary>
+    /// Quantos orbes desenhar (T-444): o <c>count</c> do <c>current_target</c> no efeito periódico do status (2 a 4 nos Orbes
+    /// Arcanos, pelo NH). Sem a definição, 3.
+    /// </summary>
+    public static int OrbCount(string statusId, ContentCatalog? content)
+    {
+        if (content is null || !content.Statuses.TryGetValue(statusId, out var def))
+        {
+            return 3;
+        }
+
+        var count = def.Periodic.SelectMany(p => p.Effects).OfType<CurrentTargetEffect>().Select(c => c.Count).DefaultIfEmpty(0).Max();
+        return count > 0 ? count : 3;
     }
 
     private static string Abbreviate(string name, int stacks)

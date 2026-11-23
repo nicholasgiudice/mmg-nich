@@ -1,5 +1,5 @@
 {
-  "_comment": "Efeitos visuais (T-054). Quadros por [coluna, linha] na grade da folha. impacts: por escola de dano, ou pelo id da fonte (prefixo). projectiles: por id de habilidade. areas: por id de área (prefixo); mode fill = um quadro do tamanho da área, scatter = vários espalhados. auras (T-412): sinal do status no corpo, por id de status (prefixo); style ring = anel nos pés, flames = labaredas, link = linha até quem protege. bursts (T-412): onda em volta do lançador ao usar a habilidade, até o raio dos alvos extras da habilidade no NH de quem usou (radius só se os dados não tiverem); at = target (T-424) faz a onda sair do alvo principal. pillars (T-424): coluna de luz caindo em cada alvo da habilidade. motes (T-424) = sinais pequenos subindo dos lados do corpo, no formato de glyph (spark, plus, drop, chevron); wind = vento nos pés; dome = cúpula de luz; sigil = selo girando nos pés. Fonte de impacto e projétil (T-434): o nome da animação ou { animation, scale = tamanho × o padrão, glow = rastro do projétil / anel do impacto, impact = animação quando o projétil chega }. pierces (T-434): flecha que atravessa a linha inteira da habilidade. spreads (T-434): cor das linhas do alvo até quem recebe a cópia dos status. jumps (T-434): cor da linha do pulo de um status que acaba (prefixo do id). Estilos de aura da T-434: hobble = corrente nos pés, drip = gotas de sangue, eye = olho dourado, stacks = gota com o número de acúmulos. bursts com at = aim: a onda sai do ponto mirado, até o raio da área. Créditos em CREDITS.md.",
+  "_comment": "Efeitos visuais (T-054). Quadros por [coluna, linha] na grade da folha. impacts: por escola de dano, ou pelo id da fonte (prefixo). projectiles: por id de habilidade. areas: por id de área (prefixo); mode fill = um quadro do tamanho da área, scatter = vários espalhados. auras (T-412): sinal do status no corpo, por id de status (prefixo); style ring = anel nos pés, flames = labaredas, link = linha até quem protege. bursts (T-412): onda em volta do lançador ao usar a habilidade, até o raio dos alvos extras da habilidade no NH de quem usou (radius só se os dados não tiverem); at = target (T-424) faz a onda sair do alvo principal. pillars (T-424): coluna de luz caindo em cada alvo da habilidade. motes (T-424) = sinais pequenos subindo dos lados do corpo, no formato de glyph (spark, plus, drop, chevron); wind = vento nos pés; dome = cúpula de luz; sigil = selo girando nos pés. Fonte de impacto e projétil (T-434): o nome da animação ou { animation, scale = tamanho × o padrão, glow = rastro do projétil / anel do impacto, impact = animação quando o projétil chega }. pierces (T-434): flecha que atravessa a linha inteira da habilidade. spreads (T-434): cor das linhas do alvo até quem recebe a cópia dos status. jumps (T-434): cor da linha do pulo de um status que acaba (prefixo do id). Estilos de aura da T-434: hobble = corrente nos pés, drip = gotas de sangue, eye = olho dourado, stacks = gota com o número de acúmulos. bursts com at = aim: a onda sai do ponto mirado, até o raio da área. T-444: auras style orbs = orbes girando (quantos: count do current_target do status); bolts = projétil desenhado ao usar a habilidade (explode = clarão no primeiro alvo, no explodeRadius do NH); shots = projétil desenhado a cada dano da fonte (prefixo do id; os orbes; reverse = do alvo para quem usou, o Sifão); hitBursts = explosão em cada alvo atingido pela fonte (prefixo); cones = cone de fogo ao usar uma habilidade em arco; beams = raio até o alvo enquanto canaliza (grow = mais forte a cada pulso); meteors = pedra caindo sobre o aviso e explosão do tamanho dele no impacto. Créditos em CREDITS.md.",
   "sheets": {
     "fx": { "texture": "effects/effects.png", "cell": [32, 32] },
     "shield": { "texture": "effects/magic_iceshield.png", "cell": [128, 128] }
@@ -48,7 +48,9 @@
     "area.venom_pool": { "animation": "poison", "mode": "scatter" },
     "area.lightning_field": { "animation": "lightning", "mode": "scatter" },
     "area.rain_slow": { "animation": "arrow", "mode": "scatter" },
-    "area.cataclysm_fire": { "animation": "fire", "mode": "scatter" }
+    "area.cataclysm_fire": { "animation": "fire", "mode": "scatter" },
+    "area.burning_ground": { "animation": "fire", "mode": "scatter" },
+    "area.meteor_flames": { "animation": "fire", "mode": "scatter" }
   },
   "auras": {
     "status.intercepted": { "style": "link", "color": "#f2c14e" },
@@ -67,7 +69,12 @@
     "status.open_wound": { "style": "drip", "color": "#d0302a" },
     "status.hawk_eye": { "style": "eye", "color": "#ffc83a" },
     "status.hunter_venom": { "style": "stacks", "color": "#8fd14f" },
-    "status.plague": { "style": "ring", "color": "#c48cff" }
+    "status.plague": { "style": "ring", "color": "#c48cff" },
+    "status.arcane_orbs": { "style": "orbs", "color": "#b46cff" },
+    "status.burn": { "style": "burning", "color": "#ff6a1a" },
+    "status.arcane_mark": { "style": "mark", "color": "#8f3fe0" },
+    "status.arcane_siphon": { "style": "mana", "color": "#4aa8ff" },
+    "status.void_exposed": { "style": "ring", "color": "#7a3cc8" }
   },
   "bursts": {
     "guardian.bastion": { "color": "#e8b84a", "radius": 5 },
@@ -85,6 +92,27 @@
   },
   "pillars": {
     "inquisitor.judgment": { "color": "#ffe08a" }
+  },
+  "bolts": {
+    "pyromancer.fireball": { "color": "#ff7a1a", "size": 8, "explode": true }
+  },
+  "shots": {
+    "status.arcane_orbs": { "color": "#b46cff", "size": 5 },
+    "arcanist.arcane_siphon": { "color": "#4aa8ff", "size": 6, "reverse": true }
+  },
+  "hitBursts": {
+    "pyromancer.combustion": { "color": "#ff5a12", "radius": 1.6 },
+    "arcanist.arcane_siphon": { "color": "#b46cff", "radius": 0.9 }
+  },
+  "cones": {
+    "pyromancer.flame_burst": { "color": "#ff6a1a" }
+  },
+  "beams": {
+    "arcanist.arcane_ray": { "color": "#b46cff", "width": 5, "grow": true },
+    "arcanist.void_beam": { "color": "#4a1580", "width": 11 }
+  },
+  "meteors": {
+    "pyromancer.meteor": { "color": "#ff6a1a" }
   },
   "shield": "shield"
 }

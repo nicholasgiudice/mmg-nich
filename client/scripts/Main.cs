@@ -35,7 +35,7 @@ namespace MmoRpgClient;
 /// Capturas (T-345): <c>--enemy-level=n</c> põe todos os inimigos e objetivos do encontro local no nível n, e
 /// <c>--enemy-health=f</c> faz os inimigos começarem com a fração f da vida.
 /// Segunda classe (T-412): <c>--level=n</c> põe o jogador do encontro local no nível n (pela XP normal) e
-/// <c>--second-class=id</c> dá a segunda classe, com NH1 nas habilidades dela, a quem tem a classe base (o jogador ou um bot).
+/// <c>--second-class=id</c> dá a segunda classe, com NH1 nas habilidades dela (ou o NH de <c>--rank</c>, T-444), a quem tem a classe base (o jogador ou um bot).
 /// Efeitos (T-054): <c>--effects=reduced|normal</c> troca a intensidade só nesta execução; <c>--circles</c> também tira os efeitos.
 /// Mira do roteiro (T-386): com <c>--demo-aim=x;y</c> (tiles), o roteiro não mira sozinho no inimigo mais próximo; o cursor
 /// fica parado nesse ponto do mapa, como um jogador que clica com o mouse longe do alvo.
@@ -350,7 +350,7 @@ public partial class Main : Node2D
             int.TryParse(_args.GetValueOrDefault("enemy-level"), out var enemyLevel) ? enemyLevel : null,
             float.TryParse(_args.GetValueOrDefault("enemy-health"), System.Globalization.CultureInfo.InvariantCulture, out var enemyHealth) ? enemyHealth : null,
             int.TryParse(_args.GetValueOrDefault("level"), out var playerLevel) ? playerLevel : null,
-            _args.GetValueOrDefault("second-class"));
+            _args.GetValueOrDefault("second-class"), _args.GetValueOrDefault("rank"));
         MatchSettings.Current = _settings = settings with { ClassId = match.PlayerClass };
         _encounterName = match.Encounter.Name;
         _tracker = new MatchTracker(match.Authority.ControlledEntity, match.Encounter.Defeat.TimeLimitTicks);

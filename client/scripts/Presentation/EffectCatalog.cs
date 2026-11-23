@@ -68,6 +68,18 @@ public enum AuraKind
 
     /// <summary>T-434: gota com o número de acúmulos ao lado do corpo (Veneno do Caçador).</summary>
     Stacks,
+
+    /// <summary>T-444, Orbes Arcanos: bolinhas girando em volta do corpo, uma por disparo do status.</summary>
+    Orbs,
+
+    /// <summary>T-444, Queimadura: três chamas pequenas no corpo e brasas subindo.</summary>
+    Burning,
+
+    /// <summary>T-444, Marca Arcana: losango com o número de pilhas ao lado da barra de vida.</summary>
+    Mark,
+
+    /// <summary>T-444, Sifão Arcano: anel nos pés e gotas subindo (a Mana sobe mais rápido).</summary>
+    Mana,
 }
 
 /// <summary>Formato dos sinais de <see cref="AuraKind.Motes"/> (T-424).</summary>
@@ -88,9 +100,10 @@ public enum AuraGlyph
 
 /// <summary>
 /// Sinal de um status no personagem enquanto ele dura (T-412). <paramref name="Glyph"/>: formato em <see cref="AuraKind.Motes"/>
-/// (T-424); <paramref name="Stacks"/>: acúmulos, para <see cref="AuraKind.Stacks"/> (T-434).
+/// (T-424); <paramref name="Stacks"/>: acúmulos, para <see cref="AuraKind.Stacks"/> (T-434); <paramref name="Count"/>: quantas
+/// peças desenhar (T-444: orbes, pelo <c>count</c> do <c>current_target</c> do status; pilhas da marca).
 /// </summary>
-public sealed record StatusAura(AuraKind Kind, Color Color, AuraGlyph Glyph = AuraGlyph.Spark, int Stacks = 0);
+public sealed record StatusAura(AuraKind Kind, Color Color, AuraGlyph Glyph = AuraGlyph.Spark, int Stacks = 0, int Count = 1);
 
 /// <summary>
 /// Tamanho e brilho de um projétil ou impacto (T-434: o Tiro Certeiro é um tiro mais forte que o Disparo). <c>Scale</c>
@@ -103,11 +116,24 @@ public sealed record FxStyle(float Scale, Color? Glow, EffectAnimation? OnArrive
 }
 
 /// <summary>
+/// Projétil desenhado pelo cliente (T-444): bola brilhante com rastro, de quem lançou até o alvo. Com
+/// <paramref name="Explode"/>, explode no primeiro alvo no raio da explosão da habilidade (Bola de Fogo).
+/// </summary>
+public sealed record SpellBolt(Color Color, float SizePx, bool Explode, bool Reverse = false);
+
+/// <summary>
+/// Raio entre quem canaliza e o alvo enquanto a canalização dura (T-444: Raio Arcano, Feixe do Vazio). Com
+/// <paramref name="Grow"/>, fica mais largo e mais claro a cada pulso que já saiu.
+/// </summary>
+public sealed record ChannelBeam(Color Color, float WidthPx, bool Grow);
+
+/// <summary>
 /// Onda que sai do lançador ao usar uma habilidade em volta dele (T-412: Bastião, Juramento), até o raio. Com
 /// <paramref name="AtTarget"/> (T-424: Golpe Sagrado da Ira Divina), sai do primeiro alvo, até o raio dos alvos extras;
-/// com <paramref name="AtAim"/> (T-434, Praga), sai do ponto mirado, até o raio da área da habilidade.
+/// com <paramref name="AtAim"/> (T-434, Praga), sai do ponto mirado, até o raio da área da habilidade. Com
+/// <paramref name="Blast"/>, uma explosão (T-444: Bola de Fogo, Combustão): clarão cheio no lugar de um anel fino.
 /// </summary>
-public sealed record CastBurst(Color Color, float Radius, bool AtTarget = false, bool AtAim = false);
+public sealed record CastBurst(Color Color, float Radius, bool AtTarget = false, bool AtAim = false, bool Blast = false);
 
 /// <summary>Coluna de luz caindo sobre cada alvo da habilidade (T-424: Julgamento).</summary>
 public sealed record LightPillar(Color Color);
@@ -133,6 +159,12 @@ public sealed class EffectCatalog
     private readonly List<(string Prefix, StatusAura Aura)> _auras = new();
     private readonly Dictionary<string, CastBurst> _bursts = new(StringComparer.Ordinal);
     private readonly Dictionary<string, LightPillar> _pillars = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, SpellBolt> _bolts = new(StringComparer.Ordinal);
+    private readonly List<(string Prefix, SpellBolt Bolt)> _shots = new();
+    private readonly List<(string Prefix, CastBurst Burst)> _hitBursts = new();
+    private readonly Dictionary<string, Color> _cones = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, ChannelBeam> _beams = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, CastBurst> _meteors = new(StringComparer.Ordinal);
 
     public EffectAnimation? Shield { get; private set; }
 
@@ -171,6 +203,27 @@ public sealed class EffectCatalog
 
     /// <summary>Tamanho e anel do impacto pela fonte do dano (prefixo, T-434); sem entrada, o padrão.</summary>
     public FxStyle ImpactStyle(string sourceId) => Prefixed(_impactStyles, sourceId) ?? FxStyle.Default;
+
+    /// <summary>Projétil desenhado ao usar a habilidade (T-444), ou null.</summary>
+    public SpellBolt? Bolt(string abilityId) => _bolts.GetValueOrDefault(abilityId);
+
+    /// <summary>Projétil desenhado a cada dano desta fonte (T-444: disparos dos orbes, pelo prefixo do id do status), ou null.</summary>
+    public SpellBolt? Shot(string sourceId) => Prefixed(_shots, sourceId);
+
+    /// <summary>Explosão em cada alvo atingido por esta fonte (T-444: Combustão, Sifão), pelo prefixo do id, ou null.</summary>
+    public CastBurst? HitBurst(string sourceId) => Prefixed(_hitBursts, sourceId);
+
+    /// <summary>Cone de fogo desenhado ao usar a habilidade (T-444, Rajada de Chamas): a cor, ou null.</summary>
+    public Color? Cone(string abilityId) => _cones.TryGetValue(abilityId, out var c) ? c : null;
+
+    /// <summary>Raio da canalização (T-444), ou null.</summary>
+    public ChannelBeam? Beam(string abilityId) => _beams.GetValueOrDefault(abilityId);
+
+    /// <summary>
+    /// Meteoro do telegráfo desta habilidade (T-444): uma pedra em chamas caindo durante o aviso e, no fim, a explosão do
+    /// tamanho do aviso. A cor; o raio vem do telegráfo.
+    /// </summary>
+    public CastBurst? Meteor(string abilityId) => _meteors.GetValueOrDefault(abilityId);
 
     public AreaEffect? Area(string areaId) => Prefixed(_areas, areaId);
 
@@ -302,6 +355,38 @@ public sealed class EffectCatalog
             catalog._pillars[ability] = new LightPillar(Color.FromHtml((string?)node!["color"] ?? "#ffffff"));
         }
 
+        foreach (var (ability, node) in root["bolts"]?.AsObject() ?? [])
+        {
+            catalog._bolts[ability] = ReadBolt(node!);
+        }
+
+        foreach (var (prefix, node) in root["shots"]?.AsObject() ?? [])
+        {
+            catalog._shots.Add((prefix, ReadBolt(node!)));
+        }
+
+        foreach (var (prefix, node) in root["hitBursts"]?.AsObject() ?? [])
+        {
+            catalog._hitBursts.Add((prefix, new CastBurst(Color.FromHtml((string?)node!["color"] ?? "#ffffff"),
+                (float?)node["radius"] ?? 1f, Blast: (bool?)node["blast"] ?? true)));
+        }
+
+        foreach (var (ability, node) in root["cones"]?.AsObject() ?? [])
+        {
+            catalog._cones[ability] = Color.FromHtml((string?)node!["color"] ?? "#ffffff");
+        }
+
+        foreach (var (ability, node) in root["beams"]?.AsObject() ?? [])
+        {
+            catalog._beams[ability] = new ChannelBeam(Color.FromHtml((string?)node!["color"] ?? "#ffffff"),
+                (float?)node["width"] ?? 4f, (bool?)node["grow"] ?? false);
+        }
+
+        foreach (var (ability, node) in root["meteors"]?.AsObject() ?? [])
+        {
+            catalog._meteors[ability] = new CastBurst(Color.FromHtml((string?)node!["color"] ?? "#ffffff"), 0f, Blast: true);
+        }
+
         return catalog;
 
         static string? AnimationName(JsonNode? node) => node is JsonObject o ? (string?)o["animation"] : (string?)node;
@@ -310,6 +395,10 @@ public sealed class EffectCatalog
             ? new FxStyle((float?)o["scale"] ?? 1f, (string?)o["glow"] is { } glow ? Color.FromHtml(glow) : null,
                 Find((string?)o["impact"]))
             : null;
+
+        static SpellBolt ReadBolt(JsonNode node) =>
+            new(Color.FromHtml((string?)node["color"] ?? "#ffffff"), (float?)node["size"] ?? 8f, (bool?)node["explode"] ?? false,
+                (bool?)node["reverse"] ?? false);
 
         EffectAnimation? Find(string? id)
         {

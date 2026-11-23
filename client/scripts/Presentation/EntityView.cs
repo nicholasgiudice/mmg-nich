@@ -583,6 +583,51 @@ public partial class EntityView : Node2D
 
                     break;
 
+                case AuraKind.Orbs:
+                    // T-444, Orbes Arcanos: bolinhas girando numa elipse em volta do peito. As da metade de trás da volta
+                    // saem atrás do sprite, as da frente por cima, para parecer que giram em volta do corpo.
+                    var center = new Godot.Vector2(0, -HeadPx * 0.45f);
+                    var rx = _radiusPx * 1.4f + 8f;
+                    for (var i = 0; i < aura.Count; i++)
+                    {
+                        var angle = t * 2.6f + i * Mathf.Tau / aura.Count;
+                        if (Mathf.Sin(angle) >= 0 != front)
+                        {
+                            continue;
+                        }
+
+                        var at = center + new Godot.Vector2(Mathf.Cos(angle) * rx, Mathf.Sin(angle) * rx * 0.4f);
+                        DrawCircle(at, 8f, new Color(aura.Color, 0.30f));
+                        DrawCircle(at, 5f, aura.Color);
+                        DrawCircle(at + new Godot.Vector2(-1.5f, -1.5f), 2f, new Color(1f, 0.95f, 1f));
+                    }
+
+                    break;
+
+                case AuraKind.Burning when front:
+                    // T-444, Queimadura: três chamas pequenas no corpo, tremendo, e brasas subindo.
+                    for (var i = 0; i < 3; i++)
+                    {
+                        var at = new Godot.Vector2((i - 1) * _radiusPx * 0.55f, -HeadPx * (0.25f + 0.25f * (i % 2)));
+                        var flicker = 0.75f + 0.25f * Mathf.Sin(t * (11f + i * 2f) + i * 2.1f);
+                        var h = 11f * flicker;
+                        DrawColoredPolygon(
+                            [at + new Godot.Vector2(-4.5f, 0), at + new Godot.Vector2(4.5f, 0), at + new Godot.Vector2(0, -h)],
+                            new Color(aura.Color, 0.95f));
+                        DrawColoredPolygon(
+                            [at + new Godot.Vector2(-2.2f, 0), at + new Godot.Vector2(2.2f, 0), at + new Godot.Vector2(0, -h * 0.55f)],
+                            new Color(1f, 0.9f, 0.35f));
+                    }
+
+                    for (var i = 0; i < 3; i++)
+                    {
+                        var k = (t * 0.8f + i / 3f) % 1f;
+                        var x = Mathf.Sin(i * 2.7f + t * 1.5f) * _radiusPx * 0.6f;
+                        DrawRect(new Rect2(x - 1f, -HeadPx * (0.4f + k * 0.8f) - 1f, 2.5f, 2.5f), new Color(1f, 0.6f, 0.2f, 1f - k));
+                    }
+
+                    break;
+
                 case AuraKind.Sigil when !front:
                     // T-424: selo dourado girando nos pés (marca), do tamanho do corpo.
                     var rs = _radiusPx + 6f;
@@ -604,20 +649,56 @@ public partial class EntityView : Node2D
                 case AuraKind.Dome when front:
                     // T-424: cúpula translúcida sobre o corpo, com a borda clara pulsando.
                     var pd = 0.5f + 0.5f * Mathf.Sin(t * 3.5f);
-                    var rx = _radiusPx + 9f;
+                    var domeRx = _radiusPx + 9f;
                     var ry = HeadPx + 8f;
                     var dome = new List<Godot.Vector2>();
                     for (var i = 0; i <= 24; i++)
                     {
                         var ang = Mathf.Pi + i * Mathf.Pi / 24;
-                        dome.Add(new Godot.Vector2(Mathf.Cos(ang) * rx, _radiusPx * 0.3f + Mathf.Sin(ang) * ry));
+                        dome.Add(new Godot.Vector2(Mathf.Cos(ang) * domeRx, _radiusPx * 0.3f + Mathf.Sin(ang) * ry));
                     }
 
                     DrawColoredPolygon([.. dome], new Color(aura.Color, 0.14f + 0.06f * pd));
                     DrawPolyline([.. dome], new Color(aura.Color, 0.7f + 0.3f * pd), 2f);
                     DrawSetTransform(new Godot.Vector2(0, _radiusPx * 0.3f), 0, new Godot.Vector2(1, 0.4f));
-                    DrawArc(Godot.Vector2.Zero, rx, 0, Mathf.Tau, 32, new Color(aura.Color, 0.6f + 0.3f * pd), 2f);
+                    DrawArc(Godot.Vector2.Zero, domeRx, 0, Mathf.Tau, 32, new Color(aura.Color, 0.6f + 0.3f * pd), 2f);
                     DrawSetTransform(Godot.Vector2.Zero, 0, Godot.Vector2.One);
+                    break;
+
+                case AuraKind.Mark when front:
+                    // T-444, Marca Arcana: losango roxo à direita da barra de vida, com o número de pilhas.
+                    var c = new Godot.Vector2(BarWidth / 2 + 9, -HeadPx - 6);
+                    const float d = 8f;
+                    DrawColoredPolygon(
+                        [c + new Godot.Vector2(0, -d), c + new Godot.Vector2(d, 0), c + new Godot.Vector2(0, d), c + new Godot.Vector2(-d, 0)],
+                        aura.Color);
+                    DrawPolyline(
+                        [c + new Godot.Vector2(0, -d), c + new Godot.Vector2(d, 0), c + new Godot.Vector2(0, d), c + new Godot.Vector2(-d, 0),
+                            c + new Godot.Vector2(0, -d)],
+                        new Color(1f, 0.9f, 1f), 1.5f);
+                    DrawString(ThemeDB.FallbackFont, c + new Godot.Vector2(-d, 4.5f), aura.Count.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                        HorizontalAlignment.Center, d * 2, 12, Colors.White);
+                    break;
+
+                case AuraKind.Mana when !front:
+                    var manaPulse = 0.5f + 0.5f * Mathf.Sin(t * 5f);
+                    DrawSetTransform(Godot.Vector2.Zero, 0, new Godot.Vector2(1, 0.5f));
+                    DrawCircle(Godot.Vector2.Zero, _radiusPx + 6f, new Color(aura.Color, 0.16f + 0.08f * manaPulse));
+                    DrawArc(Godot.Vector2.Zero, _radiusPx + 6f, 0, Mathf.Tau, 32, new Color(aura.Color, 0.7f + 0.3f * manaPulse), 2.5f);
+                    DrawSetTransform(Godot.Vector2.Zero, 0, Godot.Vector2.One);
+                    break;
+
+                case AuraKind.Mana when front:
+                    // T-444, Sifão Arcano: gotas azuis subindo enquanto a Mana regenera mais rápido.
+                    for (var i = 0; i < 5; i++)
+                    {
+                        var k = (t * 0.7f + i / 5f) % 1f;
+                        var x = Mathf.Sin(i * 1.9f) * _radiusPx * 0.9f;
+                        var at = new Godot.Vector2(x, -k * HeadPx * 1.1f);
+                        DrawCircle(at, 2.5f, new Color(aura.Color, 1f - k));
+                        DrawCircle(at + new Godot.Vector2(-0.6f, -0.6f), 1f, new Color(1, 1, 1, 1f - k));
+                    }
+
                     break;
             }
         }
