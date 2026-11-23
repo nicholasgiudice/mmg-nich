@@ -25,12 +25,13 @@ public static class CoreEffects
     private static void OnDamage(EffectContext c, DamageEffect e)
     {
         // T-201: base + escala pelas estatísticas da fonte; crítico só para quem tem estatísticas.
-        var crit = Stats.StatMath.RollCrit(c.World, c.Source);
+        // T-431: o crítico considera os status de quem ataca (Mira Firme, Olho de Falcão); quem está atrás leva a fração.
+        var (crit, critFactor) = StatusCrit.Roll(c.World, c.Source, c.Target!, c.Ability);
         var value = Stats.StatMath.Scaled(e.Base, e.Scaling, c.Source) * Stats.StatMath.MonsterPower(c.World, c.Source)
-            * TagBonus(c.Target!, e) * LowHealthBonus(c.Target!, e) * c.Power * CritFactor(c.World, crit);
+            * TagBonus(c.Target!, e) * LowHealthBonus(c.Target!, e) * c.Power * critFactor * PierceFalloff.Factor(c, e);
         DamageResolver.Deal(
             c.World, c.Source, c.Target!, c.SourceId, value, e.School, melee: c.Ability?.IsMelee ?? false, critical: crit,
-            threatMultiplier: e.ThreatMultiplier);
+            threatMultiplier: e.ThreatMultiplier, ignoreArmor: e.IgnoreArmor);
         if (e.ResetCooldownOnKill && !c.Target!.IsAlive)
         {
             ResetCooldown(c);
@@ -225,10 +226,12 @@ public static class DamageResolver
     /// (<paramref name="applyModifiers"/> false, já calculado) não é desviado.</para>
     /// <paramref name="threatMultiplier"/>: ameaça = este número × dano, no lugar de <c>rules.threat.damageMultiplier</c>.
     /// Retorna o dano final no alvo (sem a parte desviada).
+    /// <paramref name="ignoreArmor"/> (T-431, Tiro Certeiro): fração da defesa do alvo (e do protetor) ignorada.
     /// </summary>
     public static float Deal(
         World world, Entity? source, Entity target, string sourceId, double baseAmount, DamageSchool school,
-        bool melee = false, bool applyModifiers = true, bool critical = false, double? threatMultiplier = null)
+        bool melee = false, bool applyModifiers = true, bool critical = false, double? threatMultiplier = null,
+        double ignoreArmor = 0)
     {
         var health = target.TryGet<Health>();
         if (health is null || !health.IsAlive || target.IsRemoved)
@@ -239,11 +242,11 @@ public static class DamageResolver
         var shares = applyModifiers && baseAmount > 0 ? Status.DamageRedirect.Shares(world, target) : [];
         if (shares.Count == 0)
         {
-            return Apply(world, source, target, health, sourceId, baseAmount, school, melee, applyModifiers, critical, threatMultiplier);
+            return Apply(world, source, target, health, sourceId, baseAmount, school, melee, applyModifiers, critical, threatMultiplier, ignoreArmor: ignoreArmor);
         }
 
         var kept = baseAmount * (1 - shares.Sum(x => x.Fraction));
-        var amount = Apply(world, source, target, health, sourceId, kept, school, melee, applyModifiers, critical, threatMultiplier);
+        var amount = Apply(world, source, target, health, sourceId, kept, school, melee, applyModifiers, critical, threatMultiplier, ignoreArmor: ignoreArmor);
         foreach (var share in shares)
         {
             if (share.Protector.TryGet<Health>() is not { IsAlive: true } ph || share.Protector.IsRemoved)
@@ -254,7 +257,7 @@ public static class DamageResolver
             var part = baseAmount * share.Fraction * (1 - share.Redirect.Reduction);
             var taken = Apply(
                 world, source, share.Protector, ph, sourceId, part, school, melee: false, applyModifiers: true, critical, threatMultiplier,
-                redirected: true);
+                redirected: true, ignoreArmor: ignoreArmor);
             world.Events.Publish(new Status.DamageRedirected(
                 source?.Id ?? EntityId.None, target.Id, share.Protector.Id, sourceId, share.Status.StatusId, taken));
         }
@@ -269,13 +272,13 @@ public static class DamageResolver
     /// </summary>
     private static float Apply(
         World world, Entity? source, Entity target, Health health, string sourceId, double baseAmount, DamageSchool school,
-        bool melee, bool applyModifiers, bool critical, double? threatMultiplier, bool redirected = false)
+        bool melee, bool applyModifiers, bool critical, double? threatMultiplier, bool redirected = false, double ignoreArmor = 0)
     {
         var svc = world.Combat;
         var dealt = source is null || !applyModifiers ? 1.0 : svc.DamageDealtMultiplier(world, source, target, school);
         var taken = applyModifiers ? svc.DamageTakenMultiplier(world, target, source, school) : 1.0;
         var resist = target.TryGet<UnitInfo>()?.ResistanceTo(school) ?? 0;
-        var defense = applyModifiers ? Stats.StatMath.DefenseReduction(world, target, source, school) : 0;
+        var defense = applyModifiers ? Stats.StatMath.DefenseReduction(world, target, source, school, ignoreArmor) : 0;
         var amount = Math.Max(0, CoreEffects.Round(baseAmount * dealt * taken * Math.Max(0, 1 - resist) * (1 - defense)));
 
         var remaining = amount;

@@ -60,6 +60,8 @@ public static class TargetResolver
         var dir = AimDirection(caster, target, aim);
         var beneficial = IsBeneficial(ability);
 
+        var extra = (float)RangeBonus.For(world, caster, ability); // T-431: alcance a mais vindo de status (tag ranged)
+
         bool AreaFilter(Entity e) =>
             MatchesFaction(caster, e, beneficial ? FactionFilter.Ally : FactionFilter.Enemy) && CanBeHitBy(world, caster, e);
 
@@ -77,7 +79,7 @@ public static class TargetResolver
 
                 var tpos = target.Get<Transform>().Position;
                 var radius = target.TryGet<Collider>()?.Radius ?? 0f;
-                if (Vector2.Distance(pos, tpos) - radius > u.Range + RangeEpsilon)
+                if (Vector2.Distance(pos, tpos) - radius > u.Range + extra + RangeEpsilon)
                 {
                     return TargetResolution.Fail(AbilityRejectReason.OutOfRange, dir);
                 }
@@ -94,7 +96,7 @@ public static class TargetResolver
                 return new TargetResolution(null, WithLos(world, pos, arc), dir);
 
             case LineTargeting l:
-                var line = world.Spatial.InOrientedRect(pos, dir, (float)l.Length, (float)l.Width, AreaFilter);
+                var line = world.Spatial.InOrientedRect(pos, dir, (float)l.Length + extra, (float)l.Width, AreaFilter);
                 return new TargetResolution(null, WithLos(world, pos, line), dir);
 
             case CircleSelfTargeting cs:
@@ -108,7 +110,7 @@ public static class TargetResolver
                     return TargetResolution.Fail(AbilityRejectReason.InvalidTarget, dir);
                 }
 
-                if (Vector2.Distance(pos, point.Value) > cp.Range + RangeEpsilon)
+                if (Vector2.Distance(pos, point.Value) > cp.Range + extra + RangeEpsilon)
                 {
                     return TargetResolution.Fail(AbilityRejectReason.OutOfRange, dir);
                 }

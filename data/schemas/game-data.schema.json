@@ -538,6 +538,8 @@
           "properties": { "target": { "$ref": "#/$defs/effectTarget" }, "onHit": { "$ref": "#/$defs/onHit" }, "type": { "const": "damage" }, "base": { "type": "number", "minimum": 0 }, "scaling": { "$ref": "#/$defs/scaling" }, "school": { "$ref": "#/$defs/school" },
             "bonusVsTags": { "type": "object", "additionalProperties": { "type": "number", "exclusiveMinimum": -1 }, "description": "{ \"undead\": 0.5 } = +50% contra alvos com a tag; somam." },
             "threatMultiplier": { "type": "number", "minimum": 0, "description": "T-406: ameaça = este número × dano causado, no lugar de rules.threat.damageMultiplier." },
+            "behindFraction": { "type": "number", "exclusiveMinimum": 0, "maximum": 1, "description": "T-431: com vários alvos, o mais perto de quem usou leva o dano inteiro e os outros esta fração (Flecha Perfurante)." },
+            "ignoreArmor": { "type": "number", "minimum": 0, "maximum": 1, "description": "T-431: fração da defesa do alvo (armadura contra físico, resistência contra o resto) ignorada antes da conta (Tiro Certeiro)." },
             "lowHealthBonus": { "type": "object", "additionalProperties": false, "required": ["belowHealth", "bonus"],
               "description": "T-407: alvo abaixo de belowHealth da vida máxima no acerto leva o dano × (1 + bonus).",
               "properties": { "belowHealth": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 }, "bonus": { "type": "number", "exclusiveMinimum": 0 } } },
@@ -626,6 +628,18 @@
           }
         },
         "immuneToTags": { "$ref": "#/$defs/stringList" },
+        "crit": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "T-431: crítico de quem tem o status, só em dano de habilidade e do ataque básico, contra alvos a minDistance tiles ou mais (até a borda do alvo): bonus soma à chance (× acúmulos, antes do teto), multiplier troca o critMultiplier (vale o maior), guaranteed faz todo acerto ser crítico.",
+          "properties": {
+            "bonus": { "type": "number", "minimum": 0, "maximum": 1 },
+            "minDistance": { "type": "number", "minimum": 0, "description": "0 = qualquer distância." },
+            "multiplier": { "type": "number", "minimum": 1 },
+            "guaranteed": { "type": "boolean" }
+          }
+        },
+        "rangeBonus": { "type": "number", "minimum": 0, "description": "T-431: tiles a mais (× acúmulos) no alcance das habilidades com a tag ranged de quem tem o status (unidade, linha, círculo no ponto)." },
         "reflect": {
           "type": "object",
           "additionalProperties": false,

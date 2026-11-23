@@ -366,6 +366,19 @@ public sealed record StatusDefinition
     /// <summary>Fortalece o próximo uso de certas habilidades e é consumido (T-061).</summary>
     public EmpowerDefinition? Empower { get; init; }
 
+    // ---- T-431 (Atirador de Elite) ----
+
+    /// <summary>Crítico a mais pela distância até o alvo, multiplicador próprio ou crítico garantido (T-431).</summary>
+    public StatusCritDefinition? Crit { get; init; }
+
+    /// <summary>
+    /// Tiles a mais (× acúmulos) no alcance das habilidades com a tag <c>ranged</c> de quem tem o status (T-431: Mira Firme
+    /// NH3, Olho de Falcão NH3): alcance de unidade, comprimento de linha e alcance de círculo no ponto. 0 = nenhum.
+    /// </summary>
+    public double RangeBonus { get; init; }
+
+    // ---- fim T-431 ----
+
     /// <summary>Devolve parte do dano recebido a quem atacou (T-341).</summary>
     public ReflectDefinition? Reflect { get; init; }
 

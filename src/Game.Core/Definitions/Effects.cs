@@ -33,6 +33,22 @@ public sealed record DamageEffect : EffectDefinition
     /// <summary>Bônus por tag do alvo (T-017): <c>{ "undead": 0.5 }</c> = +50% contra alvos com a tag. Bônus de tags diferentes somam.</summary>
     public IReadOnlyDictionary<string, double> BonusVsTags { get; init; } = new Dictionary<string, double>();
 
+    // ---- T-431 (Atirador de Elite) ----
+
+    /// <summary>
+    /// Dano em quem está atrás (T-431, Flecha Perfurante): com vários alvos no mesmo uso, o mais perto de quem usou leva o dano
+    /// inteiro e os outros levam esta fração (0,6 = 60%). Null = todos levam o dano inteiro. Em (0, 1].
+    /// </summary>
+    public double? BehindFraction { get; init; }
+
+    /// <summary>
+    /// Fração da defesa do alvo ignorada antes da conta de defesa (T-431, Tiro Certeiro: 0,3 a 0,5): a armadura contra dano
+    /// físico, a resistência contra as outras escolas. 0 = nenhuma. Em [0, 1].
+    /// </summary>
+    public double IgnoreArmor { get; init; }
+
+    // ---- fim T-431 ----
+
     /// <summary>
     /// Ameaça gerada = este número × o dano causado, em vez de <c>rules.threat.damageMultiplier</c> (T-406: Golpe de Escudo
     /// gera 3 vezes a ameaça do dano). Null = a regra padrão.
