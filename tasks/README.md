@@ -56,7 +56,7 @@ Fluxo para você:
 | **1 — Rede mínima** | Servidor dedicado na VPS, 4 jogadores na mesma arena, login de desenvolvimento | **Concluída** (T-111: playtest online aprovado; seção 6b) |
 | **2 — Persistência e progressão** | Contas, personagens, inventário, Cidade + Campos online; atributos, níveis, equipamento e habilidades reformuladas (`design/progression-v0.1.md`) | **Concluída** (T-230: playtest aprovado com correções para a fase 3; seção 6d) |
 | **3 — Primeiro mapa completo** | Floresta, Ruínas, Cripta instanciada, Vigia Sem Rosto; grupo, lista de batalha, ouro, lojas e mapas maiores (playtest v0.2) | **Concluída** (T-380: playtest aprovado; seção 6e) |
-| **4 — Segundas classes** | Nível 40, segunda classe no nível 20 com duas opções por classe, passivas, barra de 10 teclas; Guerreiro primeiro (`design/segunda-classe-v0.1.md`) | **Detalhada** no bloco do Guerreiro (T-390; seção 6f); as outras classes em esboço. Em andamento direto na `main` (desde 2026-11-22; antes, na branch `trilha/segundas-classes`) |
+| **4 — Segundas classes** | Nível 40, segunda classe no nível 20 com duas opções por classe, passivas, barra de 10 teclas; Guerreiro primeiro (`design/segunda-classe-v0.1.md`) | **Detalhada** nos blocos do Guerreiro (T-390; seção 6f) e do Clérigo (T-420; seção 6g); Arqueiro e Mago em esboço. Em andamento direto na `main` (desde 2026-11-22; antes, na branch `trilha/segundas-classes`) |
 | **5 — Operação** | CI/CD, métricas, testes de carga, produção separada | Esboço |
 | **Depois** | Áreas e mapas novos do nível 16 ao 40 | Ainda sem esboço |
 
@@ -500,12 +500,12 @@ T-302, T-311, T-312, T-322, T-323, T-342, T-345, T-352 ─► T-380 ─► T-390
 
 ## 6f. Tarefas da fase 4 (segundas classes, bloco do Guerreiro)
 
-Detalhadas pela T-390 a partir de `design/segunda-classe-v0.1.md` e do playtest v0.3 (`tasks/reports/playtest-v0.3.md`). A fase entrega o **sistema** de segunda classe com o **Guerreiro** (Guardião e Berserker). As outras três classes ficam no esboço da seção 7 até o playtest do Guerreiro (T-413).
+Detalhadas pela T-390 a partir de `design/segunda-classe-v0.1.md` e do playtest v0.3 (`tasks/reports/playtest-v0.3.md`). A fase entrega o **sistema** de segunda classe com o **Guerreiro** (Guardião e Berserker). As outras três classes ficavam no esboço da seção 7 até o playtest do Guerreiro (T-413). Em 2026-11-22 o designer decidiu seguir sem esperar por ele: o Clérigo está na seção 6g.
 
 **Decisões da T-390**
 - **Escolha pela tela de habilidades**, fora de combate, em qualquer lugar (T-403, T-410). O mestre da classe na Cidade, do design, fica para quando os mapas forem refeitos.
 - **Sem migração de banco:** a segunda classe vai no documento de progressão do personagem (jsonb, com versão), como o resto da progressão (T-404).
-- **Mecânicas antes dos dados:** as peças novas do Core (desvio de dano, vida pelo dano, dano pela vida do alvo, área que acompanha) são tarefas próprias com dados de teste (T-406, T-407). Elas também servem às classes seguintes (o desvio de dano ao Elo da Vida do Sacerdote; a vida pelo dano ao Inquisidor).
+- **Mecânicas antes dos dados:** as peças novas do Core (desvio de dano, vida pelo dano, dano pela vida do alvo, área que acompanha) são tarefas próprias com dados de teste (T-406, T-407). Elas também servem às classes seguintes (a vida pelo dano ao Inquisidor; o desvio de dano ia servir ao Elo da Vida, que saiu em 2026-11-22, seção 6g).
 - **Ferramenta de teste desligada por padrão** (`--dev-tools`), ligada só no servidor local de teste (T-405).
 - **Fora desta fase:** áreas e mapas novos, monstros novos, as outras segundas classes e a operação (fase 5).
 
@@ -576,9 +576,58 @@ T-410, T-411, T-412 ─► T-413 ─► (outras três classes, seção 7)
 
 ---
 
+## 6g. Tarefas da fase 4 (bloco do Clérigo)
+
+Detalhadas pela T-420 a partir de `design/segunda-classe-v0.1.md`, seção 8. O bloco entrega o **Sacerdote** e o **Inquisidor** sobre o sistema de segunda classe do bloco do Guerreiro (seção 6f), que já está na `main`.
+
+**Decisões do designer (2026-11-22)**
+- **Seguir sem o playtest do Guerreiro.** A T-413 fica pendente e pode ser feita junto com o playtest do Clérigo (T-425).
+- **Inquisidor aprovado como está.**
+- **Inspiração no lugar do Elo da Vida** no Sacerdote. A Inspiração dá regeneração de Mana aos aliados no raio, menos ao próprio Sacerdote, e não Mana na hora ("Mana vem só do tempo").
+- Arqueiro e Mago: o designer revisa as segundas classes uma por uma antes de detalhar os blocos deles.
+
+**O que o bloco do Guerreiro já deixou pronto:** vida pelo dano (T-407) para o Selo da Luz, o Julgamento e a Ira Divina; estados em aliados num raio; áreas no chão. O desvio de dano (T-406) não é mais usado pelo Clérigo, porque o Elo da Vida saiu.
+
+### Índice
+
+| ID | Tarefa | Ambiente | Modelo | Depende de |
+|---|---|---|---|---|
+| [T-420](fase-4/T-420-planejar-clerigo.md) | Detalhar o bloco do Clérigo em tarefas | Windows | **Forte** | T-390 |
+| [T-421](fase-4/T-421-mecanicas-do-sacerdote.md) | Core: mecânicas do Sacerdote (cura por segundo, atributos e Mana vindos de um estado, vida mínima de 1, efeito ao acabar) | VPS | **Forte** | — |
+| [T-422](fase-4/T-422-mecanicas-do-inquisidor.md) | Core: mecânicas do Inquisidor (área que fere e cura, selo de vida pelo dano, ataque básico trocado, cura dos aliados pelo dano) | VPS | **Forte** | 421 |
+| [T-423](fase-4/T-423-dados-sacerdote-e-inquisidor.md) | Dados: habilidades do Sacerdote e do Inquisidor, metas e testes de design | VPS | Médio | 421, 422 |
+| [T-424](fase-4/T-424-icones-e-efeitos-do-clerigo.md) | Ícones e efeitos das habilidades do Sacerdote e do Inquisidor | Windows | Humano + Médio | 423 |
+| [T-425](fase-4/T-425-playtest-do-clerigo.md) | Playtest do Clérigo com segunda classe | Windows | Humano | 424 |
+
+### Ondas de execução
+
+| Onda | VPS | Windows |
+|---|---|---|
+| 1 | T-421 | — |
+| 2 | T-422 | — |
+| 3 | T-423 | — |
+| 4 | — | T-424 |
+| 5 | — | T-425 (e a T-413, se ainda estiver aberta) |
+
+**Cuidados de integração**
+- Tudo sai da `main` e entra na `main`, como no fim do bloco do Guerreiro. Testes locais no Windows, como na seção 6f.
+- A T-421 e a T-422 mexem nas definições de estado, no validador de dados e no schema: uma de cada vez, na ordem. A T-422 sai da `main` com a T-421 integrada, ou da branch da T-421.
+- **Protocolo:** nenhuma tarefa do bloco precisa subir `ProtocolVersion`. Se uma subir, é a partir do número da `main` (19 em 2026-11-22), e cliente e servidor saem do mesmo commit.
+- A T-423 é a primeira a pôr dados reais do Clérigo: só entra depois da T-421 e da T-422.
+
+### Grafo de dependências
+
+```text
+T-420 ─► T-421 ─► T-422 ─► T-423 ─► T-424 ─► T-425
+                                              ▲
+                                  (T-413) ────┘ opcional, no mesmo playtest
+```
+
+---
+
 ## 7. Fases seguintes (esboço)
 
-Serão convertidas em arquivos de tarefa no fim de cada fase. As fases 1, 2 e 3 estão detalhadas nas seções 6b, 6d e 6e, e o bloco do Guerreiro da fase 4 na seção 6f.
+Serão convertidas em arquivos de tarefa no fim de cada fase. As fases 1, 2 e 3 estão detalhadas nas seções 6b, 6d e 6e, e os blocos do Guerreiro e do Clérigo da fase 4 nas seções 6f e 6g.
 
 ### Fase 2 — Persistência e progressão
 
@@ -625,9 +674,9 @@ Decidida pelo designer depois do playtest v0.3 (2026-11-19 a 2026-11-21). Design
 | Base | regras do nível 40, simulador até o 40, metas dos testes de design | decidido |
 | Ferramenta de teste | botão no menu do Esc para subir de nível e desfazer a segunda classe, só em servidor de teste | decidido |
 | Guerreiro | sistema de segunda classe e passivas, Guardião e Berserker, barra de 10 teclas, tela de escolha; playtest | **aprovado** |
-| Clérigo | Sacerdote (aprovado) e Inquisidor | Inquisidor a aprovar |
-| Arqueiro | Atirador de Elite e Caçador | só as passivas decididas |
-| Mago | Piromante e Arcanista | a aprovar |
+| Clérigo | Sacerdote (Inspiração no lugar do Elo da Vida) e Inquisidor | **aprovado** (2026-11-22); detalhado na seção 6g (T-420) |
+| Arqueiro | Atirador de Elite e Caçador | só as passivas decididas; revisão uma por uma com o designer |
+| Mago | Piromante e Arcanista | a aprovar, uma por uma |
 
 ### Fase 5 — Operação
 

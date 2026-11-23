@@ -15,7 +15,8 @@ Os números são ponto de partida para o simulador, como em `design/progression-
 | Pontos de atributo | **200** no nível 40: 5 por nível a partir do 2 (195) e **+5 ao virar segunda classe** (decisão de 2026-11-21) |
 | Barra | uma tecla por habilidade: **10 teclas** (1–5 da base, 6–0 da segunda classe), mais ataque básico e poção |
 | Passivas | **algumas habilidades viram passivas**, sem que toda classe precise ter: **Sede de Sangue** (Berserker), **Mira Firme** (Atirador de Elite), esta pela distância do alvo, sem ficar parado, e **Flecha Envenenada** (Caçador), que envenena em todo acerto (seção 4.1) |
-| Sacerdote | **Bênção** dá atributos e a nova **Graça Veloz** dá velocidade de movimento, as duas para todos perto do Sacerdote (seção 8) |
+| Sacerdote | **Bênção** dá atributos e a nova **Graça Veloz** dá velocidade de movimento, as duas para todos perto do Sacerdote (seção 8). A **Inspiração** (regeneração de Mana dos aliados) **substitui o Elo da Vida** (decisão de 2026-11-22) |
+| Inquisidor | **aprovado como está** na seção 8 (decisão de 2026-11-22) |
 | Curva de XP | a dificuldade continua crescendo como hoje, com **monstros mais fortes que dão mais XP** (seção 3) |
 | Guerreiro | Guardião e Berserker |
 | Arqueiro | Atirador de Elite (alvo único) e Caçador |
@@ -273,7 +274,7 @@ Custo **80** (era 90; T-408), recarga 75 s. Por 4 s, gira sem parar, acertando t
 | Sede de Sangue (passiva) | estado permanente (como o Frenesi dos monstros) | **vida pelo dano causado**; **habilidade passiva** (pontos e NH, sem tecla) |
 | Tempestade de Aço | vários acertos com intervalo, Sangramento | **área que acompanha quem anda** (a verificar no Core) |
 
-O Berserker usa quase só o que já existe. O Guardião traz o **desvio de dano**, que o Sacerdote (Elo da Vida) também vai usar.
+O Berserker usa quase só o que já existe. O Guardião traz o **desvio de dano**. O Elo da Vida do Sacerdote, que também ia usar o desvio, saiu em 2026-11-22 (seção 8).
 
 ### Ajustes do simulador (T-408)
 
@@ -639,17 +640,21 @@ Pedido do designer (2026-11-20). Custo 20, recarga 20 s, raio 6 em volta do Sace
 | 4 | **+22%** | 30 s | tira a lentidão |
 | 5 | **+25%** | 30 s | tira a lentidão, raio **8** e imunidade a lentidão por 10 s |
 
-#### Elo da Vida — dois aliados dividem o dano
+#### Inspiração — mais Mana por segundo para os aliados
 
-Custo 30, recarga 18 s, alcance 8. Liga o aliado escolhido ao aliado com mais vida perto dele (até 6 tiles): uma parte do dano que o escolhido receberia vai para o outro.
+Decisão do designer (2026-11-22): **substitui o Elo da Vida**, que repetia o desvio de dano da Interceptação do Guardião. Custo 30, recarga 30 s, raio 6 em volta do Sacerdote. Os aliados que estavam no raio ao lançar, **menos o próprio Sacerdote**, ganham regeneração de Mana a mais pela duração. O bônus escala com a INT do Sacerdote.
 
-| NH | Dano desviado | Duração | Outros efeitos |
-|---|---|---|---|
-| 1 | 25% | 6 s | — |
-| 2 | 30% | 6 s | — |
-| 3 | 30% | **8 s** | — |
-| 4 | 35% | 8 s | — |
-| 5 | **40%** | 8 s | os dois ligados recebem **5% menos dano** |
+Segue a regra **"Mana vem só do tempo"** (`design/progression-v0.1.md`, seção 4): a Inspiração não dá Mana na hora, ela aumenta a regeneração. O Sacerdote fica de fora para a habilidade não pagar o próprio custo.
+
+| NH | Mana por s a mais | Duração | Outros efeitos | Perfil nível 21 |
+|---|---|---|---|---|
+| 1 | +(1,5 + 0,04 × INT) | 12 s | — | +4,0/s, 48 em cada aliado |
+| 2 | +(1,8 + 0,048 × INT) | 12 s | — | +4,8/s, 57 |
+| 3 | +(2,1 + 0,056 × INT) | **15 s** | — | +5,6/s, 84 |
+| 4 | +(2,4 + 0,064 × INT) | 15 s | — | +6,4/s, 96 |
+| 5 | +(2,7 + 0,072 × INT) | 15 s | raio **8** | +7,2/s, 107 |
+
+Para ter ideia do tamanho: todas as classes regeneram 5 de Mana por segundo, mais a INT. No NH1, a Inspiração quase dobra a regeneração do Guerreiro enquanto dura, e os 48 de Mana são meia barra dele (88 no nível 40). Fica ligada 40% do tempo no NH1 e metade a partir do NH3.
 
 **Saiu o Renovar** (cura ao longo do tempo num aliado; aprovado pelo designer em 2026-11-20) para a Graça Veloz caber nas 4 habilidades normais: ele repetia a Oração Restauradora, que já cura ao longo do tempo, e a Cura Direta da base.
 
@@ -732,10 +737,10 @@ Custo 80, recarga 90 s, só no Inquisidor. Pela duração, o Golpe Sagrado acert
 | Habilidade | Já existe no Core | Novo |
 |---|---|---|
 | Oração Restauradora | estado em aliados no raio | **estado que cura por segundo** (hoje o periódico só causa dano; a verificar) |
-| Bênção | estado em aliados no raio | **atributos vindos de um estado** (hoje só o equipamento soma atributos) |
+| Bênção | estado em aliados no raio | **atributos vindos de um estado**, com o valor pela INT de quem lançou (hoje só o equipamento soma atributos, e os números de um estado são fixos) |
 | Graça Veloz | estado em aliados no raio, velocidade, tirar estados, imunidade por etiqueta | — |
-| Elo da Vida | — | **desviar dano** (o mesmo do Guardião) |
-| Santuário | estado em aliados no raio | **vida mínima de 1** |
+| Inspiração | estado em aliados no raio | **regeneração de Mana vinda de um estado** (a mesma peça da Bênção) e **deixar quem lançou de fora** |
+| Santuário | estado em aliados no raio | **vida mínima de 1**; no NH3, **efeito ao acabar o estado** e **cura pela vida máxima do alvo** |
 | Martelo da Justiça | dano, atordoamento | — |
 | Consagração | área no chão | área que **também cura** aliados |
 | Selo da Luz | estado no monstro | **vida pelo dano** (o mesmo da Sede de Sangue), para quem bate no alvo |
@@ -748,10 +753,10 @@ São **40 habilidades novas** (5 por segunda classe), cada uma com dados, regras
 
 | Mecânica nova | Quem usa |
 |---|---|
-| Desviar dano de um aliado | Guardião (Interceptação, Juramento), Sacerdote (Elo da Vida) |
+| Desviar dano de um aliado | Guardião (Interceptação, Juramento) |
 | Vida pelo dano causado | Berserker (Sede de Sangue), Inquisidor (Selo da Luz, Julgamento, Ira Divina) |
 | Estado que cura por segundo | Sacerdote (Oração Restauradora) |
-| Atributos vindos de um estado | Sacerdote (Bênção) |
+| Atributos e regeneração de Mana vindos de um estado | Sacerdote (Bênção, Inspiração) |
 | Dano que depende de um estado ou da vida do alvo | Berserker (Execução), Piromante (Combustão), Caçador (Ferida Aberta) |
 | Copiar ou espalhar estados | Caçador (Flecha Dispersa, Praga), Piromante (Combustão NH5) |
 | Crítico, alcance e armadura como números de reforço | Atirador de Elite (Mira Firme, Tiro Certeiro, Olho de Falcão) |
@@ -767,8 +772,8 @@ São **40 habilidades novas** (5 por segunda classe), cada uma com dados, regras
 
 O designer aprovou o Guardião e o Berserker em 2026-11-20 (seção 5).
 
-1. **Atirador de Elite, Caçador, Piromante, Arcanista, Sacerdote e Inquisidor** como detalhados nas seções 6 a 8.
-2. **Sacerdote:** o designer aprovou a Graça Veloz no lugar do Renovar (2026-11-20) e ainda pode sugerir mais habilidades.
+1. **Atirador de Elite, Caçador, Piromante e Arcanista** como detalhados nas seções 6 e 7. O designer vai revisar uma por uma (2026-11-22).
+2. ~~Sacerdote e Inquisidor~~: **aprovados em 2026-11-22**. O Inquisidor ficou como está; no Sacerdote, a **Inspiração** entrou no lugar do Elo da Vida (seção 8). Tarefas na seção 6g de `tasks/README.md` (T-420).
 3. **XP por hora** como meta de cada área (o simulador mede), quando as áreas novas forem planejadas.
 
 Decididos em 2026-11-21: **+5 de atributo ao virar segunda classe**; foco só nas classes, com as áreas novas depois; uma **ferramenta para subir de nível** no teste (seção 4.2).
