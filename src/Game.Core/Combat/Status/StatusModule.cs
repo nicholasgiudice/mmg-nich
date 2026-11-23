@@ -11,7 +11,7 @@ public static class StatusModule
     public static void Register(CombatServices s)
     {
         s.Effects
-            .Register<ApplyStatusEffect>((c, e) => StatusManager.Apply(c.World, c.Source, c.Target!, e.Status, e.DurationTicks, c.AimPoint))
+            .Register<ApplyStatusEffect>((c, e) => HunterMechanics.AfterApplyStatus(c, e, StatusManager.Apply(c.World, c.Source, c.Target!, e.Status, e.DurationTicks, c.AimPoint))) // T-432: stacks
             .Register<RemoveStatusEffect>((c, e) => StatusManager.RemoveByTags(c.World, c.Target!, e.Tags.Count > 0 ? e.Tags : [e.Tag], e.Count, c.SourceEntityId));
         s.Gates.Add(new StatusGate());
         s.Modifiers.Add(new StatusModifierSource());
@@ -236,10 +236,13 @@ public sealed class StatusSystem : ISimulationSystem
                     {
                         s.NextPeriodicTick[i] += def.Periodic[i].IntervalTicks;
                         var source = world.Find(s.Source);
+                        MovingDamage.BeginPulse(entity, s, def.Periodic[i]); // T-432 (Ferida Aberta): andou desde o pulso anterior?
                         for (var k = 0; k < s.Stacks && entity.IsAlive; k++)
                         {
                             Effects.EffectApplier.Apply(world, def.Periodic[i].Effects, source, [entity], s.StatusId);
                         }
+
+                        MovingDamage.EndPulse(entity, s);
                     }
                 }
 
@@ -257,6 +260,8 @@ public sealed class StatusSystem : ISimulationSystem
                         // T-421 (Santuário NH3): só quando acaba pelo tempo, com a fonte do status.
                         Effects.EffectApplier.Apply(world, def.OnExpire, world.Find(s.Source), [entity], s.StatusId);
                     }
+
+                    StatusJump.OnExpired(world, entity, s, def); // T-432 (Praga): pula para o inimigo mais perto
                 }
             }
 

@@ -425,6 +425,24 @@ public sealed record StatusDefinition
     /// vale o aplicado por último. Null = não troca.
     /// </summary>
     public string? BasicAttack { get; init; }
+
+    // ---- T-432 (Caçador) ----
+
+    /// <summary>
+    /// Efeitos em todo acerto de quem tem o status (T-432, Flecha Envenenada): a cada dano de habilidade (ataque básico
+    /// incluído) que quem tem o status causa em outra entidade, estes efeitos rodam no alvo, com quem tem o status como fonte.
+    /// Dano periódico de status, dano de área, dano refletido e a parte desviada a um protetor não contam. Uma vez por acerto
+    /// (não × acúmulos). Vazio = nada.
+    /// </summary>
+    public IReadOnlyList<EffectDefinition> HitEffects { get; init; } = [];
+
+    /// <summary>Status escolhido pelo NH de outra habilidade de quem aplica (T-432, Veneno do Caçador). Null = o próprio status.</summary>
+    public StatusByRankDefinition? ByRank { get; init; }
+
+    /// <summary>Enquanto ativo, os status de quem o tem com certas etiquetas pulam ao acabar pelo tempo (T-432, Praga).</summary>
+    public StatusJumpDefinition? JumpOnExpire { get; init; }
+
+    // ---- fim T-432 ----
 }
 
 public sealed record AreaDefinition

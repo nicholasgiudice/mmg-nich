@@ -564,7 +564,8 @@
               "description": "T-422: cada acerto cura os aliados a até radius tiles de quem causou nesta fração do dano final (Ira Divina).",
               "properties": { "fraction": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 }, "radius": { "type": "number", "exclusiveMinimum": 0 },
                 "includeSelf": { "type": "boolean", "description": "Quem causou também se cura. Padrão true." },
-                "ability": { "$ref": "#/$defs/id", "description": "Habilidade a que a cura é atribuída no log. Padrão: a origem do dano." } } } } },
+                "ability": { "$ref": "#/$defs/id", "description": "Habilidade a que a cura é atribuída no log. Padrão: a origem do dano." } } },
+            "movingBonus": { "type": "number", "minimum": 0, "description": "T-432: no periodic de um status, o pulso causa × (1 + movingBonus) se o alvo andou mais de 0,1 tile desde o pulso anterior (Ferida Aberta)." } } },
         { "type": "object", "additionalProperties": false, "required": ["type", "base"],
           "properties": { "target": { "$ref": "#/$defs/effectTarget" }, "onHit": { "$ref": "#/$defs/onHit" }, "type": { "const": "heal" }, "base": { "type": "number", "minimum": 0 }, "scaling": { "$ref": "#/$defs/scaling" },
             "maxHealthFraction": { "type": "number", "minimum": 0, "maximum": 1, "description": "T-421: soma esta fração da vida máxima de quem recebe." } } },
@@ -574,7 +575,8 @@
               "description": "Ao expirar com sobra, devolve round(sobra × fraction) do recurso a quem criou o escudo.",
               "properties": { "resource": { "type": "string" }, "fraction": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 } } } } },
         { "type": "object", "additionalProperties": false, "required": ["type", "status"],
-          "properties": { "target": { "$ref": "#/$defs/effectTarget" }, "onHit": { "$ref": "#/$defs/onHit" }, "type": { "const": "apply_status" }, "status": { "$ref": "#/$defs/id" }, "duration": { "$ref": "#/$defs/seconds" } } },
+          "properties": { "target": { "$ref": "#/$defs/effectTarget" }, "onHit": { "$ref": "#/$defs/onHit" }, "type": { "const": "apply_status" }, "status": { "$ref": "#/$defs/id" }, "duration": { "$ref": "#/$defs/seconds" },
+            "stacks": { "type": "integer", "minimum": 1, "description": "T-432: acúmulos postos de uma vez, até o máximo do status (Praga). Padrão 1." } } },
         { "type": "object", "additionalProperties": false, "required": ["type"],
           "description": "Informe tag ou tags (qualquer uma das tags).",
           "properties": { "target": { "$ref": "#/$defs/effectTarget" }, "onHit": { "$ref": "#/$defs/onHit" }, "type": { "const": "remove_status" }, "tag": { "type": "string" }, "tags": { "$ref": "#/$defs/stringList" }, "count": { "type": "integer", "minimum": 0, "description": "0 = todos os que casarem." } } },
@@ -617,7 +619,12 @@
           "description": "T-442 (Orbes Arcanos): count disparos dos effects no alvo atual de quem recebe o efeito (o último alvo de unidade que escolheu), se vivo, no alcance e com linha de visão. Para o periodic de um status em quem lança.",
           "properties": { "target": { "$ref": "#/$defs/effectTarget" }, "onHit": { "$ref": "#/$defs/onHit" }, "type": { "const": "current_target" },
             "range": { "type": "number", "exclusiveMinimum": 0 }, "count": { "type": "integer", "minimum": 1 },
-            "affects": { "$ref": "#/$defs/faction" }, "effects": { "$ref": "#/$defs/effects" } } }
+            "affects": { "$ref": "#/$defs/faction" }, "effects": { "$ref": "#/$defs/effects" } } },
+        { "type": "object", "additionalProperties": false, "required": ["type", "tags", "radius"],
+          "description": "T-432 (Flecha Dispersa): copia os status do alvo com uma das tags (mesmos acúmulos, tempo que falta, quem usou como fonte) para até count entidades a até radius tiles dele, as mais perto primeiro; count 0 = todas.",
+          "properties": { "target": { "$ref": "#/$defs/effectTarget" }, "onHit": { "$ref": "#/$defs/onHit" }, "type": { "const": "copy_status" },
+            "tags": { "$ref": "#/$defs/stringList" }, "radius": { "type": "number", "exclusiveMinimum": 0 },
+            "count": { "type": "integer", "minimum": 0, "description": "Padrão 1; 0 = todas no raio." }, "affects": { "$ref": "#/$defs/faction" } } }
       ]
     },
     "onHit": { "type": "integer", "minimum": 1, "maximum": 5, "description": "Só neste acerto de uma habilidade com vários acertos (1 = o primeiro)." },
@@ -768,7 +775,28 @@
             "ability": { "$ref": "#/$defs/id", "description": "Habilidade a que a cura é atribuída no log. Padrão: o status." }
           }
         },
-        "basicAttack": { "$ref": "#/$defs/id", "description": "T-422: enquanto o status dura, o ataque básico de quem o tem usa esta habilidade (Ira Divina)." }
+        "basicAttack": { "$ref": "#/$defs/id", "description": "T-422: enquanto o status dura, o ataque básico de quem o tem usa esta habilidade (Ira Divina)." },
+        "hitEffects": { "$ref": "#/$defs/effects", "description": "T-432: efeitos no alvo a cada dano de habilidade (ataque básico incluído) de quem tem o status, com ele como fonte; não conta dano periódico, de área, refletido nem desviado (Flecha Envenenada)." },
+        "byRank": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["ability", "statuses"],
+          "description": "T-432: aplicar este status aplica statuses[NH − 1] pelo NH de ability de quem aplica; sem pontos ou sem NH, o primeiro; acima da lista, o último (Veneno do Caçador). Os outros campos deste status não valem.",
+          "properties": {
+            "ability": { "$ref": "#/$defs/id" },
+            "statuses": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/id" } }
+          }
+        },
+        "jumpOnExpire": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["tags", "radius"],
+          "description": "T-432: enquanto ativo, os status com uma das tags aplicados por quem o tem, ao acabar pelo tempo num inimigo, pulam com todos os acúmulos para o inimigo mais perto a até radius tiles que ainda não tem um deles (Praga).",
+          "properties": {
+            "tags": { "$ref": "#/$defs/stringList" },
+            "radius": { "type": "number", "exclusiveMinimum": 0 }
+          }
+        }
       }
     },
     "scaledValue": {
