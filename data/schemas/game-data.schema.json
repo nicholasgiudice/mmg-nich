@@ -515,7 +515,18 @@
         "angle": { "type": "number", "exclusiveMinimum": 0, "maximum": 360 },
         "anchor": { "enum": ["source", "aim"] },
         "affects": { "$ref": "#/$defs/faction" },
-        "charge": { "type": "boolean" }
+        "charge": { "type": "boolean" },
+        "volley": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["min", "max", "radius"],
+          "description": "Salva (só anchor aim): de min a max telegráfos. O primeiro no ponto mirado, depois um em cada outro jogador inimigo a até radius da fonte, o resto em pontos andáveis aleatórios no mesmo raio.",
+          "properties": {
+            "min": { "type": "integer", "minimum": 1, "maximum": 10 },
+            "max": { "type": "integer", "minimum": 1, "maximum": 10 },
+            "radius": { "type": "number", "exclusiveMinimum": 0 }
+          }
+        }
       }
     },
     "phase": {
