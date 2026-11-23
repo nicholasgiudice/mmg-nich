@@ -94,6 +94,9 @@ public sealed record RunResult
     /// <summary>T-408: segundos vivos somados dos jogadores de cada classe (para o dano por segundo vivo).</summary>
     public IReadOnlyDictionary<string, double> AliveSecondsByClass { get; init; } = new Dictionary<string, double>();
 
+    /// <summary>T-423: <see cref="DamageDealt"/> por classe do jogador (ex.: os outros membros com e sem o Sacerdote).</summary>
+    public IReadOnlyDictionary<string, double> DamageDealtByClass { get; init; } = new Dictionary<string, double>();
+
     /// <summary>Cura efetiva feita por jogadores e cura excedente (acima da vida máxima).</summary>
     public double Healing { get; init; }
     public double Overheal { get; init; }
@@ -225,6 +228,7 @@ public static class EncounterRunner
     {
         private readonly SortedDictionary<string, double> _takenByClass = new(StringComparer.Ordinal);
         private readonly SortedDictionary<string, double> _aliveByClass = new(StringComparer.Ordinal);
+        private readonly SortedDictionary<string, double> _dealtByClass = new(StringComparer.Ordinal);
         private readonly Dictionary<string, int> _uses = new(StringComparer.Ordinal);
         private double _taken, _dealt, _heal, _overheal, _gained, _spent, _wasted, _moved;
         private int _atCap, _playerDeaths, _enemyDeaths, _phases, _stationaryUses, _totalUses, _objectivesLost;
@@ -249,6 +253,8 @@ public static class EncounterRunner
                         if (players.Contains(d.Source))
                         {
                             _dealt += d.Amount;
+                            var by = classOf[d.Source];
+                            _dealtByClass[by] = _dealtByClass.GetValueOrDefault(by) + d.Amount;
                         }
 
                         break;
@@ -387,6 +393,7 @@ public static class EncounterRunner
                 DamageTaken = _taken,
                 DamageTakenByClass = _takenByClass,
                 AliveSecondsByClass = _aliveByClass,
+                DamageDealtByClass = _dealtByClass,
                 DamageDealt = _dealt,
                 Healing = _heal,
                 Overheal = _overheal,

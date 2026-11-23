@@ -1,0 +1,536 @@
+{
+  "$schema": "./schemas/game-data.schema.json",
+  "abilities": [
+    {
+      "id": "priest.restoring_prayer",
+      "name": "Oração Restauradora",
+      "tags": ["heal", "group"],
+      "cost": { "resource": "mana", "amount": 45 },
+      "cooldown": 12,
+      "targeting": { "type": "self" },
+      "effects": [
+        { "type": "apply_status", "status": "status.restoring_prayer_1", "duration": 8 },
+        {
+          "type": "extra_targets",
+          "radius": 6,
+          "count": 0,
+          "affects": "ally",
+          "effects": [{ "type": "apply_status", "status": "status.restoring_prayer_1", "duration": 8 }]
+        }
+      ],
+      "ranks": [
+        {
+          "rank": 2,
+          "effects": [
+            { "type": "apply_status", "status": "status.restoring_prayer_2", "duration": 8 },
+            {
+              "type": "extra_targets",
+              "radius": 6,
+              "count": 0,
+              "affects": "ally",
+              "effects": [{ "type": "apply_status", "status": "status.restoring_prayer_2", "duration": 8 }]
+            }
+          ]
+        },
+        {
+          "rank": 3,
+          "effects": [
+            { "type": "apply_status", "status": "status.restoring_prayer_3", "duration": 10 },
+            {
+              "type": "extra_targets",
+              "radius": 6,
+              "count": 0,
+              "affects": "ally",
+              "effects": [{ "type": "apply_status", "status": "status.restoring_prayer_3", "duration": 10 }]
+            }
+          ]
+        },
+        {
+          "rank": 4,
+          "effects": [
+            { "type": "apply_status", "status": "status.restoring_prayer_4", "duration": 10 },
+            {
+              "type": "extra_targets",
+              "radius": 6,
+              "count": 0,
+              "affects": "ally",
+              "effects": [{ "type": "apply_status", "status": "status.restoring_prayer_4", "duration": 10 }]
+            }
+          ]
+        },
+        {
+          "rank": 5,
+          "effects": [
+            { "type": "apply_status", "status": "status.restoring_prayer_5", "duration": 10 },
+            {
+              "type": "extra_targets",
+              "radius": 8,
+              "count": 0,
+              "affects": "ally",
+              "effects": [{ "type": "apply_status", "status": "status.restoring_prayer_5", "duration": 10 }]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "priest.blessing",
+      "name": "Bênção",
+      "tags": ["buff", "group"],
+      "cost": { "resource": "mana", "amount": 35 },
+      "cooldown": 30,
+      "targeting": { "type": "self" },
+      "effects": [
+        {
+          "type": "extra_targets",
+          "radius": 6,
+          "count": 0,
+          "affects": "ally",
+          "effects": [{ "type": "apply_status", "status": "status.blessing_1", "duration": 15 }]
+        },
+        { "type": "apply_status", "status": "status.blessing_1", "duration": 15 }
+      ],
+      "ranks": [
+        {
+          "rank": 2,
+          "effects": [
+            {
+              "type": "extra_targets",
+              "radius": 6,
+              "count": 0,
+              "affects": "ally",
+              "effects": [{ "type": "apply_status", "status": "status.blessing_2", "duration": 15 }]
+            },
+            { "type": "apply_status", "status": "status.blessing_2", "duration": 15 }
+          ]
+        },
+        {
+          "rank": 3,
+          "effects": [
+            {
+              "type": "extra_targets",
+              "radius": 6,
+              "count": 0,
+              "affects": "ally",
+              "effects": [{ "type": "apply_status", "status": "status.blessing_3", "duration": 20 }]
+            },
+            { "type": "apply_status", "status": "status.blessing_3", "duration": 20 }
+          ]
+        },
+        {
+          "rank": 4,
+          "effects": [
+            {
+              "type": "extra_targets",
+              "radius": 6,
+              "count": 0,
+              "affects": "ally",
+              "effects": [{ "type": "apply_status", "status": "status.blessing_4", "duration": 20 }]
+            },
+            { "type": "apply_status", "status": "status.blessing_4", "duration": 20 }
+          ]
+        },
+        {
+          "rank": 5,
+          "effects": [
+            {
+              "type": "extra_targets",
+              "radius": 8,
+              "count": 0,
+              "affects": "ally",
+              "effects": [{ "type": "apply_status", "status": "status.blessing_5", "duration": 20 }]
+            },
+            { "type": "apply_status", "status": "status.blessing_5", "duration": 20 }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "priest.swift_grace",
+      "name": "Graça Veloz",
+      "tags": ["buff", "group", "speed"],
+      "cost": { "resource": "mana", "amount": 20 },
+      "cooldown": 20,
+      "targeting": { "type": "self" },
+      "effects": [
+        { "type": "apply_status", "status": "status.swift_grace_1", "duration": 30 },
+        {
+          "type": "extra_targets",
+          "radius": 6,
+          "count": 0,
+          "affects": "ally",
+          "effects": [{ "type": "apply_status", "status": "status.swift_grace_1", "duration": 30 }]
+        }
+      ],
+      "ranks": [
+        {
+          "rank": 2,
+          "effects": [
+            { "type": "apply_status", "status": "status.swift_grace_2", "duration": 30 },
+            {
+              "type": "extra_targets",
+              "radius": 6,
+              "count": 0,
+              "affects": "ally",
+              "effects": [{ "type": "apply_status", "status": "status.swift_grace_2", "duration": 30 }]
+            }
+          ]
+        },
+        {
+          "rank": 3,
+          "effects": [
+            { "type": "remove_status", "tags": ["slow"], "count": 0, "target": "self" },
+            { "type": "apply_status", "status": "status.swift_grace_3", "duration": 30 },
+            {
+              "type": "extra_targets",
+              "radius": 6,
+              "count": 0,
+              "affects": "ally",
+              "effects": [
+                { "type": "remove_status", "tags": ["slow"], "count": 0 },
+                { "type": "apply_status", "status": "status.swift_grace_3", "duration": 30 }
+              ]
+            }
+          ]
+        },
+        {
+          "rank": 4,
+          "effects": [
+            { "type": "remove_status", "tags": ["slow"], "count": 0, "target": "self" },
+            { "type": "apply_status", "status": "status.swift_grace_4", "duration": 30 },
+            {
+              "type": "extra_targets",
+              "radius": 6,
+              "count": 0,
+              "affects": "ally",
+              "effects": [
+                { "type": "remove_status", "tags": ["slow"], "count": 0 },
+                { "type": "apply_status", "status": "status.swift_grace_4", "duration": 30 }
+              ]
+            }
+          ]
+        },
+        {
+          "rank": 5,
+          "effects": [
+            { "type": "remove_status", "tags": ["slow"], "count": 0, "target": "self" },
+            { "type": "apply_status", "status": "status.swift_grace_5", "duration": 30 },
+            { "type": "apply_status", "status": "status.swift_grace_ward", "duration": 10 },
+            {
+              "type": "extra_targets",
+              "radius": 8,
+              "count": 0,
+              "affects": "ally",
+              "effects": [
+                { "type": "remove_status", "tags": ["slow"], "count": 0 },
+                { "type": "apply_status", "status": "status.swift_grace_5", "duration": 30 },
+                { "type": "apply_status", "status": "status.swift_grace_ward", "duration": 10 }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "priest.inspiration",
+      "name": "Inspiração",
+      "tags": ["buff", "group", "mana"],
+      "cost": { "resource": "mana", "amount": 30 },
+      "cooldown": 30,
+      "targeting": { "type": "self" },
+      "effects": [
+        {
+          "type": "extra_targets",
+          "radius": 6,
+          "count": 0,
+          "affects": "ally",
+          "effects": [{ "type": "apply_status", "status": "status.inspiration_1", "duration": 12 }]
+        }
+      ],
+      "ranks": [
+        {
+          "rank": 2,
+          "effects": [
+            {
+              "type": "extra_targets",
+              "radius": 6,
+              "count": 0,
+              "affects": "ally",
+              "effects": [{ "type": "apply_status", "status": "status.inspiration_2", "duration": 12 }]
+            }
+          ]
+        },
+        {
+          "rank": 3,
+          "effects": [
+            {
+              "type": "extra_targets",
+              "radius": 6,
+              "count": 0,
+              "affects": "ally",
+              "effects": [{ "type": "apply_status", "status": "status.inspiration_3", "duration": 15 }]
+            }
+          ]
+        },
+        {
+          "rank": 4,
+          "effects": [
+            {
+              "type": "extra_targets",
+              "radius": 6,
+              "count": 0,
+              "affects": "ally",
+              "effects": [{ "type": "apply_status", "status": "status.inspiration_4", "duration": 15 }]
+            }
+          ]
+        },
+        {
+          "rank": 5,
+          "effects": [
+            {
+              "type": "extra_targets",
+              "radius": 8,
+              "count": 0,
+              "affects": "ally",
+              "effects": [{ "type": "apply_status", "status": "status.inspiration_5", "duration": 15 }]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "priest.sanctuary",
+      "name": "Santuário",
+      "tags": ["defensive", "group", "signature"],
+      "signature": true,
+      "cost": { "resource": "mana", "amount": 90 },
+      "cooldown": 120,
+      "targeting": { "type": "self" },
+      "effects": [
+        { "type": "apply_status", "status": "status.sanctuary_1", "duration": 4 },
+        {
+          "type": "extra_targets",
+          "radius": 6,
+          "count": 0,
+          "affects": "ally",
+          "effects": [{ "type": "apply_status", "status": "status.sanctuary_1", "duration": 4 }]
+        }
+      ],
+      "ranks": [
+        {
+          "rank": 2,
+          "effects": [
+            { "type": "apply_status", "status": "status.sanctuary_1", "duration": 5 },
+            {
+              "type": "extra_targets",
+              "radius": 6,
+              "count": 0,
+              "affects": "ally",
+              "effects": [{ "type": "apply_status", "status": "status.sanctuary_1", "duration": 5 }]
+            }
+          ]
+        },
+        {
+          "rank": 3,
+          "effects": [
+            { "type": "apply_status", "status": "status.sanctuary_3", "duration": 6 },
+            {
+              "type": "extra_targets",
+              "radius": 6,
+              "count": 0,
+              "affects": "ally",
+              "effects": [{ "type": "apply_status", "status": "status.sanctuary_3", "duration": 6 }]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "statuses": [
+    {
+      "id": "status.restoring_prayer_1",
+      "name": "Oração Restauradora",
+      "tags": ["buff", "heal", "hot"],
+      "defaultDuration": 8,
+      "stacking": "refresh",
+      "periodic": [{ "interval": 1, "effects": [{ "type": "heal", "base": 4, "scaling": { "int": 0.4 } }] }]
+    },
+    {
+      "id": "status.restoring_prayer_2",
+      "name": "Oração Restauradora",
+      "tags": ["buff", "heal", "hot"],
+      "defaultDuration": 8,
+      "stacking": "refresh",
+      "periodic": [{ "interval": 1, "effects": [{ "type": "heal", "base": 4.8, "scaling": { "int": 0.48 } }] }]
+    },
+    {
+      "id": "status.restoring_prayer_3",
+      "name": "Oração Restauradora",
+      "tags": ["buff", "heal", "hot"],
+      "defaultDuration": 10,
+      "stacking": "refresh",
+      "periodic": [{ "interval": 1, "effects": [{ "type": "heal", "base": 5.6, "scaling": { "int": 0.56 } }] }]
+    },
+    {
+      "id": "status.restoring_prayer_4",
+      "name": "Oração Restauradora",
+      "tags": ["buff", "heal", "hot"],
+      "defaultDuration": 10,
+      "stacking": "refresh",
+      "periodic": [{ "interval": 1, "effects": [{ "type": "heal", "base": 6.4, "scaling": { "int": 0.64 } }] }]
+    },
+    {
+      "id": "status.restoring_prayer_5",
+      "name": "Oração Restauradora",
+      "tags": ["buff", "heal", "hot"],
+      "defaultDuration": 10,
+      "stacking": "refresh",
+      "periodic": [{ "interval": 1, "effects": [{ "type": "heal", "base": 7.2, "scaling": { "int": 0.72 } }] }]
+    },
+    {
+      "id": "status.blessing_1",
+      "name": "Bênção",
+      "tags": ["buff", "blessing"],
+      "defaultDuration": 15,
+      "stacking": "refresh",
+      "stats": { "attributes": { "all": { "base": 2, "scaling": { "int": 0.08 } } } }
+    },
+    {
+      "id": "status.blessing_2",
+      "name": "Bênção",
+      "tags": ["buff", "blessing"],
+      "defaultDuration": 15,
+      "stacking": "refresh",
+      "stats": { "attributes": { "all": { "base": 2.4, "scaling": { "int": 0.096 } } } }
+    },
+    {
+      "id": "status.blessing_3",
+      "name": "Bênção",
+      "tags": ["buff", "blessing"],
+      "defaultDuration": 20,
+      "stacking": "refresh",
+      "stats": { "attributes": { "all": { "base": 2.8, "scaling": { "int": 0.112 } } } }
+    },
+    {
+      "id": "status.blessing_4",
+      "name": "Bênção",
+      "tags": ["buff", "blessing"],
+      "defaultDuration": 20,
+      "stacking": "refresh",
+      "stats": { "attributes": { "all": { "base": 3.2, "scaling": { "int": 0.128 } } } }
+    },
+    {
+      "id": "status.blessing_5",
+      "name": "Bênção",
+      "tags": ["buff", "blessing"],
+      "defaultDuration": 20,
+      "stacking": "refresh",
+      "stats": { "attributes": { "all": { "base": 3.6, "scaling": { "int": 0.144 } } } }
+    },
+    {
+      "id": "status.swift_grace_1",
+      "name": "Graça Veloz",
+      "tags": ["buff", "haste"],
+      "defaultDuration": 30,
+      "stacking": "refresh",
+      "modifiers": { "speedMultiplier": 1.15 }
+    },
+    {
+      "id": "status.swift_grace_2",
+      "name": "Graça Veloz",
+      "tags": ["buff", "haste"],
+      "defaultDuration": 30,
+      "stacking": "refresh",
+      "modifiers": { "speedMultiplier": 1.17 }
+    },
+    {
+      "id": "status.swift_grace_3",
+      "name": "Graça Veloz",
+      "tags": ["buff", "haste"],
+      "defaultDuration": 30,
+      "stacking": "refresh",
+      "modifiers": { "speedMultiplier": 1.2 }
+    },
+    {
+      "id": "status.swift_grace_4",
+      "name": "Graça Veloz",
+      "tags": ["buff", "haste"],
+      "defaultDuration": 30,
+      "stacking": "refresh",
+      "modifiers": { "speedMultiplier": 1.22 }
+    },
+    {
+      "id": "status.swift_grace_5",
+      "name": "Graça Veloz",
+      "tags": ["buff", "haste"],
+      "defaultDuration": 30,
+      "stacking": "refresh",
+      "modifiers": { "speedMultiplier": 1.25 }
+    },
+    {
+      "id": "status.swift_grace_ward",
+      "name": "Passo Livre",
+      "tags": ["buff", "haste"],
+      "defaultDuration": 10,
+      "stacking": "refresh",
+      "immuneToTags": ["slow"]
+    },
+    {
+      "id": "status.inspiration_1",
+      "name": "Inspiração",
+      "tags": ["buff", "inspiration"],
+      "defaultDuration": 12,
+      "stacking": "refresh",
+      "stats": { "manaRegen": { "base": 1.5, "scaling": { "int": 0.04 } } }
+    },
+    {
+      "id": "status.inspiration_2",
+      "name": "Inspiração",
+      "tags": ["buff", "inspiration"],
+      "defaultDuration": 12,
+      "stacking": "refresh",
+      "stats": { "manaRegen": { "base": 1.8, "scaling": { "int": 0.048 } } }
+    },
+    {
+      "id": "status.inspiration_3",
+      "name": "Inspiração",
+      "tags": ["buff", "inspiration"],
+      "defaultDuration": 15,
+      "stacking": "refresh",
+      "stats": { "manaRegen": { "base": 2.1, "scaling": { "int": 0.056 } } }
+    },
+    {
+      "id": "status.inspiration_4",
+      "name": "Inspiração",
+      "tags": ["buff", "inspiration"],
+      "defaultDuration": 15,
+      "stacking": "refresh",
+      "stats": { "manaRegen": { "base": 2.4, "scaling": { "int": 0.064 } } }
+    },
+    {
+      "id": "status.inspiration_5",
+      "name": "Inspiração",
+      "tags": ["buff", "inspiration"],
+      "defaultDuration": 15,
+      "stacking": "refresh",
+      "stats": { "manaRegen": { "base": 2.7, "scaling": { "int": 0.072 } } }
+    },
+    {
+      "id": "status.sanctuary_1",
+      "name": "Santuário",
+      "tags": ["buff", "sanctuary"],
+      "defaultDuration": 4,
+      "stacking": "refresh",
+      "flags": { "undying": true }
+    },
+    {
+      "id": "status.sanctuary_3",
+      "name": "Santuário",
+      "tags": ["buff", "sanctuary"],
+      "defaultDuration": 6,
+      "stacking": "refresh",
+      "flags": { "undying": true },
+      "onExpire": [{ "type": "heal", "base": 0, "maxHealthFraction": 0.2 }]
+    }
+  ]
+}

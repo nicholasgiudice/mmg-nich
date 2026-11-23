@@ -755,6 +755,25 @@ Custo 80, recarga 90 s, só no Inquisidor. Pela duração, o Golpe Sagrado acert
 | Julgamento | dano sagrado, bônus contra mortos-vivos | — |
 | Ira Divina | reforço próprio | **ataque básico em área** e cura pelo dano |
 
+### Ajustes do simulador (T-423)
+
+Os dados estão em `data/abilities_priest.json` e `data/abilities_inquisitor.json`, com os números das tabelas acima. **Nenhum número mudou:** com os custos, recargas e valores do design, as metas do Clérigo passam (`tasks/reports/balance-v0.20.md`). Antes e depois:
+
+| Habilidade | Antes (design) | Depois (dados) |
+|---|---|---|
+| Sacerdote (as 5) | tabelas acima | **iguais** |
+| Inquisidor (as 5) | tabelas acima | **iguais** |
+
+O que os dados decidem onde o design não diz:
+
+- **Bênção:** o Sacerdote recebe a Bênção **depois** dos aliados, para todos ganharem o bônus pela INT dele sem a Bênção (com a ordem inversa, os aliados ganhavam +8 em vez de +7 no perfil do 21).
+- **Santuário** vale também para o Sacerdote ("ninguém cai"); **Oração Restauradora**, **Graça Veloz** e **Bênção** também; a **Inspiração** não.
+- **Graça Veloz NH5:** a imunidade a lentidão é um estado à parte (Passo Livre, 10 s), ao lado da velocidade (30 s).
+- **Contra mortos-vivos e corrompidos:** Martelo da Justiça e Ira Divina +25% nos dois; Consagração +50% contra mortos-vivos e +25% contra corrompidos; Julgamento +50% (NH5 +75%) contra mortos-vivos e +25% contra corrompidos.
+- **Ira Divina:** o golpe trocado é o Golpe Sagrado da base (1 × ARMA + 0,6 × INT) × 1,5 no NH1 e no NH2 e × 1,8 no NH3, no alvo e em todos a até 2 dele, com a mesma recarga (1,1 s) e alcance (6).
+
+Meta revista: a diferença entre segundas classes passou a comparar cada uma no encontro solo da classe base dela, com o limite do Clérigo (1,8×) para as do Clérigo e o Sacerdote sem limite (`design/progression-v0.1.md` §8).
+
 ## 9. Custo
 
 São **40 habilidades novas** (5 por segunda classe), cada uma com dados, regras no Core, teste, ícone e efeito visual. Muitas mecânicas novas servem a mais de uma classe:

@@ -291,7 +291,7 @@ Perfis de teste: personagem no **nível esperado** da área, pontos no **atribut
 | Diferença entre classes (solo, perfil esperado) | nenhuma classe mais de 1,6× mais lenta que a média; o Clérigo, a mais lenta pelo design, até **1,8×** (1,7×) |
 | Mago só com a Explosão Elemental (4 Ratos) | vence no máximo metade **ou não é mais de 10% mais rápido** que a rotação (ou é mais lento que a rotação); e fica sem Mana na maioria das lutas |
 | Poção de Mana no perfil fraco (Mago e Clérigo solo) | o fraco com 1 poção por luta vence no máximo 50% **ou a poção acrescenta no máximo 15 pontos** à vitória dele sem poção (vitória ≤ 50%) |
-| Do nível 15 ao 40 (perfil esperado, solo, monstro normal do próprio nível, sem assinatura) | tempo para matar **não cresce mais de 20%** do nível 15 ao 40 em nenhuma classe (a escala dos monstros acompanha a do personagem; medido: de −28% a +11%); nenhuma classe mais de 1,6× mais lenta que a média, Clérigo até 1,8× (medido no 40: Clérigo 1,64× contra o Guarda e **1,92× contra o Lobo**, a rever com as segundas classes do Clérigo) |
+| Do nível 15 ao 40 (perfil esperado, solo, monstro normal do próprio nível, sem assinatura) | tempo para matar **não cresce mais de 20%** do nível 15 ao 40 em nenhuma classe (a escala dos monstros acompanha a do personagem; medido: de −28% a +11%); nenhuma classe mais de 1,6× mais lenta que a média, Clérigo até 1,8× (medido no 40: Clérigo 1,64× contra o Guarda e **1,92× contra o Lobo**, a rever com as segundas classes do Clérigo; com o Inquisidor, 1,08× contra o Lobo, T-423) |
 
 Saiu na T-402: "pelo menos três encontros do protótipo com uma estratégia relevante entre 5% e 95%" (T-018). Os encontros do protótipo ficaram em 96–100%; resultados não binários continuam cobertos pelo Pátio dos Mortos solo (média 40–70%), pela Matriarca sem Clérigo (5–60%) e pelo perfil fraco.
 
@@ -307,9 +307,18 @@ Perfil esperado com segunda classe: o do nível, com os +5 pontos de atributo da
 | Berserker, mesmo encontro | recebe no máximo **1,5×** o dano do Guerreiro só com a base (a Fúria expõe, a Sede de Sangue devolve), e vence ≥ 85% |
 | Guardião × Guerreiro só com a base, encontro de grupo (grupo de 4 com Clérigo contra um chefe ou elite do nível) | os **outros membros** do grupo recebem pelo menos **15% menos dano** com o Guardião, e a vitória não cai |
 | Guardião, solo | vence ≥ 85% o grupo típico; pode ser mais lento que o Guerreiro só com a base |
-| Diferença entre segundas classes (solo, perfil esperado, grupo típico) | nenhuma segunda classe mais de **1,6×** mais lenta que a média das outras (as classes base no mesmo nível entram na média enquanto houver só as do Guerreiro) |
+| Diferença entre segundas classes (solo, perfil esperado) | nenhuma segunda classe mais de **1,6×** mais lenta que a média das outras; cada uma no encontro solo da classe base dela (Guerreiro: Três Lobos; Clérigo: Guarda Esquelético), e as classes base que ainda não têm segunda classe entram na média com o encontro solo delas. **Revisão da T-423:** as do Clérigo, a classe mais lenta pelo design, até **1,8×**; o **Sacerdote** (cura) entra na média, mas sem limite (era: todas contra o grupo típico, 1,6×; motivo em `tasks/reports/balance-v0.20.md` §3) |
 | Nível 21 (NH1 da segunda classe) | escolher a segunda classe não deixa o personagem mais lento que só a base: o NH1 já é útil (`design/segunda-classe-v0.1.md` §2) |
 | Distribuição de pontos (base × segunda classe) | pôr os pontos do 21 em diante só na base (as 3 NH que faltam) ou na segunda classe: as duas vencem ≥ 70%; nenhuma é a única que vence |
+
+**Metas do Clérigo (T-423, `tasks/reports/balance-v0.20.md`).** As metas gerais acima (nível 21, distribuição de pontos, diferença entre segundas classes) valem também para o Sacerdote e o Inquisidor; o grupo típico do Clérigo solo são os mesmos Três Lobos do nível, com o Clérigo no lugar do Guerreiro.
+
+| Situação | Meta |
+|---|---|
+| Inquisidor × Clérigo só com a base, grupo típico (Três Lobos do nível), solo | o Inquisidor vence ≥ 85% e em no máximo **85%** do tempo do Clérigo só com a base (a mesma meta do Berserker) |
+| Inquisidor, solo, nível 40, um Lobo do nível (o duelo da curva de níveis, sem as assinaturas) | no máximo **1,8×** a média das quatro classes, com o Inquisidor no lugar do Clérigo (o Clérigo só com a base fica em 1,92×) |
+| Sacerdote × Clérigo só com a base, grupo de 4 contra a Matriarca do nível | a vitória não cai (margem de 10 pontos) e os **outros membros** causam pelo menos **10% mais dano por segundo vivo** (Bênção e Inspiração) |
+| Sacerdote, solo | vence ≥ 85% o grupo típico; pode ser mais lento que o Clérigo só com a base |
 
 ## 9. Implementação (fase 2, ordem sugerida)
 

@@ -50,7 +50,7 @@ Qualquer nome aceita o sufixo `+dodge` (`rotation+dodge`): se o bot está dentro
 
 ### Como as estratégias escolhem habilidades (guiado por dados)
 
-O papel de cada habilidade é deduzido dos efeitos, não do id (`AbilityInfo`): `taunt` (efeito `threat` com `tauntDuration`), `heal`, `defensive` (escudo/status em si ou aliado), `dash` (deslocamento tipo dash; para trás = recuo), `interrupt`, `damage` (área = `circle_self`/`circle_at_point`/`line`). Condições do `rotation`: cura só abaixo de `healBelow` (0,75) de vida; provocação com 2+ inimigos ou aliados; defensiva com inimigo a até 6 tiles; dash para a frente com o alvo a 3,5+ tiles, para trás perto e com pouca vida (ou fugindo no `kite`); interrupção só se algum inimigo está conjurando; área só com `minAoe` (2) inimigos atingíveis. Tudo passa por `AbilityValidator` (recarga, recurso, alcance, linha de visão).
+O papel de cada habilidade é deduzido dos efeitos, não do id (`AbilityInfo`): `taunt` (efeito `threat` com `tauntDuration`), `heal`, `defensive` (escudo/status em si ou aliado), `dash` (deslocamento tipo dash; para trás = recuo), `interrupt`, `damage` (área = `circle_self`/`circle_at_point`/`line`). Condições do `rotation`: cura só abaixo de `healBelow` (0,75) de vida; provocação com 2+ inimigos ou aliados; defensiva com inimigo a até 6 tiles; T-423: habilidades que só aplicam estados das segundas classes do Clérigo seguem o estado (reforço de grupo no começo da luta e quando acaba; Santuário com um aliado no raio abaixo de `emergencyBelow`; Ira Divina com `minAoe` inimigos em volta do alvo; Oração com alguém ferido no raio; Selo da Luz no alvo do bot); dash para a frente com o alvo a 3,5+ tiles, para trás perto e com pouca vida (ou fugindo no `kite`); interrupção só se algum inimigo está conjurando; área só com `minAoe` (2) inimigos atingíveis. Tudo passa por `AbilityValidator` (recarga, recurso, alcance, linha de visão).
 
 ### Configuração por `--opt` (a T-014/T-016 ajustam isto sem mudar código)
 
@@ -64,6 +64,7 @@ Chaves globais ou por classe (`class.warrior:taunt=...`, a da classe vence). Sel
 | `order` | habilidades que o `rotation`/`kite` tentam primeiro, nessa ordem | ordem da classe |
 | `skip` | habilidades que o `rotation`/`kite` nunca usam | nenhuma |
 | `healBelow`, `minAoe`, `kiteDistance`, `retreatDistance` | limiares numéricos | 0.75, 2, 85% do alcance do básico (máx. 7), 55% da distância preferida |
+| `emergencyBelow`, `buffRange` | T-423: vida (fração) de um aliado no raio para o Santuário; distância do inimigo mais próximo para os reforços de grupo (Bênção, Inspiração, Graça Veloz) | 0.3, 10 |
 
 Ex.: `--opt class.warrior:taunt=warrior.provoke --opt class.mage:explosion=tag:aoe --opt class.warrior:skip=warrior.charge`.
 

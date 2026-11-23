@@ -279,6 +279,25 @@ Guardião e Berserker, no nível 20. As tabelas finais (efeitos e valores por NH
 | Sede de Sangue (passiva) | `berserker.blood_thirst` | — | — |
 | Tempestade de Aço (assinatura) | `berserker.steel_storm` | **80** (era 90) | 75 s |
 
+## Segunda classe do Clérigo (fase 4)
+
+Sacerdote e Inquisidor, no nível 20. As tabelas finais (efeitos e valores por NH) são as de `design/segunda-classe-v0.1.md` §8; os dados estão em `data/abilities_priest.json` e `data/abilities_inquisitor.json` (T-423). NH1 no nível 21, depois 24, 27, 30 e 33; a assinatura no 35, 37 e 40. Nenhuma das duas tem passiva. Os números do design passaram no simulador sem ajuste (`tasks/reports/balance-v0.20.md`):
+
+| Habilidade | Id | Custo | Recarga |
+|---|---|---|---|
+| Oração Restauradora | `priest.restoring_prayer` | 45 | 12 s |
+| Bênção | `priest.blessing` | 35 | 30 s |
+| Graça Veloz | `priest.swift_grace` | 20 | 20 s |
+| Inspiração | `priest.inspiration` | 30 | 30 s |
+| Santuário (assinatura) | `priest.sanctuary` | 90 | 120 s |
+| Martelo da Justiça | `inquisitor.hammer_of_justice` | 25 | 8 s |
+| Consagração | `inquisitor.consecration` | 45 | 14 s |
+| Selo da Luz | `inquisitor.seal_of_light` | 20 | 12 s |
+| Julgamento | `inquisitor.judgment` | 30 | 7 s |
+| Ira Divina (assinatura) | `inquisitor.divine_wrath` | 80 | 90 s |
+
+Durante a Ira Divina, o ataque básico (Golpe Sagrado) usa `inquisitor.divine_wrath_strike_1` (NH1 e NH2) ou `inquisitor.divine_wrath_strike_3` (NH3): o Golpe Sagrado × 1,5 (× 1,8 no NH3) no alvo e em todos a até 2 dele, e cada acerto cura 10% (15% no NH3) do dano nos aliados a até 4 tiles.
+
 ## Depois do MVP
 
 Habilidades fora da barra de 5 teclas (especializações): Guerreiro — Investida, Interceptação; Arqueiro — Armadilha de Contenção, Flecha Perfurante, Tiro Debilitante; Mago — Combustão, Dissipar Magia; Clérigo — Bênção, Oração Restauradora. Recebem tabela de níveis quando entrarem no jogo.
