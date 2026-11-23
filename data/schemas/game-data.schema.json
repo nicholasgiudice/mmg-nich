@@ -454,7 +454,8 @@
     },
         "hits": { "$ref": "#/$defs/abilityHits" },
         "cooldownCharges": { "type": "integer", "minimum": 1 },
-        "passiveStatus": { "$ref": "#/$defs/id", "description": "T-403: status permanente da passiva neste NH." }
+        "passiveStatus": { "$ref": "#/$defs/id", "description": "T-403: status permanente da passiva neste NH." },
+        "channel": { "$ref": "#/$defs/channel", "description": "T-442: canalização neste NH (substitui a inteira)." }
       }
     },
     "ability": {
@@ -483,7 +484,21 @@
         "ranks": { "type": "array", "maxItems": 4, "items": { "$ref": "#/$defs/abilityRank" } },
         "targeting": { "$ref": "#/$defs/targeting" },
         "telegraph": { "$ref": "#/$defs/telegraph" },
-        "effects": { "type": "array", "items": { "$ref": "#/$defs/effect" } }
+        "effects": { "type": "array", "items": { "$ref": "#/$defs/effect" } },
+        "channel": { "$ref": "#/$defs/channel" }
+      }
+    },
+    "channel": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["pulses", "interval"],
+      "description": "T-442: canalização com pulsos. Custo e recarga no início; os efeitos da habilidade saem a cada interval enquanto canaliza. Andar (sem moveSpeedMultiplier), atordoar, silenciar ou interromper corta. Não combina com castTime, hits nem telegraph.",
+      "properties": {
+        "pulses": { "type": "integer", "minimum": 1, "maximum": 40 },
+        "interval": { "type": "number", "exclusiveMinimum": 0 },
+        "pulseGrowth": { "type": "number", "minimum": 0, "description": "Cada pulso causa esta fração a mais que o anterior, acumulando: pulso n = base × (1 + pulseGrowth)^(n−1)." },
+        "moveSpeedMultiplier": { "type": "number", "exclusiveMinimum": 0, "maximum": 1, "description": "Pode andar canalizando, com a velocidade × este número. Ausente = andar corta." },
+        "onComplete": { "$ref": "#/$defs/effects", "description": "Efeitos no alvo se a canalização vai até o fim." }
       }
     },
     "telegraph": {
@@ -597,7 +612,12 @@
           "description": "Levanta aliados caídos perto do alvo com uma fração da vida máxima.",
           "properties": { "target": { "$ref": "#/$defs/effectTarget" }, "onHit": { "$ref": "#/$defs/onHit" }, "type": { "const": "revive" },
             "radius": { "type": "number", "exclusiveMinimum": 0 }, "healthFraction": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 },
-            "count": { "type": "integer", "minimum": 1 } } }
+            "count": { "type": "integer", "minimum": 1 } } },
+        { "type": "object", "additionalProperties": false, "required": ["type", "range", "effects"],
+          "description": "T-442 (Orbes Arcanos): count disparos dos effects no alvo atual de quem recebe o efeito (o último alvo de unidade que escolheu), se vivo, no alcance e com linha de visão. Para o periodic de um status em quem lança.",
+          "properties": { "target": { "$ref": "#/$defs/effectTarget" }, "onHit": { "$ref": "#/$defs/onHit" }, "type": { "const": "current_target" },
+            "range": { "type": "number", "exclusiveMinimum": 0 }, "count": { "type": "integer", "minimum": 1 },
+            "affects": { "$ref": "#/$defs/faction" }, "effects": { "$ref": "#/$defs/effects" } } }
       ]
     },
     "onHit": { "type": "integer", "minimum": 1, "maximum": 5, "description": "Só neste acerto de uma habilidade com vários acertos (1 = o primeiro)." },

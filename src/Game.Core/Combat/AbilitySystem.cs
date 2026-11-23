@@ -150,6 +150,10 @@ public sealed class AbilitySystem : ISimulationSystem
             {
                 CastControl.Cancel(world, e, CastInterruptReason.Died);
             }
+            else if (ability?.Channel is not null)
+            {
+                Channeling.Advance(world, e, st, cast, ability); // T-442: pulsos da canalização
+            }
             else if (ability is { CastWhileMoving: false } && e.TryGet<Movement>() is { } mv && mv.Direction != Vector2.Zero)
             {
                 CastControl.Cancel(world, e, CastInterruptReason.Moved);
@@ -183,6 +187,7 @@ public sealed class AbilitySystem : ISimulationSystem
             return;
         }
 
+        CurrentTargetEffects.Remember(world, caster, use.Target); // T-442: alvo atual (Orbes Arcanos)
         var check = AbilityValidator.Validate(world, caster, use.AbilityId, use.Target, use.AimPoint);
         if (check.Reason is { } reason)
         {
@@ -269,6 +274,12 @@ public sealed class AbilitySystem : ISimulationSystem
 
         var rank = st.RankOf(ability.Id);
         var power = world.Combat.ConsumeAbilityPower(world, caster, ability.Id); // T-061: fortalecer o próximo uso
+        if (ability.Channel is not null)
+        {
+            Channeling.Begin(world, caster, st, ability, target, aim, power); // T-442: os efeitos saem nos pulsos
+            return;
+        }
+
         ApplyHit(world, caster, ability, res, target, aim, rank, power, 1);
         ScheduleExtraHits(world, caster, ability, rank, target, aim, power);
     }

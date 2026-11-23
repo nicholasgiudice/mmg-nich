@@ -64,6 +64,12 @@ public static class GameJson
                 (typeof(ReviveEffect), "revive"));
         }
 
+        if (info.Type == typeof(EffectDefinition))
+        {
+            // T-442: em bloco próprio para não disputar a lista acima.
+            info.PolymorphismOptions!.DerivedTypes.Add(new JsonDerivedType(typeof(CurrentTargetEffect), "current_target"));
+        }
+
         if (info.Type == typeof(ZoneDefinition))
         {
             // T-331: posições vêm do mapa do Tiled (ZoneComposer); no zones.json esses campos são erro.
