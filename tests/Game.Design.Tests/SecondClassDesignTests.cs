@@ -1,4 +1,5 @@
 using Game.Bots;
+using Game.Core.Combat;
 using Game.Core.Definitions;
 using Game.Sim;
 using Xunit.Abstractions;
@@ -7,68 +8,128 @@ using static Game.Design.Tests.DesignHarness;
 namespace Game.Design.Tests;
 
 /// <summary>
-/// T-408: metas da segunda classe do Guerreiro (<c>design/progression-v0.1.md</c> §8, "Metas da segunda classe") com as
-/// habilidades reais do Guardião e do Berserker. Relatório: <c>tasks/reports/balance-v0.19.md</c>.
+/// Como medir uma segunda classe no simulador (T-408, T-423): classe base, par principal do perfil focado, estratégia
+/// correta solo e no grupo. Cada classe com segunda classe entra em <see cref="SecondClassDesignTests.Specs"/>.
+/// </summary>
+/// <param name="BaseClass">Classe base (ex.: <c>class.warrior</c>).</param>
+/// <param name="Pair">As duas principais da segunda classe no perfil focado (sobem alternando, depois do NH1 de todas).</param>
+public sealed record SecondClassSpec(string BaseClass, string[] Pair)
+{
+    /// <summary>Opções de bot no solo (ex.: <c>class.warrior:order</c>); chaves escopadas pela classe base.</summary>
+    public IReadOnlyDictionary<string, string>? SoloOptions { get; init; }
+
+    /// <summary>Opções de bot no encontro de grupo.</summary>
+    public IReadOnlyDictionary<string, string>? GroupOptions { get; init; }
+
+    /// <summary>
+    /// Limite da diferença entre segundas classes: no máximo esta vez a média das outras (1,6×; as do Clérigo, a classe
+    /// mais lenta pelo design, 1,8×). Null = entra na média, mas sem limite (o Sacerdote, de cura).
+    /// </summary>
+    public double? SpeedLimit { get; init; } = 1.6;
+}
+
+/// <summary>
+/// Metas da segunda classe (<c>design/progression-v0.1.md</c> §8, "Metas da segunda classe") com as habilidades reais.
+/// T-408: Guardião e Berserker (<c>tasks/reports/balance-v0.19.md</c>). T-423: Sacerdote e Inquisidor
+/// (<c>tasks/reports/balance-v0.20.md</c>; as metas próprias do Clérigo estão em <see cref="ClericSecondClassDesignTests"/>).
+/// Os helpers valem para qualquer classe base: uma classe nova só entra em <see cref="Specs"/>.
 /// </summary>
 public class SecondClassDesignTests(ITestOutputHelper output)
 {
     public const string Warrior = "class.warrior";
+    public const string Cleric = "class.cleric";
     public const string Guardian = "second_class.guardian";
     public const string Berserker = "second_class.berserker";
+    public const string Priest = "second_class.priest";
+    public const string Inquisitor = "second_class.inquisitor";
 
     /// <summary>Grupo típico solo: três Lobos do nível; encontro de grupo: a Matriarca do nível contra o grupo de 4 com Clérigo.</summary>
     public const string Solo = "encounter.three_wolves";
     public const string Group = "encounter.forest_matriarch";
 
-    /// <summary>As duas principais de cada segunda classe no perfil focado (sobem alternando, depois do NH1 de todas).</summary>
-    public static readonly IReadOnlyDictionary<string, string[]> Pair = new Dictionary<string, string[]>
-    {
-        [Guardian] = ["guardian.bastion", "guardian.interception"],
-        [Berserker] = ["berserker.execution", "berserker.fury"],
-    };
-
     /// <summary>
-    /// Estratégia correta de cada segunda classe no solo contra a matilha (a barra põe a base primeiro): o Berserker abre
-    /// com a Fúria e guarda a Investida para alvo único (contra três Lobos, a Mana dela rende mais no Golpe Circular).
-    /// O Guardião usa a rotação da barra.
+    /// Segundas classes medidas. Estratégia correta:
+    /// <list type="bullet">
+    /// <item>o Berserker abre com a Fúria e guarda a Investida para alvo único (contra três Lobos, a Mana dela rende mais no
+    /// Golpe Circular);</item>
+    /// <item>no grupo, o Guardião deixa o Golpe de Escudo de lado: a Provocação já segura a Matriarca, e a Mana rende mais no
+    /// Bastião, na Interceptação e no Golpe Pesado (que interrompe);</item>
+    /// <item>no grupo, o Sacerdote abre com a Bênção e a Inspiração (antes da cura, que só sai com alguém ferido);</item>
+    /// <item>o Inquisidor usa a rotação da barra (a base primeiro; o bot decide o Selo e a Ira pelo estado que aplicam).</item>
+    /// </list>
     /// </summary>
-    public static readonly IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>> SoloOptions =
-        new Dictionary<string, IReadOnlyDictionary<string, string>>
+    public static readonly IReadOnlyDictionary<string, SecondClassSpec> Specs = new Dictionary<string, SecondClassSpec>
+    {
+        [Guardian] = new(Warrior, ["guardian.bastion", "guardian.interception"])
         {
-            [Berserker] = new Dictionary<string, string>
+            GroupOptions = new Dictionary<string, string> { [$"{Warrior}:skip"] = "guardian.shield_bash" },
+        },
+        [Berserker] = new(Warrior, ["berserker.execution", "berserker.fury"])
+        {
+            SoloOptions = new Dictionary<string, string>
             {
                 [$"{Warrior}:order"] = "berserker.fury",
                 [$"{Warrior}:skip"] = "berserker.charge",
             },
-        };
+        },
+        [Priest] = new(Cleric, ["priest.blessing", "priest.inspiration"])
+        {
+            SpeedLimit = null,
+            GroupOptions = new Dictionary<string, string> { [$"{Cleric}:order"] = "priest.blessing,priest.inspiration" },
+        },
+        [Inquisitor] = new(Cleric, ["inquisitor.judgment", "inquisitor.hammer_of_justice"]) { SpeedLimit = 1.8 },
+    };
+
+    public static TheoryData<string> SecondClasses => [.. Specs.Keys];
 
     /// <summary>
-    /// No grupo, o Guardião deixa o Golpe de Escudo de lado: a Provocação já segura a Matriarca, e a Mana rende mais no
-    /// Bastião, na Interceptação e no Golpe Pesado (que interrompe).
+    /// Três Lobos do nível com o jogador da classe base: o encontro real tem o Guerreiro; as outras classes usam uma cópia
+    /// dele com o jogador trocado (mesma arena, posições e limite de tempo), em <see cref="SoloContent"/>.
     /// </summary>
-    public static readonly IReadOnlyDictionary<string, string> GuardianGroupOptions = new Dictionary<string, string>
+    public static string SoloOf(string cls) => cls == Warrior ? Solo : $"{Solo}.{cls}";
+
+    /// <summary>O catálogo real mais os Três Lobos de cada classe base de <see cref="Specs"/>.</summary>
+    public static ContentCatalog SoloContent { get; } = BuildSoloContent(Content);
+
+    private static ContentCatalog BuildSoloContent(ContentCatalog c)
     {
-        [$"{Warrior}:skip"] = "guardian.shield_bash",
-    };
+        var basis = c.Encounters[Solo];
+        var copies = Specs.Values.Select(s => s.BaseClass).Distinct().Where(cls => cls != Warrior)
+            .Select(cls => basis with { Id = SoloOf(cls), Players = [basis.Players[0] with { Class = cls }] });
+        return new ContentCatalog(c.Classes.Values, c.Abilities.Values, c.Statuses.Values, c.Areas.Values,
+            c.Monsters.Values, c.Arenas.Values, c.Encounters.Values.Concat(copies), c.Items.Values)
+        {
+            Rules = c.Rules,
+            Threat = c.Threat,
+            Fingerprint = c.Fingerprint,
+            Zones = c.Zones,
+            Shops = c.Shops,
+        };
+    }
 
     private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, Lazy<BatchSummary>> Cache = new();
 
-    private static ClassDefinition Cls => Content.Classes[Warrior];
+    public static string BaseOf(string second) => Specs[second].BaseClass;
+
+    private static ClassDefinition ClassOf(string second) => Content.Classes[BaseOf(second)];
 
     /// <summary>
     /// Perfil esperado com segunda classe (§8): pontos de atributo com os +5 nos sugeridos; os de habilidade primeiro no
     /// que falta da base (perfil focado), depois cada normal da segunda classe no NH1, as duas principais alternando, a
-    /// assinatura quando o nível deixa e o resto. <paramref name="basePoints"/> limita os pontos da base.
+    /// assinatura quando o nível deixa e o resto. <paramref name="basePoints"/> limita os pontos da base. Solo, a base usa o
+    /// par solo da classe (<see cref="DesignHarness.SoloFocus"/>: o Clérigo com Corrente e Escudo), como o "só a base".
     /// </summary>
-    public static CharacterProfile WithSecondClass(int level, string second, int? basePoints = null)
+    public static CharacterProfile WithSecondClass(int level, string second, int? basePoints = null, bool solo = true)
     {
-        var baseRanks = CharacterProfiles.SkillRanks(Content, Cls, Math.Min(basePoints ?? level, level), RankProfiles.Focused);
+        var cls = ClassOf(second);
+        var focus = solo ? SoloFocus.GetValueOrDefault(cls.Id) : null;
+        var baseRanks = CharacterProfiles.SkillRanks(Content, cls, Math.Min(basePoints ?? level, level), RankProfiles.Focused, focus);
         var free = Content.Rules.Progression.SkillPointsAt(level) - baseRanks.Values.Sum();
         return CharacterProfile.Expected(level) with
         {
-            Ranks = new Dictionary<string, Dictionary<string, int>> { [Warrior] = baseRanks },
-            SecondClass = new Dictionary<string, string> { [Warrior] = second },
-            SecondClassRanks = new Dictionary<string, Dictionary<string, int>> { [Warrior] = SecondClassRanks(level, second, free) },
+            Ranks = new Dictionary<string, Dictionary<string, int>> { [cls.Id] = baseRanks },
+            SecondClass = new Dictionary<string, string> { [cls.Id] = second },
+            SecondClassRanks = new Dictionary<string, Dictionary<string, int>> { [cls.Id] = SecondClassRanks(level, second, free) },
         };
     }
 
@@ -76,10 +137,10 @@ public class SecondClassDesignTests(ITestOutputHelper output)
     public static Dictionary<string, int> SecondClassRanks(int level, string second, int points)
     {
         var rules = Content.Rules.Progression;
-        var abilities = Cls.SecondClasses.Single(s => s.Id == second).Abilities;
+        var abilities = ClassOf(second).SecondClasses.Single(s => s.Id == second).Abilities;
         var normals = abilities.Where(id => !Content.Abilities[id].Signature).ToList();
         var signature = abilities.FirstOrDefault(id => Content.Abilities[id].Signature);
-        var pair = Pair[second];
+        var pair = Specs[second].Pair;
         var ranks = abilities.ToDictionary(id => id, _ => 0, StringComparer.Ordinal);
 
         bool CanRaise(string id) =>
@@ -105,14 +166,19 @@ public class SecondClassDesignTests(ITestOutputHelper output)
         return ranks.Where(kv => kv.Value > 0).ToDictionary(kv => kv.Key, kv => kv.Value, StringComparer.Ordinal);
     }
 
-    /// <summary>Lote com o perfil (todos os jogadores do encontro), os monstros no nível e as opções de bot dadas.</summary>
+    /// <summary>
+    /// Lote com o perfil (todos os jogadores do encontro), os monstros no nível e as opções de bot dadas. <paramref name="content"/>
+    /// troca o catálogo (ex.: com um duelo de <see cref="LevelCurve.WithDuel"/>); <paramref name="seed"/> troca o lote de sementes.
+    /// </summary>
     public static BatchSummary RunWith(
-        string encounter, string strategy, CharacterProfile profile, int monsterLevel, IReadOnlyDictionary<string, string>? extra = null)
+        string encounter, string strategy, CharacterProfile profile, int monsterLevel, IReadOnlyDictionary<string, string>? extra = null,
+        ContentCatalog? content = null, ulong seed = 1)
     {
         var ranks = string.Join(",", profile.Ranks.SelectMany(r => r.Value).Concat(profile.SecondClassRanks.SelectMany(r => r.Value))
             .OrderBy(kv => kv.Key, StringComparer.Ordinal).Select(kv => $"{kv.Key}={kv.Value}"));
+        var seconds = string.Join(",", profile.SecondClass.OrderBy(kv => kv.Key, StringComparer.Ordinal).Select(kv => $"{kv.Key}={kv.Value}"));
         var extraKey = extra is null ? "" : string.Join(",", extra.OrderBy(o => o.Key, StringComparer.Ordinal).Select(o => $"{o.Key}={o.Value}"));
-        var key = $"{encounter}|{strategy}|{profile.Label}|{profile.SecondClass.GetValueOrDefault(Warrior)}|{ranks}|{monsterLevel}|{extraKey}";
+        var key = $"{encounter}|{strategy}|{profile.Label}|{seconds}|{ranks}|{monsterLevel}|{extraKey}|{seed}";
         return Cache.GetOrAdd(key, _ => new Lazy<BatchSummary>(() =>
         {
             var options = new Dictionary<string, string>(Options);
@@ -121,12 +187,13 @@ public class SecondClassDesignTests(ITestOutputHelper output)
                 options[k] = v;
             }
 
-            return Batch.Run(Content, new RunSpec
+            return Batch.Run(content ?? SoloContent, new RunSpec
             {
                 EncounterId = encounter,
                 Strategy = strategy,
                 Options = new BotOptions(options),
                 Runs = Runs,
+                BaseSeed = seed,
                 HazardSourceFactory = () => new TelegraphHazardSource(),
                 Profile = profile.Focus.Count > 0 || encounter == Group ? profile : profile with { Focus = SoloFocus },
                 MonsterLevel = monsterLevel,
@@ -134,21 +201,37 @@ public class SecondClassDesignTests(ITestOutputHelper output)
         })).Value;
     }
 
-    public static BatchSummary BaseOnly(int level) => RunWith(Solo, "rotation", CharacterProfile.Expected(level), level);
+    /// <summary>Estratégia solo da classe base (os de longe se afastam), como nos testes de progressão.</summary>
+    public static string SoloStrategy(string cls) => LevelCurve.SoloStrategy[cls];
 
-    public static BatchSummary SoloWith(int level, string second, int? basePoints = null) =>
-        RunWith(Solo, "rotation", WithSecondClass(level, second, basePoints), level, SoloOptions.GetValueOrDefault(second));
+    /// <summary>Só a base, solo; <paramref name="encounter"/> null = os Três Lobos do nível (<see cref="SoloOf"/>).</summary>
+    public static BatchSummary BaseOnly(int level, string cls = Warrior, string? encounter = null) =>
+        RunWith(encounter ?? SoloOf(cls), SoloStrategy(cls), CharacterProfile.Expected(level), level);
 
-    public static BatchSummary GroupWith(int level, string? second) =>
-        RunWith(Group, "kite+dodge", second is null ? CharacterProfile.Expected(level) : WithSecondClass(level, second), level,
-            second == Guardian ? GuardianGroupOptions : null);
+    /// <summary>Com a segunda classe, solo; <paramref name="encounter"/> null = os Três Lobos do nível (<see cref="SoloOf"/>).</summary>
+    public static BatchSummary SoloWith(int level, string second, int? basePoints = null, string? encounter = null) =>
+        RunWith(encounter ?? SoloOf(BaseOf(second)), SoloStrategy(BaseOf(second)), WithSecondClass(level, second, basePoints), level,
+            Specs[second].SoloOptions);
 
-    /// <summary>Dano por segundo vivo nos membros do grupo que não são o Guerreiro (todas as execuções somadas).</summary>
-    public static double OthersDamagePerSecond(BatchSummary s) =>
-        s.PerRun!.Sum(r => r.DamageTakenByClass.Where(kv => kv.Key != Warrior).Sum(kv => kv.Value))
-        / s.PerRun!.Sum(r => r.AliveSecondsByClass.Where(kv => kv.Key != Warrior).Sum(kv => kv.Value));
+    /// <summary>Encontro solo da classe base da segunda classe (o da diferença entre classes): Guerreiro, Três Lobos; Clérigo, o Guarda.</summary>
+    public static string HomeOf(string second) => SoloFor(BaseOf(second));
 
-    private static string Fmt(string label, BatchSummary s) =>
+    /// <summary>Grupo de 4 contra a Matriarca do nível: só a base (<paramref name="second"/> null) ou com a segunda classe.</summary>
+    public static BatchSummary GroupWith(int level, string? second, ulong seed = 1) =>
+        RunWith(Group, "kite+dodge", second is null ? CharacterProfile.Expected(level) : WithSecondClass(level, second, solo: false), level,
+            second is null ? null : Specs[second].GroupOptions, seed: seed);
+
+    /// <summary>Dano por segundo vivo recebido pelos membros do grupo que não são da classe <paramref name="cls"/> (todas as execuções somadas).</summary>
+    public static double OthersDamagePerSecond(BatchSummary s, string cls = Warrior) =>
+        s.PerRun!.Sum(r => r.DamageTakenByClass.Where(kv => kv.Key != cls).Sum(kv => kv.Value))
+        / s.PerRun!.Sum(r => r.AliveSecondsByClass.Where(kv => kv.Key != cls).Sum(kv => kv.Value));
+
+    /// <summary>T-423: dano por segundo vivo causado pelos membros do grupo que não são da classe <paramref name="cls"/>.</summary>
+    public static double OthersDealtPerSecond(BatchSummary s, string cls) =>
+        s.PerRun!.Sum(r => r.DamageDealtByClass.Where(kv => kv.Key != cls).Sum(kv => kv.Value))
+        / s.PerRun!.Sum(r => r.AliveSecondsByClass.Where(kv => kv.Key != cls).Sum(kv => kv.Value));
+
+    public static string Fmt(string label, BatchSummary s) =>
         $"{label}: vitória {s.WinRate:P0}, {s.TimeToWinMean:F1} s, dano recebido {s.DamageTaken:F0}, usos "
         + string.Join(" ", s.AbilityUses.Where(u => !u.Key.StartsWith("consumable", StringComparison.Ordinal)).Select(u => $"{u.Key}={u.Value:F1}"));
 
@@ -231,10 +314,10 @@ public class SecondClassDesignTests(ITestOutputHelper output)
         Assert.True(after <= 0.85 * before, $"outros: {after:F1}/s com o Guardião × {before:F1}/s só a base ({after / before:P0})");
     }
 
-    // ---------- as duas ----------
+    // ---------- todas ----------
 
     /// <summary>Encontro solo de cada classe base (o mesmo dos testes de progressão).</summary>
-    private static string SoloFor(string cls) => cls switch
+    public static string SoloFor(string cls) => cls switch
     {
         "class.archer" => "encounter.wolf_and_bandit",
         "class.mage" => "encounter.four_rats",
@@ -242,26 +325,34 @@ public class SecondClassDesignTests(ITestOutputHelper output)
         _ => Solo,
     };
 
-    /// <summary>Nenhuma segunda classe mais de 1,6× mais lenta que a média das outras (com as classes base do nível).</summary>
+    /// <summary>
+    /// Nenhuma segunda classe mais de 1,6× mais lenta que a média das outras. Cada uma no encontro solo da classe base dela
+    /// (<see cref="HomeOf"/>: Guerreiro, Três Lobos; Clérigo, o Guarda Esquelético), como na diferença entre classes; as
+    /// classes base que ainda não têm segunda classe entram na média com o encontro solo delas. Limite por segunda classe
+    /// (<see cref="SecondClassSpec.SpeedLimit"/>): as do Clérigo, a classe mais lenta pelo design, até 1,8×; o Sacerdote,
+    /// de cura, entra na média sem limite (T-423, <c>tasks/reports/balance-v0.20.md</c> §3).
+    /// </summary>
     [Theory]
     [MemberData(nameof(Levels))]
     public void No_second_class_is_more_than_1_6_times_slower_than_the_others(int level)
     {
-        var times = new Dictionary<string, double>
-        {
-            [Guardian] = SoloWith(level, Guardian).TimeToWinMean,
-            [Berserker] = SoloWith(level, Berserker).TimeToWinMean,
-        };
-        foreach (var (cls, strategy) in LevelCurve.SoloStrategy.Where(kv => kv.Key != Warrior))
+        var times = Specs.Keys.ToDictionary(second => second, second => SoloWith(level, second, encounter: HomeOf(second)).TimeToWinMean);
+        var withSecond = Specs.Values.Select(s => s.BaseClass).ToHashSet();
+        foreach (var (cls, strategy) in LevelCurve.SoloStrategy.Where(kv => !withSecond.Contains(kv.Key)))
         {
             times[cls] = RunWith(SoloFor(cls), strategy, CharacterProfile.Expected(level), level).TimeToWinMean;
         }
 
         output.WriteLine(string.Join(", ", times.Select(t => $"{t.Key} {t.Value:F1} s")));
-        foreach (var second in new[] { Guardian, Berserker })
+        foreach (var second in Specs.Keys)
         {
             var others = times.Where(t => t.Key != second).Average(t => t.Value);
-            Assert.True(times[second] <= 1.6 * others, $"{second}: {times[second]:F1} s × média das outras {others:F1} s");
+            if (Specs[second].SpeedLimit is not { } limit)
+            {
+                continue;
+            }
+
+            Assert.True(times[second] <= limit * others, $"{second}: {times[second]:F1} s × média das outras {others:F1} s (limite {limit}×)");
         }
     }
 
@@ -270,11 +361,10 @@ public class SecondClassDesignTests(ITestOutputHelper output)
     /// não fica mais lento que só a base (margem de 2%).
     /// </summary>
     [Theory]
-    [InlineData(Guardian)]
-    [InlineData(Berserker)]
+    [MemberData(nameof(SecondClasses))]
     public void At_level_21_the_rank_1_of_the_second_class_is_already_useful(string second)
     {
-        var baseOnly = BaseOnly(21);
+        var baseOnly = BaseOnly(21, BaseOf(second));
         var withSecond = SoloWith(21, second, basePoints: 20);
         Log("nv21 só a base", baseOnly);
         Log($"nv21 {second}", withSecond);
@@ -285,15 +375,15 @@ public class SecondClassDesignTests(ITestOutputHelper output)
 
     /// <summary>No nível 30, pontos do 21 em diante só na base (as 3 NH que faltam) ou na segunda classe: os dois vencem ≥ 70%.</summary>
     [Theory]
-    [InlineData(Guardian)]
-    [InlineData(Berserker)]
+    [MemberData(nameof(SecondClasses))]
     public void Points_after_21_in_the_base_or_in_the_second_class_both_win(string second)
     {
         const int level = 30;
-        var inBase = RunWith(Solo, "rotation", CharacterProfile.Expected(level) with
+        var cls = BaseOf(second);
+        var inBase = RunWith(SoloOf(cls), SoloStrategy(cls), CharacterProfile.Expected(level) with
         {
-            SecondClass = new Dictionary<string, string> { [Warrior] = second },
-        }, level, SoloOptions.GetValueOrDefault(second));
+            SecondClass = new Dictionary<string, string> { [cls] = second },
+        }, level, Specs[second].SoloOptions);
         var inSecond = SoloWith(level, second, basePoints: 20);
         Log($"nv{level} {second} pontos na base", inBase);
         Log($"nv{level} {second} pontos na segunda classe", inSecond);

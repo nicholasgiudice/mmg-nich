@@ -1,0 +1,444 @@
+{
+  "$schema": "./schemas/game-data.schema.json",
+  "abilities": [
+    {
+      "id": "inquisitor.hammer_of_justice",
+      "name": "Martelo da Justiça",
+      "tags": ["melee", "holy", "control"],
+      "cost": { "resource": "mana", "amount": 25 },
+      "cooldown": 8,
+      "targeting": { "type": "melee_arc", "range": 1.9, "angle": 60 },
+      "effects": [
+        {
+          "type": "damage",
+          "school": "holy",
+          "base": 10,
+          "scaling": { "weapon": 1, "int": 1.8 },
+          "bonusVsTags": { "undead": 0.25, "corrupted": 0.25 }
+        },
+        { "type": "apply_status", "status": "status.stunned", "duration": 1 }
+      ],
+      "ranks": [
+        {
+          "rank": 2,
+          "effects": [
+            {
+              "type": "damage",
+              "school": "holy",
+              "base": 12,
+              "scaling": { "weapon": 1.2, "int": 2.16 },
+              "bonusVsTags": { "undead": 0.25, "corrupted": 0.25 }
+            },
+            { "type": "apply_status", "status": "status.stunned", "duration": 1 }
+          ]
+        },
+        {
+          "rank": 3,
+          "effects": [
+            {
+              "type": "damage",
+              "school": "holy",
+              "base": 14,
+              "scaling": { "weapon": 1.4, "int": 2.52 },
+              "bonusVsTags": { "undead": 0.25, "corrupted": 0.25 }
+            },
+            { "type": "apply_status", "status": "status.stunned", "duration": 1.5 }
+          ]
+        },
+        {
+          "rank": 4,
+          "effects": [
+            {
+              "type": "damage",
+              "school": "holy",
+              "base": 16,
+              "scaling": { "weapon": 1.6, "int": 2.88 },
+              "bonusVsTags": { "undead": 0.25, "corrupted": 0.25 }
+            },
+            { "type": "apply_status", "status": "status.stunned", "duration": 1.5 }
+          ]
+        },
+        {
+          "rank": 5,
+          "targeting": { "type": "melee_arc", "range": 1.9, "angle": 120 },
+          "effects": [
+            {
+              "type": "damage",
+              "school": "holy",
+              "base": 18,
+              "scaling": { "weapon": 1.8, "int": 3.24 },
+              "bonusVsTags": { "undead": 0.25, "corrupted": 0.25 }
+            },
+            { "type": "apply_status", "status": "status.stunned", "duration": 1.5 }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "inquisitor.consecration",
+      "name": "Consagração",
+      "tags": ["holy", "aoe", "heal"],
+      "cost": { "resource": "mana", "amount": 45 },
+      "cooldown": 14,
+      "targeting": { "type": "self" },
+      "effects": [
+        { "type": "spawn_area", "area": "area.consecration_harm_1" },
+        { "type": "spawn_area", "area": "area.consecration_mend_1" }
+      ],
+      "ranks": [
+        {
+          "rank": 2,
+          "effects": [
+            { "type": "spawn_area", "area": "area.consecration_harm_2" },
+            { "type": "spawn_area", "area": "area.consecration_mend_2" }
+          ]
+        },
+        {
+          "rank": 3,
+          "effects": [
+            { "type": "spawn_area", "area": "area.consecration_harm_3" },
+            { "type": "spawn_area", "area": "area.consecration_mend_3" }
+          ]
+        },
+        {
+          "rank": 4,
+          "effects": [
+            { "type": "spawn_area", "area": "area.consecration_harm_4" },
+            { "type": "spawn_area", "area": "area.consecration_mend_4" }
+          ]
+        },
+        {
+          "rank": 5,
+          "effects": [
+            { "type": "spawn_area", "area": "area.consecration_harm_5" },
+            { "type": "spawn_area", "area": "area.consecration_mend_5" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "inquisitor.seal_of_light",
+      "name": "Selo da Luz",
+      "tags": ["holy", "mark"],
+      "cost": { "resource": "mana", "amount": 20 },
+      "cooldown": 12,
+      "targeting": { "type": "unit", "range": 6, "faction": "enemy" },
+      "effects": [{ "type": "apply_status", "status": "status.seal_of_light_1", "duration": 8 }],
+      "ranks": [
+        { "rank": 2, "effects": [{ "type": "apply_status", "status": "status.seal_of_light_2", "duration": 8 }] },
+        { "rank": 3, "effects": [{ "type": "apply_status", "status": "status.seal_of_light_3", "duration": 10 }] },
+        { "rank": 4, "effects": [{ "type": "apply_status", "status": "status.seal_of_light_4", "duration": 10 }] },
+        { "rank": 5, "effects": [{ "type": "apply_status", "status": "status.seal_of_light_5", "duration": 10 }] }
+      ]
+    },
+    {
+      "id": "inquisitor.judgment",
+      "name": "Julgamento",
+      "tags": ["holy"],
+      "cost": { "resource": "mana", "amount": 30 },
+      "cooldown": 7,
+      "targeting": { "type": "unit", "range": 3, "faction": "enemy" },
+      "effects": [
+        {
+          "type": "damage",
+          "school": "holy",
+          "base": 20,
+          "scaling": { "weapon": 1.2, "int": 2.5 },
+          "bonusVsTags": { "undead": 0.5, "corrupted": 0.25 }
+        }
+      ],
+      "ranks": [
+        {
+          "rank": 2,
+          "effects": [
+            {
+              "type": "damage",
+              "school": "holy",
+              "base": 24,
+              "scaling": { "weapon": 1.44, "int": 3 },
+              "bonusVsTags": { "undead": 0.5, "corrupted": 0.25 }
+            }
+          ]
+        },
+        {
+          "rank": 3,
+          "targeting": { "type": "unit", "range": 5, "faction": "enemy" },
+          "effects": [
+            {
+              "type": "damage",
+              "school": "holy",
+              "base": 28,
+              "scaling": { "weapon": 1.68, "int": 3.5 },
+              "bonusVsTags": { "undead": 0.5, "corrupted": 0.25 }
+            }
+          ]
+        },
+        {
+          "rank": 4,
+          "targeting": { "type": "unit", "range": 5, "faction": "enemy" },
+          "effects": [
+            {
+              "type": "damage",
+              "school": "holy",
+              "base": 32,
+              "scaling": { "weapon": 1.92, "int": 4 },
+              "bonusVsTags": { "undead": 0.5, "corrupted": 0.25 }
+            }
+          ]
+        },
+        {
+          "rank": 5,
+          "targeting": { "type": "unit", "range": 5, "faction": "enemy" },
+          "effects": [
+            {
+              "type": "damage",
+              "school": "holy",
+              "base": 36,
+              "scaling": { "weapon": 2.16, "int": 4.5 },
+              "bonusVsTags": { "undead": 0.75, "corrupted": 0.25 },
+              "selfHeal": 0.2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "inquisitor.divine_wrath",
+      "name": "Ira Divina",
+      "tags": ["holy", "aoe", "signature"],
+      "signature": true,
+      "cost": { "resource": "mana", "amount": 80 },
+      "cooldown": 90,
+      "targeting": { "type": "self" },
+      "effects": [{ "type": "apply_status", "status": "status.divine_wrath_1", "duration": 10, "target": "self" }],
+      "ranks": [
+        { "rank": 2, "effects": [{ "type": "apply_status", "status": "status.divine_wrath_1", "duration": 12, "target": "self" }] },
+        { "rank": 3, "effects": [{ "type": "apply_status", "status": "status.divine_wrath_3", "duration": 15, "target": "self" }] }
+      ]
+    },
+    {
+      "id": "inquisitor.divine_wrath_strike_1",
+      "name": "Golpe Sagrado",
+      "tags": ["basic", "holy"],
+      "cooldown": 1.1,
+      "targeting": { "type": "unit", "range": 6, "faction": "enemy" },
+      "effects": [
+        {
+          "type": "damage",
+          "school": "holy",
+          "base": 0,
+          "scaling": { "weapon": 1.5, "int": 0.9 },
+          "bonusVsTags": { "undead": 0.25, "corrupted": 0.25 },
+          "allyHeal": { "fraction": 0.1, "radius": 4, "ability": "inquisitor.divine_wrath" }
+        },
+        {
+          "type": "extra_targets",
+          "radius": 2,
+          "count": 0,
+          "effects": [
+            {
+              "type": "damage",
+              "school": "holy",
+              "base": 0,
+              "scaling": { "weapon": 1.5, "int": 0.9 },
+              "bonusVsTags": { "undead": 0.25, "corrupted": 0.25 },
+              "allyHeal": { "fraction": 0.1, "radius": 4, "ability": "inquisitor.divine_wrath" }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "inquisitor.divine_wrath_strike_3",
+      "name": "Golpe Sagrado",
+      "tags": ["basic", "holy"],
+      "cooldown": 1.1,
+      "targeting": { "type": "unit", "range": 6, "faction": "enemy" },
+      "effects": [
+        {
+          "type": "damage",
+          "school": "holy",
+          "base": 0,
+          "scaling": { "weapon": 1.8, "int": 1.08 },
+          "bonusVsTags": { "undead": 0.25, "corrupted": 0.25 },
+          "allyHeal": { "fraction": 0.15, "radius": 4, "ability": "inquisitor.divine_wrath" }
+        },
+        {
+          "type": "extra_targets",
+          "radius": 2,
+          "count": 0,
+          "effects": [
+            {
+              "type": "damage",
+              "school": "holy",
+              "base": 0,
+              "scaling": { "weapon": 1.8, "int": 1.08 },
+              "bonusVsTags": { "undead": 0.25, "corrupted": 0.25 },
+              "allyHeal": { "fraction": 0.15, "radius": 4, "ability": "inquisitor.divine_wrath" }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "statuses": [
+    {
+      "id": "status.seal_of_light_1",
+      "name": "Selo da Luz",
+      "tags": ["debuff", "seal"],
+      "defaultDuration": 8,
+      "stacking": "refresh",
+      "attackerLifesteal": { "fraction": 0.1, "ability": "inquisitor.seal_of_light" }
+    },
+    {
+      "id": "status.seal_of_light_2",
+      "name": "Selo da Luz",
+      "tags": ["debuff", "seal"],
+      "defaultDuration": 8,
+      "stacking": "refresh",
+      "attackerLifesteal": { "fraction": 0.12, "ability": "inquisitor.seal_of_light" }
+    },
+    {
+      "id": "status.seal_of_light_3",
+      "name": "Selo da Luz",
+      "tags": ["debuff", "seal"],
+      "defaultDuration": 10,
+      "stacking": "refresh",
+      "attackerLifesteal": { "fraction": 0.15, "ability": "inquisitor.seal_of_light" }
+    },
+    {
+      "id": "status.seal_of_light_4",
+      "name": "Selo da Luz",
+      "tags": ["debuff", "seal"],
+      "defaultDuration": 10,
+      "stacking": "refresh",
+      "attackerLifesteal": { "fraction": 0.17, "ability": "inquisitor.seal_of_light" }
+    },
+    {
+      "id": "status.seal_of_light_5",
+      "name": "Selo da Luz",
+      "tags": ["debuff", "seal"],
+      "defaultDuration": 10,
+      "stacking": "refresh",
+      "attackerLifesteal": { "fraction": 0.2, "ability": "inquisitor.seal_of_light" }
+    },
+    {
+      "id": "status.divine_wrath_1",
+      "name": "Ira Divina",
+      "tags": ["buff", "divine_wrath"],
+      "defaultDuration": 10,
+      "stacking": "refresh",
+      "basicAttack": "inquisitor.divine_wrath_strike_1"
+    },
+    {
+      "id": "status.divine_wrath_3",
+      "name": "Ira Divina",
+      "tags": ["buff", "divine_wrath"],
+      "defaultDuration": 15,
+      "stacking": "refresh",
+      "basicAttack": "inquisitor.divine_wrath_strike_3"
+    }
+  ],
+  "areas": [
+    {
+      "id": "area.consecration_harm_1",
+      "radius": 3,
+      "duration": 6,
+      "interval": 1,
+      "mode": "periodic",
+      "affects": "enemy",
+      "effects": [
+        { "type": "damage", "school": "holy", "base": 4, "scaling": { "int": 0.5 }, "bonusVsTags": { "undead": 0.5, "corrupted": 0.25 } }
+      ]
+    },
+    {
+      "id": "area.consecration_mend_1",
+      "radius": 3,
+      "duration": 6,
+      "interval": 1,
+      "mode": "periodic",
+      "affects": "ally",
+      "effects": [{ "type": "heal", "base": 3, "scaling": { "int": 0.3 } }]
+    },
+    {
+      "id": "area.consecration_harm_2",
+      "radius": 3,
+      "duration": 6,
+      "interval": 1,
+      "mode": "periodic",
+      "affects": "enemy",
+      "effects": [
+        { "type": "damage", "school": "holy", "base": 4.8, "scaling": { "int": 0.6 }, "bonusVsTags": { "undead": 0.5, "corrupted": 0.25 } }
+      ]
+    },
+    {
+      "id": "area.consecration_mend_2",
+      "radius": 3,
+      "duration": 6,
+      "interval": 1,
+      "mode": "periodic",
+      "affects": "ally",
+      "effects": [{ "type": "heal", "base": 3.6, "scaling": { "int": 0.36 } }]
+    },
+    {
+      "id": "area.consecration_harm_3",
+      "radius": 3,
+      "duration": 8,
+      "interval": 1,
+      "mode": "periodic",
+      "affects": "enemy",
+      "effects": [
+        { "type": "damage", "school": "holy", "base": 5.6, "scaling": { "int": 0.7 }, "bonusVsTags": { "undead": 0.5, "corrupted": 0.25 } }
+      ]
+    },
+    {
+      "id": "area.consecration_mend_3",
+      "radius": 3,
+      "duration": 8,
+      "interval": 1,
+      "mode": "periodic",
+      "affects": "ally",
+      "effects": [{ "type": "heal", "base": 4.2, "scaling": { "int": 0.42 } }]
+    },
+    {
+      "id": "area.consecration_harm_4",
+      "radius": 3,
+      "duration": 8,
+      "interval": 1,
+      "mode": "periodic",
+      "affects": "enemy",
+      "effects": [
+        { "type": "damage", "school": "holy", "base": 6.4, "scaling": { "int": 0.8 }, "bonusVsTags": { "undead": 0.5, "corrupted": 0.25 } }
+      ]
+    },
+    {
+      "id": "area.consecration_mend_4",
+      "radius": 3,
+      "duration": 8,
+      "interval": 1,
+      "mode": "periodic",
+      "affects": "ally",
+      "effects": [{ "type": "heal", "base": 4.8, "scaling": { "int": 0.48 } }]
+    },
+    {
+      "id": "area.consecration_harm_5",
+      "radius": 4,
+      "duration": 8,
+      "interval": 1,
+      "mode": "periodic",
+      "affects": "enemy",
+      "effects": [
+        { "type": "damage", "school": "holy", "base": 7.2, "scaling": { "int": 0.9 }, "bonusVsTags": { "undead": 0.5, "corrupted": 0.25 } }
+      ]
+    },
+    {
+      "id": "area.consecration_mend_5",
+      "radius": 4,
+      "duration": 8,
+      "interval": 1,
+      "mode": "periodic",
+      "affects": "ally",
+      "effects": [{ "type": "heal", "base": 5.4, "scaling": { "int": 0.54 } }]
+    }
+  ]
+}

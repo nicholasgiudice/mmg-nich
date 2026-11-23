@@ -35,7 +35,7 @@ public sealed record BotPlan(
 /// Bot genérico guiado por dados: a estratégia é um <see cref="BotPlan"/> (modo de movimento + lista de habilidades permitidas).
 /// As condições de uso de cada habilidade são deduzidas do papel (<see cref="AbilityRole"/>), não de ids.
 /// </summary>
-public sealed class ConfigurableBot(BotPlan plan) : IBotController
+public sealed partial class ConfigurableBot(BotPlan plan) : IBotController
 {
     private readonly Navigator _nav = new();
     private EntityId _focus = EntityId.None;
@@ -234,6 +234,13 @@ public sealed class ConfigurableBot(BotPlan plan) : IBotController
         var force = plan.ForceAbilities;
         var cls = ctx.ClassId;
         var nearest = enemies.Count > 0 ? enemies[0] : null;
+
+        // T-423: estados de grupo do Clérigo (Santuário, Ira Divina, Oração, Bênção, Inspiração, Graça Veloz, Selo da Luz).
+        if (PlanStatusAbility(ctx, info, enemies, focus, out var statusTarget) is { } byStatus)
+        {
+            target = statusTarget;
+            return byStatus;
+        }
 
         switch (info.Role)
         {
