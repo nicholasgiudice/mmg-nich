@@ -29,9 +29,10 @@ public static class CoreEffects
         var (crit, critFactor) = StatusCrit.Roll(c.World, c.Source, c.Target!, c.Ability);
         var value = Stats.StatMath.Scaled(e.Base, e.Scaling, c.Source) * Stats.StatMath.MonsterPower(c.World, c.Source)
             * TagBonus(c.Target!, e) * LowHealthBonus(c.Target!, e) * c.Power * critFactor * PierceFalloff.Factor(c, e);
-        DamageResolver.Deal(
+        var dealt = DamageResolver.Deal(
             c.World, c.Source, c.Target!, c.SourceId, value, e.School, melee: c.Ability?.IsMelee ?? false, critical: crit,
             threatMultiplier: e.ThreatMultiplier, ignoreArmor: e.IgnoreArmor);
+        DamageHeals.Apply(c, e, dealt); // T-422: selfHeal e allyHeal
         if (e.ResetCooldownOnKill && !c.Target!.IsAlive)
         {
             ResetCooldown(c);

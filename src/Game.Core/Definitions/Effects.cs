@@ -65,6 +65,36 @@ public sealed record DamageEffect : EffectDefinition
     /// habilidade (não de status nem de área). Habilidade com cargas recupera uma carga no tick seguinte.
     /// </summary>
     public bool ResetCooldownOnKill { get; init; }
+
+    // ---- T-422 (Inquisidor): cura pelo dano do próprio golpe ----
+
+    /// <summary>
+    /// Cura quem causou o dano nesta fração do dano final (T-422, Julgamento NH5: 0,2). Em [0, 1]; 0 = nada. Passa pela cura
+    /// recebida, não é crítica e sai como <c>HealApplied</c> com a origem do dano. Cura sem efeito não publica nada.
+    /// </summary>
+    public double SelfHeal { get; init; }
+
+    /// <summary>Cura os aliados perto de quem causou o dano numa fração do dano final de cada acerto (T-422, Ira Divina). Null = nada.</summary>
+    public DamageAllyHealDefinition? AllyHeal { get; init; }
+}
+
+/// <summary>
+/// Cura dos aliados pelo dano (T-422, Ira Divina): a cada acerto, os aliados (mesma facção) a até <see cref="Radius"/> tiles de
+/// quem causou o dano recebem <see cref="Fraction"/> do dano final. Passa pela cura recebida de cada um e não é crítica.
+/// </summary>
+public sealed record DamageAllyHealDefinition
+{
+    /// <summary>Fração do dano final, em (0, 1].</summary>
+    public required double Fraction { get; init; }
+
+    /// <summary>Distância máxima (tiles) de quem causou o dano até o aliado (o corpo do aliado conta, como nas áreas).</summary>
+    public required double Radius { get; init; }
+
+    /// <summary>Quem causou o dano também se cura (padrão true).</summary>
+    public bool IncludeSelf { get; init; } = true;
+
+    /// <summary>Habilidade a que a cura é atribuída no <c>HealApplied</c> e no log (ex.: a Ira Divina). Null = a origem do dano.</summary>
+    public string? Ability { get; init; }
 }
 
 /// <summary>

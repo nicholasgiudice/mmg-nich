@@ -543,7 +543,13 @@
             "lowHealthBonus": { "type": "object", "additionalProperties": false, "required": ["belowHealth", "bonus"],
               "description": "T-407: alvo abaixo de belowHealth da vida máxima no acerto leva o dano × (1 + bonus).",
               "properties": { "belowHealth": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 }, "bonus": { "type": "number", "exclusiveMinimum": 0 } } },
-            "resetCooldownOnKill": { "type": "boolean", "description": "T-407: se este dano matar o alvo, a recarga da habilidade volta a zero." } } },
+            "resetCooldownOnKill": { "type": "boolean", "description": "T-407: se este dano matar o alvo, a recarga da habilidade volta a zero." },
+            "selfHeal": { "type": "number", "minimum": 0, "maximum": 1, "description": "T-422: cura quem causou nesta fração do dano final (Julgamento NH5)." },
+            "allyHeal": { "type": "object", "additionalProperties": false, "required": ["fraction", "radius"],
+              "description": "T-422: cada acerto cura os aliados a até radius tiles de quem causou nesta fração do dano final (Ira Divina).",
+              "properties": { "fraction": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 }, "radius": { "type": "number", "exclusiveMinimum": 0 },
+                "includeSelf": { "type": "boolean", "description": "Quem causou também se cura. Padrão true." },
+                "ability": { "$ref": "#/$defs/id", "description": "Habilidade a que a cura é atribuída no log. Padrão: a origem do dano." } } } } },
         { "type": "object", "additionalProperties": false, "required": ["type", "base"],
           "properties": { "target": { "$ref": "#/$defs/effectTarget" }, "onHit": { "$ref": "#/$defs/onHit" }, "type": { "const": "heal" }, "base": { "type": "number", "minimum": 0 }, "scaling": { "$ref": "#/$defs/scaling" },
             "maxHealthFraction": { "type": "number", "minimum": 0, "maximum": 1, "description": "T-421: soma esta fração da vida máxima de quem recebe." } } },
@@ -728,7 +734,21 @@
             "manaRegen": { "$ref": "#/$defs/scaledValue", "description": "Mana por segundo a mais." }
           }
         },
-        "onExpire": { "$ref": "#/$defs/effects", "description": "T-421: efeitos quando o status acaba pelo tempo (não quando é tirado nem quando quem o tem morre)." }
+        "onExpire": { "$ref": "#/$defs/effects", "description": "T-421: efeitos quando o status acaba pelo tempo (não quando é tirado nem quando quem o tem morre)." },
+        "attackerLifesteal": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["fraction"],
+          "description": "T-422: todo aliado de quem aplicou que causa dano em quem tem o status cura esta fração do dano final (mesmas regras de lifesteal; Selo da Luz).",
+          "properties": {
+            "fraction": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 },
+            "belowHealth": { "type": "number", "minimum": 0, "maximum": 1, "description": "0 = nunca." },
+            "belowHealthMultiplier": { "type": "number", "minimum": 1, "description": "Padrão 2 (dobra)." },
+            "killHeal": { "type": "number", "minimum": 0, "maximum": 1 },
+            "ability": { "$ref": "#/$defs/id", "description": "Habilidade a que a cura é atribuída no log. Padrão: o status." }
+          }
+        },
+        "basicAttack": { "$ref": "#/$defs/id", "description": "T-422: enquanto o status dura, o ataque básico de quem o tem usa esta habilidade (Ira Divina)." }
       }
     },
     "scaledValue": {
