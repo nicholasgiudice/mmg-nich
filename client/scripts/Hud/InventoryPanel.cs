@@ -204,7 +204,8 @@ public partial class InventoryPanel : ProgressionPanel
         var doll = new DollFigure
         {
             CustomMinimumSize = new Vector2(DollWidth, DollHeight),
-            Sprite = classId is null ? null : s_sprites.For(classId),
+            Sprite = classId is null ? null
+                : s_sprites.ForCharacter(classId, self.TryGet<Game.Core.Combat.Progression.CharacterProgress>()?.SecondClass),
             Zoom = FigureZoom,
             Niche = HudTheme.DollNiche(),
             NicheZoom = NicheZoom,
