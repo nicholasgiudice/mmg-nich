@@ -56,7 +56,7 @@ Fluxo para você:
 | **1 — Rede mínima** | Servidor dedicado na VPS, 4 jogadores na mesma arena, login de desenvolvimento | **Concluída** (T-111: playtest online aprovado; seção 6b) |
 | **2 — Persistência e progressão** | Contas, personagens, inventário, Cidade + Campos online; atributos, níveis, equipamento e habilidades reformuladas (`design/progression-v0.1.md`) | **Concluída** (T-230: playtest aprovado com correções para a fase 3; seção 6d) |
 | **3 — Primeiro mapa completo** | Floresta, Ruínas, Cripta instanciada, Vigia Sem Rosto; grupo, lista de batalha, ouro, lojas e mapas maiores (playtest v0.2) | **Concluída** (T-380: playtest aprovado; seção 6e) |
-| **4 — Segundas classes** | Nível 40, segunda classe no nível 20 com duas opções por classe, passivas, barra de 10 teclas; Guerreiro primeiro (`design/segunda-classe-v0.1.md`) | **Detalhada** nos blocos do Guerreiro (T-390; seção 6f) e do Clérigo (T-420; seção 6g); Arqueiro e Mago em esboço. Em andamento direto na `main` (desde 2026-11-22; antes, na branch `trilha/segundas-classes`) |
+| **4 — Segundas classes** | Nível 40, segunda classe no nível 20 com duas opções por classe, passivas, barra de 10 teclas; Guerreiro primeiro (`design/segunda-classe-v0.1.md`) | **Detalhada** nos blocos do Guerreiro (T-390; seção 6f), do Clérigo (T-420; seção 6g) e do Arqueiro (T-430; seção 6h); Mago em esboço. Em andamento direto na `main` (desde 2026-11-22; antes, na branch `trilha/segundas-classes`) |
 | **5 — Operação** | CI/CD, métricas, testes de carga, produção separada | Esboço |
 | **Depois** | Áreas e mapas novos do nível 16 ao 40 | Ainda sem esboço |
 
@@ -584,7 +584,7 @@ Detalhadas pela T-420 a partir de `design/segunda-classe-v0.1.md`, seção 8. O 
 - **Seguir sem o playtest do Guerreiro.** A T-413 fica pendente e pode ser feita junto com o playtest do Clérigo (T-425).
 - **Inquisidor aprovado como está.**
 - **Inspiração no lugar do Elo da Vida** no Sacerdote. A Inspiração dá regeneração de Mana aos aliados no raio, menos ao próprio Sacerdote, e não Mana na hora ("Mana vem só do tempo").
-- Arqueiro e Mago: o designer revisa as segundas classes uma por uma antes de detalhar os blocos deles.
+- Arqueiro e Mago: o designer revisa as segundas classes uma por uma antes de detalhar os blocos deles. O Arqueiro está na seção 6h.
 
 **O que o bloco do Guerreiro já deixou pronto:** vida pelo dano (T-407) para o Selo da Luz, o Julgamento e a Ira Divina; estados em aliados num raio; áreas no chão. O desvio de dano (T-406) não é mais usado pelo Clérigo, porque o Elo da Vida saiu.
 
@@ -625,9 +625,57 @@ T-420 ─► T-421 ─► T-422 ─► T-423 ─► T-424 ─► T-425
 
 ---
 
+## 6h. Tarefas da fase 4 (bloco do Arqueiro)
+
+Detalhadas pela T-430 a partir de `design/segunda-classe-v0.1.md`, seção 6. O bloco entrega o **Atirador de Elite** e o **Caçador**.
+
+**Decisões do designer (2026-11-22)**
+- **Atirador de Elite aprovado**, com o **Tiro Certeiro sem conjuração** e o **Olho de Falcão de 15 / 17 / 20 s** (antes, 6 / 7 / 8 s).
+- **Caçador aprovado como está.**
+
+**Pode rodar ao lado do bloco do Clérigo.** Os dois blocos não dependem um do outro, mas as tarefas de Core (T-421, T-422, T-431, T-432) mexem nos mesmos arquivos: definições de estado, `DamageResolver`, validador de dados e schema. Rode **uma tarefa de Core de cada vez**, nesta ordem: T-421, T-422, T-431, T-432. Também dá para alternar os blocos, desde que cada tarefa saia da `main` com a anterior integrada.
+
+### Índice
+
+| ID | Tarefa | Ambiente | Modelo | Depende de |
+|---|---|---|---|---|
+| [T-430](fase-4/T-430-planejar-arqueiro.md) | Detalhar o bloco do Arqueiro em tarefas | Windows | **Forte** | T-420 |
+| [T-431](fase-4/T-431-mecanicas-do-atirador.md) | Core: mecânicas do Atirador (dano menor atrás na linha, crítico pela distância, alcance de um estado, ignorar armadura, crítico garantido) | VPS | **Forte** | — |
+| [T-432](fase-4/T-432-mecanicas-do-cacador.md) | Core: mecânicas do Caçador (efeito em todo acerto, veneno pelo NH da passiva, dano se o alvo andar, copiar estados, estado que pula) | VPS | **Forte** | 431 |
+| [T-433](fase-4/T-433-dados-atirador-e-cacador.md) | Dados: habilidades do Atirador e do Caçador, metas e testes de design | VPS | Médio | 431, 432 |
+| [T-434](fase-4/T-434-icones-e-efeitos-do-arqueiro.md) | Ícones e efeitos das habilidades do Atirador e do Caçador | Windows | Humano + Médio | 433 |
+| [T-435](fase-4/T-435-playtest-do-arqueiro.md) | Playtest do Arqueiro com segunda classe | Windows | Humano | 434 |
+
+### Ondas de execução (com o bloco do Clérigo)
+
+| Onda | VPS | Windows |
+|---|---|---|
+| 1 | T-421 | — |
+| 2 | T-422 | — |
+| 3 | T-423, depois T-431 | — |
+| 4 | T-432 | T-424 |
+| 5 | T-433 | T-425 |
+| 6 | — | T-434 |
+| 7 | — | T-435 |
+
+**Cuidados de integração**
+- Tudo sai da `main` e entra na `main`. Testes locais no Windows, como na seção 6f.
+- **Protocolo:** nenhuma tarefa do bloco precisa subir `ProtocolVersion`. Se a T-431 precisar mandar o alcance novo pela rede, sobe a partir do número da `main`, e cliente e servidor saem do mesmo commit.
+- A T-423 e a T-433 mexem em `classes.json` e nos testes de design da segunda classe (`SecondClassDesignTests`): integrar uma e rebasear a outra.
+- A T-424 e a T-434 mexem em `icons.png` e `icons.json`: uma de cada vez.
+
+### Grafo de dependências
+
+```text
+T-430 ─► T-431 ─► T-432 ─► T-433 ─► T-434 ─► T-435
+         (depois da T-422, pelos arquivos em comum)
+```
+
+---
+
 ## 7. Fases seguintes (esboço)
 
-Serão convertidas em arquivos de tarefa no fim de cada fase. As fases 1, 2 e 3 estão detalhadas nas seções 6b, 6d e 6e, e os blocos do Guerreiro e do Clérigo da fase 4 nas seções 6f e 6g.
+Serão convertidas em arquivos de tarefa no fim de cada fase. As fases 1, 2 e 3 estão detalhadas nas seções 6b, 6d e 6e, e os blocos do Guerreiro, do Clérigo e do Arqueiro da fase 4 nas seções 6f, 6g e 6h.
 
 ### Fase 2 — Persistência e progressão
 
@@ -675,7 +723,7 @@ Decidida pelo designer depois do playtest v0.3 (2026-11-19 a 2026-11-21). Design
 | Ferramenta de teste | botão no menu do Esc para subir de nível e desfazer a segunda classe, só em servidor de teste | decidido |
 | Guerreiro | sistema de segunda classe e passivas, Guardião e Berserker, barra de 10 teclas, tela de escolha; playtest | **aprovado** |
 | Clérigo | Sacerdote (Inspiração no lugar do Elo da Vida) e Inquisidor | **aprovado** (2026-11-22); detalhado na seção 6g (T-420) |
-| Arqueiro | Atirador de Elite e Caçador | só as passivas decididas; revisão uma por uma com o designer |
+| Arqueiro | Atirador de Elite (Tiro Certeiro sem conjuração, Olho de Falcão de 15 a 20 s) e Caçador | **aprovado** (2026-11-22); detalhado na seção 6h (T-430) |
 | Mago | Piromante e Arcanista | a aprovar, uma por uma |
 
 ### Fase 5 — Operação

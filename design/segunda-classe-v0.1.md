@@ -17,6 +17,8 @@ Os números são ponto de partida para o simulador, como em `design/progression-
 | Passivas | **algumas habilidades viram passivas**, sem que toda classe precise ter: **Sede de Sangue** (Berserker), **Mira Firme** (Atirador de Elite), esta pela distância do alvo, sem ficar parado, e **Flecha Envenenada** (Caçador), que envenena em todo acerto (seção 4.1) |
 | Sacerdote | **Bênção** dá atributos e a nova **Graça Veloz** dá velocidade de movimento, as duas para todos perto do Sacerdote (seção 8). A **Inspiração** (regeneração de Mana dos aliados) **substitui o Elo da Vida** (decisão de 2026-11-22) |
 | Inquisidor | **aprovado como está** na seção 8 (decisão de 2026-11-22) |
+| Atirador de Elite | **aprovado** (2026-11-22), com duas mudanças: o **Tiro Certeiro sem conjuração** e o **Olho de Falcão de 15 a 20 s** (seção 6) |
+| Caçador | **aprovado como está** na seção 6 (decisão de 2026-11-22) |
 | Curva de XP | a dificuldade continua crescendo como hoje, com **monstros mais fortes que dão mais XP** (seção 3) |
 | Guerreiro | Guardião e Berserker |
 | Arqueiro | Atirador de Elite (alvo único) e Caçador |
@@ -339,11 +341,11 @@ Custo 20, recarga 12 s, alcance 10.
 | 4 | +12% | +1 | — |
 | 5 | +12% | +1 | o crítico contra esses alvos causa **× 1,65** (em vez de × 1,5) |
 
-Os valores são menores que os da versão ativa (+10% a +20% por 6 a 8 s, a cada 15 s), porque agora valem o tempo todo. A versão anterior, que exigia ficar parado, foi descartada: com o Tiro Certeiro já pedindo 1,5 s parado, o Atirador passaria tempo demais sem andar.
+Os valores são menores que os da versão ativa (+10% a +20% por 6 a 8 s, a cada 15 s), porque agora valem o tempo todo. A versão anterior, que exigia ficar parado, foi descartada: com o Tiro Certeiro pedindo 1,5 s parado (na época), o Atirador passaria tempo demais sem andar.
 
-#### Tiro Certeiro — preparação longa, dano muito alto
+#### Tiro Certeiro — dano muito alto que ignora armadura
 
-Custo 35, recarga 10 s, alcance 12, conjuração de 1,5 s parado. Ignora parte da armadura do alvo.
+Custo 35, recarga 10 s, alcance 12, **sem conjuração** (decisão do designer, 2026-11-22; antes, 1,5 s parado). Ignora parte da armadura do alvo.
 
 | NH | Valor | Armadura ignorada | Outros efeitos | Perfil nível 21 |
 |---|---|---|---|---|
@@ -351,17 +353,21 @@ Custo 35, recarga 10 s, alcance 12, conjuração de 1,5 s parado. Ignora parte d
 | 2 | dano 30 + 2,4 × ARMA + 4,8 × DES | 30% | — | 388 |
 | 3 | dano 35 + 2,8 × ARMA + 5,6 × DES | **40%** | — | 452 |
 | 4 | dano 40 + 3,2 × ARMA + 6,4 × DES | 40% | — | 517 |
-| 5 | dano 45 + 3,6 × ARMA + 7,2 × DES | **50%** | conjuração **1 s** | 581 |
+| 5 | dano 45 + 3,6 × ARMA + 7,2 × DES | **50%** | recarga **8 s** | 581 |
+
+Sem a conjuração, o NH5 troca "conjuração de 1 s" por recarga de 8 s. O dano foi feito para um tiro que pedia 1,5 s parado: sem esse preço, o simulador deve dizer se ele precisa cair (tarefa de dados do Arqueiro).
 
 #### Olho de Falcão (assinatura, nível 35) — todo ataque é crítico
 
-Custo 70, recarga 90 s, só no Atirador.
+Custo 70, recarga 90 s, só no Atirador. **Dura perto de 20 s** (decisão do designer, 2026-11-22: 6 a 8 s era pouco para 70 de Mana).
 
 | NH | Duração | Outros efeitos |
 |---|---|---|
-| 1 | 6 s | todo ataque e habilidade de dano é crítico |
-| 2 | 7 s | todos críticos |
-| 3 | **8 s** | todos críticos e **+2 de alcance** |
+| 1 | 15 s | todo ataque e habilidade de dano é crítico |
+| 2 | 17 s | todos críticos |
+| 3 | **20 s** | todos críticos e **+2 de alcance** |
+
+Com 15 a 20 s a cada 90 s, o Atirador fica com todos os golpes críticos de 17% a 22% do tempo. O simulador confere se isso passa das metas (antes, 6 a 8 s).
 
 ### Caçador — venenos e sangramento em vários alvos
 
@@ -434,7 +440,7 @@ Custo 80, recarga 90 s, alcance 9, raio 6. Põe pilhas do Veneno do Caçador em 
 | Flecha Perfurante | linha (como a Flecha Devastadora NH2) | dano menor em quem está atrás |
 | Tiro Debilitante | dano, lentidão, menos dano causado | — |
 | Mira Firme (passiva) | estado permanente | **crítico pela distância até o alvo**, alcance como reforço |
-| Tiro Certeiro | conjuração | **ignorar armadura** |
+| Tiro Certeiro | dano | **ignorar armadura** |
 | Olho de Falcão | reforço próprio | **crítico garantido** (passa do teto de 40%) |
 | Flecha Envenenada (passiva) | veneno, pilhas (como o Sangramento), estado permanente | **efeito em todo acerto** (hoje um efeito só vale dentro da própria habilidade) |
 | Ferida Aberta | sangramento | **dano maior se o alvo andar** |
@@ -772,9 +778,10 @@ São **40 habilidades novas** (5 por segunda classe), cada uma com dados, regras
 
 O designer aprovou o Guardião e o Berserker em 2026-11-20 (seção 5).
 
-1. **Atirador de Elite, Caçador, Piromante e Arcanista** como detalhados nas seções 6 e 7. O designer vai revisar uma por uma (2026-11-22).
-2. ~~Sacerdote e Inquisidor~~: **aprovados em 2026-11-22**. O Inquisidor ficou como está; no Sacerdote, a **Inspiração** entrou no lugar do Elo da Vida (seção 8). Tarefas na seção 6g de `tasks/README.md` (T-420).
-3. **XP por hora** como meta de cada área (o simulador mede), quando as áreas novas forem planejadas.
+1. **Piromante e Arcanista** como detalhados na seção 7. O designer vai revisar uma por uma (2026-11-22).
+2. ~~Atirador de Elite e Caçador~~: **aprovados em 2026-11-22**. O Caçador ficou como está; no Atirador, o Tiro Certeiro ficou sem conjuração e o Olho de Falcão dura de 15 a 20 s (seção 6). Tarefas na seção 6h de `tasks/README.md` (T-430).
+3. ~~Sacerdote e Inquisidor~~: **aprovados em 2026-11-22**. O Inquisidor ficou como está; no Sacerdote, a **Inspiração** entrou no lugar do Elo da Vida (seção 8). Tarefas na seção 6g de `tasks/README.md` (T-420).
+4. **XP por hora** como meta de cada área (o simulador mede), quando as áreas novas forem planejadas.
 
 Decididos em 2026-11-21: **+5 de atributo ao virar segunda classe**; foco só nas classes, com as áreas novas depois; uma **ferramenta para subir de nível** no teste (seção 4.2).
 
