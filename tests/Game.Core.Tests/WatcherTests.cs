@@ -5,6 +5,7 @@ using Game.Core.Combat.Effects;
 using Game.Core.Combat.Objectives;
 using Game.Core.Combat.Phases;
 using Game.Core.Combat.Status;
+using Game.Core.Combat.Telegraphs;
 using Game.Core.Combat.Threat;
 using Game.Core.CombatLog;
 using Game.Core.Definitions;
@@ -485,6 +486,64 @@ public class WatcherTests
 
         Assert.True(StatusManager.Has(w, mage, "status.dread"));
         Assert.Equal(new Vector2(0, -1), StatusManager.FleeDirection(w, mage));
+    }
+
+    private static (World W, Entity Boss) DreadWorld(ulong seed)
+    {
+        var content = RealContent.Value;
+        var w = WorldBuilder.CreateDefault(seed, null, content);
+        var boss = EntityFactory.SpawnMonster(w, content.Monsters["monster.faceless_watcher"], new Vector2(5, 5), 1);
+        boss.Get<AbilityState>().Known.Clear();
+        boss.Get<AbilityState>().Known.Add("watcher.dread_ground");
+        boss.Get<Health>().Current = boss.Get<Health>().Max * 0.5f; // fase 2 (Rosto Vazio)
+        w.Step();
+        return (w, boss);
+    }
+
+    [Fact]
+    public void Real_dread_ground_drops_three_to_five_circles_one_on_each_player_in_range_and_the_rest_at_random()
+    {
+        var content = RealContent.Value;
+        var volley = content.Abilities["watcher.dread_ground"].Telegraph!.Volley!;
+        Assert.Equal((3, 5), (volley.Min, volley.Max));
+
+        var counts = new HashSet<int>();
+        for (ulong seed = 1; seed <= 40; seed++)
+        {
+            var (w, boss) = DreadWorld(seed);
+            var mage = EntityFactory.SpawnPlayer(w, content.Classes["class.mage"], new Vector2(12, 5));
+            var archer = EntityFactory.SpawnPlayer(w, content.Classes["class.archer"], new Vector2(5, 12));
+            var far = EntityFactory.SpawnPlayer(w, content.Classes["class.cleric"], new Vector2(40, 40));
+            var aim = mage.Get<Transform>().Position;
+            w.Enqueue(new UseAbilityIntent(boss.Id, "watcher.dread_ground", mage.Id, aim));
+            var started = Run(w, 2).OfType<TelegraphStarted>().Where(t => t.AbilityId == "watcher.dread_ground").ToList();
+
+            counts.Add(started.Count);
+            Assert.InRange(started.Count, 3, 5);
+            Assert.Equal(aim, started[0].Origin);
+            Assert.Contains(started, t => t.Origin == archer.Get<Transform>().Position);
+            Assert.DoesNotContain(started, t => t.Origin == far.Get<Transform>().Position);
+            Assert.All(started, t => Assert.True(Vector2.Distance(t.Origin, boss.Get<Transform>().Position) <= volley.Radius + 1e-3f));
+            Assert.Equal(started.Count, started.Select(t => t.Origin).Distinct().Count());
+        }
+
+        Assert.Equal([3, 4, 5], counts.Order());
+    }
+
+    [Fact]
+    public void Real_dread_ground_volley_is_deterministic_per_seed()
+    {
+        List<Vector2> Origins(ulong seed)
+        {
+            var content = RealContent.Value;
+            var (w, boss) = DreadWorld(seed);
+            var mage = EntityFactory.SpawnPlayer(w, content.Classes["class.mage"], new Vector2(12, 5));
+            w.Enqueue(new UseAbilityIntent(boss.Id, "watcher.dread_ground", mage.Id, mage.Get<Transform>().Position));
+            return Run(w, 2).OfType<TelegraphStarted>().Select(t => t.Origin).ToList();
+        }
+
+        Assert.Equal(Origins(7), Origins(7));
+        Assert.NotEqual(Origins(7), Origins(8));
     }
 
     [Fact]

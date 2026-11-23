@@ -301,6 +301,13 @@ public sealed class AbilitySystem : ISimulationSystem
         double power, int hitIndex)
     {
         caster.Get<Transform>().Facing = res.Direction;
+        if (ability.Telegraph is { Volley: not null })
+        {
+            Telegraphs.TelegraphService.StartVolley(
+                world, caster, ability, res.Direction, aim, target.HasValue ? world.Find(target.Value) : null, rank, power, hitIndex);
+            return;
+        }
+
         if (ability.Telegraph is not null)
         {
             Telegraphs.TelegraphService.Start(

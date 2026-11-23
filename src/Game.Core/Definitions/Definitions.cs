@@ -176,6 +176,23 @@ public sealed record TelegraphDefinition
 
     /// <summary>Investida: ao resolver, depois dos efeitos, a fonte é deslocada ao longo da linha (só shape line).</summary>
     public bool Charge { get; init; }
+
+    /// <summary>
+    /// Salva (só âncora <c>aim</c>): em vez de um telegráfo, cria de <see cref="TelegraphVolley.Min"/> a <see cref="TelegraphVolley.Max"/>
+    /// (sorteado no RNG da simulação). O primeiro cai no ponto mirado; os seguintes, em cada outro jogador inimigo a até
+    /// <see cref="TelegraphVolley.Radius"/> da fonte; o que sobrar, em pontos andáveis aleatórios no mesmo raio.
+    /// </summary>
+    public TelegraphVolley? Volley { get; init; }
+}
+
+/// <summary>Quantidade e alcance de uma salva de telegráfos (ver <see cref="TelegraphDefinition.Volley"/>).</summary>
+public sealed record TelegraphVolley
+{
+    public required int Min { get; init; }
+    public required int Max { get; init; }
+
+    /// <summary>Raio (tiles, a partir da fonte) onde a salva procura jogadores e sorteia pontos.</summary>
+    public required double Radius { get; init; }
 }
 
 public sealed record StatModifiers

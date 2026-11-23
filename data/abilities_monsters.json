@@ -298,10 +298,11 @@
       "name": "Chão do Pavor",
       "tags": ["ai.area"],
       "cooldown": 8,
-      "targeting": { "type": "circle_at_point", "range": 14, "radius": 2.5 },
-      "telegraph": { "shape": "circle", "radius": 2.5, "delay": 1.2, "anchor": "aim" },
+      "targeting": { "type": "circle_at_point", "range": 14, "radius": 2.4 },
+      "telegraph": { "shape": "circle", "radius": 2.4, "delay": 1.2, "anchor": "aim",
+        "volley": { "min": 3, "max": 5, "radius": 14 } },
       "effects": [
-        { "type": "damage", "school": "arcane", "base": 70 },
+        { "type": "damage", "school": "arcane", "base": 55 },
         { "type": "apply_status", "status": "status.dread" }
       ]
     },

@@ -396,6 +396,15 @@ internal static partial class GameDataValidator
         }
 
         if (t.Charge && t.Shape != TelegraphShape.Line) { ctx.Error("charge", "Investida exige shape 'line'."); }
+
+        if (t.Volley is { } v)
+        {
+            if (t.Anchor != TelegraphAnchor.Aim) { ctx.Error("volley", "Salva exige anchor 'aim'."); }
+            if (t.Charge) { ctx.Error("volley", "Salva não combina com charge."); }
+            if (v.Min is < 1 or > 10) { ctx.Error("volley.min", "Deve estar entre 1 e 10."); }
+            if (v.Max < v.Min || v.Max > 10) { ctx.Error("volley.max", "Deve estar entre min e 10."); }
+            ctx.Positive("volley.radius", v.Radius);
+        }
     }
 
     private static void ValidateTargeting(TargetingDefinition t, Ctx ctx)
