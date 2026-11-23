@@ -7,6 +7,7 @@ namespace Game.Bots;
 /// (<c>class.warrior:taunt</c>), que tem prioridade sobre a chave global (<c>taunt</c>).
 /// Chaves usadas: taunt, explosion, heal (seletores), skip, order (listas), healBelow, minAoe, kiteDistance, retreatDistance,
 /// reaction (T-018: faixa em segundos "0.2-0.4", valor fixo ou 0 para desligar; padrão 0.2-0.4), potionBelow (T-018: fração de vida, padrão 0.4, 0 desliga), manaPotionBelow (T-322: fração do recurso para beber a poção de Mana; padrão 0 = desligado), focusFirst (T-341: ids de monstro que viram foco antes do mais próximo), interrupt (T-351: auto, save ou never; como usar habilidades com interrupção), followInjured (T-351: 1 = o curandeiro anda até o aliado ferido fora do alcance da cura), emergencyBelow e buffRange (T-423: Santuário e reforços de grupo, ver ConfigurableBot.GroupStatus), groupOnly (T-433: seletor de habilidades usadas só com 2 ou mais inimigos), selfBuffRange (T-433: até que distância do inimigo mais próximo um reforço próprio sem dano é usado; padrão 6).
+/// minAoeOf (T-443: lista id=n, mínimo de inimigos no raio de uma habilidade de área), manaRegenBelow e channelSafety (T-443: Sifão Arcano e canalização parada, ver ConfigurableBot.Mage).
 /// Um seletor é uma lista separada por vírgula de ids de habilidade ou <c>tag:xxx</c>.
 /// </summary>
 public sealed class BotOptions

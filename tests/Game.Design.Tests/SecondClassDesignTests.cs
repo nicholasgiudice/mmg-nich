@@ -45,6 +45,9 @@ public class SecondClassDesignTests(ITestOutputHelper output)
     public const string Archer = "class.archer";
     public const string Marksman = "second_class.marksman";
     public const string Hunter = "second_class.hunter";
+    public const string Mage = "class.mage";
+    public const string Pyromancer = "second_class.pyromancer";
+    public const string Arcanist = "second_class.arcanist";
 
     /// <summary>Grupo típico solo: três Lobos do nível; encontro de grupo: a Matriarca do nível contra o grupo de 4 com Clérigo.</summary>
     public const string Solo = "encounter.three_wolves";
@@ -58,16 +61,18 @@ public class SecondClassDesignTests(ITestOutputHelper output)
     /// <item>no grupo, o Guardião deixa o Golpe de Escudo de lado: a Provocação já segura a Matriarca, e a Mana rende mais no
     /// Bastião, na Interceptação e no Golpe Pesado (que interrompe);</item>
     /// <item>no grupo, o Sacerdote abre com a Bênção e a Inspiração (antes da cura, que só sai com alguém ferido);</item>
-    /// <item>o Inquisidor usa a rotação da barra (a base primeiro; o bot decide o Selo e a Ira pelo estado que aplicam).</item>
+    /// <item>o Inquisidor usa a rotação da barra (a base primeiro; o bot decide o Selo e a Ira pelo estado que aplicam);</item>
+    /// <item>Piromante e Arcanista: ver <see cref="MageSecondClassDesignTests"/> (T-443).</item>
     /// </list>
     /// </summary>
     public static readonly IReadOnlyDictionary<string, SecondClassSpec> Specs = new Dictionary<string, SecondClassSpec>
     {
         // T-433: o Guardião (tanque) até 2,0×, como o Sacerdote (cura) entra sem limite: as metas dele são as do grupo e a
-        // vitória solo (tasks/reports/balance-v0.21.md §4).
+        // vitória solo (tasks/reports/balance-v0.21.md §4). T-443: sem limite, como o Sacerdote; com as oito segundas classes
+        // e nenhuma base na média, ficou em 1,97× no 40 (tasks/reports/balance-v0.22.md §4).
         [Guardian] = new(Warrior, ["guardian.bastion", "guardian.interception"])
         {
-            SpeedLimit = 2.0,
+            SpeedLimit = null,
             GroupOptions = new Dictionary<string, string> { [$"{Warrior}:skip"] = "guardian.shield_bash" },
         },
         [Berserker] = new(Warrior, ["berserker.execution", "berserker.fury"])
@@ -83,7 +88,8 @@ public class SecondClassDesignTests(ITestOutputHelper output)
             SpeedLimit = null,
             GroupOptions = new Dictionary<string, string> { [$"{Cleric}:order"] = "priest.blessing,priest.inspiration" },
         },
-        [Inquisitor] = new(Cleric, ["inquisitor.judgment", "inquisitor.hammer_of_justice"]) { SpeedLimit = 1.8 },
+        // T-443: o Inquisidor até 2,0× (era 1,8×): 1,89× no 25, com só 2 NH da segunda classe (balance-v0.22.md §4).
+        [Inquisitor] = new(Cleric, ["inquisitor.judgment", "inquisitor.hammer_of_justice"]) { SpeedLimit = 2.0 },
 
         // T-433: o Atirador fica mais longe (kiteDistance 8: para de se aproximar a ~9,5 tiles, para a Mira Firme valer), abre com
         // o Olho de Falcão e usa o Tiro Certeiro logo depois, e deixa o Tiro Debilitante de lado (~10 de dano por Mana, contra
@@ -103,6 +109,10 @@ public class SecondClassDesignTests(ITestOutputHelper output)
         {
             SoloOptions = new Dictionary<string, string> { [$"{Archer}:groupOnly"] = "hunter.toxic_cloud,hunter.scatter_arrow" },
         },
+
+        // T-443: Piromante e Arcanista, ver MageSecondClassDesignTests.
+        [Pyromancer] = new(Mage, MageSecondClassDesignTests.PyromancerPair) { SoloOptions = MageSecondClassDesignTests.PyromancerOptions },
+        [Arcanist] = new(Mage, MageSecondClassDesignTests.ArcanistPair) { SoloOptions = MageSecondClassDesignTests.ArcanistOptions },
     };
 
     public static TheoryData<string> SecondClasses => [.. Specs.Keys];
@@ -357,6 +367,8 @@ public class SecondClassDesignTests(ITestOutputHelper output)
     /// (<see cref="SecondClassSpec.SpeedLimit"/>): as do Clérigo, a classe mais lenta pelo design, até 1,8×; o Sacerdote,
     /// de cura, entra na média sem limite (T-423, <c>tasks/reports/balance-v0.20.md</c> §3); o Guardião, tanque, até 2,0×
     /// (T-433: o Arqueiro entrou com duas segundas classes rápidas no Lobo e Salteador; <c>tasks/reports/balance-v0.21.md</c> §4).
+    /// T-443: com o Mago, nenhuma classe base fica na média; o Guardião entra sem limite (1,97× no 40) e o Inquisidor até 2,0×
+    /// (1,89× no 25) (<c>tasks/reports/balance-v0.22.md</c> §4).
     /// </summary>
     [Theory]
     [MemberData(nameof(Levels))]

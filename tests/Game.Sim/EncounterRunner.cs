@@ -110,6 +110,12 @@ public sealed record RunResult
     /// <summary>Ticks-jogador com o recurso no máximo (indicador de geração desperdiçada).</summary>
     public int TicksAtResourceCap { get; init; }
 
+    /// <summary>
+    /// T-443: ticks-jogador vivos com o recurso abaixo do custo da habilidade mais barata (com custo) da segunda classe que o
+    /// jogador conhece ("sem Mana" para as habilidades novas). 0 para quem não tem segunda classe.
+    /// </summary>
+    public int TicksBelowSecondClassCost { get; init; }
+
     public int PlayerDeaths { get; init; }
 
     /// <summary>Objetivos destruídos (T-351: selos) e se o encontro falhou por isso (<c>EncounterFailed</c>).</summary>
@@ -233,6 +239,8 @@ public static class EncounterRunner
         private double _taken, _dealt, _heal, _overheal, _gained, _spent, _wasted, _moved;
         private int _atCap, _playerDeaths, _enemyDeaths, _phases, _stationaryUses, _totalUses, _objectivesLost;
         private bool _failed;
+        private int _belowSecondCost;
+        private readonly Dictionary<EntityId, double> _secondCost = [];
         private readonly Dictionary<(EntityId, string), double> _expectedAbilityGain = new();
         private readonly Dictionary<(EntityId, string), double> _actualAbilityGain = new();
 
@@ -317,7 +325,32 @@ public static class EncounterRunner
                 {
                     _atCap++;
                 }
+
+                if (p.IsAlive && p.TryGet<ResourcePool>() is { Max: > 0 } res && res.Current < SecondClassCost(p))
+                {
+                    _belowSecondCost++;
+                }
             }
+        }
+
+        /// <summary>T-443: custo da habilidade mais barata (com custo) da segunda classe que o jogador conhece; 0 sem segunda classe.</summary>
+        private double SecondClassCost(Entity p)
+        {
+            if (!_secondCost.TryGetValue(p.Id, out var cost))
+            {
+                var known = p.TryGet<AbilityState>();
+                var second = content.Classes.TryGetValue(classOf[p.Id], out var cls)
+                    ? cls.SecondClasses.SelectMany(s => s.Abilities).ToHashSet(StringComparer.Ordinal)
+                    : [];
+                cost = known is null
+                    ? 0
+                    : known.Known.Where(second.Contains)
+                        .Select(id => content.AbilityAt(id, known.RankOf(id))?.Cost?.Amount ?? 0)
+                        .Where(c => c > 0).DefaultIfEmpty(0).Min();
+                _secondCost[p.Id] = cost;
+            }
+
+            return cost;
         }
 
         private void OnExecuted(World world, AbilityExecuted a)
@@ -401,6 +434,7 @@ public static class EncounterRunner
                 ResourceSpent = _spent,
                 ResourceWasted = wasted,
                 TicksAtResourceCap = _atCap,
+                TicksBelowSecondClassCost = _belowSecondCost,
                 PlayerDeaths = _playerDeaths,
                 ObjectivesLost = _objectivesLost,
                 Failed = _failed,

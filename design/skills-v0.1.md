@@ -317,6 +317,25 @@ Atirador de Elite e Caçador, no nível 20. As tabelas finais (efeitos e valores
 
 O Veneno do Caçador é um status por NH da Flecha Envenenada (`status.hunter_venom_1` a `_5`), escolhido pelo apelido `status.hunter_venom` (`byRank`); a Nuvem Tóxica, a Flecha Dispersa e a Praga aplicam o apelido.
 
+## Segunda classe do Mago (fase 4)
+
+Piromante e Arcanista, no nível 20. As tabelas finais (efeitos e valores por NH) são as de `design/segunda-classe-v0.1.md` §7; os dados estão em `data/abilities_pyromancer.json` e `data/abilities_arcanist.json` (T-443). NH1 no nível 21, depois 24, 27, 30 e 33; a assinatura no 35, 37 e 40. Nenhuma das duas tem passiva. Os números do design passaram no simulador sem ajuste (`tasks/reports/balance-v0.22.md`):
+
+| Habilidade | Id | Custo | Recarga |
+|---|---|---|---|
+| Combustão | `pyromancer.combustion` | 40 | 10 s |
+| Rajada de Chamas | `pyromancer.flame_burst` | 35 | 6 s |
+| Chão em Chamas | `pyromancer.burning_ground` | 50 | 14 s |
+| Bola de Fogo | `pyromancer.fireball` | 45 | 7 s |
+| Meteoro (assinatura) | `pyromancer.meteor` | 100 | 120 s |
+| Raio Arcano | `arcanist.arcane_ray` | 40 | 8 s |
+| Marca Arcana | `arcanist.arcane_mark` | 15 | 3 s |
+| Orbes Arcanos | `arcanist.arcane_orbs` | 45 | 16 s |
+| Sifão Arcano | `arcanist.arcane_siphon` | sem custo | 10 s |
+| Feixe do Vazio (assinatura) | `arcanist.void_beam` | 90 | 90 s |
+
+A Queimadura é um estado por NH (`status.burn_1` a `status.burn_5`, do mesmo grupo: fica a de NH mais alto); cada habilidade do Piromante aplica a do próprio NH (o Meteoro, a do NH dele, 1 a 3). O Chão em Chamas é uma área por NH (`area.burning_ground_1` a `_5`) e o Meteoro NH3 deixa `area.meteor_flames` (o Chão em Chamas NH1 por 5 s). A Marca Arcana é um estado por NH (`status.arcane_mark_1` a `_5`); o Sifão NH3+ põe a do NH da Marca de quem lança (`status.arcane_mark`, pelo NH da habilidade). Orbes e Sifão são estados em quem lança (`status.arcane_orbs_N`, `status.arcane_siphon_N`); o Feixe do Vazio NH3 deixa `status.void_exposed`.
+
 ## Depois do MVP
 
 Habilidades fora da barra de 5 teclas (especializações): Guerreiro — Investida, Interceptação; Arqueiro — Armadilha de Contenção, Flecha Perfurante, Tiro Debilitante; Mago — Combustão, Dissipar Magia; Clérigo — Bênção, Oração Restauradora. Recebem tabela de níveis quando entrarem no jogo.
