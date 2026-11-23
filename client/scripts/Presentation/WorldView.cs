@@ -126,7 +126,26 @@ public partial class WorldView : Node2D
                         var rank = latest?.Entities.FirstOrDefault(s => s.Id == used.Source)?.TryGet<AbilityState>()?.RankOf(used.AbilityId) ?? 1;
                         var reach = _content.AbilityAt(used.AbilityId, rank)?.Effects.OfType<ExtraTargetsEffect>()
                             .Select(x => (float)x.Radius).DefaultIfEmpty(burst.Radius).Max() ?? burst.Radius;
-                        AddChild(BurstView.Create(userView.Position, burst with { Radius = reach }));
+                        // T-424: com "at": "target" (Golpe Sagrado), a onda sai do alvo principal, até o raio dos alvos extras.
+                        var center = burst.AtTarget
+                            ? used.Targets.Select(t => _views.GetValueOrDefault(t)).FirstOrDefault(v => v is not null)?.Position
+                            : userView.Position;
+                        if (center is { } at)
+                        {
+                            AddChild(BurstView.Create(at, burst with { Radius = reach }));
+                        }
+                    }
+
+                    if (_effects.Pillar(used.AbilityId) is { } pillar)
+                    {
+                        // T-424: coluna de luz caindo em cada alvo (Julgamento).
+                        foreach (var target in used.Targets)
+                        {
+                            if (_views.TryGetValue(target, out var targetView))
+                            {
+                                AddChild(PillarView.Create(targetView.Position, targetView.HeadPx, pillar));
+                            }
+                        }
                     }
 
                     if (MultiHit(latest, used.Source, used.AbilityId) is { } first)

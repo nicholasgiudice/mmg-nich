@@ -356,6 +356,7 @@ public partial class SkillPanel : ProgressionPanel
                 Fallback = def.Name,
                 CustomMinimumSize = new Vector2(28, 28),
                 Size = new Vector2(28, 28),
+                SizeFlagsVertical = SizeFlags.ShrinkBegin, // T-424: sem esticar quando o resumo tem várias linhas
                 TooltipText = tip,
             });
             var text = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };

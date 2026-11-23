@@ -1,5 +1,5 @@
 {
-  "_comment": "Efeitos visuais (T-054). Quadros por [coluna, linha] na grade da folha. impacts: por escola de dano, ou pelo id da fonte (prefixo). projectiles: por id de habilidade. areas: por id de área (prefixo); mode fill = um quadro do tamanho da área, scatter = vários espalhados. auras (T-412): sinal do status no corpo, por id de status (prefixo); style ring = anel nos pés, flames = labaredas, link = linha até quem protege. bursts (T-412): onda em volta do lançador ao usar a habilidade, até o raio dos alvos extras da habilidade no NH de quem usou (radius só se os dados não tiverem). Créditos em CREDITS.md.",
+  "_comment": "Efeitos visuais (T-054). Quadros por [coluna, linha] na grade da folha. impacts: por escola de dano, ou pelo id da fonte (prefixo). projectiles: por id de habilidade. areas: por id de área (prefixo); mode fill = um quadro do tamanho da área, scatter = vários espalhados. auras (T-412): sinal do status no corpo, por id de status (prefixo); style ring = anel nos pés, flames = labaredas, link = linha até quem protege. bursts (T-412): onda em volta do lançador ao usar a habilidade, até o raio dos alvos extras da habilidade no NH de quem usou (radius só se os dados não tiverem); at = target (T-424) faz a onda sair do alvo principal. pillars (T-424): coluna de luz caindo em cada alvo da habilidade. motes (T-424) = sinais pequenos subindo dos lados do corpo, no formato de glyph (spark, plus, drop, chevron); wind = vento nos pés; dome = cúpula de luz; sigil = selo girando nos pés. Créditos em CREDITS.md.",
   "sheets": {
     "fx": { "texture": "effects/effects.png", "cell": [32, 32] },
     "shield": { "texture": "effects/magic_iceshield.png", "cell": [128, 128] }
@@ -39,11 +39,30 @@
     "status.fury": { "style": "flames", "color": "#e5402f" },
     "status.bastion": { "style": "ring", "color": "#e8b84a" },
     "status.oath": { "style": "ring", "color": "#fff0b0" },
-    "status.steadfast": { "style": "ring", "color": "#b8d4ff" }
+    "status.steadfast": { "style": "ring", "color": "#b8d4ff" },
+    "status.inspiration": { "style": "motes", "glyph": "drop", "color": "#4aa8ff" },
+    "status.restoring_prayer": { "style": "motes", "glyph": "plus", "color": "#5fe06a" },
+    "status.blessing": { "style": "motes", "glyph": "chevron", "color": "#f2c14e" },
+    "status.swift_grace": { "style": "wind", "color": "#7fe3ff" },
+    "status.sanctuary": { "style": "dome", "color": "#fff3c4" },
+    "status.seal_of_light": { "style": "sigil", "color": "#ffd54a" },
+    "status.divine_wrath": { "style": "flames", "color": "#ffcc33" }
   },
   "bursts": {
     "guardian.bastion": { "color": "#e8b84a", "radius": 5 },
-    "guardian.oath": { "color": "#fff0b0", "radius": 6 }
+    "guardian.oath": { "color": "#fff0b0", "radius": 6 },
+    "priest.inspiration": { "color": "#4aa8ff", "radius": 6 },
+    "priest.restoring_prayer": { "color": "#5fe06a", "radius": 6 },
+    "priest.blessing": { "color": "#f2c14e", "radius": 6 },
+    "priest.swift_grace": { "color": "#7fe3ff", "radius": 6 },
+    "priest.sanctuary": { "color": "#fff3c4", "radius": 6 },
+    "inquisitor.hammer_of_justice": { "color": "#ffd54a", "radius": 1.5, "at": "target" },
+    "inquisitor.divine_wrath": { "color": "#ffcc33", "radius": 3 },
+    "inquisitor.divine_wrath_strike_1": { "color": "#ffcf3a", "radius": 2, "at": "target" },
+    "inquisitor.divine_wrath_strike_3": { "color": "#ffcf3a", "radius": 2, "at": "target" }
+  },
+  "pillars": {
+    "inquisitor.judgment": { "color": "#ffe08a" }
   },
   "shield": "shield"
 }
