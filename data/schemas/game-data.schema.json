@@ -543,7 +543,8 @@
               "properties": { "belowHealth": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 }, "bonus": { "type": "number", "exclusiveMinimum": 0 } } },
             "resetCooldownOnKill": { "type": "boolean", "description": "T-407: se este dano matar o alvo, a recarga da habilidade volta a zero." } } },
         { "type": "object", "additionalProperties": false, "required": ["type", "base"],
-          "properties": { "target": { "$ref": "#/$defs/effectTarget" }, "onHit": { "$ref": "#/$defs/onHit" }, "type": { "const": "heal" }, "base": { "type": "number", "minimum": 0 }, "scaling": { "$ref": "#/$defs/scaling" } } },
+          "properties": { "target": { "$ref": "#/$defs/effectTarget" }, "onHit": { "$ref": "#/$defs/onHit" }, "type": { "const": "heal" }, "base": { "type": "number", "minimum": 0 }, "scaling": { "$ref": "#/$defs/scaling" },
+            "maxHealthFraction": { "type": "number", "minimum": 0, "maximum": 1, "description": "T-421: soma esta fração da vida máxima de quem recebe." } } },
         { "type": "object", "additionalProperties": false, "required": ["type", "amount", "duration"],
           "properties": { "target": { "$ref": "#/$defs/effectTarget" }, "onHit": { "$ref": "#/$defs/onHit" }, "type": { "const": "shield" }, "amount": { "type": "number", "exclusiveMinimum": 0 }, "duration": { "$ref": "#/$defs/seconds" }, "scaling": { "$ref": "#/$defs/scaling" },
             "refund": { "type": "object", "additionalProperties": false, "required": ["resource", "fraction"],
@@ -695,10 +696,32 @@
             "silenced": { "type": "boolean" },
             "untargetable": { "type": "boolean", "description": "T-340: não pode ser alvo de habilidades de outros (unidade, área, telegráfo)." },
             "feared": { "type": "boolean", "description": "T-351: medo; não age e foge do ponto de origem, sem controle do jogador." },
-            "knockbackImmune": { "type": "boolean", "description": "T-406: empurrão (knockback) de inimigo não move quem tem o status." }
+            "knockbackImmune": { "type": "boolean", "description": "T-406: empurrão (knockback) de inimigo não move quem tem o status." },
+            "undying": { "type": "boolean", "description": "T-421: dano não deixa quem tem o status abaixo de 1 de vida (Santuário)." }
           }
-        }
+        },
+        "stats": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "T-421: atributos e Mana por segundo somados a quem tem o status (personagens), calculados ao aplicar pelas estatísticas de quem aplicou; × acúmulos.",
+          "properties": {
+            "attributes": {
+              "type": "object",
+              "propertyNames": { "enum": ["str", "dex", "agi", "int", "vit", "all"] },
+              "additionalProperties": { "$ref": "#/$defs/scaledValue" },
+              "description": "Pontos por atributo (all = os cinco), arredondados para inteiro."
+            },
+            "manaRegen": { "$ref": "#/$defs/scaledValue", "description": "Mana por segundo a mais." }
+          }
+        },
+        "onExpire": { "$ref": "#/$defs/effects", "description": "T-421: efeitos quando o status acaba pelo tempo (não quando é tirado nem quando quem o tem morre)." }
       }
+    },
+    "scaledValue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["base"],
+      "properties": { "base": { "type": "number" }, "scaling": { "$ref": "#/$defs/scaling" } }
     },
     "area": {
       "type": "object",

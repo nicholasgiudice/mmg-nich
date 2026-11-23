@@ -452,6 +452,7 @@ internal static partial class GameDataValidator
                 case HealEffect h:
                     c.NonNegative("base", h.Base);
                     ValidateScaling(h.Scaling, c);
+                    if (h.MaxHealthFraction is < 0 or > 1) { c.Error("maxHealthFraction", "Deve estar em 0..1."); }
                     break;
                 case ShieldEffect s:
                     c.Positive("amount", s.Amount);
@@ -589,6 +590,35 @@ internal static partial class GameDataValidator
             var c = ctx.At($".periodic[{i}]");
             c.PositiveTicks("interval", x.Periodic[i].IntervalTicks);
             ValidateEffects(x.Periodic[i].Effects, c, "effects", refs);
+        }
+
+        if (x.Stats is { } stats)
+        {
+            if (stats.Attributes.Count == 0 && stats.ManaRegen is null)
+            {
+                ctx.Error("stats", "Informe attributes ou manaRegen.");
+            }
+
+            foreach (var (key, value) in stats.Attributes)
+            {
+                var c = ctx.At($".stats.attributes.{key}");
+                if (!StatusStatsDefinition.AttributeKeys.Contains(key))
+                {
+                    ctx.Error($"stats.attributes.{key}", $"Atributo desconhecido. Use: {string.Join(", ", StatusStatsDefinition.AttributeKeys)}.");
+                }
+
+                ValidateScaling(value.Scaling, c);
+            }
+
+            if (stats.ManaRegen is { } mr)
+            {
+                ValidateScaling(mr.Scaling, ctx.At(".stats.manaRegen"));
+            }
+        }
+
+        if (x.OnExpire.Count > 0)
+        {
+            ValidateEffects(x.OnExpire, ctx, "onExpire", refs);
         }
     }
 

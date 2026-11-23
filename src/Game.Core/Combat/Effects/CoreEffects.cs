@@ -94,8 +94,9 @@ public static class CoreEffects
         }
 
         var crit = Stats.StatMath.RollCrit(c.World, c.Source); // crítico vale para cura (design §10)
-        var amount = Math.Max(0, Round(Stats.StatMath.Scaled(e.Base, e.Scaling, c.Source) * Stats.StatMath.MonsterPower(c.World, c.Source)
-            * c.Power * CritFactor(c.World, crit) * Status.StatusManager.HealingTakenMultiplier(c.World, target)));
+        var raw = (Stats.StatMath.Scaled(e.Base, e.Scaling, c.Source) * Stats.StatMath.MonsterPower(c.World, c.Source))
+            + (e.MaxHealthFraction * health.Max); // T-421: fração da vida máxima de quem recebe
+        var amount = Math.Max(0, Round(raw * c.Power * CritFactor(c.World, crit) * Status.StatusManager.HealingTakenMultiplier(c.World, target)));
         var effective = Math.Min(amount, health.Max - health.Current);
         health.Current += effective;
         c.World.Events.Publish(new HealApplied(c.SourceEntityId, target.Id, c.SourceId, amount, effective, amount - effective, crit));
@@ -299,6 +300,11 @@ public static class DamageResolver
 
         var applied = Math.Min(health.Current, remaining);
         var overkill = remaining - applied;
+        if (applied >= health.Current && Status.StatusManager.IsUndying(world, target))
+        {
+            applied = Math.Max(0, health.Current - 1); // T-421 (Santuário): fica com 1 de vida
+            overkill = 0;
+        }
         health.Current -= applied;
         var killed = health.Current <= 0;
         world.Events.Publish(new DamageDealt(
