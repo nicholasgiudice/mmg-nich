@@ -163,6 +163,11 @@ public static class StatusManager
             }
         }
 
+        if (ExclusiveStatus.Resolve(world, target, effects, def, ref duration, sourceId) is { } stronger)
+        {
+            return stronger; // T-441 (Queimadura por NH): a mais forte fica, com a duração renovada
+        }
+
         var expires = world.Tick + duration;
         origin ??= source?.TryGet<Simulation.Components.Transform>()?.Position;
         var inst = effects.Active.FirstOrDefault(s => s.StatusId == statusId && IsActive(world, s));

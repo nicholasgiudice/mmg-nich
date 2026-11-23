@@ -540,7 +540,8 @@
         { "type": "object", "additionalProperties": false, "required": ["type", "range", "angle"],
           "properties": { "type": { "const": "melee_arc" }, "range": { "type": "number", "exclusiveMinimum": 0 }, "angle": { "type": "number", "exclusiveMinimum": 0, "maximum": 360 } } },
         { "type": "object", "additionalProperties": false, "required": ["type", "length", "width"],
-          "properties": { "type": { "const": "line" }, "length": { "type": "number", "exclusiveMinimum": 0 }, "width": { "type": "number", "exclusiveMinimum": 0 } } },
+          "properties": { "type": { "const": "line" }, "length": { "type": "number", "exclusiveMinimum": 0 }, "width": { "type": "number", "exclusiveMinimum": 0 },
+            "explodeRadius": { "type": "number", "exclusiveMinimum": 0, "description": "T-441 (Bola de Fogo): para no primeiro alvo da linha e acerta todos a até este raio dele; sem alvo na linha, não explode." } } },
         { "type": "object", "additionalProperties": false, "required": ["type", "range", "radius"],
           "properties": { "type": { "const": "circle_at_point" }, "range": { "type": "number", "exclusiveMinimum": 0 }, "radius": { "type": "number", "exclusiveMinimum": 0 } } },
         { "type": "object", "additionalProperties": false, "required": ["type", "radius"],
@@ -624,7 +625,12 @@
           "description": "T-432 (Flecha Dispersa): copia os status do alvo com uma das tags (mesmos acúmulos, tempo que falta, quem usou como fonte) para até count entidades a até radius tiles dele, as mais perto primeiro; count 0 = todas.",
           "properties": { "target": { "$ref": "#/$defs/effectTarget" }, "onHit": { "$ref": "#/$defs/onHit" }, "type": { "const": "copy_status" },
             "tags": { "$ref": "#/$defs/stringList" }, "radius": { "type": "number", "exclusiveMinimum": 0 },
-            "count": { "type": "integer", "minimum": 0, "description": "Padrão 1; 0 = todas no raio." }, "affects": { "$ref": "#/$defs/faction" } } }
+            "count": { "type": "integer", "minimum": 0, "description": "Padrão 1; 0 = todas no raio." }, "affects": { "$ref": "#/$defs/faction" } } },
+        { "type": "object", "additionalProperties": false, "required": ["type", "tags", "effects"],
+          "description": "T-441 (Combustão): os effects só nos alvos que, no momento do uso, têm um status com uma das tags; consume tira esses status de cada um depois dos efeitos.",
+          "properties": { "target": { "$ref": "#/$defs/effectTarget" }, "onHit": { "$ref": "#/$defs/onHit" }, "type": { "const": "if_status" },
+            "tags": { "$ref": "#/$defs/stringList" }, "effects": { "$ref": "#/$defs/effects" },
+            "consume": { "type": "boolean", "description": "Padrão false (o status continua)." } } }
       ]
     },
     "onHit": { "type": "integer", "minimum": 1, "maximum": 5, "description": "Só neste acerto de uma habilidade com vários acertos (1 = o primeiro)." },
@@ -795,6 +801,16 @@
           "properties": {
             "tags": { "$ref": "#/$defs/stringList" },
             "radius": { "type": "number", "exclusiveMinimum": 0 }
+          }
+        },
+        "exclusive": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["group", "tier"],
+          "description": "T-441: status do mesmo grupo não convivem numa entidade; fica o de tier mais alto (empate: o novo), com a maior duração entre o que falta e a nova (Queimadura por NH).",
+          "properties": {
+            "group": { "type": "string", "minLength": 1 },
+            "tier": { "type": "integer", "minimum": 1 }
           }
         }
       }

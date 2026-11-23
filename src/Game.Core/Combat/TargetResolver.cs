@@ -97,6 +97,12 @@ public static class TargetResolver
 
             case LineTargeting l:
                 var line = world.Spatial.InOrientedRect(pos, dir, (float)l.Length + extra, (float)l.Width, AreaFilter);
+                if (l.ExplodeRadius is { } blast)
+                {
+                    // T-441 (Bola de Fogo): para no primeiro da linha e explode em volta dele.
+                    return new TargetResolution(null, Status.LineExplosion.Resolve(world, pos, dir, WithLos(world, pos, line), blast, AreaFilter), dir);
+                }
+
                 return new TargetResolution(null, WithLos(world, pos, line), dir);
 
             case CircleSelfTargeting cs:

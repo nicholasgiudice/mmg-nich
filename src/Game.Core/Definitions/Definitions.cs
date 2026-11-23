@@ -443,6 +443,16 @@ public sealed record StatusDefinition
     public StatusJumpDefinition? JumpOnExpire { get; init; }
 
     // ---- fim T-432 ----
+
+    // ---- T-441 (Piromante) ----
+
+    /// <summary>
+    /// Status do mesmo grupo não convivem numa entidade (T-441, Queimadura por NH): a de nível mais alto fica, com a duração
+    /// renovada. Null = sem grupo.
+    /// </summary>
+    public StatusExclusiveDefinition? Exclusive { get; init; }
+
+    // ---- fim T-441 ----
 }
 
 public sealed record AreaDefinition
