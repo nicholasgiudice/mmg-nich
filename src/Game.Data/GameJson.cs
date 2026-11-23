@@ -76,6 +76,12 @@ public static class GameJson
             info.PolymorphismOptions!.DerivedTypes.Add(new JsonDerivedType(typeof(CopyStatusEffect), "copy_status"));
         }
 
+        if (info.Type == typeof(EffectDefinition))
+        {
+            // T-441 (Combustão): em bloco próprio, como os da T-442 e da T-432.
+            info.PolymorphismOptions!.DerivedTypes.Add(new JsonDerivedType(typeof(IfStatusEffect), "if_status"));
+        }
+
         if (info.Type == typeof(ZoneDefinition))
         {
             // T-331: posições vêm do mapa do Tiled (ZoneComposer); no zones.json esses campos são erro.

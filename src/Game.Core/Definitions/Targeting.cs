@@ -22,6 +22,17 @@ public sealed record LineTargeting : TargetingDefinition
 {
     public required double Length { get; init; }
     public required double Width { get; init; }
+
+    // ---- T-441 (Piromante) ----
+
+    /// <summary>
+    /// Explodir no primeiro que acerta (T-441, Bola de Fogo): o disparo para no primeiro alvo da linha (o mais à frente de
+    /// quem usou) e os alvos passam a ser todos a até este raio (tiles) dele. Sem alvo na linha, não explode (nenhum alvo).
+    /// Null = linha comum (todos na linha).
+    /// </summary>
+    public double? ExplodeRadius { get; init; }
+
+    // ---- fim T-441 ----
 }
 
 public sealed record CircleAtPointTargeting : TargetingDefinition

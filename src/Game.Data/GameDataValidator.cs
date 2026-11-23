@@ -412,6 +412,7 @@ internal static partial class GameDataValidator
             case LineTargeting l:
                 ctx.Positive("length", l.Length);
                 ctx.Positive("width", l.Width);
+                ValidatePyromancerTargeting(l, ctx); // T-441 (GameDataValidator.Pyromancer.cs)
                 break;
             case CircleAtPointTargeting c:
                 ctx.Positive("range", c.Range);
@@ -523,6 +524,9 @@ internal static partial class GameDataValidator
                     break;
                 case CopyStatusEffect cs:
                     ValidateCopyStatus(cs, c); // T-432 (GameDataValidator.Hunter.cs)
+                    break;
+                case IfStatusEffect ifs:
+                    ValidateIfStatus(ifs, c, refs); // T-441 (GameDataValidator.Pyromancer.cs)
                     break;
             }
         }
@@ -637,6 +641,7 @@ internal static partial class GameDataValidator
 
         ValidateInquisitorStatus(x, ctx, refs); // T-422
         ValidateHunterStatus(x, ctx, refs); // T-432 (GameDataValidator.Hunter.cs)
+        ValidatePyromancerStatus(x, ctx); // T-441 (GameDataValidator.Pyromancer.cs)
     }
 
     private static void ValidateRules(RulesDefinition rules, List<LoadError> errors)

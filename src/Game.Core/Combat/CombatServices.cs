@@ -184,5 +184,8 @@ public static class CombatModules
 
         // ---- slot T-432 (Caçador): efeito copy_status + efeitos em todo acerto (hitEffects) ----
         Status.HunterMechanics.Register(s);
+
+        // ---- slot T-441 (Piromante): efeito if_status ----
+        Status.PyromancerMechanics.Register(s);
     }
 }
