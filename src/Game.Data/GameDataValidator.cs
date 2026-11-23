@@ -33,6 +33,7 @@ internal static partial class GameDataValidator
         var abilityDefs = c.Abilities.GroupBy(a => a.Value.Id).ToDictionary(g => g.Key, g => g.First().Value, StringComparer.Ordinal);
         ValidateSecondClasses(c, abilityDefs, errors); // T-403
         ValidateBasicAttackSwaps(c, abilityDefs, errors); // T-422
+        ValidateStatusByRank(c, errors); // T-432 (GameDataValidator.Hunter.cs)
         foreach (var e in c.Encounters)
         {
             ValidateEncounter(e, classes, monsters, c.Arenas.GroupBy(a => a.Value.Id).ToDictionary(g => g.Key, g => g.First().Value), abilityDefs, errors);
@@ -452,6 +453,7 @@ internal static partial class GameDataValidator
                     }
 
                     ValidateDamageHeals(d, c, refs); // T-422
+                    ValidateHunterDamage(d, c); // T-432
                     break;
                 case HealEffect h:
                     c.NonNegative("base", h.Base);
@@ -472,6 +474,7 @@ internal static partial class GameDataValidator
                 case ApplyStatusEffect a:
                     c.Exists("status", a.Status, refs.Statuses, "status");
                     if (a.DurationTicks is { } d2) { c.PositiveTicks("duration", d2); }
+                    ValidateHunterApplyStatus(a, c); // T-432
                     break;
                 case RemoveStatusEffect r:
                     if (string.IsNullOrWhiteSpace(r.Tag) && r.Tags.Count == 0) { c.Error("tag", "Informe 'tag' ou 'tags'."); }
@@ -517,6 +520,9 @@ internal static partial class GameDataValidator
                     break;
                 case CurrentTargetEffect ct:
                     ValidateCurrentTarget(ct, c, refs); // T-442 (GameDataValidator.Arcanist.cs)
+                    break;
+                case CopyStatusEffect cs:
+                    ValidateCopyStatus(cs, c); // T-432 (GameDataValidator.Hunter.cs)
                     break;
             }
         }
@@ -630,6 +636,7 @@ internal static partial class GameDataValidator
         }
 
         ValidateInquisitorStatus(x, ctx, refs); // T-422
+        ValidateHunterStatus(x, ctx, refs); // T-432 (GameDataValidator.Hunter.cs)
     }
 
     private static void ValidateRules(RulesDefinition rules, List<LoadError> errors)

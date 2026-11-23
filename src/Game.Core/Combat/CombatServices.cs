@@ -181,5 +181,8 @@ public static class CombatModules
         // ---- slot T-442 (Arcanista): andar devagar canalizando + efeito current_target ----
         Channeling.Register(s);
         CurrentTargetEffects.Register(s);
+
+        // ---- slot T-432 (Caçador): efeito copy_status + efeitos em todo acerto (hitEffects) ----
+        Status.HunterMechanics.Register(s);
     }
 }

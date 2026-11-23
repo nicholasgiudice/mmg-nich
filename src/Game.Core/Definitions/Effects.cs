@@ -76,6 +76,15 @@ public sealed record DamageEffect : EffectDefinition
 
     /// <summary>Cura os aliados perto de quem causou o dano numa fração do dano final de cada acerto (T-422, Ira Divina). Null = nada.</summary>
     public DamageAllyHealDefinition? AllyHeal { get; init; }
+
+    // ---- T-432 (Caçador): dano maior se o alvo andar ----
+
+    /// <summary>
+    /// Dano a mais nos pulsos em que o alvo se moveu (T-432, Ferida Aberta: 0,5; NH5: 1). Vale só no <c>periodic</c> de um
+    /// status: o pulso causa × (1 + este número) se a posição do alvo no Core mudou mais de 0,1 tile desde o pulso anterior
+    /// (o primeiro pulso compara com a posição quando o status pegou). 0 = nada.
+    /// </summary>
+    public double MovingBonus { get; init; }
 }
 
 /// <summary>
@@ -145,6 +154,12 @@ public sealed record ApplyStatusEffect : EffectDefinition
     public required string Status { get; init; }
     /// <summary>Null = usa a duração padrão do status.</summary>
     public int? DurationTicks { get; init; }
+
+    /// <summary>
+    /// Acúmulos postos de uma vez (T-432, Praga: 3 a 5), até o máximo do status. Só vale em status com <c>stacking: stack</c>.
+    /// Padrão 1.
+    /// </summary>
+    public int Stacks { get; init; } = 1;
 }
 
 public sealed record RemoveStatusEffect : EffectDefinition

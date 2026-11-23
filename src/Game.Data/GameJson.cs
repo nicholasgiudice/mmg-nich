@@ -70,6 +70,12 @@ public static class GameJson
             info.PolymorphismOptions!.DerivedTypes.Add(new JsonDerivedType(typeof(CurrentTargetEffect), "current_target"));
         }
 
+        if (info.Type == typeof(EffectDefinition))
+        {
+            // T-432 (Flecha Dispersa): em bloco próprio, como o da T-442.
+            info.PolymorphismOptions!.DerivedTypes.Add(new JsonDerivedType(typeof(CopyStatusEffect), "copy_status"));
+        }
+
         if (info.Type == typeof(ZoneDefinition))
         {
             // T-331: posições vêm do mapa do Tiled (ZoneComposer); no zones.json esses campos são erro.

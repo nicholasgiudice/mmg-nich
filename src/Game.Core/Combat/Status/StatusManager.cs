@@ -128,6 +128,12 @@ public static class StatusManager
             throw new InvalidOperationException($"Unknown status '{statusId}' (not in ContentCatalog.Statuses)");
         }
 
+        if (def.ByRank is not null)
+        {
+            statusId = RankedStatus.Resolve(source, statusId, def); // T-432: o status do NH de outra habilidade da fonte
+            def = world.Content.Statuses[statusId];
+        }
+
         var sourceId = source?.Id ?? EntityId.None;
         if (IsImmune(world, target, def))
         {
@@ -176,6 +182,7 @@ public static class StatusManager
             effects.Active.RemoveAll(s => s.StatusId == statusId); // restos expirados ainda não limpos
             effects.Active.Add(inst);
             world.Events.Publish(new StatusApplied(sourceId, target.Id, statusId, inst.Id, 1, expires, duration));
+            MovingDamage.OnApplied(target, def); // T-432 (Ferida Aberta): posição de partida
         }
         else
         {
