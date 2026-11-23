@@ -19,6 +19,8 @@ Os números são ponto de partida para o simulador, como em `design/progression-
 | Inquisidor | **aprovado como está** na seção 8 (decisão de 2026-11-22) |
 | Atirador de Elite | **aprovado** (2026-11-22), com duas mudanças: o **Tiro Certeiro sem conjuração** e o **Olho de Falcão de 15 a 20 s** (seção 6) |
 | Caçador | **aprovado como está** na seção 6 (decisão de 2026-11-22) |
+| Piromante | **aprovado como está** na seção 7 (decisão de 2026-11-22) |
+| Arcanista | **aprovado** (2026-11-22), com uma mudança: o **Sifão Arcano aumenta a regeneração de Mana** em vez de devolver Mana na hora, para manter a regra "Mana vem só do tempo" (seção 7) |
 | Curva de XP | a dificuldade continua crescendo como hoje, com **monstros mais fortes que dão mais XP** (seção 3) |
 | Guerreiro | Guardião e Berserker |
 | Arqueiro | Atirador de Elite (alvo único) e Caçador |
@@ -562,17 +564,17 @@ Custo 45, recarga 16 s, duração 10 s. Os orbes giram em volta do Arcanista e c
 | 4 | 3 | dano 3,2 + 0,32 × INT | 42 cada, 84/s |
 | 5 | **4** | dano 3,6 + 0,36 × INT | 48 cada, 127/s |
 
-#### Sifão Arcano — dano que devolve Mana
+#### Sifão Arcano — dano que acelera a Mana
 
-Sem custo, recarga 10 s, alcance 9, conjuração 1 s.
+Sem custo, recarga 10 s, alcance 9, conjuração 1 s. **Decisão do designer (2026-11-22):** em vez de devolver Mana na hora, o Sifão dá ao Arcanista **regeneração de Mana a mais por 5 s**, para manter a regra "Mana vem só do tempo" (`design/progression-v0.1.md`, seção 4). O total é o mesmo da versão anterior (30 a 50), só que espalhado em 5 s. Usa a mesma peça da Inspiração do Sacerdote (T-421).
 
-| NH | Valor | Mana devolvida | Outros efeitos | Perfil nível 21 |
+| NH | Valor | Mana por s a mais (5 s) | Outros efeitos | Perfil nível 21 |
 |---|---|---|---|---|
-| 1 | dano 20 + 1,5 × INT | 30 | — | 203 |
-| 2 | dano 24 + 1,8 × INT | 35 | — | 244 |
-| 3 | dano 28 + 2,1 × INT | 40 | põe **1 pilha** de Marca Arcana | 284 |
-| 4 | dano 32 + 2,4 × INT | 45 | põe 1 pilha | 325 |
-| 5 | dano 36 + 2,7 × INT | 50 | põe 1 pilha e conjuração **0,5 s** | 365 |
+| 1 | dano 20 + 1,5 × INT | +6 (30 no total) | — | 203 |
+| 2 | dano 24 + 1,8 × INT | +7 (35) | — | 244 |
+| 3 | dano 28 + 2,1 × INT | +8 (40) | põe **1 pilha** de Marca Arcana | 284 |
+| 4 | dano 32 + 2,4 × INT | +9 (45) | põe 1 pilha | 325 |
+| 5 | dano 36 + 2,7 × INT | +10 (50) | põe 1 pilha e conjuração **0,5 s** | 365 |
 
 #### Feixe do Vazio (assinatura, nível 35) — canalização longa num alvo
 
@@ -597,7 +599,7 @@ Custo 90, recarga 90 s, alcance 9. Canaliza 4 s, um pulso a cada 0,5 s (8 pulsos
 | Raio Arcano | canalização (como a Flecha Devastadora) | **dano que sobe a cada pulso**; andar canalizando (NH5) |
 | Marca Arcana | pilhas (como o Sangramento) | — |
 | Orbes Arcanos | — | **orbes que atiram sozinhos no alvo atual** |
-| Sifão Arcano | dano, Mana (como a poção de Mana) | — |
+| Sifão Arcano | dano, pilha de Marca Arcana | **regeneração de Mana vinda de um estado** (a mesma peça da Inspiração, T-421) |
 | Feixe do Vazio | canalização, mais dano recebido (como a Marca do Caçador) | andar canalizando |
 
 ## 8. Clérigo em detalhe
@@ -762,7 +764,7 @@ São **40 habilidades novas** (5 por segunda classe), cada uma com dados, regras
 | Desviar dano de um aliado | Guardião (Interceptação, Juramento) |
 | Vida pelo dano causado | Berserker (Sede de Sangue), Inquisidor (Selo da Luz, Julgamento, Ira Divina) |
 | Estado que cura por segundo | Sacerdote (Oração Restauradora) |
-| Atributos e regeneração de Mana vindos de um estado | Sacerdote (Bênção, Inspiração) |
+| Atributos e regeneração de Mana vindos de um estado | Sacerdote (Bênção, Inspiração), Arcanista (Sifão Arcano) |
 | Dano que depende de um estado ou da vida do alvo | Berserker (Execução), Piromante (Combustão), Caçador (Ferida Aberta) |
 | Copiar ou espalhar estados | Caçador (Flecha Dispersa, Praga), Piromante (Combustão NH5) |
 | Crítico, alcance e armadura como números de reforço | Atirador de Elite (Mira Firme, Tiro Certeiro, Olho de Falcão) |
@@ -778,7 +780,7 @@ São **40 habilidades novas** (5 por segunda classe), cada uma com dados, regras
 
 O designer aprovou o Guardião e o Berserker em 2026-11-20 (seção 5).
 
-1. **Piromante e Arcanista** como detalhados na seção 7. O designer vai revisar uma por uma (2026-11-22).
+1. ~~Piromante e Arcanista~~: **aprovados em 2026-11-22**. O Piromante ficou como está; no Arcanista, o Sifão Arcano passou a aumentar a regeneração de Mana (seção 7). Tarefas na seção 6i de `tasks/README.md` (T-440).
 2. ~~Atirador de Elite e Caçador~~: **aprovados em 2026-11-22**. O Caçador ficou como está; no Atirador, o Tiro Certeiro ficou sem conjuração e o Olho de Falcão dura de 15 a 20 s (seção 6). Tarefas na seção 6h de `tasks/README.md` (T-430).
 3. ~~Sacerdote e Inquisidor~~: **aprovados em 2026-11-22**. O Inquisidor ficou como está; no Sacerdote, a **Inspiração** entrou no lugar do Elo da Vida (seção 8). Tarefas na seção 6g de `tasks/README.md` (T-420).
 4. **XP por hora** como meta de cada área (o simulador mede), quando as áreas novas forem planejadas.

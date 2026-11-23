@@ -46,5 +46,5 @@ Concluída em 2026-11-22, no Windows (só documentos), branch `task/T-420-planej
 - T-425 Playtest do Clérigo.
 
 **Pendências**
-- Revisar com o designer o Mago (Piromante e Arcanista) e criar o bloco dele. O Arqueiro foi feito na T-430.
+- Revisar com o designer o Arqueiro e o Mago e criar os blocos deles: feitos na T-430 e na T-440.
 - T-413 (playtest do Guerreiro) continua aberta.

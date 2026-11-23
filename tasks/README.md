@@ -56,7 +56,7 @@ Fluxo para você:
 | **1 — Rede mínima** | Servidor dedicado na VPS, 4 jogadores na mesma arena, login de desenvolvimento | **Concluída** (T-111: playtest online aprovado; seção 6b) |
 | **2 — Persistência e progressão** | Contas, personagens, inventário, Cidade + Campos online; atributos, níveis, equipamento e habilidades reformuladas (`design/progression-v0.1.md`) | **Concluída** (T-230: playtest aprovado com correções para a fase 3; seção 6d) |
 | **3 — Primeiro mapa completo** | Floresta, Ruínas, Cripta instanciada, Vigia Sem Rosto; grupo, lista de batalha, ouro, lojas e mapas maiores (playtest v0.2) | **Concluída** (T-380: playtest aprovado; seção 6e) |
-| **4 — Segundas classes** | Nível 40, segunda classe no nível 20 com duas opções por classe, passivas, barra de 10 teclas; Guerreiro primeiro (`design/segunda-classe-v0.1.md`) | **Detalhada** nos blocos do Guerreiro (T-390; seção 6f), do Clérigo (T-420; seção 6g) e do Arqueiro (T-430; seção 6h); Mago em esboço. Em andamento direto na `main` (desde 2026-11-22; antes, na branch `trilha/segundas-classes`) |
+| **4 — Segundas classes** | Nível 40, segunda classe no nível 20 com duas opções por classe, passivas, barra de 10 teclas; Guerreiro primeiro (`design/segunda-classe-v0.1.md`) | **Detalhada** nos blocos do Guerreiro (T-390; seção 6f), do Clérigo (T-420; seção 6g), do Arqueiro (T-430; seção 6h) e do Mago (T-440; seção 6i). Em andamento direto na `main` (desde 2026-11-22; antes, na branch `trilha/segundas-classes`) |
 | **5 — Operação** | CI/CD, métricas, testes de carga, produção separada | Esboço |
 | **Depois** | Áreas e mapas novos do nível 16 ao 40 | Ainda sem esboço |
 
@@ -584,7 +584,7 @@ Detalhadas pela T-420 a partir de `design/segunda-classe-v0.1.md`, seção 8. O 
 - **Seguir sem o playtest do Guerreiro.** A T-413 fica pendente e pode ser feita junto com o playtest do Clérigo (T-425).
 - **Inquisidor aprovado como está.**
 - **Inspiração no lugar do Elo da Vida** no Sacerdote. A Inspiração dá regeneração de Mana aos aliados no raio, menos ao próprio Sacerdote, e não Mana na hora ("Mana vem só do tempo").
-- Arqueiro e Mago: o designer revisa as segundas classes uma por uma antes de detalhar os blocos deles. O Arqueiro está na seção 6h.
+- Arqueiro e Mago: o designer revisa as segundas classes uma por uma antes de detalhar os blocos deles. O Arqueiro está na seção 6h e o Mago na 6i.
 
 **O que o bloco do Guerreiro já deixou pronto:** vida pelo dano (T-407) para o Selo da Luz, o Julgamento e a Ira Divina; estados em aliados num raio; áreas no chão. O desvio de dano (T-406) não é mais usado pelo Clérigo, porque o Elo da Vida saiu.
 
@@ -646,7 +646,7 @@ Detalhadas pela T-430 a partir de `design/segunda-classe-v0.1.md`, seção 6. O 
 | [T-434](fase-4/T-434-icones-e-efeitos-do-arqueiro.md) | Ícones e efeitos das habilidades do Atirador e do Caçador | Windows | Humano + Médio | 433 |
 | [T-435](fase-4/T-435-playtest-do-arqueiro.md) | Playtest do Arqueiro com segunda classe | Windows | Humano | 434 |
 
-### Ondas de execução (com o bloco do Clérigo)
+### Ondas de execução (com o bloco do Clérigo; as três classes juntas na seção 6i)
 
 | Onda | VPS | Windows |
 |---|---|---|
@@ -673,9 +673,68 @@ T-430 ─► T-431 ─► T-432 ─► T-433 ─► T-434 ─► T-435
 
 ---
 
+## 6i. Tarefas da fase 4 (bloco do Mago) e ordem das três classes
+
+Detalhadas pela T-440 a partir de `design/segunda-classe-v0.1.md`, seção 7. O bloco entrega o **Piromante** e o **Arcanista**.
+
+**Decisões do designer (2026-11-22)**
+- **Piromante aprovado como está.**
+- **Arcanista aprovado**, com o **Sifão Arcano dando regeneração de Mana por 5 s** em vez de Mana na hora ("Mana vem só do tempo", como na Inspiração).
+
+**Peças que vêm de outros blocos:** a regeneração de Mana de um estado (T-421) serve ao Sifão; a cópia de estados (T-432) serve à Combustão NH5. Por isso a T-441 depende da T-432 e a T-442 da T-421.
+
+### Índice
+
+| ID | Tarefa | Ambiente | Modelo | Depende de |
+|---|---|---|---|---|
+| [T-440](fase-4/T-440-planejar-mago.md) | Detalhar o bloco do Mago em tarefas | Windows | **Forte** | T-430 |
+| [T-441](fase-4/T-441-mecanicas-do-piromante.md) | Core: mecânicas do Piromante (Queimadura por NH, dano só em quem queima, explodir no primeiro acerto, área depois do impacto) | VPS | **Forte** | 432 |
+| [T-442](fase-4/T-442-mecanicas-do-arcanista.md) | Core: mecânicas do Arcanista (canalização com pulsos, dano que sobe, andar canalizando, orbes, Sifão) | VPS | **Forte** | 421, 441 |
+| [T-443](fase-4/T-443-dados-piromante-e-arcanista.md) | Dados: habilidades do Piromante e do Arcanista, metas e testes de design | VPS | Médio | 441, 442 |
+| [T-444](fase-4/T-444-icones-e-efeitos-do-mago.md) | Ícones e efeitos das habilidades do Piromante e do Arcanista | Windows | Humano + Médio | 443 |
+| [T-445](fase-4/T-445-playtest-do-mago.md) | Playtest do Mago com segunda classe (pode ser o da fase inteira) | Windows | Humano | 444 |
+
+### Ondas das três classes juntas
+
+As seis tarefas de Core mexem nos mesmos arquivos (definições de estado, `DamageResolver`, conjuração, validador de dados e schema): **uma de cada vez**, cada uma saindo da `main` com a anterior integrada. Os dados e o cliente de uma classe andam enquanto o Core da seguinte roda.
+
+| Onda | VPS | Windows |
+|---|---|---|
+| 1 | T-421 | — |
+| 2 | T-422 | — |
+| 3 | T-423, depois T-431 | — |
+| 4 | T-432 | T-424 |
+| 5 | T-433, depois T-441 | T-425 (opcional agora) |
+| 6 | T-442 | T-434 |
+| 7 | T-443 | T-435 (opcional agora) |
+| 8 | — | T-444 |
+| 9 | — | T-445 (e os playtests que estiverem abertos) |
+
+**Cuidados de integração**
+- Tudo sai da `main` e entra na `main`. Testes locais no Windows, como na seção 6f.
+- **Protocolo:** a T-442 é a que mais pode precisar de rede (orbes, canalização em andamento). Quem subir `ProtocolVersion` sobe a partir do número da `main`, e cliente e servidor saem do mesmo commit.
+- A T-423, a T-433 e a T-443 mexem em `classes.json` e nos testes de design da segunda classe: uma de cada vez.
+- A T-424, a T-434 e a T-444 mexem em `icons.png` e `icons.json`: uma de cada vez.
+
+### Grafo de dependências (as três classes)
+
+```text
+T-421 ─► T-422 ─► T-423 ─► T-424 ─► T-425
+  │
+  │      T-431 ─► T-432 ─► T-433 ─► T-434 ─► T-435
+  │                 │
+  │                 ▼
+  └──────────────► T-441 ─► T-442 ─► T-443 ─► T-444 ─► T-445
+       (T-421 ─► T-442)
+
+Ordem do Core: T-421 → T-422 → T-431 → T-432 → T-441 → T-442
+```
+
+---
+
 ## 7. Fases seguintes (esboço)
 
-Serão convertidas em arquivos de tarefa no fim de cada fase. As fases 1, 2 e 3 estão detalhadas nas seções 6b, 6d e 6e, e os blocos do Guerreiro, do Clérigo e do Arqueiro da fase 4 nas seções 6f, 6g e 6h.
+Serão convertidas em arquivos de tarefa no fim de cada fase. As fases 1, 2 e 3 estão detalhadas nas seções 6b, 6d e 6e, e os blocos do Guerreiro, do Clérigo, do Arqueiro e do Mago da fase 4 nas seções 6f a 6i.
 
 ### Fase 2 — Persistência e progressão
 
@@ -724,7 +783,7 @@ Decidida pelo designer depois do playtest v0.3 (2026-11-19 a 2026-11-21). Design
 | Guerreiro | sistema de segunda classe e passivas, Guardião e Berserker, barra de 10 teclas, tela de escolha; playtest | **aprovado** |
 | Clérigo | Sacerdote (Inspiração no lugar do Elo da Vida) e Inquisidor | **aprovado** (2026-11-22); detalhado na seção 6g (T-420) |
 | Arqueiro | Atirador de Elite (Tiro Certeiro sem conjuração, Olho de Falcão de 15 a 20 s) e Caçador | **aprovado** (2026-11-22); detalhado na seção 6h (T-430) |
-| Mago | Piromante e Arcanista | a aprovar, uma por uma |
+| Mago | Piromante e Arcanista (Sifão Arcano com regeneração de Mana) | **aprovado** (2026-11-22); detalhado na seção 6i (T-440) |
 
 ### Fase 5 — Operação
 

@@ -52,4 +52,4 @@ O playtest da T-435 pergunta se a Ferida Aberta e a Praga se notam.
 - T-435 Playtest do Arqueiro.
 
 **Pendências**
-- Revisar com o designer o Mago (Piromante e Arcanista) e criar o bloco dele.
+- Revisar com o designer o Mago (Piromante e Arcanista) e criar o bloco dele: feito na T-440.
