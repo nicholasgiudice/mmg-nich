@@ -347,7 +347,7 @@ Os valores são menores que os da versão ativa (+10% a +20% por 6 a 8 s, a cada
 
 #### Tiro Certeiro — dano muito alto que ignora armadura
 
-Custo 35, recarga 10 s, alcance 12, **sem conjuração** (decisão do designer, 2026-11-22; antes, 1,5 s parado). Ignora parte da armadura do alvo.
+Custo **20** (era 35; T-433), recarga 10 s, alcance 12, **sem conjuração** (decisão do designer, 2026-11-22; antes, 1,5 s parado). Ignora parte da armadura do alvo.
 
 | NH | Valor | Armadura ignorada | Outros efeitos | Perfil nível 21 |
 |---|---|---|---|---|
@@ -357,7 +357,7 @@ Custo 35, recarga 10 s, alcance 12, **sem conjuração** (decisão do designer, 
 | 4 | dano 40 + 3,2 × ARMA + 6,4 × DES | 40% | — | 517 |
 | 5 | dano 45 + 3,6 × ARMA + 7,2 × DES | **50%** | recarga **8 s** | 581 |
 
-Sem a conjuração, o NH5 troca "conjuração de 1 s" por recarga de 8 s. O dano foi feito para um tiro que pedia 1,5 s parado: sem esse preço, o simulador deve dizer se ele precisa cair (tarefa de dados do Arqueiro).
+Sem a conjuração, o NH5 troca "conjuração de 1 s" por recarga de 8 s. O dano foi feito para um tiro que pedia 1,5 s parado: sem esse preço, o simulador deve dizer se ele precisa cair (tarefa de dados do Arqueiro). **Resposta da T-433:** o dano não precisa cair; o custo caiu de 35 para 20 (ver "Ajustes do simulador (T-433)" no fim desta seção).
 
 #### Olho de Falcão (assinatura, nível 35) — todo ataque é crítico
 
@@ -449,6 +449,31 @@ Custo 80, recarga 90 s, alcance 9, raio 6. Põe pilhas do Veneno do Caçador em 
 | Nuvem Tóxica | área no chão (como o Campo de Relâmpagos) | — |
 | Flecha Dispersa | dano | **copiar estados para outros monstros** |
 | Praga | estado em área | **estado que pula ao acabar** |
+
+### Ajustes do simulador (T-433)
+
+Os dados estão em `data/abilities_marksman.json` e `data/abilities_hunter.json`, com os números das tabelas acima. Mudou **um número**: o custo do Tiro Certeiro. Medidas em `tasks/reports/balance-v0.21.md`.
+
+| Habilidade | Antes | Depois | Por quê |
+|---|---|---|---|
+| Tiro Certeiro | custo 35 | **20** | o Arqueiro tem **90 de Mana** do 1 ao 40 (não põe INT) e 5,5/s; o Olho de Falcão (70) e o Tiro Certeiro (35) juntos passavam disso, e o bot gastava a Mana que voltava nas habilidades baratas: com o Olho de Falcão ligado, o Tiro Certeiro não saía. Com 20, os dois cabem nos 90 e saem juntos. Contra a elite, o Atirador levava **84–98%** do tempo da base (meta: no máximo 85%); com 20, **72–78%** |
+
+O dano do Tiro Certeiro (feito para um tiro que pedia 1,5 s parado) **não precisou cair**: a rajada com o Olho de Falcão fica longe da meta (abaixo). A duração do Olho de Falcão (15/17/20 s) é a do designer.
+
+**Olho de Falcão (pendente com o designer):** com 70 de Mana, ele quase não acrescenta dano. Contra um alvo que não morre, o Atirador causa nos 20 s **0,98–0,99×** o que causa sem ele (13,0 mil × 13,2 mil no 37; 14,2 mil × 14,3 mil no 40), e mata a elite do 40 em 8,9 s com ele e 9,1 s sem. Motivo: o perfil esperado já tem 40% de crítico a 6+ tiles (o teto) com × 1,65, então todo golpe crítico rende só +31%, e os 70 de Mana pagam 3 Tiros Certeiros. Com o custo a 40, a elite cai em 6,9 s; a 30, em 6,2 s (1,18× de dano nos 20 s). Ficou em 70: nenhuma meta falha e a tarefa pede não mexer no que o designer pediu sem isso; a decisão está no relatório, §5.
+
+O que os dados decidem onde o design não diz:
+
+- **Flecha Perfurante:** linha de 1,2 de largura (a da Flecha Devastadora NH2).
+- **Tiro Debilitante:** o estado (Debilitado) tem as etiquetas `slow` e `weaken`, sem `control` (elites e chefes não o encurtam).
+- **Olho de Falcão:** o +2 de alcance do NH3 vale para os disparos com a etiqueta `ranged`, como o +1 da Mira Firme.
+- **Flecha Envenenada:** o mesmo estado em todos os NH; o Veneno do Caçador do NH sai do apelido `status.hunter_venom` (T-432). Sem pontos nela (a Nuvem e a Praga de quem não a tem), vale o veneno do NH1.
+- **Ferida Aberta:** sem dano na hora (só o sangramento); o estado renova a duração.
+- **Nuvem Tóxica:** duas áreas juntas, uma com o dano a cada 1 s e outra com 1 pilha a cada 2 s (a primeira aos 2 s); a lentidão do NH5 é um estado de 1,2 s renovado a cada segundo na nuvem.
+- **Flecha Dispersa:** copia os estados com `hunter_venom` ou `bleed` (o Sangramento comum e a Ferida Aberta) para os 2/2/3/3/4 monstros mais perto a até 4 tiles.
+- **Praga:** a Praga NH3 põe 5 pilhas, mas o máximo do veneno vem da Flecha Envenenada (3 no NH1 e NH2, 4 no NH3 e NH4, 5 no NH5).
+
+Metas revistas (`design/progression-v0.1.md` §8): no nível 25 a meta de tempo das segundas classes do Arqueiro é não ficar mais lento que a base (85% do 30 em diante); a rajada do Olho de Falcão no máximo 1,5× (era 2,5×); o Guardião até 2,0× na diferença entre segundas classes.
 
 ## 7. Mago em detalhe
 

@@ -51,7 +51,19 @@
         "archer.rain_of_arrows",
         "archer.devastating_arrow"
       ],
-      "startingInventory": [{ "item": "consumable.minor_healing_potion", "count": 5 }]
+      "startingInventory": [{ "item": "consumable.minor_healing_potion", "count": 5 }],
+      "secondClasses": [
+        {
+          "id": "second_class.marksman",
+          "name": "Atirador de Elite",
+          "abilities": ["marksman.piercing_arrow", "marksman.crippling_shot", "marksman.steady_aim", "marksman.true_shot", "marksman.hawk_eye"]
+        },
+        {
+          "id": "second_class.hunter",
+          "name": "Caçador",
+          "abilities": ["hunter.poison_arrow", "hunter.open_wound", "hunter.toxic_cloud", "hunter.scatter_arrow", "hunter.plague"]
+        }
+      ]
     },
     {
       "id": "class.mage",

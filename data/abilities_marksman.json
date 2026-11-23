@@ -1,0 +1,233 @@
+{
+  "$schema": "./schemas/game-data.schema.json",
+  "abilities": [
+    {
+      "id": "marksman.piercing_arrow",
+      "name": "Flecha Perfurante",
+      "tags": ["ranged", "damage", "pierce"],
+      "cost": { "resource": "mana", "amount": 30 },
+      "cooldown": 8,
+      "targeting": { "type": "line", "length": 10, "width": 1.2 },
+      "effects": [
+        { "type": "damage", "school": "physical", "base": 14, "scaling": { "weapon": 1.4, "dex": 2.8 }, "behindFraction": 0.6 }
+      ],
+      "ranks": [
+        {
+          "rank": 2,
+          "effects": [
+            { "type": "damage", "school": "physical", "base": 16.8, "scaling": { "weapon": 1.68, "dex": 3.36 }, "behindFraction": 0.6 }
+          ]
+        },
+        {
+          "rank": 3,
+          "effects": [
+            { "type": "damage", "school": "physical", "base": 19.6, "scaling": { "weapon": 1.96, "dex": 3.92 }, "behindFraction": 0.8 }
+          ]
+        },
+        {
+          "rank": 4,
+          "effects": [
+            { "type": "damage", "school": "physical", "base": 22.4, "scaling": { "weapon": 2.24, "dex": 4.48 }, "behindFraction": 0.8 }
+          ]
+        },
+        {
+          "rank": 5,
+          "cooldown": 6,
+          "targeting": { "type": "line", "length": 14, "width": 1.2 },
+          "effects": [
+            { "type": "damage", "school": "physical", "base": 25.2, "scaling": { "weapon": 2.52, "dex": 5.04 }, "behindFraction": 0.8 }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "marksman.crippling_shot",
+      "name": "Tiro Debilitante",
+      "tags": ["ranged", "damage", "debuff"],
+      "cost": { "resource": "mana", "amount": 20 },
+      "cooldown": 12,
+      "targeting": { "type": "unit", "range": 10, "faction": "enemy" },
+      "effects": [
+        { "type": "damage", "school": "physical", "base": 6, "scaling": { "weapon": 0.6, "dex": 1.2 } },
+        { "type": "apply_status", "status": "status.crippled", "duration": 4 }
+      ],
+      "ranks": [
+        {
+          "rank": 2,
+          "effects": [
+            { "type": "damage", "school": "physical", "base": 7.2, "scaling": { "weapon": 0.72, "dex": 1.44 } },
+            { "type": "apply_status", "status": "status.crippled", "duration": 4 }
+          ]
+        },
+        {
+          "rank": 3,
+          "effects": [
+            { "type": "damage", "school": "physical", "base": 8.4, "scaling": { "weapon": 0.84, "dex": 1.68 } },
+            { "type": "apply_status", "status": "status.crippled_40", "duration": 5 }
+          ]
+        },
+        {
+          "rank": 4,
+          "effects": [
+            { "type": "damage", "school": "physical", "base": 9.6, "scaling": { "weapon": 0.96, "dex": 1.92 } },
+            { "type": "apply_status", "status": "status.crippled_40", "duration": 5 }
+          ]
+        },
+        {
+          "rank": 5,
+          "effects": [
+            { "type": "damage", "school": "physical", "base": 10.8, "scaling": { "weapon": 1.08, "dex": 2.16 } },
+            { "type": "apply_status", "status": "status.crippled_50", "duration": 6 }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "marksman.steady_aim",
+      "name": "Mira Firme",
+      "tags": ["passive", "crit"],
+      "passive": true,
+      "passiveStatus": "status.steady_aim",
+      "targeting": { "type": "self" },
+      "ranks": [
+        { "rank": 2, "passiveStatus": "status.steady_aim_8" },
+        { "rank": 3, "passiveStatus": "status.steady_aim_10" },
+        { "rank": 4, "passiveStatus": "status.steady_aim_12" },
+        { "rank": 5, "passiveStatus": "status.steady_aim_12_strong" }
+      ]
+    },
+    {
+      "id": "marksman.true_shot",
+      "name": "Tiro Certeiro",
+      "tags": ["ranged", "damage"],
+      "cost": { "resource": "mana", "amount": 20 },
+      "cooldown": 10,
+      "targeting": { "type": "unit", "range": 12, "faction": "enemy" },
+      "effects": [
+        { "type": "damage", "school": "physical", "base": 25, "scaling": { "weapon": 2, "dex": 4 }, "ignoreArmor": 0.3 }
+      ],
+      "ranks": [
+        {
+          "rank": 2,
+          "effects": [
+            { "type": "damage", "school": "physical", "base": 30, "scaling": { "weapon": 2.4, "dex": 4.8 }, "ignoreArmor": 0.3 }
+          ]
+        },
+        {
+          "rank": 3,
+          "effects": [
+            { "type": "damage", "school": "physical", "base": 35, "scaling": { "weapon": 2.8, "dex": 5.6 }, "ignoreArmor": 0.4 }
+          ]
+        },
+        {
+          "rank": 4,
+          "effects": [
+            { "type": "damage", "school": "physical", "base": 40, "scaling": { "weapon": 3.2, "dex": 6.4 }, "ignoreArmor": 0.4 }
+          ]
+        },
+        {
+          "rank": 5,
+          "cooldown": 8,
+          "effects": [
+            { "type": "damage", "school": "physical", "base": 45, "scaling": { "weapon": 3.6, "dex": 7.2 }, "ignoreArmor": 0.5 }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "marksman.hawk_eye",
+      "name": "Olho de Falcão",
+      "tags": ["buff", "crit", "signature"],
+      "signature": true,
+      "cost": { "resource": "mana", "amount": 70 },
+      "cooldown": 90,
+      "targeting": { "type": "self" },
+      "effects": [{ "type": "apply_status", "status": "status.hawk_eye", "duration": 15 }],
+      "ranks": [
+        { "rank": 2, "effects": [{ "type": "apply_status", "status": "status.hawk_eye", "duration": 17 }] },
+        { "rank": 3, "effects": [{ "type": "apply_status", "status": "status.hawk_eye_3", "duration": 20 }] }
+      ]
+    }
+  ],
+  "statuses": [
+    {
+      "id": "status.crippled",
+      "name": "Debilitado",
+      "tags": ["debuff", "slow", "weaken"],
+      "defaultDuration": 4,
+      "stacking": "refresh",
+      "modifiers": { "speedMultiplier": 0.7, "damageDealtMultiplier": 0.85 }
+    },
+    {
+      "id": "status.crippled_40",
+      "name": "Debilitado",
+      "tags": ["debuff", "slow", "weaken"],
+      "defaultDuration": 5,
+      "stacking": "refresh",
+      "modifiers": { "speedMultiplier": 0.6, "damageDealtMultiplier": 0.8 }
+    },
+    {
+      "id": "status.crippled_50",
+      "name": "Debilitado",
+      "tags": ["debuff", "slow", "weaken"],
+      "defaultDuration": 6,
+      "stacking": "refresh",
+      "modifiers": { "speedMultiplier": 0.5, "damageDealtMultiplier": 0.75 }
+    },
+    {
+      "id": "status.steady_aim",
+      "name": "Mira Firme",
+      "tags": ["buff", "passive", "crit"],
+      "defaultDuration": 1,
+      "crit": { "bonus": 0.06, "minDistance": 6 }
+    },
+    {
+      "id": "status.steady_aim_8",
+      "name": "Mira Firme",
+      "tags": ["buff", "passive", "crit"],
+      "defaultDuration": 1,
+      "crit": { "bonus": 0.08, "minDistance": 6 }
+    },
+    {
+      "id": "status.steady_aim_10",
+      "name": "Mira Firme",
+      "tags": ["buff", "passive", "crit"],
+      "defaultDuration": 1,
+      "crit": { "bonus": 0.1, "minDistance": 6 },
+      "rangeBonus": 1
+    },
+    {
+      "id": "status.steady_aim_12",
+      "name": "Mira Firme",
+      "tags": ["buff", "passive", "crit"],
+      "defaultDuration": 1,
+      "crit": { "bonus": 0.12, "minDistance": 6 },
+      "rangeBonus": 1
+    },
+    {
+      "id": "status.steady_aim_12_strong",
+      "name": "Mira Firme",
+      "tags": ["buff", "passive", "crit"],
+      "defaultDuration": 1,
+      "crit": { "bonus": 0.12, "minDistance": 6, "multiplier": 1.65 },
+      "rangeBonus": 1
+    },
+    {
+      "id": "status.hawk_eye",
+      "name": "Olho de Falcão",
+      "tags": ["buff", "crit", "hawk_eye"],
+      "defaultDuration": 15,
+      "stacking": "refresh",
+      "crit": { "guaranteed": true }
+    },
+    {
+      "id": "status.hawk_eye_3",
+      "name": "Olho de Falcão",
+      "tags": ["buff", "crit", "hawk_eye"],
+      "defaultDuration": 20,
+      "stacking": "refresh",
+      "crit": { "guaranteed": true },
+      "rangeBonus": 2
+    }
+  ]
+}

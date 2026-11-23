@@ -298,6 +298,25 @@ Sacerdote e Inquisidor, no nível 20. As tabelas finais (efeitos e valores por N
 
 Durante a Ira Divina, o ataque básico (Golpe Sagrado) usa `inquisitor.divine_wrath_strike_1` (NH1 e NH2) ou `inquisitor.divine_wrath_strike_3` (NH3): o Golpe Sagrado × 1,5 (× 1,8 no NH3) no alvo e em todos a até 2 dele, e cada acerto cura 10% (15% no NH3) do dano nos aliados a até 4 tiles.
 
+## Segunda classe do Arqueiro (fase 4)
+
+Atirador de Elite e Caçador, no nível 20. As tabelas finais (efeitos e valores por NH) são as de `design/segunda-classe-v0.1.md` §6; os dados estão em `data/abilities_marksman.json` e `data/abilities_hunter.json` (T-433). NH1 no nível 21, depois 24, 27, 30 e 33; a assinatura no 35, 37 e 40. As passivas (Mira Firme e Flecha Envenenada) não ocupam tecla nem custam Mana. Com o simulador mudou só o custo do Tiro Certeiro (`tasks/reports/balance-v0.21.md`):
+
+| Habilidade | Id | Custo | Recarga |
+|---|---|---|---|
+| Flecha Perfurante | `marksman.piercing_arrow` | 30 | 8 s (6 s no NH5) |
+| Tiro Debilitante | `marksman.crippling_shot` | 20 | 12 s |
+| Mira Firme (passiva) | `marksman.steady_aim` | — | — |
+| Tiro Certeiro | `marksman.true_shot` | **20** (era 35) | 10 s (8 s no NH5) |
+| Olho de Falcão (assinatura) | `marksman.hawk_eye` | 70 | 90 s |
+| Flecha Envenenada (passiva) | `hunter.poison_arrow` | — | — |
+| Ferida Aberta | `hunter.open_wound` | 25 | 10 s |
+| Nuvem Tóxica | `hunter.toxic_cloud` | 45 | 14 s |
+| Flecha Dispersa | `hunter.scatter_arrow` | 30 | 12 s |
+| Praga (assinatura) | `hunter.plague` | 80 | 90 s |
+
+O Veneno do Caçador é um status por NH da Flecha Envenenada (`status.hunter_venom_1` a `_5`), escolhido pelo apelido `status.hunter_venom` (`byRank`); a Nuvem Tóxica, a Flecha Dispersa e a Praga aplicam o apelido.
+
 ## Depois do MVP
 
 Habilidades fora da barra de 5 teclas (especializações): Guerreiro — Investida, Interceptação; Arqueiro — Armadilha de Contenção, Flecha Perfurante, Tiro Debilitante; Mago — Combustão, Dissipar Magia; Clérigo — Bênção, Oração Restauradora. Recebem tabela de níveis quando entrarem no jogo.
