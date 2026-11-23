@@ -1,4 +1,5 @@
 using System.Numerics;
+using Game.Core.Combat.Telegraphs;
 using Game.Core.Combat.Threat;
 using Game.Core.Definitions;
 using Game.Core.Intents;
@@ -159,6 +160,24 @@ public sealed class AiContext
     }
 
     public bool InReach(AbilityDefinition a, Entity target) => ReachOf(a) is { } r && DistanceTo(target) <= r;
+
+    /// <summary>
+    /// Há telegráfo deste monstro ainda não resolvido com origem nele (âncora <c>source</c>, ex.: a linha da investida)?
+    /// Andar durante a preparação desalinharia o golpe/avanço do que o jogador vê.
+    /// </summary>
+    public bool HasPendingTelegraphAtSelf()
+    {
+        foreach (var e in World.Entities)
+        {
+            if (!e.IsRemoved && e.TryGet<TelegraphState>() is { } t && t.Source == Self.Id
+                && (!World.Content.Abilities.TryGetValue(t.AbilityId, out var a) || a.Telegraph?.Anchor != TelegraphAnchor.Aim))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     /// <summary>Tenta usar a primeira habilidade ofensiva disponível (lista = prioridade; condições = validação: recarga, alcance, LoS, recurso).</summary>
     public AiUseResult TryUseBest(Entity target, bool instantOnly = false)

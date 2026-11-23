@@ -281,4 +281,43 @@ public class ForestMonsterTests
         Assert.Contains(ev, e => e is TelegraphResolved r && r.AbilityId == "corrupted_ent.trampling_slam");
         Assert.DoesNotContain(ev, e => e is DamageDealt { SourceId: "corrupted_ent.trampling_slam" });
     }
+
+    // ---------- ai.boss: investida em recarga não deixa o chefe parado longe do alvo ----------
+
+    [Theory]
+    [InlineData("monster.forest_matriarch", "matriarch.charge", 6.5f, 4.5f, new[] { "matriarch.bite" })] // mordida 2,3; investida 6
+    [InlineData("monster.faceless_watcher", "watcher.iron_charge", 7.5f, 5.5f, new[] { "watcher.oath_cleave", "watcher.iron_strike" })] // golpe 4; investida 8
+    public void Boss_holds_still_while_preparing_the_charge_then_walks_to_the_target_while_it_recharges(
+        string monster, string chargeId, float start, float after, string[] melee)
+    {
+        var c = RealContent.Value;
+        var w = WorldBuilder.CreateDefault(1, null, c);
+        var boss = EntityFactory.SpawnMonster(w, c.Monsters[monster], new Vector2(10, 10));
+        var hero = Unit(w, new Vector2(10 + start, 10), Faction.Player); // fora do corpo a corpo, dentro da investida
+        hero.Get<Health>().Max = 1_000_000;
+        hero.Get<Health>().Current = 1_000_000;
+        var ev = Run(w, 1);
+        var ai = boss.Get<Game.Core.Combat.Ai.AiState>(); // criado no primeiro tick
+        for (var i = 0; i < 200 && !ev.Any(e => e is TelegraphStarted t && t.AbilityId == chargeId); i++)
+        {
+            ev = Run(w, 1);
+        }
+
+        var charge = Assert.Single(ev.OfType<TelegraphStarted>(), t => t.AbilityId == chargeId);
+        while (w.Tick < charge.ResolveAtTick - 1)
+        {
+            Run(w, 1);
+            Assert.False(ai.Moving, "parado na preparação: a investida sai do ponto mostrado pelo telegráfo");
+        }
+
+        Run(w, 2);
+
+        // investida em recarga: o alvo fora do corpo a corpo tem de ser alcançado a pé, não esperado de longe
+        hero.Get<Transform>().Position = boss.Get<Transform>().Position + new Vector2(0, after);
+        ev = Run(w, 80);
+
+        Assert.True(Vector2.Distance(boss.Get<Transform>().Position, hero.Get<Transform>().Position) < 3f);
+        Assert.Contains(ev, e => e is AbilityStarted a && a.Source == boss.Id && melee.Contains(a.AbilityId));
+        Assert.DoesNotContain(ev, e => e is TelegraphStarted t && t.AbilityId == chargeId);
+    }
 }
