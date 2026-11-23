@@ -148,8 +148,15 @@ public sealed partial class ConfigurableBot(BotPlan plan) : IBotController
         BotContext ctx, IReadOnlyList<AbilityInfo> allowed, List<Entity> enemies, Entity? focus, bool fleeing, List<Intent> output, out bool dashed)
     {
         dashed = false;
+        var groupOnly = ctx.Options.GetList(ctx.ClassId, "groupOnly");
         foreach (var info in allowed)
         {
+            // T-433: habilidades de grupo (Nuvem Tóxica, Flecha Dispersa) só com 2 ou mais inimigos.
+            if (enemies.Count < 2 && info.Matches(groupOnly))
+            {
+                continue;
+            }
+
             // Fugindo: só instantâneas (conjurar parado faria o bot ser alcançado).
             if (fleeing && !_cornered && info.NeedsStanding)
             {
@@ -271,7 +278,8 @@ public sealed partial class ConfigurableBot(BotPlan plan) : IBotController
 
             case AbilityRole.Defensive:
                 {
-                    if (nearest is null || (!force && ctx.EdgeDistanceTo(nearest) > 6))
+                    // T-433: selfBuffRange (padrão 6) = até que distância do inimigo mais próximo o reforço próprio é usado.
+                    if (nearest is null || (!force && ctx.EdgeDistanceTo(nearest) > ctx.Options.GetDouble(ctx.ClassId, "selfBuffRange", 6)))
                     {
                         return false;
                     }

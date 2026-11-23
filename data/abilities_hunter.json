@@ -1,0 +1,369 @@
+{
+  "$schema": "./schemas/game-data.schema.json",
+  "abilities": [
+    {
+      "id": "hunter.poison_arrow",
+      "name": "Flecha Envenenada",
+      "tags": ["passive", "poison"],
+      "passive": true,
+      "passiveStatus": "status.poison_arrow",
+      "targeting": { "type": "self" },
+      "ranks": [
+        { "rank": 2, "passiveStatus": "status.poison_arrow" },
+        { "rank": 3, "passiveStatus": "status.poison_arrow" },
+        { "rank": 4, "passiveStatus": "status.poison_arrow" },
+        { "rank": 5, "passiveStatus": "status.poison_arrow" }
+      ]
+    },
+    {
+      "id": "hunter.open_wound",
+      "name": "Ferida Aberta",
+      "tags": ["ranged", "debuff", "bleed"],
+      "cost": { "resource": "mana", "amount": 25 },
+      "cooldown": 10,
+      "targeting": { "type": "unit", "range": 9, "faction": "enemy" },
+      "effects": [{ "type": "apply_status", "status": "status.open_wound", "duration": 6 }],
+      "ranks": [
+        { "rank": 2, "effects": [{ "type": "apply_status", "status": "status.open_wound_2", "duration": 6 }] },
+        { "rank": 3, "effects": [{ "type": "apply_status", "status": "status.open_wound_3", "duration": 8 }] },
+        { "rank": 4, "effects": [{ "type": "apply_status", "status": "status.open_wound_4", "duration": 8 }] },
+        { "rank": 5, "effects": [{ "type": "apply_status", "status": "status.open_wound_5", "duration": 8 }] }
+      ]
+    },
+    {
+      "id": "hunter.toxic_cloud",
+      "name": "Nuvem Tóxica",
+      "tags": ["ranged", "aoe", "zone", "poison"],
+      "cost": { "resource": "mana", "amount": 45 },
+      "cooldown": 14,
+      "targeting": { "type": "circle_at_point", "range": 9, "radius": 3 },
+      "effects": [
+        { "type": "spawn_area", "area": "area.toxic_cloud" },
+        { "type": "spawn_area", "area": "area.toxic_cloud_venom" }
+      ],
+      "ranks": [
+        {
+          "rank": 2,
+          "effects": [
+            { "type": "spawn_area", "area": "area.toxic_cloud_2" },
+            { "type": "spawn_area", "area": "area.toxic_cloud_venom" }
+          ]
+        },
+        {
+          "rank": 3,
+          "targeting": { "type": "circle_at_point", "range": 9, "radius": 4 },
+          "effects": [
+            { "type": "spawn_area", "area": "area.toxic_cloud_3" },
+            { "type": "spawn_area", "area": "area.toxic_cloud_venom_3" }
+          ]
+        },
+        {
+          "rank": 4,
+          "effects": [
+            { "type": "spawn_area", "area": "area.toxic_cloud_4" },
+            { "type": "spawn_area", "area": "area.toxic_cloud_venom_3" }
+          ]
+        },
+        {
+          "rank": 5,
+          "effects": [
+            { "type": "spawn_area", "area": "area.toxic_cloud_5" },
+            { "type": "spawn_area", "area": "area.toxic_cloud_venom_5" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "hunter.scatter_arrow",
+      "name": "Flecha Dispersa",
+      "tags": ["ranged", "damage", "spread"],
+      "cost": { "resource": "mana", "amount": 30 },
+      "cooldown": 12,
+      "targeting": { "type": "unit", "range": 9, "faction": "enemy" },
+      "effects": [
+        { "type": "damage", "school": "physical", "base": 8, "scaling": { "weapon": 0.6, "dex": 1.2 } },
+        { "type": "copy_status", "tags": ["hunter_venom", "bleed"], "radius": 4, "count": 2 }
+      ],
+      "ranks": [
+        {
+          "rank": 2,
+          "effects": [
+            { "type": "damage", "school": "physical", "base": 9.6, "scaling": { "weapon": 0.72, "dex": 1.44 } },
+            { "type": "copy_status", "tags": ["hunter_venom", "bleed"], "radius": 4, "count": 2 }
+          ]
+        },
+        {
+          "rank": 3,
+          "effects": [
+            { "type": "damage", "school": "physical", "base": 11.2, "scaling": { "weapon": 0.84, "dex": 1.68 } },
+            { "type": "copy_status", "tags": ["hunter_venom", "bleed"], "radius": 4, "count": 3 }
+          ]
+        },
+        {
+          "rank": 4,
+          "effects": [
+            { "type": "damage", "school": "physical", "base": 12.8, "scaling": { "weapon": 0.96, "dex": 1.92 } },
+            { "type": "copy_status", "tags": ["hunter_venom", "bleed"], "radius": 4, "count": 3 }
+          ]
+        },
+        {
+          "rank": 5,
+          "effects": [
+            { "type": "damage", "school": "physical", "base": 14.4, "scaling": { "weapon": 1.08, "dex": 2.16 } },
+            { "type": "copy_status", "tags": ["hunter_venom", "bleed"], "radius": 4, "count": 4 }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "hunter.plague",
+      "name": "Praga",
+      "tags": ["ranged", "aoe", "poison", "signature"],
+      "signature": true,
+      "cost": { "resource": "mana", "amount": 80 },
+      "cooldown": 90,
+      "targeting": { "type": "circle_at_point", "range": 9, "radius": 6 },
+      "effects": [
+        { "type": "apply_status", "status": "status.hunter_venom", "stacks": 3 },
+        { "type": "apply_status", "status": "status.plague", "duration": 8, "target": "self" }
+      ],
+      "ranks": [
+        {
+          "rank": 2,
+          "effects": [
+            { "type": "apply_status", "status": "status.hunter_venom", "stacks": 4 },
+            { "type": "apply_status", "status": "status.plague", "duration": 8, "target": "self" }
+          ]
+        },
+        {
+          "rank": 3,
+          "effects": [
+            { "type": "apply_status", "status": "status.hunter_venom", "stacks": 5 },
+            { "type": "apply_status", "status": "status.plague_3", "duration": 10, "target": "self" }
+          ]
+        }
+      ]
+    }
+  ],
+  "statuses": [
+    {
+      "id": "status.poison_arrow",
+      "name": "Flecha Envenenada",
+      "tags": ["buff", "passive", "poison"],
+      "defaultDuration": 1,
+      "hitEffects": [{ "type": "apply_status", "status": "status.hunter_venom" }]
+    },
+    {
+      "id": "status.hunter_venom",
+      "name": "Veneno do Caçador",
+      "tags": ["debuff", "poison", "dot", "hunter_venom"],
+      "defaultDuration": 4,
+      "byRank": {
+        "ability": "hunter.poison_arrow",
+        "statuses": [
+          "status.hunter_venom_1",
+          "status.hunter_venom_2",
+          "status.hunter_venom_3",
+          "status.hunter_venom_4",
+          "status.hunter_venom_5"
+        ]
+      }
+    },
+    {
+      "id": "status.hunter_venom_1",
+      "name": "Veneno do Caçador",
+      "tags": ["debuff", "poison", "dot", "hunter_venom"],
+      "defaultDuration": 4,
+      "stacking": "stack",
+      "maxStacks": 3,
+      "periodic": [{ "interval": 1, "effects": [{ "type": "damage", "school": "nature", "base": 1, "scaling": { "dex": 0.12 } }] }]
+    },
+    {
+      "id": "status.hunter_venom_2",
+      "name": "Veneno do Caçador",
+      "tags": ["debuff", "poison", "dot", "hunter_venom"],
+      "defaultDuration": 4,
+      "stacking": "stack",
+      "maxStacks": 3,
+      "periodic": [{ "interval": 1, "effects": [{ "type": "damage", "school": "nature", "base": 1.2, "scaling": { "dex": 0.144 } }] }]
+    },
+    {
+      "id": "status.hunter_venom_3",
+      "name": "Veneno do Caçador",
+      "tags": ["debuff", "poison", "dot", "hunter_venom"],
+      "defaultDuration": 5,
+      "stacking": "stack",
+      "maxStacks": 4,
+      "periodic": [{ "interval": 1, "effects": [{ "type": "damage", "school": "nature", "base": 1.4, "scaling": { "dex": 0.168 } }] }]
+    },
+    {
+      "id": "status.hunter_venom_4",
+      "name": "Veneno do Caçador",
+      "tags": ["debuff", "poison", "dot", "hunter_venom"],
+      "defaultDuration": 5,
+      "stacking": "stack",
+      "maxStacks": 4,
+      "periodic": [{ "interval": 1, "effects": [{ "type": "damage", "school": "nature", "base": 1.6, "scaling": { "dex": 0.192 } }] }]
+    },
+    {
+      "id": "status.hunter_venom_5",
+      "name": "Veneno do Caçador",
+      "tags": ["debuff", "poison", "dot", "hunter_venom"],
+      "defaultDuration": 6,
+      "stacking": "stack",
+      "maxStacks": 5,
+      "periodic": [{ "interval": 1, "effects": [{ "type": "damage", "school": "nature", "base": 1.8, "scaling": { "dex": 0.216 } }] }]
+    },
+    {
+      "id": "status.open_wound",
+      "name": "Ferida Aberta",
+      "tags": ["debuff", "bleed", "dot"],
+      "defaultDuration": 6,
+      "stacking": "refresh",
+      "periodic": [
+        { "interval": 1, "effects": [{ "type": "damage", "school": "physical", "base": 6, "scaling": { "dex": 0.6 }, "movingBonus": 0.5 }] }
+      ]
+    },
+    {
+      "id": "status.open_wound_2",
+      "name": "Ferida Aberta",
+      "tags": ["debuff", "bleed", "dot"],
+      "defaultDuration": 6,
+      "stacking": "refresh",
+      "periodic": [
+        { "interval": 1, "effects": [{ "type": "damage", "school": "physical", "base": 7.2, "scaling": { "dex": 0.72 }, "movingBonus": 0.5 }] }
+      ]
+    },
+    {
+      "id": "status.open_wound_3",
+      "name": "Ferida Aberta",
+      "tags": ["debuff", "bleed", "dot"],
+      "defaultDuration": 8,
+      "stacking": "refresh",
+      "periodic": [
+        { "interval": 1, "effects": [{ "type": "damage", "school": "physical", "base": 8.4, "scaling": { "dex": 0.84 }, "movingBonus": 0.5 }] }
+      ]
+    },
+    {
+      "id": "status.open_wound_4",
+      "name": "Ferida Aberta",
+      "tags": ["debuff", "bleed", "dot"],
+      "defaultDuration": 8,
+      "stacking": "refresh",
+      "periodic": [
+        { "interval": 1, "effects": [{ "type": "damage", "school": "physical", "base": 9.6, "scaling": { "dex": 0.96 }, "movingBonus": 0.5 }] }
+      ]
+    },
+    {
+      "id": "status.open_wound_5",
+      "name": "Ferida Aberta",
+      "tags": ["debuff", "bleed", "dot"],
+      "defaultDuration": 8,
+      "stacking": "refresh",
+      "periodic": [
+        { "interval": 1, "effects": [{ "type": "damage", "school": "physical", "base": 10.8, "scaling": { "dex": 1.08 }, "movingBonus": 1 }] }
+      ]
+    },
+    {
+      "id": "status.toxic_cloud_slow",
+      "name": "Lentidão",
+      "tags": ["debuff", "slow"],
+      "defaultDuration": 1,
+      "stacking": "refresh",
+      "modifiers": { "speedMultiplier": 0.8 }
+    },
+    {
+      "id": "status.plague",
+      "name": "Praga",
+      "tags": ["buff", "plague"],
+      "defaultDuration": 8,
+      "stacking": "refresh",
+      "jumpOnExpire": { "tags": ["hunter_venom"], "radius": 4 }
+    },
+    {
+      "id": "status.plague_3",
+      "name": "Praga",
+      "tags": ["buff", "plague"],
+      "defaultDuration": 10,
+      "stacking": "refresh",
+      "jumpOnExpire": { "tags": ["hunter_venom"], "radius": 4 }
+    }
+  ],
+  "areas": [
+    {
+      "id": "area.toxic_cloud",
+      "radius": 3,
+      "duration": 6,
+      "interval": 1,
+      "mode": "periodic",
+      "affects": "enemy",
+      "effects": [{ "type": "damage", "school": "nature", "base": 4, "scaling": { "dex": 0.7 } }]
+    },
+    {
+      "id": "area.toxic_cloud_2",
+      "radius": 3,
+      "duration": 6,
+      "interval": 1,
+      "mode": "periodic",
+      "affects": "enemy",
+      "effects": [{ "type": "damage", "school": "nature", "base": 4.8, "scaling": { "dex": 0.84 } }]
+    },
+    {
+      "id": "area.toxic_cloud_3",
+      "radius": 4,
+      "duration": 6,
+      "interval": 1,
+      "mode": "periodic",
+      "affects": "enemy",
+      "effects": [{ "type": "damage", "school": "nature", "base": 5.6, "scaling": { "dex": 0.98 } }]
+    },
+    {
+      "id": "area.toxic_cloud_4",
+      "radius": 4,
+      "duration": 6,
+      "interval": 1,
+      "mode": "periodic",
+      "affects": "enemy",
+      "effects": [{ "type": "damage", "school": "nature", "base": 6.4, "scaling": { "dex": 1.12 } }]
+    },
+    {
+      "id": "area.toxic_cloud_5",
+      "radius": 4,
+      "duration": 8,
+      "interval": 1,
+      "mode": "periodic",
+      "affects": "enemy",
+      "effects": [
+        { "type": "damage", "school": "nature", "base": 7.2, "scaling": { "dex": 1.26 } },
+        { "type": "apply_status", "status": "status.toxic_cloud_slow", "duration": 1.2 }
+      ]
+    },
+    {
+      "id": "area.toxic_cloud_venom",
+      "radius": 3,
+      "duration": 6,
+      "interval": 2,
+      "mode": "periodic",
+      "affects": "enemy",
+      "effects": [{ "type": "apply_status", "status": "status.hunter_venom" }]
+    },
+    {
+      "id": "area.toxic_cloud_venom_3",
+      "radius": 4,
+      "duration": 6,
+      "interval": 2,
+      "mode": "periodic",
+      "affects": "enemy",
+      "effects": [{ "type": "apply_status", "status": "status.hunter_venom" }]
+    },
+    {
+      "id": "area.toxic_cloud_venom_5",
+      "radius": 4,
+      "duration": 8,
+      "interval": 2,
+      "mode": "periodic",
+      "affects": "enemy",
+      "effects": [{ "type": "apply_status", "status": "status.hunter_venom" }]
+    }
+  ]
+}

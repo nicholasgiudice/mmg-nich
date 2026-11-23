@@ -320,6 +320,16 @@ Perfil esperado com segunda classe: o do nível, com os +5 pontos de atributo da
 | Sacerdote × Clérigo só com a base, grupo de 4 contra a Matriarca do nível | a vitória não cai (margem de 10 pontos) e os **outros membros** causam pelo menos **10% mais dano por segundo vivo** (Bênção e Inspiração) |
 | Sacerdote, solo | vence ≥ 85% o grupo típico; pode ser mais lento que o Clérigo só com a base |
 
+**Metas do Arqueiro (T-433, `tasks/reports/balance-v0.21.md`).** As metas gerais acima valem também para o Atirador de Elite e o Caçador; o grupo típico do Arqueiro solo são os Três Lobos do nível com o Arqueiro no lugar do Guerreiro, e o alvo único forte é a **Aranha Grande** (elite) do nível, sozinha (a única elite do jogo que se enfrenta sozinho). Na diferença entre segundas classes as duas rodam no encontro solo do Arqueiro (Lobo e Salteador).
+
+| Situação | Meta |
+|---|---|
+| Atirador × Arqueiro só com a base, solo, alvo único forte (a elite do nível) | o Atirador vence ≥ 85% e em no máximo **85%** do tempo do Arqueiro só com a base do 30 em diante; **no 25, no máximo o tempo da base** (revisão da T-433: o perfil do 25 tem só 2 NH da segunda classe e o Arqueiro não tem Mana sobrando); no grupo típico pode ser mais lento, mas vence ≥ 85% |
+| Caçador × Arqueiro só com a base, solo, grupo típico | o Caçador vence ≥ 85% e em no máximo **85%** do tempo do 30 em diante; **no 25, no máximo o tempo da base** (o mesmo motivo); contra a elite pode ser mais lento, mas vence ≥ 85% |
+| Olho de Falcão (nível 37 e 40, alvo que não morre) | o dano do Atirador nos 20 s com ele no máximo **1,5×** o dano nos mesmos 20 s sem ele (proposta: 2,5×, que nunca é alcançada: com todo golpe crítico o teto é 1,65×; medido: 0,98–0,99×) |
+
+**Revisão da T-433 na diferença entre segundas classes:** o **Guardião** (tanque) passa a ter limite de **2,0×** (era 1,6×), pelo mesmo motivo do Sacerdote (cura) sem limite: as metas dele são as do grupo e a vitória solo. Com o Arqueiro, a média caiu: o Arqueiro base (6,7 s) deu lugar a duas segundas classes no Lobo e Salteador (Atirador 6–8 s, Caçador 5–6 s), e o Guardião foi de 1,58× para 1,68× (30) e 1,76× (40). As outras continuam no limite delas (`tasks/reports/balance-v0.21.md` §4).
+
 ## 9. Implementação (fase 2, ordem sugerida)
 
 1. Core: componente de atributos/estatísticas, `scaling` nos efeitos (dano, cura, escudo), defesa (armadura/resistência), crítico com o RNG da simulação; dados de perfil por classe. Com perfil nível 1 + equipamento inicial, todos os testes atuais continuam passando.

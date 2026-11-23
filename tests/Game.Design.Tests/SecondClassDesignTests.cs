@@ -42,6 +42,9 @@ public class SecondClassDesignTests(ITestOutputHelper output)
     public const string Berserker = "second_class.berserker";
     public const string Priest = "second_class.priest";
     public const string Inquisitor = "second_class.inquisitor";
+    public const string Archer = "class.archer";
+    public const string Marksman = "second_class.marksman";
+    public const string Hunter = "second_class.hunter";
 
     /// <summary>Grupo típico solo: três Lobos do nível; encontro de grupo: a Matriarca do nível contra o grupo de 4 com Clérigo.</summary>
     public const string Solo = "encounter.three_wolves";
@@ -60,8 +63,11 @@ public class SecondClassDesignTests(ITestOutputHelper output)
     /// </summary>
     public static readonly IReadOnlyDictionary<string, SecondClassSpec> Specs = new Dictionary<string, SecondClassSpec>
     {
+        // T-433: o Guardião (tanque) até 2,0×, como o Sacerdote (cura) entra sem limite: as metas dele são as do grupo e a
+        // vitória solo (tasks/reports/balance-v0.21.md §4).
         [Guardian] = new(Warrior, ["guardian.bastion", "guardian.interception"])
         {
+            SpeedLimit = 2.0,
             GroupOptions = new Dictionary<string, string> { [$"{Warrior}:skip"] = "guardian.shield_bash" },
         },
         [Berserker] = new(Warrior, ["berserker.execution", "berserker.fury"])
@@ -78,6 +84,25 @@ public class SecondClassDesignTests(ITestOutputHelper output)
             GroupOptions = new Dictionary<string, string> { [$"{Cleric}:order"] = "priest.blessing,priest.inspiration" },
         },
         [Inquisitor] = new(Cleric, ["inquisitor.judgment", "inquisitor.hammer_of_justice"]) { SpeedLimit = 1.8 },
+
+        // T-433: o Atirador fica mais longe (kiteDistance 8: para de se aproximar a ~9,5 tiles, para a Mira Firme valer), abre com
+        // o Olho de Falcão e usa o Tiro Certeiro logo depois, e deixa o Tiro Debilitante de lado (~10 de dano por Mana, contra
+        // 15–50 das outras; a lentidão não faz falta contra quem ele já deixa para trás). O Caçador usa a Nuvem Tóxica e a
+        // Flecha Dispersa só com 2 ou mais monstros.
+        [Marksman] = new(Archer, ["marksman.true_shot", "marksman.steady_aim"])
+        {
+            SoloOptions = new Dictionary<string, string>
+            {
+                [$"{Archer}:order"] = "marksman.hawk_eye,marksman.true_shot",
+                [$"{Archer}:skip"] = "marksman.crippling_shot",
+                [$"{Archer}:selfBuffRange"] = "12",
+                [$"{Archer}:kiteDistance"] = "8",
+            },
+        },
+        [Hunter] = new(Archer, ["hunter.poison_arrow", "hunter.open_wound"])
+        {
+            SoloOptions = new Dictionary<string, string> { [$"{Archer}:groupOnly"] = "hunter.toxic_cloud,hunter.scatter_arrow" },
+        },
     };
 
     public static TheoryData<string> SecondClasses => [.. Specs.Keys];
@@ -330,7 +355,8 @@ public class SecondClassDesignTests(ITestOutputHelper output)
     /// (<see cref="HomeOf"/>: Guerreiro, Três Lobos; Clérigo, o Guarda Esquelético), como na diferença entre classes; as
     /// classes base que ainda não têm segunda classe entram na média com o encontro solo delas. Limite por segunda classe
     /// (<see cref="SecondClassSpec.SpeedLimit"/>): as do Clérigo, a classe mais lenta pelo design, até 1,8×; o Sacerdote,
-    /// de cura, entra na média sem limite (T-423, <c>tasks/reports/balance-v0.20.md</c> §3).
+    /// de cura, entra na média sem limite (T-423, <c>tasks/reports/balance-v0.20.md</c> §3); o Guardião, tanque, até 2,0×
+    /// (T-433: o Arqueiro entrou com duas segundas classes rápidas no Lobo e Salteador; <c>tasks/reports/balance-v0.21.md</c> §4).
     /// </summary>
     [Theory]
     [MemberData(nameof(Levels))]
