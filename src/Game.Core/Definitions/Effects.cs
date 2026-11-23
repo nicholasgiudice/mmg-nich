@@ -70,6 +70,9 @@ public sealed record HealEffect : EffectDefinition
 
     /// <summary>Escala pelas estatísticas da fonte (T-201).</summary>
     public IReadOnlyDictionary<string, double> Scaling { get; init; } = new Dictionary<string, double>();
+
+    /// <summary>Fração da vida máxima de quem recebe, somada a base e escala (T-421, Santuário NH3: 0,2). Em [0, 1].</summary>
+    public double MaxHealthFraction { get; init; }
 }
 
 public sealed record ShieldEffect : EffectDefinition

@@ -303,6 +303,41 @@ public sealed record StatusFlags
     /// não move quem tem o status. Empurrão de aliado e avanço próprio continuam valendo.
     /// </summary>
     public bool KnockbackImmune { get; init; }
+
+    /// <summary>
+    /// Vida mínima de 1 (T-421, Santuário): um dano que mataria quem tem o status o deixa com 1 de vida. Vale para todo dano
+    /// (direto, periódico, de área e a parte desviada a um protetor). Não muda cura nem escudo.
+    /// </summary>
+    public bool Undying { get; init; }
+}
+
+/// <summary>Valor que escala com as estatísticas de quem aplicou (T-421): <c>base + Σ coeficiente × estatística</c>.</summary>
+public sealed record ScaledValueDefinition
+{
+    public required double Base { get; init; }
+
+    /// <summary>Chaves de <see cref="ScalingKeys"/>. Fonte sem estatísticas = só a base.</summary>
+    public IReadOnlyDictionary<string, double> Scaling { get; init; } = new Dictionary<string, double>();
+}
+
+/// <summary>
+/// Estatísticas que um status soma a quem o tem (T-421: Bênção, Inspiração; depois o Sifão Arcano). O valor é calculado ao
+/// aplicar, pelas estatísticas de quem aplicou, e fica fixo enquanto o status dura (renovar recalcula). Vezes os acúmulos.
+/// Só vale em quem tem estatísticas de personagem (<c>CharacterStats</c>).
+/// </summary>
+public sealed record StatusStatsDefinition
+{
+    /// <summary>
+    /// Pontos de atributo: chave <c>str</c>, <c>dex</c>, <c>agi</c>, <c>int</c>, <c>vit</c> ou <c>all</c> (os cinco). Arredondados
+    /// para inteiro (metade para longe do zero). Tudo que deriva deles muda junto (vida e Mana máximas, dano, crítico).
+    /// </summary>
+    public IReadOnlyDictionary<string, ScaledValueDefinition> Attributes { get; init; } = new Dictionary<string, ScaledValueDefinition>();
+
+    /// <summary>Mana por segundo a mais (soma na regeneração; não dá Mana na hora).</summary>
+    public ScaledValueDefinition? ManaRegen { get; init; }
+
+    /// <summary>Chaves aceitas em <see cref="Attributes"/>.</summary>
+    public static readonly IReadOnlySet<string> AttributeKeys = new HashSet<string>(StringComparer.Ordinal) { "str", "dex", "agi", "int", "vit", "all" };
 }
 
 public sealed record PeriodicEffectDefinition
@@ -342,6 +377,15 @@ public sealed record StatusDefinition
 
     /// <summary>Vida pelo dano causado (T-407).</summary>
     public LifestealDefinition? Lifesteal { get; init; }
+
+    /// <summary>Atributos e regeneração de Mana somados a quem tem o status, pela INT (etc.) de quem aplicou (T-421).</summary>
+    public StatusStatsDefinition? Stats { get; init; }
+
+    /// <summary>
+    /// Efeitos que rodam quando o status acaba pelo tempo (T-421, Santuário NH3), com a fonte do status e quem o tinha como
+    /// alvo. Não rodam quando o status é tirado, quando quem o tem morre nem em status permanente.
+    /// </summary>
+    public IReadOnlyList<EffectDefinition> OnExpire { get; init; } = [];
 }
 
 public sealed record AreaDefinition

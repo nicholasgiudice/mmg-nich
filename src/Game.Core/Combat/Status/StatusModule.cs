@@ -226,6 +226,7 @@ public sealed class StatusSystem : ISimulationSystem
                 continue;
             }
 
+            var expired = false;
             foreach (var s in fx.Active.ToList())
             {
                 var def = world.Content.Statuses[s.StatusId];
@@ -250,7 +251,18 @@ public sealed class StatusSystem : ISimulationSystem
                 if (world.Tick >= s.ExpiresAtTick && fx.Active.Remove(s))
                 {
                     world.Events.Publish(new StatusExpired(entity.Id, s.StatusId, s.Id));
+                    expired = true;
+                    if (def.OnExpire.Count > 0 && entity.IsAlive)
+                    {
+                        // T-421 (Santuário NH3): só quando acaba pelo tempo, com a fonte do status.
+                        Effects.EffectApplier.Apply(world, def.OnExpire, world.Find(s.Source), [entity], s.StatusId);
+                    }
                 }
+            }
+
+            if (expired)
+            {
+                StatusStats.Sync(world, entity); // T-421: atributos de status que acabaram saem
             }
         }
     }

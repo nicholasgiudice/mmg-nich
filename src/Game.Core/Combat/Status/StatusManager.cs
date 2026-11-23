@@ -70,6 +70,9 @@ public static class StatusManager
     /// <summary>Tem status com a marca <c>knockbackImmune</c> (T-406, Bastião NH5): empurrão de inimigo não o move.</summary>
     public static bool IsKnockbackImmune(World world, Entity e) => Active(world, e).Any(s => Def(world, s).Flags.KnockbackImmune);
 
+    /// <summary>Tem status com a marca <c>undying</c> (T-421, Santuário): dano não o deixa abaixo de 1 de vida.</summary>
+    public static bool IsUndying(World world, Entity e) => Active(world, e).Any(s => Def(world, s).Flags.Undying);
+
     /// <summary>Tem status com a marca <c>untargetable</c> (T-340): ninguém além dele mesmo o alcança com habilidades.</summary>
     public static bool IsUntargetable(World world, Entity e) => Active(world, e).Any(s => Def(world, s).Flags.Untargetable);
 
@@ -192,6 +195,12 @@ public static class StatusManager
             }
         }
 
+        if (def.Stats is { } stats)
+        {
+            StatusStats.Capture(source, target, inst, stats); // T-421: valor pela fonte, fixo até renovar
+            StatusStats.Sync(world, target);
+        }
+
         if (def.Flags.Stunned || def.Flags.Feared)
         {
             CastControl.Cancel(world, target, CastInterruptReason.Disabled, sourceId);
@@ -243,6 +252,12 @@ public static class StatusManager
         effects.Active.RemoveAll(s => s.StatusId == statusId);
         effects.Active.Add(inst);
         world.Events.Publish(new StatusApplied(target.Id, target.Id, statusId, inst.Id, 1, PermanentTick, int.MaxValue));
+        if (def.Stats is { } stats)
+        {
+            StatusStats.Capture(target, target, inst, stats);
+            StatusStats.Sync(world, target);
+        }
+
         return inst;
     }
 
@@ -258,6 +273,7 @@ public static class StatusManager
 
         fx.Active.Remove(s);
         world.Events.Publish(new StatusRemoved(target.Id, s.StatusId, s.Id, target.Id));
+        StatusStats.Sync(world, target);
         return true;
     }
 
@@ -339,6 +355,7 @@ public static class StatusManager
             }
         }
 
+        StatusStats.Sync(world, target);
         return removed;
     }
 
@@ -362,6 +379,7 @@ public static class StatusManager
             }
         }
 
+        StatusStats.Sync(world, target);
         return removed;
     }
 
@@ -377,6 +395,7 @@ public static class StatusManager
 
         fx.Active.Remove(s);
         world.Events.Publish(new StatusRemoved(target.Id, s.StatusId, s.Id, by));
+        StatusStats.Sync(world, target);
         return true;
     }
 }

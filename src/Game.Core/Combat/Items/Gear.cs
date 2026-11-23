@@ -302,6 +302,7 @@ public static class Gear
         }
 
         ItemMath.Recompute(world.Content, cls, s, e.TryGet<CharacterProgress>(), e.TryGet<Equipment>());
+        Status.StatusStats.AfterRecompute(world, e); // T-421: os atributos vindos de status voltam depois do recálculo
         Leveling.RefreshDerived(world, e);
     }
 
