@@ -41,13 +41,50 @@ public enum AuraKind
 
     /// <summary>Linha do protegido até quem o protege (Interceptação: o dano desviado), mais um anel fino nos pés.</summary>
     Link,
+
+    /// <summary>
+    /// T-424: sinais pequenos subindo dos lados do corpo, no formato de <see cref="StatusAura.Glyph"/> (os estados de grupo
+    /// do Sacerdote: cura, atributos, velocidade, Mana).
+    /// </summary>
+    Motes,
+
+    /// <summary>T-424: arcos de vento girando rápido em volta dos pés (velocidade: Graça Veloz).</summary>
+    Wind,
+
+    /// <summary>T-424: cúpula de luz translúcida sobre o corpo (Santuário: não cai abaixo de 1 de vida).</summary>
+    Dome,
+
+    /// <summary>T-424: selo girando no chão, nos pés (marca num inimigo: Selo da Luz).</summary>
+    Sigil,
 }
 
-/// <summary>Sinal de um status no personagem enquanto ele dura (T-412).</summary>
-public sealed record StatusAura(AuraKind Kind, Color Color);
+/// <summary>Formato dos sinais de <see cref="AuraKind.Motes"/> (T-424).</summary>
+public enum AuraGlyph
+{
+    /// <summary>Faísca (losango de quatro pontas).</summary>
+    Spark,
 
-/// <summary>Onda que sai do lançador ao usar uma habilidade em volta dele (T-412: Bastião, Juramento), até o raio.</summary>
-public sealed record CastBurst(Color Color, float Radius);
+    /// <summary>Sinal de mais (cura).</summary>
+    Plus,
+
+    /// <summary>Gota (Mana).</summary>
+    Drop,
+
+    /// <summary>Seta para cima (atributos).</summary>
+    Chevron,
+}
+
+/// <summary>Sinal de um status no personagem enquanto ele dura (T-412; <paramref name="Glyph"/> só em <see cref="AuraKind.Motes"/>, T-424).</summary>
+public sealed record StatusAura(AuraKind Kind, Color Color, AuraGlyph Glyph = AuraGlyph.Spark);
+
+/// <summary>
+/// Onda que sai do lançador ao usar uma habilidade em volta dele (T-412: Bastião, Juramento), até o raio. Com
+/// <paramref name="AtTarget"/> (T-424: Golpe Sagrado da Ira Divina), sai do primeiro alvo, até o raio dos alvos extras.
+/// </summary>
+public sealed record CastBurst(Color Color, float Radius, bool AtTarget = false);
+
+/// <summary>Coluna de luz caindo sobre cada alvo da habilidade (T-424: Julgamento).</summary>
+public sealed record LightPillar(Color Color);
 
 /// <summary>
 /// Efeitos visuais por cima da apresentação (T-054), lidos de <c>assets/art/effects/effects.json</c>: impacto por
@@ -64,6 +101,7 @@ public sealed class EffectCatalog
     private readonly List<(string Prefix, AreaEffect Effect)> _areas = new();
     private readonly List<(string Prefix, StatusAura Aura)> _auras = new();
     private readonly Dictionary<string, CastBurst> _bursts = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, LightPillar> _pillars = new(StringComparer.Ordinal);
 
     public EffectAnimation? Shield { get; private set; }
 
@@ -72,6 +110,9 @@ public sealed class EffectCatalog
 
     /// <summary>Onda em volta do lançador ao usar a habilidade, ou null.</summary>
     public CastBurst? Burst(string abilityId) => _bursts.GetValueOrDefault(abilityId);
+
+    /// <summary>Coluna de luz nos alvos da habilidade (T-424), ou null.</summary>
+    public LightPillar? Pillar(string abilityId) => _pillars.GetValueOrDefault(abilityId);
 
     /// <summary>Impacto de um dano: pela fonte (habilidade/área) se houver, senão pela escola.</summary>
     public EffectAnimation? Impact(string sourceId, DamageSchool school) =>
@@ -162,7 +203,8 @@ public sealed class EffectCatalog
         {
             if (Enum.TryParse<AuraKind>((string?)node!["style"], ignoreCase: true, out var kind))
             {
-                catalog._auras.Add((prefix, new StatusAura(kind, Color.FromHtml((string?)node["color"] ?? "#ffffff"))));
+                var glyph = Enum.TryParse<AuraGlyph>((string?)node["glyph"], ignoreCase: true, out var g) ? g : AuraGlyph.Spark;
+                catalog._auras.Add((prefix, new StatusAura(kind, Color.FromHtml((string?)node["color"] ?? "#ffffff"), glyph)));
             }
             else
             {
@@ -173,7 +215,12 @@ public sealed class EffectCatalog
         foreach (var (ability, node) in root["bursts"]?.AsObject() ?? [])
         {
             catalog._bursts[ability] = new CastBurst(Color.FromHtml((string?)node!["color"] ?? "#ffffff"),
-                (float?)node["radius"] ?? 5f);
+                (float?)node["radius"] ?? 5f, (string?)node["at"] == "target");
+        }
+
+        foreach (var (ability, node) in root["pillars"]?.AsObject() ?? [])
+        {
+            catalog._pillars[ability] = new LightPillar(Color.FromHtml((string?)node!["color"] ?? "#ffffff"));
         }
 
         return catalog;

@@ -53,6 +53,11 @@ public partial class AreaView : Node2D
 
         var r = _state.Radius * Units.PixelsPerUnit;
         var (color, kind) = Style(_state.AreaId, _hostile);
+        if (kind == Kind.Hidden)
+        {
+            return; // T-424: a área de cura da Consagração fica embaixo da de dano, que é a desenhada
+        }
+
         var a = _alpha;
         var fill = new Color(color, 0.28f * a);
         var edge = new Color(color, (_armed ? 0.9f : 0.45f) * a);
@@ -103,6 +108,10 @@ public partial class AreaView : Node2D
                     DrawCircle(tip, 2.5f, new Color(1f, 0.45f, 0.3f, a));
                 }
 
+                break;
+
+            case Kind.Consecrate:
+                DrawConsecration(r, color, a);
                 break;
 
             case Kind.None:
@@ -159,6 +168,35 @@ public partial class AreaView : Node2D
         DrawSetTransform(Vector2.Zero);
     }
 
+    /// <summary>
+    /// T-424, Consagração: chão dourado com um anel de dentro e oito marcas girando devagar entre os anéis, e fiapos de
+    /// luz subindo em pontos fixos (pela semente), cada um com fase própria.
+    /// </summary>
+    private void DrawConsecration(float r, Color color, float a)
+    {
+        var breath = 0.5f + 0.5f * Mathf.Sin((float)_time * 2.2f);
+        DrawCircle(Vector2.Zero, r, new Color(color, (0.16f + 0.06f * breath) * a));
+        DrawCircle(Vector2.Zero, r * 0.72f, new Color(color.Lightened(0.4f), 0.08f * a));
+        DrawArc(Vector2.Zero, r * 0.72f, 0, Mathf.Tau, 40, new Color(color, 0.55f * a), 1.5f);
+        var turn = (float)_time * 0.35f;
+        for (var i = 0; i < 8; i++)
+        {
+            var dir = Vector2.FromAngle(turn + i * Mathf.Tau / 8);
+            DrawLine(dir * r * 0.78f, dir * r * 0.94f, new Color(color.Lightened(0.3f), 0.85f * a), 3f);
+        }
+
+        var rng = new RandomNumberGenerator { Seed = (ulong)_seed };
+        var count = Math.Clamp((int)(r / Units.PixelsPerUnit * 3), 5, 14);
+        for (var i = 0; i < count; i++)
+        {
+            var at = Vector2.FromAngle(rng.Randf() * Mathf.Tau) * Mathf.Sqrt(rng.Randf()) * r * 0.85f;
+            var k = (float)((_time * 0.8 + rng.Randf()) % 1.0);
+            var rise = k * 14f;
+            var mote = new Color(1f, 0.95f, 0.7f, (1f - k) * 0.9f * a);
+            DrawLine(at - new Vector2(0, rise), at - new Vector2(0, rise + 5f), mote, 2f);
+        }
+    }
+
     private void DrawDashedRing(float r, Color color)
     {
         const int dashes = 16;
@@ -176,6 +214,12 @@ public partial class AreaView : Node2D
         Web,
         Trap,
         Spin,
+
+        /// <summary>T-424: chão consagrado (dourado).</summary>
+        Consecrate,
+
+        /// <summary>T-424: não desenha (a cura da Consagração, por baixo da área de dano).</summary>
+        Hidden,
     }
 
     private static (Color, Kind) Style(string areaId, bool hostile) => areaId switch
@@ -184,6 +228,8 @@ public partial class AreaView : Node2D
         "area.sticky_web" => (new Color(0.92f, 0.92f, 0.85f), Kind.Web),
         "area.containment_trap" => (new Color(0.95f, 0.75f, 0.30f), Kind.Trap),
         _ when areaId.StartsWith("area.steel_storm", StringComparison.Ordinal) => (new Color(0.85f, 0.88f, 0.95f), Kind.Spin),
+        _ when areaId.StartsWith("area.consecration_harm", StringComparison.Ordinal) => (new Color(1.0f, 0.80f, 0.32f), Kind.Consecrate),
+        _ when areaId.StartsWith("area.consecration_mend", StringComparison.Ordinal) => (Colors.White, Kind.Hidden),
         _ when areaId.Contains("trap", StringComparison.Ordinal) => (new Color(0.95f, 0.75f, 0.30f), Kind.Trap),
         _ when areaId.Contains("web", StringComparison.Ordinal) => (new Color(0.92f, 0.92f, 0.85f), Kind.Web),
         _ => (hostile ? new Color(0.75f, 0.35f, 0.95f) : new Color(0.35f, 0.65f, 1.0f), Kind.Pool),

@@ -338,6 +338,56 @@
       "x": 136,
       "y": 408,
       "source": "pixellab:d4d95f63-1c76-492e-8829-294e582f75c5#8"
+    },
+    "priest.inspiration": {
+      "x": 102,
+      "y": 442,
+      "source": "pixellab:67f51a2e-19cc-4fdf-8cc4-38be5bee9174#1"
+    },
+    "inquisitor.consecration": {
+      "x": 34,
+      "y": 476,
+      "source": "pixellab:67f51a2e-19cc-4fdf-8cc4-38be5bee9174#4"
+    },
+    "priest.restoring_prayer": {
+      "x": 0,
+      "y": 442,
+      "source": "pixellab:67f51a2e-19cc-4fdf-8cc4-38be5bee9174#9"
+    },
+    "priest.blessing": {
+      "x": 34,
+      "y": 442,
+      "source": "pixellab:0beec438-ce47-4fec-a780-43535a9e92c5#0"
+    },
+    "priest.swift_grace": {
+      "x": 68,
+      "y": 442,
+      "source": "pixellab:0beec438-ce47-4fec-a780-43535a9e92c5#3"
+    },
+    "priest.sanctuary": {
+      "x": 136,
+      "y": 442,
+      "source": "pixellab:0beec438-ce47-4fec-a780-43535a9e92c5#6"
+    },
+    "inquisitor.hammer_of_justice": {
+      "x": 0,
+      "y": 476,
+      "source": "pixellab:0beec438-ce47-4fec-a780-43535a9e92c5#9"
+    },
+    "inquisitor.seal_of_light": {
+      "x": 68,
+      "y": 476,
+      "source": "pixellab:67f51a2e-19cc-4fdf-8cc4-38be5bee9174#14"
+    },
+    "inquisitor.judgment": {
+      "x": 102,
+      "y": 476,
+      "source": "pixellab:0beec438-ce47-4fec-a780-43535a9e92c5#12"
+    },
+    "inquisitor.divine_wrath": {
+      "x": 136,
+      "y": 476,
+      "source": "pixellab:0beec438-ce47-4fec-a780-43535a9e92c5#15"
     }
   }
 }

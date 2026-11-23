@@ -63,6 +63,9 @@ public partial class EntityView : Node2D
     private const float ChipHeight = 10f;
     private const double FlashSeconds = 0.12;
 
+    /// <summary>Ampliação dos sinais de <see cref="AuraKind.Motes"/> (T-424), para lerem de longe.</summary>
+    private const float MoteScale = 1.8f;
+
     private readonly Label _nameLabel = new();
     private float _radiusPx = 0.4f * Units.PixelsPerUnit;
     private Color _color = MonsterColor;
@@ -434,6 +437,7 @@ public partial class EntityView : Node2D
     private void DrawAuras(bool front)
     {
         var t = (float)_time;
+        var motes = 0; // T-424: cada estado com sinais sobe numa fase própria, para não se sobreporem
         foreach (var aura in _auras)
         {
             switch (aura.Kind)
@@ -488,7 +492,128 @@ public partial class EntityView : Node2D
                     }
 
                     break;
+
+                case AuraKind.Motes when front:
+                    // T-424: três sinais pequenos subindo dos lados do corpo, um de cada vez, sumindo no alto.
+                    var phase = motes++ / 9f;
+                    for (var i = 0; i < 3; i++)
+                    {
+                        var k = (t * 0.55f + i / 3f + phase) % 1f;
+                        var side = i % 2 == 0 ? 1f : -1f;
+                        var x = side * (_radiusPx + 7f) + (i == 1 ? 0 : -side * 3f);
+                        var y = _radiusPx * 0.2f - k * HeadPx * 1.15f;
+                        var fade = k < 0.15f ? k / 0.15f : 1f - (k - 0.15f) / 0.85f;
+                        DrawSetTransform(new Godot.Vector2(x, y), 0, new Godot.Vector2(MoteScale, MoteScale));
+                        DrawGlyph(aura.Glyph, Godot.Vector2.Zero, aura.Color, fade);
+                    }
+
+                    DrawSetTransform(Godot.Vector2.Zero, 0, Godot.Vector2.One);
+                    break;
+
+                case AuraKind.Wind when !front:
+                    // T-424: três arcos claros girando rápido em volta dos pés, como vento.
+                    DrawSetTransform(Godot.Vector2.Zero, 0, new Godot.Vector2(1, 0.45f));
+                    for (var i = 0; i < 3; i++)
+                    {
+                        var from = t * 7f + i * Mathf.Tau / 3;
+                        var rw = _radiusPx + 7f + i * 3f;
+                        DrawArc(Godot.Vector2.Zero, rw, from, from + 1.6f, 12, new Color(0.05f, 0.1f, 0.15f, 0.35f), 7f);
+                        DrawArc(Godot.Vector2.Zero, rw, from + 0.3f, from + 1.6f, 12, new Color(aura.Color, 1f), 4f);
+                        DrawArc(Godot.Vector2.Zero, rw, from + 1.0f, from + 1.6f, 6, Colors.White, 2f);
+                    }
+
+                    DrawSetTransform(Godot.Vector2.Zero, 0, Godot.Vector2.One);
+                    break;
+
+                case AuraKind.Wind when front:
+                    // Riscos de velocidade passando pelos lados das pernas.
+                    for (var i = 0; i < 4; i++)
+                    {
+                        var k = (t * 2.2f + i / 4f) % 1f;
+                        var side = i % 2 == 0 ? 1f : -1f;
+                        var y = -HeadPx * (0.15f + 0.12f * i);
+                        var x0 = side * (_radiusPx + 4f + k * 10f);
+                        DrawLine(new Godot.Vector2(x0, y), new Godot.Vector2(x0 + side * 9f, y), new Color(aura.Color, 1f - k), 2.5f);
+                    }
+
+                    break;
+
+                case AuraKind.Sigil when !front:
+                    // T-424: selo dourado girando nos pés (marca), do tamanho do corpo.
+                    var rs = _radiusPx + 6f;
+                    var spin = t * 1.6f;
+                    var glow = 0.75f + 0.25f * Mathf.Sin(t * 5f);
+                    DrawSetTransform(Godot.Vector2.Zero, 0, new Godot.Vector2(1, 0.5f));
+                    DrawCircle(Godot.Vector2.Zero, rs, new Color(aura.Color, 0.16f));
+                    DrawArc(Godot.Vector2.Zero, rs, 0, Mathf.Tau, 40, new Color(aura.Color, glow), 2.5f);
+                    DrawArc(Godot.Vector2.Zero, rs * 0.7f, 0, Mathf.Tau, 32, new Color(aura.Color, 0.6f * glow), 1.5f);
+                    for (var i = 0; i < 4; i++)
+                    {
+                        var dir = Godot.Vector2.FromAngle(spin + i * Mathf.Tau / 4);
+                        DrawLine(dir * rs * 0.7f, dir * rs * 1.18f, new Color(aura.Color, glow), 3f);
+                    }
+
+                    DrawSetTransform(Godot.Vector2.Zero, 0, Godot.Vector2.One);
+                    break;
+
+                case AuraKind.Dome when front:
+                    // T-424: cúpula translúcida sobre o corpo, com a borda clara pulsando.
+                    var pd = 0.5f + 0.5f * Mathf.Sin(t * 3.5f);
+                    var rx = _radiusPx + 9f;
+                    var ry = HeadPx + 8f;
+                    var dome = new List<Godot.Vector2>();
+                    for (var i = 0; i <= 24; i++)
+                    {
+                        var ang = Mathf.Pi + i * Mathf.Pi / 24;
+                        dome.Add(new Godot.Vector2(Mathf.Cos(ang) * rx, _radiusPx * 0.3f + Mathf.Sin(ang) * ry));
+                    }
+
+                    DrawColoredPolygon([.. dome], new Color(aura.Color, 0.14f + 0.06f * pd));
+                    DrawPolyline([.. dome], new Color(aura.Color, 0.7f + 0.3f * pd), 2f);
+                    DrawSetTransform(new Godot.Vector2(0, _radiusPx * 0.3f), 0, new Godot.Vector2(1, 0.4f));
+                    DrawArc(Godot.Vector2.Zero, rx, 0, Mathf.Tau, 32, new Color(aura.Color, 0.6f + 0.3f * pd), 2f);
+                    DrawSetTransform(Godot.Vector2.Zero, 0, Godot.Vector2.One);
+                    break;
             }
+        }
+    }
+
+    /// <summary>Um sinal de <see cref="AuraKind.Motes"/> (T-424): forma cheia com contorno escuro, para ler sobre a grama.</summary>
+    private void DrawGlyph(AuraGlyph glyph, Godot.Vector2 c, Color color, float alpha)
+    {
+        var fill = new Color(color, alpha);
+        var outline = new Color(0.08f, 0.06f, 0.05f, 0.85f * alpha);
+        var light = new Color(color.Lightened(0.55f), alpha);
+        switch (glyph)
+        {
+            case AuraGlyph.Plus:
+                DrawRect(new Rect2(c.X - 1.5f - 1, c.Y - 4.5f - 1, 5f, 11f), outline);
+                DrawRect(new Rect2(c.X - 4.5f - 1, c.Y - 1.5f - 1, 11f, 5f), outline);
+                DrawRect(new Rect2(c.X - 1.5f, c.Y - 4.5f, 3f, 9f), fill);
+                DrawRect(new Rect2(c.X - 4.5f, c.Y - 1.5f, 9f, 3f), fill);
+                break;
+
+            case AuraGlyph.Drop:
+                Godot.Vector2[] drop = [c + new Godot.Vector2(0, -6f), c + new Godot.Vector2(3.6f, 0.5f), c + new Godot.Vector2(-3.6f, 0.5f)];
+                DrawCircle(c + new Godot.Vector2(0, 1.5f), 4.6f, outline);
+                DrawColoredPolygon([c + new Godot.Vector2(0, -7.5f), c + new Godot.Vector2(4.6f, 0.5f), c + new Godot.Vector2(-4.6f, 0.5f)], outline);
+                DrawCircle(c + new Godot.Vector2(0, 1.5f), 3.6f, fill);
+                DrawColoredPolygon(drop, fill);
+                DrawRect(new Rect2(c.X - 2f, c.Y - 0.5f, 1.5f, 2f), light);
+                break;
+
+            case AuraGlyph.Chevron:
+                DrawPolyline([c + new Godot.Vector2(-4.5f, 2.5f), c + new Godot.Vector2(0, -2.5f), c + new Godot.Vector2(4.5f, 2.5f)], outline, 4.5f);
+                DrawPolyline([c + new Godot.Vector2(-4.5f, 2.5f), c + new Godot.Vector2(0, -2.5f), c + new Godot.Vector2(4.5f, 2.5f)], fill, 2.5f);
+                break;
+
+            default:
+                Godot.Vector2[] spark = [c + new Godot.Vector2(0, -5f), c + new Godot.Vector2(1.5f, -1.5f), c + new Godot.Vector2(5f, 0),
+                    c + new Godot.Vector2(1.5f, 1.5f), c + new Godot.Vector2(0, 5f), c + new Godot.Vector2(-1.5f, 1.5f),
+                    c + new Godot.Vector2(-5f, 0), c + new Godot.Vector2(-1.5f, -1.5f)];
+                DrawColoredPolygon(spark, fill);
+                DrawCircle(c, 1.2f, light);
+                break;
         }
     }
 
