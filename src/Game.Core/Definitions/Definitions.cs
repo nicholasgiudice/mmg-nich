@@ -106,6 +106,12 @@ public sealed record AbilityDefinition
     /// <summary>Status permanente de uma passiva (T-403); um NH pode trocar por outro.</summary>
     public string? PassiveStatus { get; init; }
 
+    /// <summary>
+    /// Canalização com pulsos (T-442, Raio Arcano e Feixe do Vazio): os efeitos saem a cada intervalo enquanto quem lança
+    /// canaliza, em vez de uma vez. Null = habilidade comum. Não combina com <c>castTime</c>, <c>hits</c> nem telegráfo.
+    /// </summary>
+    public ChannelDefinition? Channel { get; init; }
+
     public const int MaxRank = 5;
     public const int MaxSignatureRank = 3;
 
@@ -144,6 +150,9 @@ public sealed record AbilityRankDefinition
 
     /// <summary>Status permanente da passiva neste NH (T-403); null herda.</summary>
     public string? PassiveStatus { get; init; }
+
+    /// <summary>Canalização neste NH (T-442); null herda. Declarada, substitui a canalização inteira.</summary>
+    public ChannelDefinition? Channel { get; init; }
 }
 
 /// <summary>

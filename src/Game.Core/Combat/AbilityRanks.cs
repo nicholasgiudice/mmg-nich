@@ -38,6 +38,7 @@ public static class AbilityRanks
                 Hits = r.Hits ?? current.Hits,
                 CooldownCharges = r.CooldownCharges ?? current.CooldownCharges,
                 PassiveStatus = r.PassiveStatus ?? current.PassiveStatus,
+                Channel = r.Channel ?? current.Channel, // T-442
             };
         }
 

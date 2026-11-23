@@ -177,5 +177,9 @@ public static class CombatModules
 
         // ---- slot T-012 (áreas/invocação/fases): efeitos spawn_area/summon + gate de fases ----
         EncounterModule.Register(s);
+
+        // ---- slot T-442 (Arcanista): andar devagar canalizando + efeito current_target ----
+        Channeling.Register(s);
+        CurrentTargetEffects.Register(s);
     }
 }

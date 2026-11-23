@@ -256,6 +256,7 @@ internal static partial class GameDataValidator
         ValidateRankFields(x.Hits, x.CooldownCharges, ctx);
         ValidateRanks(x, ctx, refs);
         ValidatePassive(x, ctx, refs);
+        ValidateChannel(x, ctx, refs); // T-442 (GameDataValidator.Arcanist.cs)
     }
 
     /// <summary>
@@ -510,6 +511,9 @@ internal static partial class GameDataValidator
                     if (su.Count < 1) { c.Error("count", "Deve ser pelo menos 1."); }
                     c.NonNegative("radius", su.Radius);
                     if (su.MaxAlive < 0) { c.Error("maxAlive", "Deve ser maior ou igual a 0 (0 = sem limite)."); }
+                    break;
+                case CurrentTargetEffect ct:
+                    ValidateCurrentTarget(ct, c, refs); // T-442 (GameDataValidator.Arcanist.cs)
                     break;
             }
         }
