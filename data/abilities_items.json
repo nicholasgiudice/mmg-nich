@@ -32,6 +32,22 @@
       "cooldown": 12,
       "targeting": { "type": "self" },
       "effects": [{ "type": "resource", "resource": "mana", "amount": 120 }]
+    },
+    {
+      "id": "item.superior_healing_potion",
+      "name": "Poção de Cura Superior",
+      "tags": ["consumable", "heal"],
+      "cooldown": 12,
+      "targeting": { "type": "self" },
+      "effects": [{ "type": "heal", "base": 300, "scaling": { "vit": 7 } }]
+    },
+    {
+      "id": "item.superior_mana_potion",
+      "name": "Poção de Mana Superior",
+      "tags": ["consumable", "mana"],
+      "cooldown": 12,
+      "targeting": { "type": "self" },
+      "effects": [{ "type": "resource", "resource": "mana", "amount": 300 }]
     }
   ]
 }

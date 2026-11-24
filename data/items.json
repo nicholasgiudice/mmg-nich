@@ -34,6 +34,22 @@
       "price": 45
     },
     {
+      "id": "consumable.superior_healing_potion",
+      "name": "Poção de Cura Superior",
+      "type": "consumable",
+      "stack": 20,
+      "useAbility": "item.superior_healing_potion",
+      "price": 125
+    },
+    {
+      "id": "consumable.superior_mana_potion",
+      "name": "Poção de Mana Superior",
+      "type": "consumable",
+      "stack": 20,
+      "useAbility": "item.superior_mana_potion",
+      "price": 125
+    },
+    {
       "id": "weapon.sword",
       "name": "Espada",
       "slot": "weapon",

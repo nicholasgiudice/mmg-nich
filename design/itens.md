@@ -1,6 +1,6 @@
 # Itens — referência dos dados
 
-Status: **referência gerada a partir dos dados** (2026-11-02; consumíveis, ouro e lojas em 2026-11-09, T-320–T-322). Fonte: `data/items.json` (itens base e `rules.items`), `data/abilities_items.json` (efeito dos consumíveis), `data/classes.json` (equipamento e inventário iniciais), `data/shops.json` (lojas e `rules.shops`) e `data/rules.json` (ouro, em `rules.progression`). Os números saem desses arquivos; quando os dados mudarem, este documento deve ser atualizado.
+Status: **referência gerada a partir dos dados** (2026-11-02; consumíveis, ouro e lojas em 2026-11-09, T-320–T-322; poções Superiores e loja do Forte do Passo em 2026-11-24, T-513). Fonte: `data/items.json` (itens base e `rules.items`), `data/abilities_items.json` (efeito dos consumíveis), `data/classes.json` (equipamento e inventário iniciais), `data/shops.json` (lojas e `rules.shops`) e `data/rules.json` (ouro, em `rules.progression`). Os números saem desses arquivos; quando os dados mudarem, este documento deve ser atualizado.
 
 Monstros e onde cada um aparece em `design/bestiario.md`; habilidades em `design/habilidades.md`.
 
@@ -80,7 +80,10 @@ Itens de inventário (`type: consumable` em `items.json`): empilham, e usar gast
 | Poção de Mana Menor | `consumable.minor_mana_potion` | `item.minor_mana_potion` | +40 de Mana | 12 s | 20 | 15 |
 | Poção de Cura Maior | `consumable.greater_healing_potion` | `item.greater_healing_potion` | cura 180 + 5 × VIT | 12 s | 20 | 45 |
 | Poção de Mana Maior | `consumable.greater_mana_potion` | `item.greater_mana_potion` | +120 de Mana | 12 s | 20 | 45 |
+| Poção de Cura Superior | `consumable.superior_healing_potion` | `item.superior_healing_potion` | cura 300 + 7 × VIT | 12 s | 20 | 125 |
+| Poção de Mana Superior | `consumable.superior_mana_potion` | `item.superior_mana_potion` | +300 de Mana | 12 s | 20 | 125 |
 
+**Por que as Superiores (T-513):** do nível 16 ao 27 a Poção de Cura Maior chega a devolver só 44% da vida do Guerreiro (nível 27) e a de Mana Maior só 31% da Mana do Mago (nível 27, e 44% já no 16). A meta é a melhor poção da loja devolver pelo menos metade da vida e da Mana máximas em todas as classes e níveis da faixa; as Superiores dão 66% e 77% no pior caso. Medidas em `tasks/reports/balance-v0.27.md`. Só o Forte do Passo vende as Superiores.
 Todo personagem novo começa com **5 Poções de Cura Menor** (`startingInventory` em `classes.json`). Nenhum monstro deixa cair consumível: eles vêm do inventário inicial e do Templo.
 
 ## Raridade e afixos
@@ -126,11 +129,11 @@ Todos os 21 itens base (as 7 armas, as 12 armaduras e os 2 acessórios) estão n
 
 | Categoria | Monstros | Chance | Itens por queda | Peso de raridade (comum / incomum / raro / épico) | Garantia |
 |---|---|---|---|---|---|
-| Normal | Rato de Campo, Lobo Cinzento, Salteador da Estrada, Aranha Menor, Guarda Esquelético | 4% | 1 | 70 / 25 / 5 / 0 | — |
-| Elite | Aranha Grande | 25% | 1 | 40 / 45 / 15 / 0 | — |
-| Chefe | Matriarca da Floresta | 100% | 2 | 0 / 60 / 35 / 5 | o primeiro sai pelo menos incomum |
+| Normal | Rato de Campo, Lobo Cinzento, Salteador da Estrada, Aranha Menor, Guarda Esquelético, e os do sul (Afogado, Homem-lagarto, Serpente do Charco, Mineiro Possuído, Lobo da Serra, Morcego das Cavernas) | 4% | 1 | 70 / 25 / 5 / 0 | — |
+| Elite | Aranha Grande, Golem de Pedra | 25% | 1 | 40 / 45 / 15 / 0 | — |
+| Chefe | Matriarca da Floresta, Bruxa do Brejo, Capataz Forjado | 100% | 2 | 0 / 60 / 35 / 5 | o primeiro sai pelo menos incomum |
 
-Item épico só cai da Matriarca. Os itens caem para quem participou da morte e ficam 120 s no chão.
+Item épico só cai dos chefes (Matriarca, Bruxa do Brejo, Capataz Forjado). Quedas e ouro são por categoria, não por monstro: os monstros do sul (T-510 a T-512) usam a tabela da categoria deles, sem entrada própria. Os itens caem para quem participou da morte e ficam 120 s no chão.
 
 **Quem pega o item no chão** (T-394):
 - **Item que cai de monstro:** cada item tem um dono, escolhido entre os participantes da morte (quem recebe a XP). O dono do primeiro item muda de morte para morte (a conta usa o monstro e o momento da morte); os itens seguintes da mesma queda vão para os próximos participantes, em rodízio. Nos primeiros **30 s** (`ownerDuration`), só o dono pega. Depois, qualquer jogador pega, tenha participado da morte ou não.
@@ -149,6 +152,9 @@ Ouro de uma morte = `goldPerMonsterLevel` (**1**) × nível do monstro × catego
 | normal nível L | L (ex.: Lobo nv2 = 2) |
 | elite nível L | 4 × L |
 | Matriarca (chefe nv8) | 160, dividido pelo grupo |
+| Golem de Pedra (elite nv25) | 100 |
+| Bruxa do Brejo (chefe nv20) | 400, dividido pelo grupo |
+| Capataz Forjado (chefe nv27) | 540, dividido pelo grupo |
 
 ### Lojas (`data/shops.json`)
 
@@ -156,8 +162,9 @@ Ouro de uma morte = `goldPerMonsterLevel` (**1**) × nível do monstro × catego
 |---|---|---|
 | Sacerdote (Templo) | `shop.temple` | Poções de Cura e de Mana: Menor (15 cada) e Maior (45 cada) |
 | Ferreiro | `shop.smith` | as 7 armas e as 12 armaduras, **comuns**, nos níveis 2 a 6 |
+| Intendente (Forte do Passo) | `shop.pass_fort` | as 6 poções (Menor, Maior e Superior, de cura e de Mana) e as 7 armas e as 12 armaduras, **comuns**, nos níveis **16** e **21** |
 
-O Mercado, o Armazém, a Estalagem e o Salão de Treinamento ainda não têm loja. Para comprar ou vender é preciso estar a até **3 tiles** do NPC (`interactRange`). Estoque ilimitado; até 100 unidades por pedido.
+O Mercado, o Armazém, a Estalagem e o Salão de Treinamento ainda não têm loja. O Intendente do Forte do Passo (`shop.pass_fort`) está nos dados desde a T-513; o NPC é colocado no mapa pela T-531. Para comprar ou vender é preciso estar a até **3 tiles** do NPC (`interactRange`). Estoque ilimitado; até 100 unidades por pedido.
 
 **Preço de compra:** o `price` da oferta ou, sem ele (o caso de todas hoje), o **valor do item**:
 
@@ -180,6 +187,17 @@ O Mercado, o Armazém, a Estalagem e o Salão de Treinamento ainda não têm loj
 | Poção de Mana não carrega o perfil fraco (vitória ≤ 50%) | Mago fraco: 0% (nv5) e 6% (nv9), igual sem poção |
 
 Ouro por hora nos Campos: grupos nv1 ≈ 92, nv2 ≈ 178, nv3 ≈ 335, nv4 ≈ 362 (limitado pelo renascimento).
+
+### Economia do 16 ao 27 (T-513)
+
+Mesmo modelo de ritmo, com o tempo de luta do simulador (perfil esperado solo) mais 60 s por grupo e **sem** o limite de renascimento (os mapas do sul ainda não têm os pontos de nascimento). Testes: `SouthEconomyDesignTests`.
+
+| Zona | Níveis | Ouro por hora | Peça comum do Forte | Superiores pagas por hora (125) |
+|---|---|---|---|---|
+| Brejo | 16 a 20 | ≈ 1.540 | nv16: 720 ouro = 28 min | ≈ 12 |
+| Serra e Minas | 21 a 27 | ≈ 4.100 | nv21: 945 ouro = 14 min | ≈ 33 |
+
+Metas do sul: a melhor poção do Forte devolve ≥ 50% da vida e da Mana (todas as classes e níveis); uma hora paga de 10 a 40 Superiores (a meta do primeiro mapa, 16–24 por hora, não cabe com um preço só: a Serra rende 2,6× o Brejo); peça comum do Forte custa de 10 a 40 min de caça (o primeiro mapa pedia 20–40). Pendência para o designer e a T-550: a peça do nível 21 sai em 14 min, e o Anel e o Amuleto só caem.
 
 ## Pontos em aberto nos dados
 
