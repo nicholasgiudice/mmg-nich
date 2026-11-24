@@ -156,6 +156,12 @@ public sealed class NetBot : IDisposable
 
     public int ShopRejections { get; private set; }
 
+    /// <summary>Motivo da última recusa da loja (T-531).</summary>
+    public string? LastShopReject { get; private set; }
+
+    /// <summary>Ouro recebido nas vendas (T-531).</summary>
+    public int ShopGoldFromSales { get; private set; }
+
     /// <summary>Chegou perto do NPC da loja.</summary>
     public bool ReachedShop { get; private set; }
 
@@ -174,6 +180,35 @@ public sealed class NetBot : IDisposable
 
     /// <summary>Segundos (relógio do bot) até entrar na área de destino.</summary>
     public double? ReachedRouteAfterSeconds { get; private set; }
+
+    /// <summary>
+    /// T-531: com <see cref="Shop"/>, depois da compra o bot volta por este destino (zona e área, como a rota), ex.: a praça
+    /// da Cidade depois de comprar no Forte.
+    /// </summary>
+    public string? ReturnZone { get; init; }
+
+    public string? ReturnArea { get; init; }
+
+    /// <summary>Entrou na área de volta depois de comprar.</summary>
+    public bool ReachedReturn { get; private set; }
+
+    /// <summary>T-531: pede à ferramenta de teste (<c>--dev-tools</c> no servidor) o nível máximo ao entrar no mundo.</summary>
+    public bool DevMaxLevel { get; init; }
+
+    /// <summary>
+    /// T-531: com rota, numa zona de campo do caminho o bot luta (estratégia) até ganhar este ouro dos monstros e só então
+    /// segue (o personagem de <c>--dev-login</c> nasce sem ouro).
+    /// </summary>
+    public int Earn { get; init; }
+
+    /// <summary>Ouro ganho matando monstros (eventos <c>GoldGained</c>).</summary>
+    public int GoldEarned { get; private set; }
+
+    /// <summary>Zonas na ordem em que o bot entrou nelas (para conferir um percurso).</summary>
+    public IReadOnlyList<string> ZonePath => _zonePath;
+
+    private readonly List<string> _zonePath = [];
+    private bool _devLevelAsked;
 
     /// <summary>
     /// T-350: zona de instância (<c>zone.*</c> do tipo <c>instance</c>) para onde o bot vai: espera o grupo ter
@@ -231,14 +266,35 @@ public sealed class NetBot : IDisposable
             return;
         }
 
+        if (DevMaxLevel && !_devLevelAsked)
+        {
+            _devLevelAsked = true;
+            Send(new DevToolRequest(DevToolAction.ToMaxLevel), ReliableChannel, DeliveryMethod.ReliableOrdered);
+        }
+
         _buffer.Clear();
-        if (Shop && Zone is { } shopZone)
+        if (Shop && Zone is { } shopZone && (RouteZone is null || (ShopBuys == 0 && shopZone.Npcs.Any(n => n.Shop == ShopId))))
         {
             ShopIntent(shopZone, self, latest.Tick);
         }
+        else if (Shop && ShopBuys > 0 && ReturnZone is not null && Zone is { } backZone)
+        {
+            if (!ReachedReturn && RouteIntent(backZone, self, ReturnZone, ReturnArea))
+            {
+                ReachedReturn = true;
+            }
+        }
+        else if (RouteZone is not null && GoldEarned < Earn && Zone is { Kind: ZoneKind.Field })
+        {
+            _controller.Think(new BotContext(_mirror, self, _options, _hazards, (ulong)Welcome.Epoch), _buffer);
+        }
         else if (RouteZone is not null && Zone is { } routeZone)
         {
-            RouteIntent(routeZone, self);
+            if (!ReachedRoute && RouteIntent(routeZone, self, RouteZone, RouteArea))
+            {
+                ReachedRoute = true;
+                ReachedRouteAfterSeconds = _clock.Elapsed.TotalSeconds;
+            }
         }
         else if (Roam && Zone is { } here)
         {
@@ -279,32 +335,35 @@ public sealed class NetBot : IDisposable
         _buffer.Add(to.LengthSquared() < 0.01f ? new StopIntent(self.Id) : new MoveIntent(self.Id, Vector2.Normalize(to)));
     }
 
-    /// <summary>T-343: segue o caminho (A*) até o portão para <see cref="RouteZone"/> ou, já nela, até <see cref="RouteArea"/>.</summary>
-    private void RouteIntent(ZoneDefinition zone, Entity self)
+    /// <summary>
+    /// T-343: segue o caminho (A*) até o portão para <paramref name="toZone"/> ou, já nela, até <paramref name="toArea"/>.
+    /// Sem portão direto, vai ao portão da próxima zona no caminho mais curto pelos portões (T-531: Cidade → Brejo → Forte).
+    /// Devolve verdadeiro quando está dentro da área de destino (e para).
+    /// </summary>
+    private bool RouteIntent(ZoneDefinition zone, Entity self, string toZone, string? toArea)
     {
         var position = self.Get<Transform>().Position;
         RectDefinition? goal;
-        if (zone.Id == RouteZone)
+        if (zone.Id == toZone)
         {
-            goal = _content.Arenas[zone.Arena].Areas.FirstOrDefault(a => a.Name == RouteArea || a.Kind == RouteArea)?.Area;
+            goal = _content.Arenas[zone.Arena].Areas.FirstOrDefault(a => a.Name == toArea || a.Kind == toArea)?.Area;
         }
         else
         {
-            goal = zone.Gates.FirstOrDefault(g => g.To == RouteZone)?.Area;
+            var next = NextZoneTowards(zone.Id, toZone);
+            goal = zone.Gates.FirstOrDefault(g => g.To == next)?.Area;
         }
 
-        if (goal is not { } area || ReachedRoute)
+        if (goal is not { } area)
         {
             _buffer.Add(new StopIntent(self.Id));
-            return;
+            return false;
         }
 
-        if (zone.Id == RouteZone && position.X >= area.X && position.X <= area.X + area.Width && position.Y >= area.Y && position.Y <= area.Y + area.Height)
+        if (zone.Id == toZone && position.X >= area.X && position.X <= area.X + area.Width && position.Y >= area.Y && position.Y <= area.Y + area.Height)
         {
-            ReachedRoute = true;
-            ReachedRouteAfterSeconds = _clock.Elapsed.TotalSeconds;
             _buffer.Add(new StopIntent(self.Id));
-            return;
+            return true;
         }
 
         var target = new Vector2((float)(area.X + (area.Width / 2)), (float)(area.Y + (area.Height / 2)));
@@ -320,6 +379,40 @@ public sealed class NetBot : IDisposable
 
         var to = (_routePath.Count > 0 ? _routePath[0] : target) - position;
         _buffer.Add(to.LengthSquared() < 0.01f ? new StopIntent(self.Id) : new MoveIntent(self.Id, Vector2.Normalize(to)));
+        return false;
+    }
+
+    /// <summary>A zona vizinha de <paramref name="from"/> no caminho mais curto (pelos portões) até <paramref name="to"/>.</summary>
+    private string? NextZoneTowards(string from, string to)
+    {
+        var first = new Dictionary<string, string>(StringComparer.Ordinal);
+        var queue = new Queue<string>();
+        foreach (var g in _content.Zones[from].Gates.Where(g => _content.Zones.ContainsKey(g.To)))
+        {
+            if (first.TryAdd(g.To, g.To))
+            {
+                queue.Enqueue(g.To);
+            }
+        }
+
+        while (queue.Count > 0)
+        {
+            var z = queue.Dequeue();
+            if (z == to)
+            {
+                return first[z];
+            }
+
+            foreach (var g in _content.Zones[z].Gates.Where(g => _content.Zones.ContainsKey(g.To) && g.To != from))
+            {
+                if (first.TryAdd(g.To, first[z]))
+                {
+                    queue.Enqueue(g.To);
+                }
+            }
+        }
+
+        return null;
     }
 
     /// <summary>
@@ -410,6 +503,12 @@ public sealed class NetBot : IDisposable
         {
             _buffer.Add(new SellIntent(self.Id, npc.Id, found.slot, item.Count));
         }
+        else
+        {
+            // T-531: o ouro do espelho pode não ter chegado ainda (ou não vir no snapshot): sem nada para vender, pede a
+            // compra e o servidor decide (falta de ouro volta como recusa).
+            _buffer.Add(new BuyIntent(self.Id, npc.Id, offer.i, 1));
+        }
     }
 
     public void Dispose()
@@ -442,6 +541,7 @@ public sealed class NetBot : IDisposable
                 InstanceId = w.InstanceId;
                 Welcome = w;
                 _zoneVisits[w.EncounterId] = _zoneVisits.GetValueOrDefault(w.EncounterId) + 1;
+                _zonePath.Add(w.EncounterId);
                 _state.Reset(w.Epoch);
                 _mirror = WorldBuilder.CreateDefault((ulong)w.Epoch, EntityFactory.BuildMap(_content.Arenas[w.ArenaId]), _content);
                 _controller = BotStrategies.Create(_strategy);
@@ -485,8 +585,9 @@ public sealed class NetBot : IDisposable
                     switch (ev)
                     {
                         case ItemBought b when b.Entity == me.ControlledEntity: ShopBuys++; break;
-                        case ItemSold x when x.Entity == me.ControlledEntity: ShopSales++; break;
-                        case ShopRejected r when r.Entity == me.ControlledEntity: ShopRejections++; break;
+                        case ItemSold x when x.Entity == me.ControlledEntity: ShopSales++; ShopGoldFromSales += x.Gold; break;
+                        case GoldGained g when g.Entity == me.ControlledEntity: GoldEarned += g.Amount; break;
+                        case ShopRejected r when r.Entity == me.ControlledEntity: ShopRejections++; LastShopReject = r.Reason.ToString(); break;
                     }
                 }
 

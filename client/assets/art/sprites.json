@@ -118,7 +118,9 @@
     "npc.merchant": { "layout": "ulpc", "texture": "characters/bandit.png" },
     "npc.trainer": { "layout": "ulpc", "texture": "characters/archer.png" },
     "npc.storage": { "layout": "ulpc", "texture": "characters/cleric.png", "tint": [0.85, 0.95, 1.1] },
-    "npc.innkeeper": { "layout": "ulpc", "texture": "characters/mage.png" }
+    "npc.innkeeper": { "layout": "ulpc", "texture": "characters/mage.png" },
+    "npc.quartermaster": { "layout": "ulpc", "texture": "characters/guardian.png" },
+    "npc.class_master": { "layout": "ulpc", "texture": "characters/arcanist.png" }
   },
   "variants": {}
 }

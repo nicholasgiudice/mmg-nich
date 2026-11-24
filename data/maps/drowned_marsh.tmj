@@ -1407,6 +1407,18 @@
      "point": true
     },
     {
+     "id": 213,
+     "name": "from_fort",
+     "type": "player_spawn",
+     "x": 3232.0,
+     "y": 4944.0,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "point": true
+    },
+    {
      "id": 3,
      "name": "road_drowned_1",
      "type": "monster_spawn",
@@ -6974,6 +6986,29 @@
        "value": "from_marsh"
       }
      ]
+    },
+    {
+     "id": 214,
+     "name": "south_gate",
+     "type": "transition",
+     "x": 3168,
+     "y": 5056,
+     "width": 128,
+     "height": 64,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "to",
+       "type": "string",
+       "value": "zone.pass_fort"
+      },
+      {
+       "name": "arrival",
+       "type": "string",
+       "value": "from_marsh"
+      }
+     ]
     }
    ],
    "opacity": 1,
@@ -6984,7 +7019,7 @@
   }
  ],
  "nextlayerid": 12,
- "nextobjectid": 213,
+ "nextobjectid": 215,
  "orientation": "orthogonal",
  "renderorder": "right-down",
  "tiledversion": "1.11.2",

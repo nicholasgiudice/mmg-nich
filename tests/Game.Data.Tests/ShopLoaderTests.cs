@@ -84,7 +84,7 @@ public class ShopLoaderTests
             Assert.Equal(ZoneKind.Safe, x.Zone.Kind);
             Assert.True(db.Shops.ContainsKey(x.Npc.Shop!), x.Npc.Shop);
         });
-        Assert.Equal(["shop.smith", "shop.temple"], npcs.Select(x => x.Npc.Shop).OfType<string>().Order(StringComparer.Ordinal));
+        Assert.Equal(["shop.pass_fort", "shop.smith", "shop.temple", "shop.temple"], npcs.Select(x => x.Npc.Shop).OfType<string>().Order(StringComparer.Ordinal));
     }
 
     [Fact]

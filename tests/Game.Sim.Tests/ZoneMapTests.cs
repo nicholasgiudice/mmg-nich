@@ -7,7 +7,7 @@ namespace Game.Sim.Tests;
 /// <summary>
 /// T-055: Cidade e Campos são mapas do Tiled. Do nascimento de cada zona, um personagem chega andando (células livres,
 /// 4 vizinhos) a todos os pontos de surgimento, chegadas e portões; e os portões da zona batem com as transições do mapa.
-/// Desde a T-331 a zona inteira (nascimento, portões, surgimentos) é montada a partir do mapa. T-343: Ruínas da Estrada Antiga. T-352: Cripta do Vigia. T-342: Floresta Baixa. T-530: Brejo dos Afogados.
+/// Desde a T-331 a zona inteira (nascimento, portões, surgimentos) é montada a partir do mapa. T-343: Ruínas da Estrada Antiga. T-352: Cripta do Vigia. T-342: Floresta Baixa. T-530: Brejo dos Afogados. T-531: Forte do Passo.
 /// </summary>
 public class ZoneMapTests
 {
@@ -22,7 +22,7 @@ public class ZoneMapTests
         return GameDataLoader.LoadDirectory(Path.Combine(dir.FullName, "data")).GetDatabaseOrThrow();
     });
 
-    public static TheoryData<string> Zones() => new() { "zone.city", "zone.vigil_fields", "zone.matriarch_lair", "zone.old_road_ruins", "zone.watcher_crypt", "zone.lower_forest", "zone.drowned_marsh" };
+    public static TheoryData<string> Zones() => new() { "zone.city", "zone.vigil_fields", "zone.matriarch_lair", "zone.old_road_ruins", "zone.watcher_crypt", "zone.lower_forest", "zone.drowned_marsh", "zone.pass_fort" };
 
     [Theory]
     [MemberData(nameof(Zones))]
@@ -153,8 +153,7 @@ public class ZoneMapTests
         var cityMap = EntityFactory.BuildMap(Db.Value.Arenas[city.Arena]);
         var south = Assert.Single(city.Gates, g => g.To == Marsh);
         Assert.Equal(cityMap.Height, (int)(south.Area.Y + south.Area.Height));
-        var back = Assert.Single(marsh.Gates);
-        Assert.Equal("zone.city", back.To);
+        var back = Assert.Single(marsh.Gates, g => g.To == "zone.city");
         Assert.Equal(0, back.Area.Y);
 
         Assert.Equal(["Aldeia das Palafitas", "Cabana da Bruxa", "Charco Fundo", "Estrada dos Juncos"],
@@ -205,11 +204,11 @@ public class ZoneMapTests
 
     /// <summary>
     /// T-530: a água funda do Brejo é terreno lento (T-502) que o Homem-lagarto não sente, e a estrada seca liga o portão
-    /// norte à borda sul (para o Forte do Passo, T-531) sem pisar em <c>slow_terrain</c>. Há água funda onde se luta: em
+    /// norte ao portão sul (para o Forte do Passo, T-531) sem pisar em <c>slow_terrain</c>. Há água funda onde se luta: em
     /// todas as subáreas menos a Estrada há grupo a até 8 tiles dela.
     /// </summary>
     [Fact]
-    public void Marsh_dry_road_links_the_north_gate_to_the_south_edge_without_deep_water()
+    public void Marsh_dry_road_links_the_north_gate_to_the_south_gate_without_deep_water()
     {
         var zone = Db.Value.Zones[Marsh];
         var arena = Db.Value.Arenas[zone.Arena];
@@ -223,7 +222,8 @@ public class ZoneMapTests
         });
         bool Wet(int x, int y) => water.Any(a => x >= a.Area.X && x < a.Area.X + a.Area.Width && y >= a.Area.Y && y < a.Area.Y + a.Area.Height);
 
-        var gate = Assert.Single(zone.Gates).Area;
+        var gate = Assert.Single(zone.Gates, g => g.To == "zone.city").Area;
+        var fortGate = Assert.Single(zone.Gates, g => g.To == Fort).Area;
         var queue = new Queue<(int X, int Y)>();
         var seen = new HashSet<(int, int)>();
         for (var x = (int)gate.X; x < gate.X + gate.Width; x++)
@@ -241,7 +241,7 @@ public class ZoneMapTests
         while (queue.Count > 0 && !south)
         {
             var (x, y) = queue.Dequeue();
-            south = y == map.Height - 1;
+            south = fortGate.Contains(x, y);
             foreach (var (nx, ny) in new[] { (x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1) })
             {
                 if (nx >= 0 && ny >= 0 && nx < map.Width && ny < map.Height && !map.IsBlocked(nx, ny) && !Wet(nx, ny) && seen.Add((nx, ny)))
@@ -251,7 +251,7 @@ public class ZoneMapTests
             }
         }
 
-        Assert.True(south, "a estrada seca não chega à borda sul");
+        Assert.True(south, "a estrada seca não chega ao portão sul");
         foreach (var area in new[] { "Aldeia das Palafitas", "Charco Fundo", "Cabana da Bruxa" })
         {
             Assert.Contains(zone.MonsterSpawns, s => s.Area == area && water.Any(a =>
@@ -264,6 +264,77 @@ public class ZoneMapTests
     public void Marsh_has_no_sealed_pockets_or_dead_end_slits() => AssertNoPocketsOrSlits(Marsh);
 
     private const string Marsh = "zone.drowned_marsh";
+
+    private const string Fort = "zone.pass_fort";
+
+    /// <summary>
+    /// T-531: o Forte do Passo é uma zona segura (descanso igual ao da Cidade, sem monstros) ao sul do Brejo: o portão sul
+    /// do Brejo, na borda de baixo, leva ao portão norte do Forte, na borda de cima, e volta. É o único portão aberto: o
+    /// leste (Serra Partida, T-532) e o sul (Planalto, fase 6) ficam fechados, com o muro inteiro. Zona segura não leva
+    /// <c>respawn</c>: quem morre na Serra e nas Minas renasce no nascimento dela (T-501).
+    /// </summary>
+    [Fact]
+    public void Fort_is_a_safe_zone_south_of_the_marsh_without_monsters_and_with_only_the_north_gate_open()
+    {
+        var fort = Db.Value.Zones[Fort];
+        Assert.Equal(ZoneKind.Safe, fort.Kind);
+        Assert.Equal(Db.Value.Zones["zone.city"].RestPerSecond, fort.RestPerSecond);
+        Assert.True(fort.RestPerSecond > 0);
+        Assert.Null(fort.Respawn);
+        Assert.Empty(fort.MonsterSpawns);
+
+        var marsh = Db.Value.Zones[Marsh];
+        var marshMap = EntityFactory.BuildMap(Db.Value.Arenas[marsh.Arena]);
+        var south = Assert.Single(marsh.Gates, g => g.To == Fort);
+        Assert.Equal(marshMap.Height, (int)(south.Area.Y + south.Area.Height));
+        var north = Assert.Single(fort.Gates);
+        Assert.Equal(Marsh, north.To);
+        Assert.Equal(0, north.Area.Y);
+
+        var map = EntityFactory.BuildMap(Db.Value.Arenas[fort.Arena]);
+        Assert.Equal((60, 45), (map.Width, map.Height));
+        for (var y = 0; y < map.Height; y++)
+        {
+            Assert.True(map.IsBlocked(map.Width - 1, y), $"muro leste aberto em y = {y}");
+            Assert.True(map.IsBlocked(0, y), $"muro oeste aberto em y = {y}");
+        }
+
+        for (var x = 0; x < map.Width; x++)
+        {
+            Assert.True(map.IsBlocked(x, map.Height - 1), $"muro sul aberto em x = {x}");
+            Assert.True(map.IsBlocked(x, 0) || north.Area.Contains(x + 0.5, 0.5), $"muro norte aberto fora do portão em x = {x}");
+        }
+    }
+
+    /// <summary>
+    /// T-531: os NPCs do Forte: o Intendente com a loja do Forte (T-513), o Sacerdote com o Templo (poções), o mestre das
+    /// classes (abre a escolha da segunda classe no cliente, T-541) e o estalajadeiro, só decorativo. Todos alcançáveis a pé
+    /// do nascimento da zona.
+    /// </summary>
+    [Fact]
+    public void Fort_has_the_quartermaster_priest_class_master_and_innkeeper_reachable_on_foot()
+    {
+        var fort = Db.Value.Zones[Fort];
+        var expected = new (string Npc, string? Shop)[]
+        {
+            ("npc.class_master", null), ("npc.innkeeper", null), ("npc.priest", "shop.temple"), ("npc.quartermaster", "shop.pass_fort"),
+        };
+        Assert.Equal(expected, fort.Npcs.Select(n => (n.Npc, n.Shop)).OrderBy(n => n.Npc, StringComparer.Ordinal));
+        Assert.Equal("Intendente", Assert.Single(fort.Npcs, n => n.Npc == "npc.quartermaster").Properties["name"]);
+
+        var reached = Reached(fort);
+        var map = EntityFactory.BuildMap(Db.Value.Arenas[fort.Arena]);
+        foreach (var npc in fort.Npcs)
+        {
+            var cell = ((int)npc.Position.X, (int)npc.Position.Y);
+            Assert.False(map.IsBlocked(cell.Item1, cell.Item2), $"{npc.Npc} numa célula bloqueada");
+            Assert.True(reached.Contains(cell), $"{npc.Npc} inalcançável");
+        }
+    }
+
+    /// <summary>T-531: no Forte, toda célula livre é alcançável a pé e não há fresta sem saída.</summary>
+    [Fact]
+    public void Fort_has_no_sealed_pockets_or_dead_end_slits() => AssertNoPocketsOrSlits(Fort);
 
     private static double Distance(PositionDefinition a, PositionDefinition b) => Math.Sqrt(((a.X - b.X) * (a.X - b.X)) + ((a.Y - b.Y) * (a.Y - b.Y)));
 
