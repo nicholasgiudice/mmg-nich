@@ -75,7 +75,7 @@ public class ShopLoaderTests
     public void Real_shops_point_to_existing_items_and_every_npc_with_shop_is_in_a_safe_zone()
     {
         var db = Real();
-        Assert.Equal(["shop.smith", "shop.temple"], db.Shops.Keys.Order(StringComparer.Ordinal));
+        Assert.Equal(["shop.pass_fort", "shop.smith", "shop.temple"], db.Shops.Keys.Order(StringComparer.Ordinal));
         Assert.All(db.Shops.Values.SelectMany(s => s.Offers), o => Assert.True(db.Items.ContainsKey(o.Item), o.Item));
 
         var npcs = db.Zones.Values.SelectMany(z => z.Npcs.Select(n => (Zone: z, Npc: n))).ToList();

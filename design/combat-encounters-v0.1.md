@@ -651,6 +651,228 @@ Nenhuma arena nova: os grupos rodam na arena aberta do protótipo e a Bruxa no n
 
 ---
 
+## Serra Partida — Mineiro Possuído, Lobo da Montanha, Morcego das Cavernas e o Golem de Pedra (T-511)
+
+Campo do nível 21 ao 25 (`design/mapas-16-40-v0.1.md` §3.3), a **primeira área de segunda classe**. Corredores de rocha e trilhas em encosta. O truque é o **desfiladeiro**: os monstros vêm **em fila** (o Atirador de Elite fura a fila, o Berserker a recebe de frente), e os grupos ficam maiores — do 21 em diante parte deles tem de 5 a 10 monstros, o que pede dano em área (Piromante, Berserker, a Praga do Caçador; §4 do esboço). A **Rocha Rolante** do Golem é o telegráfo grande da área: uma linha que atravessa o desfiladeiro.
+
+Números nos dados no **nível 1** (`data/monsters.json`, `data/abilities_monsters.json`); entre parênteses, no nível do monstro (escala da T-206; a elite cresce como o monstro normal), antes da defesa do jogador. Os humanoides e os animais têm raio de 0,3 a 0,4; o Golem, 0,7.
+
+**Decidido:** as propostas da tarefa foram mantidas (o designer estava ausente; valem como decididas). Nenhuma mecânica nova de Core: telegráfo em linha, cone com atordoamento, `ai.pack`, `ai.swarm` e resistências por escola já existiam. As trocas de números estão marcadas abaixo e no `tasks/reports/balance-v0.25.md`.
+
+### Mineiro Possuído (`monster.possessed_miner`, nível 21)
+
+**Papel:** os mineiros que fugiram das Minas Fundas e voltaram possuídos. Corpo a corpo em grupos de 3 a 5 (e de 6 a 10 no Acampamento, T-532). No desfiladeiro, chegam em fila. Ensina a **ler o aviso no meio do grupo**: a Picaretada atordoa.
+
+| | |
+|---|---|
+| Vida | 320 (2.880) |
+| Velocidade / raio | 3,2 / 0,4 |
+| Tags | `humanoid` |
+| IA | `ai.brute` (fica parado até o próprio aviso resolver) |
+
+Habilidades:
+
+- **Picaretada** (`possessed_miner.pickaxe_blow`): cone de 70° e 1,8 à frente, com **telegráfo de 0,8 s**. Físico 30 (132) e **Atordoado** (`status.stunned`) por **1 s**. Recarga de 7 s. É controle: vale o retorno decrescente (15 s, 100% → 50% → 25% → imune), então quatro mineiros não deixam o jogador preso.
+- **Golpe de Picareta** (`possessed_miner.pick_strike`): corpo a corpo, alcance 1,4, a cada 1,8 s. Físico 14 (62).
+
+Resposta de cada classe:
+
+- **Guardião:** segura a fila na frente, sai do cone; o Bastião aguenta o atordoamento que não der para evitar.
+- **Berserker:** Fúria e Golpe Circular quando a fila encosta; o atordoamento é o risco de entrar no meio.
+- **Atirador de Elite:** o Tiro Certeiro atravessa a fila inteira no desfiladeiro; o mineiro é mais lento que ele.
+- **Caçador:** Praga e Nuvem Tóxica no grupo junto, recuando.
+- **Piromante / Arcanista:** o grupo lento é o alvo ideal de área; o Arcanista mata um por vez de longe.
+- **Sacerdote / Inquisidor:** trocam golpes e se curam; saem do cone quando o aviso aparece.
+
+### Lobo da Montanha (`monster.mountain_wolf`, nível 22)
+
+**Papel:** o Lobo Cinzento da serra, maior e mais forte. Matilha de 4 a 5 (`ai.pack`): os lobos escolhem o mesmo alvo e uivam juntos (Fúria da Matilha). Pode usar o sprite do Lobo Cinzento com outra cor (`tint`, T-521/T-540).
+
+| | |
+|---|---|
+| Vida | 260 (2.444) |
+| Velocidade / raio | 4,2 (abaixo dos 4,5 da classe mais lenta, como todo monstro normal; com a Fúria, 4,8, alcança quem corre) / 0,4 |
+| Tags | `beast` |
+| IA | `ai.pack` (foco de 4 s, janela de 2 s para uivar junto) |
+
+Habilidades:
+
+- **Mordida do Lobo da Montanha** (`mountain_wolf.bite`): corpo a corpo, alcance 1,3, a cada 1,4 s. Físico 12 (55).
+- **Uivo da Montanha** (`mountain_wolf.pack_fury`): a mesma **Fúria da Matilha** do Lobo Cinzento (`status.pack_aggression`: +30% de dano e +15% de velocidade por 8 s), recarga de 20 s.
+
+**Decidido (troca de números):** a matilha de 5 com mordida 14 matava o Clérigo (0% nas duas segundas classes). O encontro de teste ficou com 4 lobos e a mordida com 12; a matilha de 5 fica para o mapa, com o grupo de jogadores.
+
+Resposta de cada classe: como contra os Três Lobos, mais longa. O Guardião provoca e segura; o Berserker usa o Golpe Circular nos quatro; Arqueiro e Mago recuam (fora da Fúria, todos correm mais que eles); o Clérigo se cura enquanto a Fúria dura.
+
+### Morcego das Cavernas (`monster.cave_bat`, nível 22)
+
+**Papel:** bando de 5 a 6 (`ai.swarm`), pouca vida, rápido. É o **alvo de dano em área**: sozinho não mata, mas seis juntos mordendo cansam quem só tem golpe de alvo único.
+
+| | |
+|---|---|
+| Vida | 90 (846) |
+| Velocidade / raio | 4,4 (logo abaixo dos 4,5 da classe mais lenta) / 0,3 |
+| Tags | `beast` |
+| IA | `ai.swarm` (anel de 1,2 em volta do alvo; 25% de chance de trocar de alvo) |
+
+Habilidades:
+
+- **Mordida do Morcego** (`cave_bat.bite`): corpo a corpo, alcance 1,1, a cada 1 s. Físico 5 (23).
+
+**Decidido (troca de números):** a mordida baixou de 6 para 5, para o Acampamento (8 monstros) não matar o Berserker que só tem a base do 20 (§ Grupos típicos).
+
+Resposta de cada classe: Golpe Circular, Explosão Elemental, Meteoro, Flecha Dispersa e Nuvem Tóxica limpam o bando; o Clérigo, sem área, mata um por vez e se cura (é a luta mais longa dele na Serra).
+
+### Golem de Pedra (`monster.stone_golem`, nível 25, elite)
+
+**Papel:** a elite da Boca das Minas (renasce em 3 min, no mapa da T-532). Lento, **resiste a físico** e é **fraco a arcano**: o Arcanista é quem mais rende contra ele; o Guerreiro e o Arqueiro, de dano físico, levam a luta mais longa. Dá para vencer sozinho, e em dupla é seguro.
+
+| | |
+|---|---|
+| Vida | 1.200 (12.720) |
+| Velocidade / raio | 2,2 (o mais lento da Serra) / 0,7 |
+| Tags | `construct` |
+| Resistências | **físico 30%** (recebe 70%), **arcano −30%** (recebe 130%) |
+| IA | `ai.brute` (a Rocha Rolante é a primeira da lista: sai sempre que está pronta, de perto ou de longe; fica parado até o aviso resolver) |
+| Controle | como toda elite, sofre 50% da duração |
+
+Habilidades (na ordem de prioridade da IA):
+
+- **Rocha Rolante** (`stone_golem.rolling_boulder`): **linha de 14 × 1,6 com telegráfo de 1,5 s**. Físico 80 (406) em **todo jogador na linha**; nenhum monstro (o telegráfo atinge só os inimigos do Golem). Recarga de 10 s. Pune quem atira de longe parado no corredor e o grupo enfileirado atrás do tanque: no desfiladeiro, sair da linha é ir para a parede.
+- **Pisão de Pedra** (`stone_golem.ground_slam`): círculo de raio 2,6 em volta dele, **telegráfo de 1,2 s**. Físico 45 (229). Recarga de 9 s. Pune quem fica colado.
+- **Punho de Pedra** (`stone_golem.stone_fist`): corpo a corpo, arco de 100°, alcance 2, a cada 2 s. Físico 20 (102).
+
+**Decidido (troca de números):** a primeira versão (vida 1.800, Punho 34, Pisão 60, Rocha 90) matava o Guerreiro sozinho (0%). Com vida 1.500 e golpes menores, Guardião e Berserker venciam 30–40%. Ficou com vida 1.200: o Guerreiro leva 90–125 s e vence sempre, e a dupla ~30–50 s.
+
+Resposta de cada classe:
+
+- **Guardião / Berserker:** lutam colados, saem do Pisão e da linha da Rocha (que ele solta também de perto). A resistência a físico torna a luta longa: é a luta de poção do Guerreiro solo.
+- **Atirador / Caçador:** o Golem não os alcança; a Rocha é o único perigo: sair da linha logo que o aviso aparece.
+- **Piromante / Arcanista:** como o Arqueiro, e o arcano rende 130%.
+- **Sacerdote / Inquisidor:** trocam golpes e se curam; a cura cobre o Punho, não a Rocha somada ao Pisão.
+- **Em dupla:** o tanque vira o Golem para longe do outro, para a Rocha não pegar os dois.
+
+### Grupos típicos e encontros de teste (`data/encounters.json`)
+
+| Encontro | Composição | Nível do grupo | Arena |
+|---|---|---|---|
+| `encounter.miner_gang` (Mineiros no Desfiladeiro) | 4 Mineiros nv21, **em fila** | 21 | `map.fields` |
+| `encounter.mountain_wolves` (Matilha da Montanha) | 4 Lobos da Montanha nv22 | 22 | `map.fields` |
+| `encounter.cave_bats` (Bando de Morcegos) | 6 Morcegos nv22 | 22 | `map.fields` |
+| `encounter.miner_camp` (Acampamento dos Mineiros) | **8**: 4 Mineiros + 4 Morcegos, nv21 | 21 | `map.fields` |
+| `encounter.stone_golem` (Golem de Pedra na Boca das Minas) | Golem nv25; Guerreiro + Clérigo | 25 | `map.fields` |
+
+Nenhuma arena nova: os desfiladeiros ficam no mapa da Serra (T-532). Os Mineiros do teste nascem em fila na frente do jogador, como no corredor. Os testes de design (`RidgeDesignTests`) trocam o jogador por cada classe base e dão a ela cada uma das **8 segundas classes**, no nível do grupo, com a estratégia e as opções de bot da T-408/T-423/T-433/T-443. Dois perfis (relatório §1): o **esperado com segunda classe** (`design/progression-v0.1.md` §8) e o **"desde o 21"** (base parada no 20, todo ponto do 21 em diante na segunda classe). Metas e resultados em `tasks/reports/balance-v0.25.md`:
+
+- solo, nas 8 segundas classes, contra Mineiros, Matilha, Morcegos e o Acampamento: vitória ≥ 85%. **Exceção:** o Sacerdote e o Inquisidor não têm dano em área e não vencem o Acampamento sozinhos (0–1%): para eles o grupo de 8 pede grupo (relatório §4);
+- grupo grande (o Acampamento, 8 monstros): o tempo do Piromante e do Berserker contra o do Arcanista é **só medido**;
+- Golem: solo ≥ 60% em cada segunda classe; em dupla (Guardião + Sacerdote, Berserker + Atirador, Piromante + Inquisidor) ≥ 90%.
+
+### Falhas de design
+
+- quatro Picaretadas em sequência deixarem o jogador atordoado o tempo todo (o retorno decrescente corta a terceira pela metade e a quarta é imune);
+- a Rocha Rolante atingir monstros (não atinge) ou não ter para onde fugir: o desfiladeiro do mapa (T-532) precisa de 3 a 5 tiles de largura, mais que os 1,6 da linha;
+- o Golem ser imune ao Guerreiro (30% de resistência; a luta é longa, não impossível);
+- o grupo grande ser obrigatório para seguir pela Serra (o mapa põe o Acampamento fora da trilha principal; os grupos da trilha são de 3 a 6);
+- o Lobo da Montanha parecer o Lobo Cinzento sem diferença: cor, tamanho e o nível no nome (T-540).
+
+---
+
+## Minas Fundas — O Capataz Forjado (T-512)
+
+A masmorra instanciada do nível 24 ao 27, para 4 pessoas (`design/mapas-16-40-v0.1.md` §3.4), e a **primeira com papel de grupo de verdade**: o chefe bate forte em quem está à frente dele (pede tanque, o Guardião) e queima a sala inteira (pede cura em grupo, o Sacerdote). Corredores escuros e salas com grupos grandes, que pedem dano em área. É o "conteúdo que se repete bem" da faixa 21–27.
+
+**Decidido:** a proposta da tarefa foi mantida (o designer estava ausente; vale como decidida): três fases, Martelo, Fornalha e Chamar a Equipe. Três acréscimos, explicados abaixo e no `tasks/reports/balance-v0.26.md`: o chefe **bate em quem está à frente** antes da tabela de ameaça, a **Escória Ardente** em quem foge dele e a **Fornalha Transbordando** (o limite de tempo da luta).
+
+### As salas
+
+Os monstros da Serra (T-511), mais fortes, do nível 24 ao 26. Nenhum monstro novo.
+
+| Sala | Composição | Nível | O que pede |
+|---|---|---|---|
+| Galeria de Entrada | 4 Mineiros Possuídos, em fila no corredor | 24 | o tanque segura a fila; o Atirador fura |
+| Poço dos Morcegos | 6 Morcegos das Cavernas | 24–25 | dano em área (Piromante, Golpe Circular, Nuvem Tóxica) |
+| Alojamento | 5 Mineiros + 3 Morcegos (o grupo grande) | 25 | área e cura; o Clérigo sozinho não segura |
+| Trilha dos Lobos (rota opcional) | 4 Lobos da Montanha + o **Golem de Pedra** (elite) | 26 | o tanque vira o Golem para longe do grupo (a Rocha Rolante) |
+| Fundição | o Capataz Forjado | 27 | os papéis |
+
+Os carrinhos de mina servem de cobertura contra a Escória Ardente e a Rocha Rolante. O mapa e o caminho são da T-533; estes grupos são a proposta para ela, ainda não medidos como sala (o Golem e os grupos da Serra foram medidos na T-511, nos níveis 21–25).
+
+### Capataz Forjado (`monster.forged_overseer`, nível 27, chefe)
+
+Golem de ferro que mandava nos mineiros. A fornalha do peito é o relógio da luta.
+
+Números nos dados no **nível 1**; entre parênteses, no nível 27 (chefe: vida × (1 + 0,3 × 26) = × 8,8 e potência × (1 + 0,38 × 26) = × 10,88; os Mineiros invocados são normais no nível 27: vida × 11,4 e potência × 5,42), antes da defesa do jogador.
+
+| | |
+|---|---|
+| Vida | 70.000 (616.000) |
+| Velocidade / raio | 3,0 (3,9 na fase 3) / 0,9 (golem grande; o corpo é da T-521) |
+| Tags | `construct`, `boss` |
+| IA | `ai.boss`, com o parâmetro novo `meleeTargetRange` 3,5 e o papel `ai.ranged` (abaixo) |
+| Controle | como todo chefe, sofre só 25% da duração de controles |
+
+**Bate em quem está à frente (mecânica nova, `meleeTargetRange`).** Entre os jogadores da tabela de ameaça a até 3,5 tiles dele, o Capataz escolhe o de maior ameaça; sem ninguém tão perto, segue a tabela. A Provocação continua mandando antes disso. **Por quê:** no nível 27 o dano do Piromante gera muito mais ameaça que o do Guardião (o Golpe de Escudo dá 3×; a Provocação, 40 e 3 s); pela tabela, o Capataz passava a luta atrás do Mago, que corre mais que ele, e ninguém levava os golpes. Agora o tanque segura o chefe ficando na frente dele, e o resto do grupo fica a mais de 3,5 tiles.
+
+Golpes em todas as fases:
+
+- **Punho de Ferro** (`forged_overseer.iron_fist`): corpo a corpo, arco de 100°, alcance 2,4, a cada 1,6 s. Físico 62 (675). O dano contínuo no tanque: ~360 por golpe no Guardião de nível 27 com raros (17% da vida).
+- **Escória Ardente** (`forged_overseer.slag_throw`, `ai.ranged`): alvo único, alcance 14, a cada 2,5 s. Fogo 25 (272). **Só sai com o alvo a 3 tiles ou mais** (mecânica nova no `ai.boss`: o papel `ai.ranged`, como no `ai.brute`). Pune quem foge do chefe: se o tanque cai e o Capataz vai atrás do Mago, o Mago não o leva pela sala de graça.
+
+### Fase 1 — Martelo (100% a 60%)
+
+- **Martelo** (`forged_overseer.hammer`): **cone** de 100° e 3,5 tiles à frente dele, **telegráfo de 1 s**, no alvo dele. Físico 90 (979). Recarga de 9 s. **Arqueiro e Mago caem em 2 golpes** (~620 e ~720 com raros, de 1.174 e 1.102 de vida); o Guardião perde ~25% da vida (521 de 2.084). Ele fica parado até o golpe cair: quem lê o cone sai pelos lados ou para trás e volta.
+- Punho de Ferro e Escória Ardente.
+
+### Fase 2 — Fornalha (60% a 30%)
+
+- **Sopro da Fornalha** (`forged_overseer.furnace_blast`): círculo de raio 30 em volta dele, **sem telegráfo**, a cada 5 s. Fogo 22 (239) **em todos na sala**, sem como sair. O ritmo é o aviso (o cliente mostra a fornalha acendendo, T-540). Pede cura em grupo: ~180–200 em cada um a cada 5 s.
+- Ao entrar: **Fornalha Esquentando** (`status.overseer_heat`) por **190 s**. Quando acaba, entra a **Fornalha Transbordando** (`status.overseer_meltdown`, até o fim): **dano × 4**. É o limite de tempo da luta (abaixo). Usa o `onExpire` de estado que já existia (T-421).
+- Martelo, Punho de Ferro e Escória Ardente continuam.
+
+### Fase 3 — Chamar a Equipe (30% a 0%)
+
+- Ao entrar: invoca **2 Mineiros Possuídos** (no nível dele: vida 3.648; Picaretada 163 e atordoa 1 s) e ganha a **Fornalha Acesa** (`status.overseer_overdrive`, até o fim): **velocidade × 1,3 e dano × 1,15**.
+- **Chamar a Equipe** (`forged_overseer.call_crew`): **conjuração de 2 s, interrompível** (o Golpe Pesado). Invoca mais 1 Mineiro, no máximo 3 vivos. Recarga de 20 s.
+- **Martelo Acelerado** (`forged_overseer.hammer_fast`): o mesmo Martelo, recarga de 6 s.
+- Sopro da Fornalha, Punho de Ferro e Escória Ardente continuam.
+
+**A Fornalha Transbordando (o tempo da luta).** O contador começa na fase 2, que só existe em combate (o chefe entra na fase 1 assim que nasce, antes de o grupo chegar). Um grupo com tanque e Sacerdote chega à fase 2 em ~110 s e termina em ~275 s: sobram ~25 s. Sem o Guardião, o Capataz se move mais (vai atrás de quem está mais perto) e o fogo do Piromante, que fica no chão, erra: o Mago rende ~600 de dano por segundo em vez de ~990. Sem o Sacerdote, a Bênção e a Inspiração somem, e o Atirador e o Mago rendem 10–20% menos. Sem os dois, a luta levaria ~360 s e a Fornalha transborda antes do fim.
+
+**Decidido (troca em relação à proposta):** a primeira versão, sem limite, só separava os grupos por um degrau de dano: poucos pontos a mais no Punho levavam os dois grupos de ~90% a ~10%. Os dois aguentavam quase o mesmo dano, porque o Inquisidor cura tanto quanto o Sacerdote (Selo da Luz, Consagração) e a Sede de Sangue do Berserker compensa a defesa do Guardião. A diferença estável entre eles era o tempo: ~275 s contra ~360 s, com pouca variação.
+
+### Resposta de cada classe
+
+- **Guardião:** fica na frente do Capataz e o mantém parado, longe do grupo; sai do cone do Martelo no telegráfo e volta. O Bastião nos pulsos da Fornalha (−25% em quem está perto dele), a Interceptação no Sacerdote, o Inabalável contra a Picaretada dos Mineiros na fase 3. Interrompe o Chamar a Equipe com o Golpe Pesado.
+- **Berserker (no lugar do tanque):** segura o chefe na frente, mas leva 1,7× o dano do Punho que o Guardião leva, e o chefe anda mais.
+- **Atirador / Caçador:** a mais de 3,5 tiles, pelos lados; matam os Mineiros da fase 3.
+- **Piromante / Arcanista:** o Chão em Chamas e o Meteoro rendem com o chefe parado; Explosão nos Mineiros.
+- **Sacerdote:** a Oração Restauradora nos pulsos da Fornalha; a Bênção e a Inspiração (mais dano e Mana do grupo) encurtam a luta; a Cura Direta no tanque.
+- **Inquisidor (no lugar da cura):** cura quase o mesmo (Selo da Luz, Consagração), mas sem os reforços do grupo a luta fica lenta.
+
+### Encontro de teste (`data/encounters.json`)
+
+| Encontro | Composição | Arena | Jogadores |
+|---|---|---|---|
+| `encounter.forged_overseer` (O Capataz Forjado) | Capataz nv27 | `map.watcher_hall` (o salão aberto de 40 × 28 do Vigia, provisório até a Fundição da T-533) | Guerreiro + Arqueiro + Mago + Clérigo, limite de 480 s |
+
+Os testes de design (`OverseerDesignTests`) usam o perfil de grupo do nível 27 com segunda classe (`SecondClassDesignTests.WithSecondClass`) e **raros**, como o Vigia; cada classe com a estratégia solo dela e `+dodge`, as opções de grupo das segundas classes e o Clérigo seguindo o ferido. Metas e resultados em `tasks/reports/balance-v0.26.md`:
+
+- **Guardião + Atirador + Piromante + Sacerdote:** vitória ≥ 75%, em 3–6 min (97%, 273 s);
+- **sem Guardião e sem Sacerdote** (Berserker + Atirador + Piromante + Inquisidor): vitória ≤ 40% (7%);
+- só medidos: só o Guardião (com Inquisidor) 92% em 305 s; só o Sacerdote (com Berserker) 100% em 283 s; Guardião + Caçador + Arcanista + Sacerdote 100% em 275 s.
+
+### Falhas de design
+
+- o chefe correr atrás de quem atira de longe a luta toda (por isso bate em quem está à frente);
+- fugir do chefe pela sala sem custo (a Escória Ardente);
+- vencer sem ninguém sair de um telegráfo (o Martelo: os bots quase sempre saem; o Arqueiro e o Mago que não saem caem em 2);
+- a Fornalha matar quem não errou nada (~200 a cada 5 s; o que pesa é o tempo, não um pulso);
+- a Fornalha Transbordando chegar para um grupo com os papéis certos (sobram ~25 s; com o Caçador e o Arcanista, também);
+- invocações sem fim (no máximo 3 Mineiros vivos, só na fase 3).
+
+---
+
 ## Matriz de decisões
 
 | Encontro | Posicionamento | Prioridade | Gestão de recurso | Controle | Cura/suporte |
@@ -669,6 +891,12 @@ Nenhuma arena nova: os grupos rodam na arena aberta do protótipo e a Bruxa no n
 | Homens-lagarto | Alto | Médio | Médio | Baixo | Médio |
 | Serpentes do Charco | Médio | Alto | Baixo | Baixo | Médio |
 | Bruxa do Brejo | **Alto** | Alto | Médio | Alto | Alto |
+| Mineiros no Desfiladeiro | **Alto** | Médio | Médio | Alto | Médio |
+| Matilha da Montanha | Médio | Médio | Médio | Alto | Médio |
+| Bando de Morcegos | Médio | Baixo | Médio | Médio | Baixo |
+| Acampamento dos Mineiros | Alto | **Alto** | Alto | Alto | Médio |
+| Golem de Pedra | **Alto** | Baixo | Alto | Baixo | Médio |
+| Capataz Forjado | **Alto** | Médio | Alto | Médio | **Alto** |
 
 ## Critérios gerais de sucesso
 

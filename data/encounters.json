@@ -240,6 +240,106 @@
       "enemies": [{ "monster": "monster.marsh_witch", "position": { "x": 28.5, "y": 13.5 }, "level": 20 }],
       "victory": "all_enemies_dead",
       "defeat": { "condition": "all_players_dead", "timeLimit": 360 }
+    },
+    {
+      "id": "encounter.miner_gang",
+      "name": "Mineiros no Desfiladeiro",
+      "arena": "map.fields",
+      "players": [
+        { "class": "class.warrior", "position": { "x": 4.5, "y": 10.5 } }
+      ],
+      "enemies": [
+        { "monster": "monster.possessed_miner", "position": { "x": 14.5, "y": 10.5 }, "level": 21 },
+        { "monster": "monster.possessed_miner", "position": { "x": 16.0, "y": 10.5 }, "level": 21 },
+        { "monster": "monster.possessed_miner", "position": { "x": 17.5, "y": 10.5 }, "level": 21 },
+        { "monster": "monster.possessed_miner", "position": { "x": 19.0, "y": 10.5 }, "level": 21 }
+      ],
+      "victory": "all_enemies_dead",
+      "defeat": { "condition": "all_players_dead", "timeLimit": 120 }
+    },
+    {
+      "id": "encounter.mountain_wolves",
+      "name": "Matilha da Montanha",
+      "arena": "map.fields",
+      "players": [
+        { "class": "class.warrior", "position": { "x": 4.5, "y": 10.5 } }
+      ],
+      "enemies": [
+        { "monster": "monster.mountain_wolf", "position": { "x": 15.5, "y": 8.5 }, "level": 22 },
+        { "monster": "monster.mountain_wolf", "position": { "x": 16.5, "y": 10.5 }, "level": 22 },
+        { "monster": "monster.mountain_wolf", "position": { "x": 15.5, "y": 12.5 }, "level": 22 },
+        { "monster": "monster.mountain_wolf", "position": { "x": 17.5, "y": 10.5 }, "level": 22 }
+      ],
+      "victory": "all_enemies_dead",
+      "defeat": { "condition": "all_players_dead", "timeLimit": 120 }
+    },
+    {
+      "id": "encounter.cave_bats",
+      "name": "Bando de Morcegos",
+      "arena": "map.fields",
+      "players": [
+        { "class": "class.warrior", "position": { "x": 4.5, "y": 10.5 } }
+      ],
+      "enemies": [
+        { "monster": "monster.cave_bat", "position": { "x": 15.5, "y": 8.5 }, "level": 22 },
+        { "monster": "monster.cave_bat", "position": { "x": 16.5, "y": 10.5 }, "level": 22 },
+        { "monster": "monster.cave_bat", "position": { "x": 15.5, "y": 12.5 }, "level": 22 },
+        { "monster": "monster.cave_bat", "position": { "x": 17.5, "y": 8.5 }, "level": 22 },
+        { "monster": "monster.cave_bat", "position": { "x": 18.5, "y": 10.5 }, "level": 22 },
+        { "monster": "monster.cave_bat", "position": { "x": 17.5, "y": 12.5 }, "level": 22 }
+      ],
+      "victory": "all_enemies_dead",
+      "defeat": { "condition": "all_players_dead", "timeLimit": 120 }
+    },
+    {
+      "id": "encounter.miner_camp",
+      "name": "Acampamento dos Mineiros",
+      "arena": "map.fields",
+      "players": [
+        { "class": "class.warrior", "position": { "x": 4.5, "y": 10.5 } }
+      ],
+      "enemies": [
+        { "monster": "monster.possessed_miner", "position": { "x": 14.5, "y": 9.5 }, "level": 21 },
+        { "monster": "monster.possessed_miner", "position": { "x": 14.5, "y": 11.5 }, "level": 21 },
+        { "monster": "monster.cave_bat", "position": { "x": 16.5, "y": 8.5 }, "level": 21 },
+        { "monster": "monster.possessed_miner", "position": { "x": 16.5, "y": 10.5 }, "level": 21 },
+        { "monster": "monster.cave_bat", "position": { "x": 16.5, "y": 12.5 }, "level": 21 },
+        { "monster": "monster.cave_bat", "position": { "x": 18.5, "y": 9.5 }, "level": 21 },
+        { "monster": "monster.cave_bat", "position": { "x": 18.5, "y": 11.5 }, "level": 21 },
+        { "monster": "monster.possessed_miner", "position": { "x": 19.5, "y": 10.5 }, "level": 21 }
+      ],
+      "victory": "all_enemies_dead",
+      "defeat": { "condition": "all_players_dead", "timeLimit": 150 }
+    },
+    {
+      "id": "encounter.stone_golem",
+      "name": "Golem de Pedra na Boca das Minas",
+      "arena": "map.fields",
+      "players": [
+        { "class": "class.warrior", "position": { "x": 6.5, "y": 10.5 } },
+        { "class": "class.cleric", "position": { "x": 4.5, "y": 11.5 } }
+      ],
+      "enemies": [
+        { "monster": "monster.stone_golem", "position": { "x": 20.5, "y": 10.5 }, "level": 25 }
+      ],
+      "victory": "all_enemies_dead",
+      "defeat": { "condition": "all_players_dead", "timeLimit": 240 }
+    },
+    {
+      "id": "encounter.forged_overseer",
+      "name": "O Capataz Forjado",
+      "arena": "map.watcher_hall",
+      "players": [
+        { "class": "class.warrior", "position": { "x": 14.5, "y": 13.5 } },
+        { "class": "class.archer", "position": { "x": 9.5, "y": 11.5 } },
+        { "class": "class.mage", "position": { "x": 9.5, "y": 15.5 } },
+        { "class": "class.cleric", "position": { "x": 7.5, "y": 13.5 } }
+      ],
+      "enemies": [
+        { "monster": "monster.forged_overseer", "position": { "x": 27.5, "y": 13.5 } }
+      ],
+      "victory": "all_enemies_dead",
+      "defeat": { "condition": "all_players_dead", "timeLimit": 480 }
     }
   ]
 }
