@@ -46,6 +46,11 @@ public partial class AccountScreen : Control
     private SpriteCatalog _sprites = SpriteCatalog.Empty;
     private IReadOnlyList<CharacterSummary> _characters = [];
     private readonly List<CharacterCard> _cards = [];
+
+    // Seleção: até 6 cartões por linha; a área tem a altura de uma linha e rola na vertical quando há mais.
+    private const int CardColumns = 6;
+    private const int CardSeparation = 10;
+    private ScrollContainer? _cardScroll;
     private int _selected = -1;
     private bool _busy;
     private double _elapsed;
@@ -231,16 +236,28 @@ public partial class AccountScreen : Control
 
     /// <summary>
     /// Seleção de personagem (T-074): um cartão por personagem, lado a lado, e o cartão de criar no fim. Clique seleciona,
-    /// clique duplo ou Enter joga, setas trocam. Com <c>--account-sample[=n]</c> e sem conta, mostra n personagens de exemplo
-    /// (padrão 3, até 5) para prévias e capturas.
+    /// clique duplo ou Enter joga, setas trocam (para cima e para baixo, de linha). Com <c>--account-sample[=n]</c> e sem conta, mostra n personagens de exemplo
+    /// (padrão 3, até 8: acima do limite de 5, para ver a fileira rolar) para prévias e capturas.
     /// </summary>
     private async Task ShowCharacters()
     {
         Clear("Personagens");
         _root.AddChild(Hint(s_api is null ? "Prévia, sem conta" : $"Conta: {s_api.Email}"));
-        var row = new HBoxContainer { Alignment = BoxContainer.AlignmentMode.Center };
-        row.AddThemeConstantOverride("separation", 10);
-        _root.AddChild(row);
+        // Grade de até 6 cartões por linha (5 personagens e o de criar, o limite da conta). Com mais, a área mostra uma linha
+        // e a barra de rolagem lateral mostra as outras (contas acima do limite, como a de teste).
+        var grid = new GridContainer { Columns = CardColumns };
+        grid.AddThemeConstantOverride("h_separation", CardSeparation);
+        grid.AddThemeConstantOverride("v_separation", CardSeparation);
+        var center = new CenterContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+        center.AddChild(grid);
+        _cardScroll = new ScrollContainer
+        {
+            HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled,
+            VerticalScrollMode = ScrollContainer.ScrollMode.Auto,
+            FollowFocus = false,
+        };
+        _cardScroll.AddChild(center);
+        _root.AddChild(_cardScroll);
         var buttons = Row();
         var play = ButtonFor("Jogar", () => Forget(PlaySelected()), 140);
         var delete = ButtonFor("Apagar", ConfirmDelete, 120);
@@ -254,11 +271,11 @@ public partial class AccountScreen : Control
         await Run(async () =>
         {
             _characters = s_api is null ? SampleCharacters() : await s_api.Characters();
-            FillCards(row, play, delete);
+            FillCards(grid, play, delete);
         });
     }
 
-    private void FillCards(HBoxContainer row, Button play, Button delete)
+    private void FillCards(GridContainer row, Button play, Button delete)
     {
         _cards.Clear();
         for (var i = 0; i < _characters.Count; i++)
@@ -279,6 +296,19 @@ public partial class AccountScreen : Control
         var create = CharacterCard.ForCreate();
         create.Chosen += ShowCreate;
         row.AddChild(create);
+
+        // Até 6 por linha; a área de rolagem tem a altura de uma linha (a barra lateral aparece quando há mais).
+        row.Columns = Math.Clamp(_characters.Count + 1, 1, CardColumns);
+        // A altura do cartão só é certa depois do layout (textos e moldura): acompanha o tamanho do cartão de criar.
+        var scroll = _cardScroll!;
+        create.Resized += () =>
+        {
+            if (!Mathf.IsEqualApprox(scroll.CustomMinimumSize.Y, create.Size.Y))
+            {
+                scroll.CustomMinimumSize = new Godot.Vector2(0, create.Size.Y);
+                Select(_selected);
+            }
+        };
         play.Disabled = delete.Disabled = _characters.Count == 0;
         if (_characters.Count > 0)
         {
@@ -297,6 +327,13 @@ public partial class AccountScreen : Control
         {
             _cards[i].SetSelected(i == _selected);
         }
+
+        // Mais de uma linha de cartões: a área rola até o selecionado.
+        if (_selected >= 0 && _selected < _cards.Count && _cardScroll is { } scroll && scroll.IsInsideTree())
+        {
+            var card = _cards[_selected];
+            Callable.From(() => scroll.EnsureControlVisible(card)).CallDeferred();
+        }
     }
 
     public override void _UnhandledKeyInput(InputEvent @event)
@@ -314,6 +351,14 @@ public partial class AccountScreen : Control
         {
             Select(_selected + 1);
         }
+        else if (@event.IsActionPressed("ui_up") && _selected >= CardColumns)
+        {
+            Select(_selected - CardColumns);
+        }
+        else if (@event.IsActionPressed("ui_down") && _selected + CardColumns < _cards.Count)
+        {
+            Select(_selected + CardColumns);
+        }
         else if (@event.IsActionPressed("ui_accept"))
         {
             Forget(PlaySelected());
@@ -329,11 +374,11 @@ public partial class AccountScreen : Control
     /// <summary>Personagens de exemplo de <c>--account-sample</c> (T-074), um de cada classe na ordem do menu.</summary>
     private List<CharacterSummary> SampleCharacters()
     {
-        var count = int.TryParse(_args.GetValueOrDefault("account-sample"), out var n) ? Math.Clamp(n, 0, 5) : 3;
+        var count = int.TryParse(_args.GetValueOrDefault("account-sample"), out var n) ? Math.Clamp(n, 0, 8) : 3;
         var classes = _content.Classes.Keys.OrderBy(ClassOrder).ToList();
         var zones = _content.Zones.Keys.Where(z => !z.Contains("test", StringComparison.Ordinal)).Order(StringComparer.Ordinal).ToList();
-        string[] names = ["Aldric", "Mira", "Teodoro", "Brann", "Sela"];
-        int[] levels = [12, 4, 1, 7, 20];
+        string[] names = ["Aldric", "Mira", "Teodoro", "Brann", "Sela", "Oswin", "Lia", "Garrick"];
+        int[] levels = [12, 4, 1, 7, 20, 40, 33, 25];
         return Enumerable.Range(0, count)
             .Select(i => new CharacterSummary(Guid.Empty, names[i], classes[i % classes.Count], levels[i], zones.Count == 0 ? "" : zones[i % zones.Count]))
             .ToList();
