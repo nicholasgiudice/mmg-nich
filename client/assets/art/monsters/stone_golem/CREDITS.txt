@@ -1,0 +1,5 @@
+Golem de Pedra (stone_golem.png)
+Autor: Stephen Challener (Redshrike), arte gráfica; William.Thompsonj, colaborador ("[LPC] Golem").
+Licença: CC-BY 3.0 (https://creativecommons.org/licenses/by/3.0/); a página também oferece CC-BY 4.0.
+Origem: https://opengameart.org/content/lpc-golem (golem-walk.png, golem-atk.png, golem-die.png)
+Modificações: as três folhas foram empilhadas numa só (andar 448x256, ataque 448x384, morte 448x128), sem alterar os pixels (2026-11-24, T-521; script em tasks/reports/arte-monstros-fase-5/build_sheets.py).

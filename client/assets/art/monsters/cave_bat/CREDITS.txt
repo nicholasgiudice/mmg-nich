@@ -1,0 +1,5 @@
+Morcego da Caverna (cave_bat.png)
+Autor: bagzie (morcego original e voo) e bluecarrot16 (ataque); versão combinada e estendida ("[LPC] Bat combined/extended") publicada no OpenGameArt, que dispensa crédito próprio.
+Licença: OGA-BY 3.0 (https://static.opengameart.org/OGA-BY-3.0.txt)
+Origem: https://opengameart.org/content/lpc-bat-combinedextended (bat.png); originais em https://opengameart.org/content/bat-sprite e https://opengameart.org/content/lpc-monsters
+Modificações: nenhuma (arquivo renomeado de bat.png/bat_2.png, 2026-11-24, T-521).
