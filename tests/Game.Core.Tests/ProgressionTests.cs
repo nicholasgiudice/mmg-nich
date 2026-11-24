@@ -109,9 +109,11 @@ public class ProgressionTests
     [InlineData(8, 5, 1.3)]
     [InlineData(12, 5, 1.3)]
     [InlineData(4, 5, 0.8)]
-    [InlineData(1, 5, 0.2)]
-    [InlineData(1, 6, 0.0)]
-    [InlineData(1, 15, 0.0)]
+    [InlineData(3, 5, 0.6)]
+    [InlineData(2, 5, 0.4)]
+    [InlineData(1, 5, 0.4)]
+    [InlineData(1, 6, 0.4)]
+    [InlineData(1, 40, 0.4)]
     public void Level_difference_modifier(int monster, int character, double expected) =>
         Assert.Equal(expected, Rules.LevelDifferenceModifier(monster, character), 6);
 
@@ -121,6 +123,18 @@ public class ProgressionTests
         Assert.Equal(12, Rules.MonsterXp(2, MonsterRank.Normal, 2), 6);
         Assert.Equal(6 * 6 * 5, Rules.MonsterXp(6, MonsterRank.Elite, 6), 6);
         Assert.Equal(6 * 8 * 30 * 1.3, Rules.MonsterXp(8, MonsterRank.Boss, 5), 6);
+    }
+
+    [Fact]
+    public void Monster_far_below_still_gives_the_minimum_share_of_its_base_xp()
+    {
+        // Lobo nível 2 (base 12) para um personagem nível 30: 40% da base, nunca 0.
+        Assert.Equal(12 * 0.4, Rules.MonsterXp(2, MonsterRank.Normal, 30), 6);
+        Assert.Equal(5, Rules.Share(Rules.MonsterXp(2, MonsterRank.Normal, 30), 1));
+
+        // O piso vem dos dados.
+        var strict = Rules with { XpMinLevelModifier = 0 };
+        Assert.Equal(0, strict.LevelDifferenceModifier(1, 15), 6);
     }
 
     [Theory]
@@ -152,7 +166,7 @@ public class ProgressionTests
     }
 
     [Fact]
-    public void Monsters_far_below_give_nothing()
+    public void Monsters_far_below_still_give_the_minimum_xp()
     {
         var w = NewWorld();
         var hero = Hero(w, build: new CharacterBuild { Level = 6 });
@@ -160,8 +174,9 @@ public class ProgressionTests
 
         var events = AttackUntilDead(w, hero, rat);
 
-        Assert.Empty(events.OfType<XpGained>());
-        Assert.Equal(0, hero.Get<CharacterProgress>().Experience);
+        // Rato nível 1 (base 6) com 5 níveis de diferença: piso de 40% = 2,4 → 2.
+        Assert.Equal(2, Assert.Single(events.OfType<XpGained>()).Amount);
+        Assert.Equal(2, hero.Get<CharacterProgress>().Experience);
     }
 
     [Fact]

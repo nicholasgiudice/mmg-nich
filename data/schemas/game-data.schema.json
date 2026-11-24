@@ -73,7 +73,7 @@
             "xpBonusPerLevelAbove": { "type": "number", "minimum": 0 },
             "xpMaxBonus": { "type": "number", "minimum": 0 },
             "xpPenaltyPerLevelBelow": { "type": "number", "minimum": 0, "maximum": 1 },
-            "xpZeroLevelsBelow": { "type": "integer", "minimum": 1 },
+            "xpMinLevelModifier": { "type": "number", "minimum": 0, "maximum": 1 },
             "groupBonusPerMember": { "type": "number", "minimum": 0 },
             "partyShareRange": { "type": "number", "minimum": 0 },
             "participationWindow": { "$ref": "#/$defs/seconds" },

@@ -33,7 +33,7 @@
       "xpBonusPerLevelAbove": 0.1,
       "xpMaxBonus": 0.3,
       "xpPenaltyPerLevelBelow": 0.2,
-      "xpZeroLevelsBelow": 5,
+      "xpMinLevelModifier": 0.4,
       "groupBonusPerMember": 0.1,
       "partyShareRange": 30,
       "participationWindow": 30,

@@ -723,7 +723,7 @@ internal static partial class GameDataValidator
         c.NonNegative("xpBonusPerLevelAbove", p.XpBonusPerLevelAbove);
         c.NonNegative("xpMaxBonus", p.XpMaxBonus);
         if (p.XpPenaltyPerLevelBelow is < 0 or > 1) { c.Error("xpPenaltyPerLevelBelow", "Deve estar em 0..1."); }
-        if (p.XpZeroLevelsBelow < 1) { c.Error("xpZeroLevelsBelow", "Deve ser pelo menos 1."); }
+        if (p.XpMinLevelModifier is < 0 or > 1) { c.Error("xpMinLevelModifier", "Deve estar em 0..1."); }
         c.NonNegative("groupBonusPerMember", p.GroupBonusPerMember);
         c.NonNegative("partyShareRange", p.PartyShareRange);
         c.PositiveTicks("participationWindow", p.ParticipationWindowTicks);
