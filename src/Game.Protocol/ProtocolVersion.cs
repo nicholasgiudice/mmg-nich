@@ -50,6 +50,8 @@ public static class ProtocolVersion
     /// <c>NetIntent</c> ganha o tipo <c>ChooseSecondClass</c> (id da segunda classe em <c>AbilityId</c>).
     /// 19 (T-405): mensagens <c>DevToolRequest</c> e <c>DevToolResult</c> (ferramenta de teste) e <c>DevTools</c> no fim do
     /// <c>Welcome</c>. A T-404 e a T-405 foram feitas em cima da T-403 (17 e 18); na integração em main ficaram 18 e 19.
+    /// 20 (T-503): evento <c>FieldBossAnnounced</c> (tag 5): nascimento e morte de monstro de ponto com <c>announce</c>,
+    /// enviado a todos os jogadores da zona. Sai com a T-540 (cliente); a T-503 não entra na <c>main</c> sozinha.
     /// </summary>
-    public const int Current = 19;
+    public const int Current = 20;
 }

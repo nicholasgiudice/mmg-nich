@@ -112,6 +112,7 @@ internal static class ZoneComposer
                     Level = s.Level,
                     RespawnTicks = s.RespawnTicks,
                     Objective = s.Objective,
+                    Announce = s.Announce,
                 });
             }
 

@@ -3,6 +3,7 @@ using Game.Core.Combat;
 using Game.Core.Combat.Ai;
 using Game.Core.Combat.Rest;
 using Game.Core.Definitions;
+using Game.Core.Events;
 using Game.Core.Simulation;
 using Game.Core.Simulation.Components;
 using Game.Server.Interest;
@@ -208,6 +209,11 @@ public sealed class OpenZone
                 return;
             }
 
+            if (slot.DiedAt is null)
+            {
+                Announce(slot, spawned: false);
+            }
+
             slot.DiedAt ??= tick;
             if (!e.IsRemoved && tick - slot.DiedAt < Definition.CorpseTicks)
             {
@@ -228,6 +234,19 @@ public sealed class OpenZone
         if (tick >= slot.RespawnAt)
         {
             Spawn(slot);
+            Announce(slot, spawned: true);
+        }
+    }
+
+    /// <summary>
+    /// T-503: ponto com <c>announce</c>: avisa toda a zona que o monstro nasceu ou morreu. Só os nascimentos e as mortes depois
+    /// do começo da zona (o nascimento inicial e o que acontece com a zona parada não entram: não há ninguém para ouvir).
+    /// </summary>
+    private void Announce(SpawnSlot slot, bool spawned)
+    {
+        if (slot.Point.Announce)
+        {
+            World.Events.Publish(new FieldBossAnnounced(slot.Point.Monster, slot.Point.Area, spawned));
         }
     }
 
