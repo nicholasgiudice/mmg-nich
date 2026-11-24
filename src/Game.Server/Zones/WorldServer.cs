@@ -527,6 +527,14 @@ public sealed class WorldServer : ITransportHandler, IGameHost, IPartyHost
         }
     }
 
+    /// <summary>
+    /// T-501: zona segura onde renasce quem morre em <paramref name="zone"/> (aberta ou cópia de instância): a do campo
+    /// <c>respawn</c> da zona, ou a zona inicial sem ele. A carga já garante que a zona existe e é segura; se o servidor
+    /// subiu sem ela (ex.: <c>--start-zone</c> num conjunto de dados de teste), vale a zona inicial.
+    /// </summary>
+    private OpenZone RespawnZoneOf(OpenZone zone) =>
+        zone.Definition.Respawn is { } id && _zones.TryGetValue(id, out var home) ? home : _start;
+
     private void MoveThroughGatesAndRespawn()
     {
         foreach (var p in _players.Values.Where(p => p.Entity is not null).ToList())
@@ -536,9 +544,11 @@ public sealed class WorldServer : ITransportHandler, IGameHost, IPartyHost
             {
                 if (p.WantsRespawn)
                 {
-                    // T-385: renasce sempre no nascimento da zona inicial, inclusive vindo de uma instância (a cópia
-                    // continua para o resto do grupo, e o portão leva de volta à mesma cópia enquanto ela existir).
-                    Move(p, _start, _start.SpawnPosition, keepVitals: false, "renasceu");
+                    // T-385: renasce no nascimento de uma zona segura, inclusive vindo de uma instância (a cópia continua
+                    // para o resto do grupo, e o portão leva de volta à mesma cópia enquanto ela existir). T-501: a zona
+                    // do campo 'respawn' de onde morreu; sem ele, a zona inicial.
+                    var home = RespawnZoneOf(p.Zone!);
+                    Move(p, home, home.SpawnPosition, keepVitals: false, "renasceu");
                 }
 
                 continue;
@@ -725,7 +735,7 @@ public sealed class WorldServer : ITransportHandler, IGameHost, IPartyHost
     // ---------------- gravação ----------------
 
     /// <summary>
-    /// Captura e pede a gravação (só personagem com conta). Morto grava na zona inicial, no nascimento. Com
+    /// Captura e pede a gravação (só personagem com conta). Morto grava na zona de renascimento (T-501; sem ela, a inicial), no nascimento. Com
     /// <paramref name="confirm"/>, devolve a gravação para esperar (T-395); null = nada gravado.
     /// </summary>
     private Task<bool>? SaveNow(Player p, string reason, bool confirm = false)
@@ -738,7 +748,7 @@ public sealed class WorldServer : ITransportHandler, IGameHost, IPartyHost
         var position = e.Get<Transform>().Position;
         var location = p.Zone!.Definition.ExitGate() is { } exit
             ? new CharacterLocation(exit.To, (float)exit.Arrival.X, (float)exit.Arrival.Y) // T-350: instância grava a zona de origem
-            : e.IsAlive ? new CharacterLocation(p.Zone.Id, position.X, position.Y) : new CharacterLocation(_start.Id, 0, 0);
+            : e.IsAlive ? new CharacterLocation(p.Zone.Id, position.X, position.Y) : new CharacterLocation(RespawnZoneOf(p.Zone).Id, 0, 0);
         p.Saved = state with { Location = location };
         if (confirm)
         {
