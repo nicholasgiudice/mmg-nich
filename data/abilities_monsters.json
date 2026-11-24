@@ -322,6 +322,219 @@
       "cooldown": 1.4,
       "targeting": { "type": "melee_arc", "range": 1.6, "angle": 90 },
       "effects": [{ "type": "damage", "school": "arcane", "base": 18 }]
+    },
+    {
+      "id": "drowned.grab",
+      "name": "Agarrão",
+      "cooldown": 6,
+      "targeting": { "type": "melee_arc", "range": 1.6, "angle": 90 },
+      "telegraph": { "shape": "cone", "length": 1.6, "angle": 90, "delay": 0.6, "anchor": "source", "affects": "enemy" },
+      "effects": [{ "type": "damage", "school": "physical", "base": 26 }, { "type": "apply_status", "status": "status.snared", "duration": 1.5 }]
+    },
+    {
+      "id": "drowned.claw",
+      "name": "Garra do Afogado",
+      "cooldown": 1.8,
+      "targeting": { "type": "melee_arc", "range": 1.4, "angle": 90 },
+      "effects": [{ "type": "damage", "school": "physical", "base": 22 }]
+    },
+    {
+      "id": "marsh_lizardman.lunge",
+      "name": "Bote",
+      "cooldown": 6,
+      "targeting": { "type": "line", "length": 4, "width": 1.2 },
+      "telegraph": { "shape": "line", "length": 4, "width": 1.2, "delay": 0.6, "charge": true },
+      "effects": [{ "type": "damage", "school": "physical", "base": 40 }]
+    },
+    {
+      "id": "marsh_lizardman.slash",
+      "name": "Garra do Lagarto",
+      "cooldown": 1.4,
+      "targeting": { "type": "melee_arc", "range": 1.5, "angle": 90 },
+      "effects": [{ "type": "damage", "school": "physical", "base": 16 }]
+    },
+    {
+      "id": "marsh_serpent.spit",
+      "name": "Cuspe Venenoso",
+      "cooldown": 2.8,
+      "targeting": { "type": "unit", "range": 9, "faction": "enemy" },
+      "effects": [{ "type": "damage", "school": "nature", "base": 5 }, { "type": "apply_status", "status": "status.poison", "duration": 1.5 }]
+    },
+    {
+      "id": "marsh_serpent.bite",
+      "name": "Picada da Serpente",
+      "cooldown": 1.6,
+      "targeting": { "type": "melee_arc", "range": 1.4, "angle": 90 },
+      "effects": [{ "type": "damage", "school": "physical", "base": 30 }]
+    },
+    {
+      "id": "marsh_witch.staff_strike",
+      "name": "Golpe de Cajado",
+      "cooldown": 1.6,
+      "targeting": { "type": "melee_arc", "range": 2.0, "angle": 100 },
+      "effects": [{ "type": "damage", "school": "physical", "base": 8 }]
+    },
+    {
+      "id": "marsh_witch.hex_bolt",
+      "name": "Dardo do Brejo",
+      "cooldown": 2.2,
+      "targeting": { "type": "unit", "range": 10, "faction": "enemy" },
+      "effects": [{ "type": "damage", "school": "nature", "base": 10 }]
+    },
+    {
+      "id": "marsh_witch.bog_bolt",
+      "name": "Dardo do Lodo",
+      "cooldown": 1.6,
+      "targeting": { "type": "unit", "range": 12, "faction": "enemy" },
+      "effects": [{ "type": "damage", "school": "nature", "base": 10 }]
+    },
+    {
+      "id": "marsh_witch.poison_puddle",
+      "name": "Poça Venenosa",
+      "tags": ["ai.area"],
+      "cooldown": 9,
+      "targeting": { "type": "circle_at_point", "range": 12, "radius": 2 },
+      "telegraph": { "shape": "circle", "radius": 2, "delay": 1.0, "anchor": "aim" },
+      "effects": [{ "type": "spawn_area", "area": "area.witch_poison_puddle" }]
+    },
+    {
+      "id": "marsh_witch.poison_puddle_fast",
+      "name": "Poça Venenosa Rápida",
+      "tags": ["ai.area"],
+      "cooldown": 7,
+      "targeting": { "type": "circle_at_point", "range": 12, "radius": 2 },
+      "telegraph": { "shape": "circle", "radius": 2, "delay": 1.0, "anchor": "aim" },
+      "effects": [{ "type": "spawn_area", "area": "area.witch_poison_puddle" }]
+    },
+    {
+      "id": "marsh_witch.call_drowned",
+      "name": "Chamar os Afogados",
+      "tags": ["ai.summon"],
+      "cooldown": 20,
+      "castTime": 1.5,
+      "targeting": { "type": "self" },
+      "effects": [{ "type": "summon", "monster": "monster.drowned", "count": 1, "radius": 2.5, "maxAlive": 2 }]
+    },
+    {
+      "id": "marsh_witch.pulling_mud",
+      "name": "Lodo que Puxa",
+      "tags": ["ai.area"],
+      "cooldown": 14,
+      "castTime": 1.0,
+      "targeting": { "type": "self" },
+      "effects": [{ "type": "spawn_area", "area": "area.pulling_mud" }]
+    },
+    {
+      "id": "possessed_miner.pickaxe_blow",
+      "name": "Picaretada",
+      "cooldown": 7,
+      "targeting": { "type": "melee_arc", "range": 1.8, "angle": 70 },
+      "telegraph": { "shape": "cone", "length": 1.8, "angle": 70, "delay": 0.8, "anchor": "source", "affects": "enemy" },
+      "effects": [
+        { "type": "damage", "school": "physical", "base": 30 },
+        { "type": "apply_status", "status": "status.stunned", "duration": 1 }
+      ]
+    },
+    {
+      "id": "possessed_miner.pick_strike",
+      "name": "Golpe de Picareta",
+      "cooldown": 1.8,
+      "targeting": { "type": "melee_arc", "range": 1.4, "angle": 90 },
+      "effects": [{ "type": "damage", "school": "physical", "base": 14 }]
+    },
+    {
+      "id": "mountain_wolf.bite",
+      "name": "Mordida do Lobo da Montanha",
+      "cooldown": 1.4,
+      "targeting": { "type": "melee_arc", "range": 1.3, "angle": 80 },
+      "effects": [{ "type": "damage", "school": "physical", "base": 12 }]
+    },
+    {
+      "id": "mountain_wolf.pack_fury",
+      "name": "Uivo da Montanha",
+      "tags": ["ai.rally"],
+      "cooldown": 20,
+      "targeting": { "type": "self" },
+      "effects": [{ "type": "apply_status", "status": "status.pack_aggression", "duration": 8 }]
+    },
+    {
+      "id": "cave_bat.bite",
+      "name": "Mordida do Morcego",
+      "cooldown": 1.0,
+      "targeting": { "type": "melee_arc", "range": 1.1, "angle": 90 },
+      "effects": [{ "type": "damage", "school": "physical", "base": 5 }]
+    },
+    {
+      "id": "stone_golem.rolling_boulder",
+      "name": "Rocha Rolante",
+      "tags": ["ai.ranged"],
+      "cooldown": 10,
+      "targeting": { "type": "line", "length": 14, "width": 1.6 },
+      "telegraph": { "shape": "line", "length": 14, "width": 1.6, "delay": 1.5 },
+      "effects": [{ "type": "damage", "school": "physical", "base": 80 }]
+    },
+    {
+      "id": "stone_golem.ground_slam",
+      "name": "Pisão de Pedra",
+      "cooldown": 9,
+      "targeting": { "type": "circle_self", "radius": 2.6 },
+      "telegraph": { "shape": "circle", "radius": 2.6, "delay": 1.2, "anchor": "source", "affects": "enemy" },
+      "effects": [{ "type": "damage", "school": "physical", "base": 45 }]
+    },
+    {
+      "id": "stone_golem.stone_fist",
+      "name": "Punho de Pedra",
+      "cooldown": 2.0,
+      "targeting": { "type": "melee_arc", "range": 2.0, "angle": 100 },
+      "effects": [{ "type": "damage", "school": "physical", "base": 20 }]
+    },
+    {
+      "id": "forged_overseer.iron_fist",
+      "name": "Punho de Ferro",
+      "cooldown": 1.6,
+      "targeting": { "type": "melee_arc", "range": 2.4, "angle": 100 },
+      "effects": [{ "type": "damage", "school": "physical", "base": 62 }]
+    },
+    {
+      "id": "forged_overseer.hammer",
+      "name": "Martelo",
+      "cooldown": 9,
+      "targeting": { "type": "melee_arc", "range": 3.5, "angle": 100 },
+      "telegraph": { "shape": "cone", "length": 3.5, "angle": 100, "delay": 1.0, "anchor": "source", "affects": "enemy" },
+      "effects": [{ "type": "damage", "school": "physical", "base": 90 }]
+    },
+    {
+      "id": "forged_overseer.hammer_fast",
+      "name": "Martelo Acelerado",
+      "cooldown": 6,
+      "targeting": { "type": "melee_arc", "range": 3.5, "angle": 100 },
+      "telegraph": { "shape": "cone", "length": 3.5, "angle": 100, "delay": 1.0, "anchor": "source", "affects": "enemy" },
+      "effects": [{ "type": "damage", "school": "physical", "base": 90 }]
+    },
+    {
+      "id": "forged_overseer.furnace_blast",
+      "name": "Sopro da Fornalha",
+      "tags": ["ai.area"],
+      "cooldown": 5,
+      "targeting": { "type": "circle_self", "radius": 30 },
+      "effects": [{ "type": "damage", "school": "fire", "base": 22 }]
+    },
+    {
+      "id": "forged_overseer.slag_throw",
+      "name": "Escória Ardente",
+      "tags": ["ai.ranged"],
+      "cooldown": 2.5,
+      "targeting": { "type": "unit", "range": 14, "faction": "enemy" },
+      "effects": [{ "type": "damage", "school": "fire", "base": 25 }]
+    },
+    {
+      "id": "forged_overseer.call_crew",
+      "name": "Chamar a Equipe",
+      "tags": ["ai.summon"],
+      "cooldown": 20,
+      "castTime": 2,
+      "targeting": { "type": "self" },
+      "effects": [{ "type": "summon", "monster": "monster.possessed_miner", "count": 1, "radius": 2.5, "maxAlive": 3 }]
     }
   ]
 }

@@ -14,6 +14,7 @@ public static class SystemOrder
     public const int Telegraphs = 2500; // T-012: resolve telegráfos (dano/efeitos a quem está na forma)
     public const int Areas = 2600;      // T-012: aplica/expira áreas persistentes (poça, teia, armadilha)
     public const int Phases = 2700;     // T-012: fases de boss (vida -> fase; efeitos de entrada)
+    public const int Terrain = 2800;    // T-502: terreno do mapa (água funda): estado enquanto está dentro, depois de tudo que move
     public const int Status = 3000;     // T-009
     public const int StatusResourceBridge = 3500; // integração T-009 -> T-010 (StatusRemoved -> status_removed)
     public const int Resources = 4000;  // T-010

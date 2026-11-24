@@ -111,11 +111,14 @@ Retângulos (sem rotação) dentro do mapa. A **classe** do objeto diz o que a �
 |---|---|
 | `altar` | altar ativável |
 | `seal` | selo do encontro |
-| `web` | teia (lentidão) |
+| `web` | teia (lentidão; sem mecânica ainda) |
+| `slow_terrain` | terreno que deixa lento (T-502, ex.: a água funda do Brejo). Propriedades: `status` (obrigatória, id do estado aplicado enquanto a unidade está dentro, ex.: `status.deep_water`), `ignoreTags` (opcional, tags de monstro que não sentem o terreno, separadas por vírgula, ex.: `amphibious`). Ver abaixo |
 | `subarea` | subárea de uma zona (o **nome** do objeto é o nome da subárea, ex.: `Fazenda Abandonada`); dá a subárea aos `monster_spawn` dentro dela (§5) |
 | `npc` | NPC de uma zona (T-331). Propriedades: `npc` (obrigatória, id da definição, ex.: `npc.smith`), `shop` (opcional, id da loja, ex.: `shop.smith`); outras (ex.: `name`, `building`) ficam como texto. Posição = centro do retângulo. A lógica de NPC é da T-321 |
 
 Classe vazia é erro. Nome único na camada. `npc` sem a propriedade `npc`, ou com id fora do padrão (`npc` e `shop` em snake_case com namespace por ponto), é erro.
+
+**`slow_terrain` (T-502).** Vale para jogadores e monstros, pelo centro da unidade (o retângulo inclui a borda de cima e da esquerda, não a de baixo e da direita). O estado entra no tick em que a unidade pisa na área e sai no mesmo tick em que ela sai (sem resto de duração); dentro, não acaba. Duas áreas com o mesmo estado, sobrepostas, não acumulam. O estado é de terreno, não de habilidade: não leva a tag `control` (sem retorno decrescente, sem redução por elite ou chefe) nem as tags que a Purificação e as imunidades a lentidão olham (`poison`, `curse`, `slow`...). A IA não desvia do terreno. Sem `status`, com id fora do padrão ou com um estado que não existe em `data/statuses.json` é erro de carga. Arena de teste: `maps/terrain_test.tmj` (encontros `encounter.terrain_water` e `encounter.terrain_dry`).
 
 ## 7. Transições de zona (`transitions`)
 

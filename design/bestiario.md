@@ -1,6 +1,6 @@
 # Bestiário
 
-Status: **referência gerada a partir dos dados** (2026-11-02; Fada da Névoa e Ent Corrompido em 2026-11-06, T-340; Sacerdote Morto e Cavaleiro Espectral em 2026-11-09, T-341; Vigia Sem Rosto, Sombra e Selo do Juramento em 2026-11-10, T-351). Fonte: `data/monsters.json`, `data/abilities_monsters.json`, `data/statuses.json`, `data/areas.json`, `data/zones.json`, `data/encounters.json`, `data/rules.json` e `data/items.json` (tabelas de queda). Os números saem desses arquivos; quando os dados mudarem, este documento deve ser atualizado.
+Status: **referência gerada a partir dos dados** (2026-11-02; Fada da Névoa e Ent Corrompido em 2026-11-06, T-340; Sacerdote Morto e Cavaleiro Espectral em 2026-11-09, T-341; Vigia Sem Rosto, Sombra e Selo do Juramento em 2026-11-10, T-351; Afogado, Homem-lagarto, Serpente do Charco e Bruxa do Brejo em 2026-11-24, T-510; Mineiro Possuído, Lobo da Montanha, Morcego das Cavernas e Golem de Pedra em 2026-11-24, T-511; Capataz Forjado em 2026-11-24, T-512). Fonte: `data/monsters.json`, `data/abilities_monsters.json`, `data/statuses.json`, `data/areas.json`, `data/zones.json`, `data/encounters.json`, `data/rules.json` e `data/items.json` (tabelas de queda). Os números saem desses arquivos; quando os dados mudarem, este documento deve ser atualizado.
 
 As habilidades dos monstros estão detalhadas em `design/habilidades.md` (§ Monstros) e os itens em `design/itens.md`.
 
@@ -14,8 +14,8 @@ As habilidades dos monstros estão detalhadas em `design/habilidades.md` (§ Mon
 - **Velocidade** em tiles por segundo; **raio** (tamanho do corpo) em tiles.
 - **Categoria** (`rank`): normal (sem o campo), elite ou chefe. Ela escolhe a tabela de queda e reduz a duração dos efeitos de controle recebidos (`rules.json` → `control.durationByRank`): normal **× 1,0**, elite **× 0,5**, chefe **× 0,25**.
 - **Armadura e resistência**: nenhum monstro define `armor` ou `resistance` em `monsters.json` (campos opcionais do esquema). Não há defesa extra por esses campos hoje.
-- **Resistências por escola** (`resistances`): fração do dano cortada; negativa = **fraqueza** (−0,3 = recebe 130%). Só o Ent Corrompido define (físico 0,25; fogo −0,3).
-- **Escolas de dano**: físico (`physical`), natureza (`nature`), arcano (`arcane`).
+- **Resistências por escola** (`resistances`): fração do dano cortada; negativa = **fraqueza** (−0,3 = recebe 130%). O Ent Corrompido (físico 0,25; fogo −0,3), o Afogado (sagrado −0,4) e o Golem de Pedra (físico 0,3; arcano −0,3) definem.
+- **Escolas de dano**: físico (`physical`), natureza (`nature`), arcano (`arcane`), fogo (`fire`; a Fornalha e a Escória do Capataz Forjado).
 
 ## Resumo
 
@@ -35,6 +35,15 @@ As habilidades dos monstros estão detalhadas em `design/habilidades.md` (§ Mon
 | Sombra | `monster.shade` | 14 | normal | 150 | 3,6 | 0,4 | undead | `ai.melee_chaser` |
 | Vigia Sem Rosto | `monster.faceless_watcher` | 15 | **chefe** | 45000 | 3,4 | 0,9 | undead, boss | `ai.boss` |
 | Selo do Juramento (objetivo) | `monster.watcher_seal` | 15 | normal | 380 | 0 | 0,6 | seal | `ai.none` |
+| Afogado | `monster.drowned` | 16 | normal | 300 | 2,6 | 0,4 | undead | `ai.brute` |
+| Homem-lagarto do Brejo | `monster.marsh_lizardman` | 17 | normal | 440 | 4,0 | 0,4 | humanoid, amphibious | `ai.brute` |
+| Serpente do Charco | `monster.marsh_serpent` | 18 | normal | 200 | 3,0 | 0,45 | beast | `ai.ranged_kiter` |
+| Bruxa do Brejo | `monster.marsh_witch` | 20 | **chefe** | 5500 | 3,2 | 0,45 | humanoid, boss | `ai.boss` |
+| Mineiro Possuído | `monster.possessed_miner` | 21 | normal | 320 | 3,2 | 0,4 | humanoid | `ai.brute` |
+| Lobo da Montanha | `monster.mountain_wolf` | 22 | normal | 260 | 4,2 | 0,4 | beast | `ai.pack` |
+| Morcego das Cavernas | `monster.cave_bat` | 22 | normal | 90 | 4,4 | 0,3 | beast | `ai.swarm` |
+| Golem de Pedra | `monster.stone_golem` | 25 | **elite** | 1200 | 2,2 | 0,7 | construct | `ai.brute` |
+| Capataz Forjado | `monster.forged_overseer` | 27 | **chefe** | 70000 | 3,0 | 0,9 | construct, boss | `ai.boss` |
 
 ## Quedas (drops)
 
@@ -95,6 +104,17 @@ Arenas fechadas usadas no protótipo e nos testes. Os cinco do protótipo usam `
 | Pátio dos Mortos (`encounter.dead_courtyard`) | `map.broken_gate` | 3 Guardas Esqueléticos nv9 + 1 Sacerdote Morto nv10 | Guerreiro, Clérigo (os testes trocam as classes) | 240 s |
 | Cavaleiro Espectral na Torre Quebrada (`encounter.spectral_knight`) | `map.broken_gate` | 1 Cavaleiro Espectral nv11 | Guerreiro, Arqueiro, Clérigo | 240 s |
 | O Vigia Sem Rosto (`encounter.faceless_watcher`) | `map.watcher_hall` | 1 Vigia nv15; a proteger: 3 Selos do Juramento | Guerreiro, Arqueiro, Mago, Clérigo | 480 s |
+| Bando de Afogados (`encounter.drowned_pack`) | `map.fields` | 3 Afogados nv16 | Guerreiro (os testes trocam a classe) | 120 s |
+| Par de Homens-lagarto (`encounter.marsh_lizardmen`) | `map.fields` | 2 Homens-lagarto nv17 | Guerreiro (os testes trocam a classe) | 120 s |
+| Serpentes do Charco (`encounter.marsh_serpents`) | `map.fields` | 2 Serpentes nv18 | Guerreiro (os testes trocam a classe) | 120 s |
+| Palafitas Assombradas (`encounter.marsh_mixed`) | `map.fields` | 1 Afogado nv16 + 1 Homem-lagarto nv17 | Guerreiro (os testes trocam a classe) | 120 s |
+| Bruxa do Brejo (`encounter.marsh_witch`) | `map.matriarch_nest` | 1 Bruxa nv20 | Guerreiro, Arqueiro, Clérigo | 360 s |
+| Mineiros no Desfiladeiro (`encounter.miner_gang`) | `map.fields` | 4 Mineiros Possuídos nv21, em fila | Guerreiro (os testes trocam a classe e a segunda classe) | 120 s |
+| Matilha da Montanha (`encounter.mountain_wolves`) | `map.fields` | 4 Lobos da Montanha nv22 | Guerreiro (os testes trocam a classe e a segunda classe) | 120 s |
+| Bando de Morcegos (`encounter.cave_bats`) | `map.fields` | 6 Morcegos das Cavernas nv22 | Guerreiro (os testes trocam a classe e a segunda classe) | 120 s |
+| Acampamento dos Mineiros (`encounter.miner_camp`) | `map.fields` | 4 Mineiros Possuídos + 4 Morcegos das Cavernas, nv21 | Guerreiro (os testes trocam a classe e a segunda classe) | 150 s |
+| Golem de Pedra na Boca das Minas (`encounter.stone_golem`) | `map.fields` | 1 Golem de Pedra nv25 | Guerreiro, Clérigo (os testes trocam as classes e as segundas classes) | 240 s |
+| O Capataz Forjado (`encounter.forged_overseer`) | `map.watcher_hall` (provisório até a Fundição da T-533) | 1 Capataz Forjado nv27 | Guerreiro, Arqueiro, Mago, Clérigo (os testes trocam as segundas classes) | 480 s |
 
 ## Monstros
 
@@ -295,10 +315,154 @@ Nível 15, **chefe**. Vida 45 000 no nível 1; no nível 15 = **234 000** (45 00
 
 Nível 15, normal. Vida 380 (2 508 no nível 15), velocidade 0, raio 0,6. Tag: seal. Não é inimigo: nasce pelo campo `objectives` do encontro, **do lado dos jogadores**, sem IA, e não se move nem é empurrado. Pode ser curado e receber escudo; não puxa aggro e não é revivido. **Se os três caem, a luta falha** (`EncounterFailed`). Sem sprite próprio ainda (T-345).
 
+### Afogado — `monster.drowned`
+
+Nível 16, normal. Vida 300, velocidade 2,6, raio 0,4. Tag: **undead** (recebe +25% do dano sagrado do Clérigo). Resistências: **sagrado −40%** (fraqueza). Design: `design/combat-encounters-v0.1.md` § Brejo dos Afogados.
+
+- **Habilidades:**
+  - Agarrão (`drowned.grab`): cone de 90° × 1,6 à frente, com aviso de 0,6 s; dano físico 26 e **Preso** (`status.snared`) por 1,5 s; recarga 6 s.
+  - Garra do Afogado (`drowned.claw`): dano físico 22, arco de 90°, alcance 1,4, recarga 1,8 s.
+- **IA:** `ai.brute`. Persegue até `approachRange` 1,5; fica parado até o próprio aviso resolver. `aggroRange` 14.
+- **Vida pelo nível de nascimento:** nv. 16 = 2100; nv. 20 (invocado pela Bruxa) = 2580.
+- **Onde aparece:** Brejo dos Afogados (mapa da T-530), em bandos de 3 a 4; invocado pela Bruxa do Brejo. Encontros de teste Bando de Afogados e Palafitas Assombradas.
+- **Arte:** sprite LPC da T-521.
+- **Quedas:** tabela normal.
+
+### Homem-lagarto do Brejo — `monster.marsh_lizardman`
+
+Nível 17, normal. Vida 440, velocidade 4,0, raio 0,4. Tags: humanoid, **amphibious** (não sente a água funda: as áreas `slow_terrain` do Brejo usam `ignoreTags = amphibious`). Design: `design/combat-encounters-v0.1.md` § Brejo dos Afogados.
+
+- **Habilidades:**
+  - Bote (`marsh_lizardman.lunge`): linha 4 × 1,2 com aviso de 0,6 s; avança e causa dano físico 40; recarga 6 s.
+  - Garra do Lagarto (`marsh_lizardman.slash`): dano físico 16, arco de 90°, alcance 1,5, recarga 1,4 s.
+- **IA:** `ai.brute`. O Bote sai sempre que o alvo está na linha, também colado nele. Persegue até `approachRange` 1,5. `aggroRange` 14.
+- **Vida pelo nível de nascimento:** nv. 17 = 3256.
+- **Onde aparece:** Brejo dos Afogados, em pares. Encontros de teste Par de Homens-lagarto e Palafitas Assombradas.
+- **Arte:** sprite LPC da T-521.
+- **Quedas:** tabela normal.
+
+### Serpente do Charco — `monster.marsh_serpent`
+
+Nível 18, normal. Vida 200, velocidade 3,0, raio 0,45. Tag: beast. Design: `design/combat-encounters-v0.1.md` § Brejo dos Afogados.
+
+- **Habilidades:**
+  - Cuspe Venenoso (`marsh_serpent.spit`): dano de natureza 5 num alvo inimigo a até 9 e **Veneno** (`status.poison`) por 1,5 s; recarga 2,8 s.
+  - Picada da Serpente (`marsh_serpent.bite`): dano físico 30, arco de 90°, alcance 1,4, recarga 1,6 s.
+- **IA:** `ai.ranged_kiter`. Distância preferida 6; recua de quem chega a menos de 3, usando só as instantâneas (as duas são). `aggroRange` 14.
+- **Vida pelo nível de nascimento:** nv. 18 = 1560.
+- **Onde aparece:** Charco Fundo, no Brejo, em pares. Encontro de teste Serpentes do Charco.
+- **Arte:** sprite da T-521.
+- **Quedas:** tabela normal.
+
+### Bruxa do Brejo — `monster.marsh_witch`
+
+Nível 20, **chefe** (chefe de campo). Vida 5500 (36 850 no nível 20), velocidade 3,2, raio 0,45. Tags: humanoid, boss. Design: `design/combat-encounters-v0.1.md` § Brejo dos Afogados.
+
+| Habilidade | Id | Resumo |
+|---|---|---|
+| Lodo que Puxa | `marsh_witch.pulling_mud` | conjuração de 1 s; cria o Lodo (`area.pulling_mud`, raio 4,5, 6 s, **preso a ela**): **Água Funda** (`status.deep_water`, velocidade × 0,6) por 0,5 s em todo inimigo dentro, a cada 0,25 s; recarga 14 s |
+| Chamar os Afogados | `marsh_witch.call_drowned` | conjuração de 1,5 s (interrompível); invoca 1 Afogado em raio 2,5 (máximo 2 vivos); recarga 20 s |
+| Poça Venenosa | `marsh_witch.poison_puddle` | aviso de 1 s; cria a Poça Venenosa (`area.witch_poison_puddle`, raio 2, 8 s, natureza 3,5 por segundo) a até 12; recarga 9 s |
+| Poça Venenosa Rápida | `marsh_witch.poison_puddle_fast` | a mesma poça, recarga 7 s |
+| Golpe de Cajado | `marsh_witch.staff_strike` | dano físico 8, arco de 100°, alcance 2, recarga 1,6 s |
+| Dardo do Brejo | `marsh_witch.hex_bolt` | dano de natureza 10 num alvo a até 10; recarga 2,2 s |
+| Dardo do Lodo | `marsh_witch.bog_bolt` | dano de natureza 10 num alvo a até 12; recarga 1,6 s |
+
+- **Fases** (`phases`):
+
+| Fase | Id | Vida | Ao entrar | Habilidades |
+|---|---|---|---|---|
+| Poças Venenosas | `phase.poison_puddles` | 100% | — | Poça Venenosa, Golpe de Cajado, Dardo do Brejo |
+| Chamado dos Afogados | `phase.drowned_call` | 66% | invoca 2 Afogados em raio 2,5 (máximo 3 vivos) | Chamar os Afogados, Poça Venenosa, Golpe de Cajado, Dardo do Brejo |
+| Lodo que Puxa | `phase.pulling_mud` | 33% | sem invocações (`noSummons`) | Lodo que Puxa, Poça Venenosa Rápida, Golpe de Cajado, Dardo do Lodo |
+
+- **IA:** `ai.boss`. `aggroRange` 40.
+- **Onde aparece:** Cabana da Bruxa, no Brejo (mapa da T-530; renasce em 10 min). Encontro de teste Bruxa do Brejo (nv. 20).
+- **Arte:** sprite LPC da T-521.
+- **Quedas:** tabela chefe.
+
+### Mineiro Possuído — `monster.possessed_miner`
+
+Nível 21, normal. Vida 320, velocidade 3,2, raio 0,4. Tag: humanoid. Design: `design/combat-encounters-v0.1.md` § Serra Partida.
+
+- **Habilidades:**
+  - Picaretada (`possessed_miner.pickaxe_blow`): cone de 70° × 1,8 à frente, com aviso de 0,8 s; dano físico 30 e **Atordoado** (`status.stunned`) por 1 s; recarga 7 s.
+  - Golpe de Picareta (`possessed_miner.pick_strike`): dano físico 14, arco de 90°, alcance 1,4, recarga 1,8 s.
+- **IA:** `ai.brute`. Persegue até `approachRange` 1,5; fica parado até o próprio aviso resolver. `aggroRange` 14.
+- **Vida pelo nível de nascimento:** nv. 21 = 2880.
+- **Onde aparece:** Serra Partida (mapa da T-532): Desfiladeiro, em grupos de 3 a 5, e Acampamento dos Mineiros, de 6 a 10. Minas Fundas (T-533), no nível 24 a 25, e invocado pelo Capataz Forjado, no nível dele (27: vida 3648). Encontros de teste Mineiros no Desfiladeiro e Acampamento dos Mineiros.
+- **Arte:** sprite LPC da T-521.
+- **Quedas:** tabela normal.
+
+### Lobo da Montanha — `monster.mountain_wolf`
+
+Nível 22, normal. Vida 260, velocidade 4,2, raio 0,4. Tag: beast. Design: `design/combat-encounters-v0.1.md` § Serra Partida.
+
+- **Habilidades:**
+  - Mordida do Lobo da Montanha (`mountain_wolf.bite`): dano físico 12, arco de 80°, alcance 1,3, recarga 1,4 s.
+  - Uivo da Montanha (`mountain_wolf.pack_fury`, `ai.rally`): **Fúria da Matilha** (`status.pack_aggression`: dano × 1,3, velocidade × 1,15) por 8 s; recarga 20 s.
+- **IA:** `ai.pack`, como o Lobo Cinzento (`focusSeconds` 4, `rallyWindowSeconds` 2). `aggroRange` 14.
+- **Vida pelo nível de nascimento:** nv. 22 = 2444.
+- **Onde aparece:** Serra Partida, em matilhas de 4 a 5; Minas Fundas (T-533), na rota opcional, no nível 26. Encontro de teste Matilha da Montanha.
+- **Arte:** o sprite do Lobo Cinzento com outra cor (T-521/T-540).
+- **Quedas:** tabela normal.
+
+### Morcego das Cavernas — `monster.cave_bat`
+
+Nível 22, normal. Vida 90, velocidade 4,4, raio 0,3. Tag: beast. Design: `design/combat-encounters-v0.1.md` § Serra Partida.
+
+- **Habilidades:**
+  - Mordida do Morcego (`cave_bat.bite`): dano físico 5, arco de 90°, alcance 1,1, recarga 1 s.
+- **IA:** `ai.swarm`, como o Rato (`ringRadius` 1,2, `retargetChance` 0,25). `aggroRange` 14.
+- **Vida pelo nível de nascimento:** nv. 21 = 810; nv. 22 = 846.
+- **Onde aparece:** Serra Partida (Ninho dos Morcegos e Acampamento dos Mineiros), em bandos de 5 a 6; Minas Fundas (T-533), no nível 24 a 25. Encontros de teste Bando de Morcegos e Acampamento dos Mineiros.
+- **Arte:** sprite da T-521.
+- **Quedas:** tabela normal.
+
+### Golem de Pedra — `monster.stone_golem`
+
+Nível 25, **elite**. Vida 1200 (12 720 no nível 25), velocidade 2,2, raio 0,7. Tag: construct. Resistências: **físico 0,3**, **arcano −0,3** (fraqueza). Design: `design/combat-encounters-v0.1.md` § Serra Partida.
+
+- **Habilidades** (na ordem de prioridade da IA):
+  - Rocha Rolante (`stone_golem.rolling_boulder`, `ai.ranged`): linha de 14 × 1,6 com aviso de 1,5 s; dano físico 80 em todo inimigo na linha (monstros não); recarga 10 s.
+  - Pisão de Pedra (`stone_golem.ground_slam`): círculo de raio 2,6 em volta dele, com aviso de 1,2 s; dano físico 45; recarga 9 s.
+  - Punho de Pedra (`stone_golem.stone_fist`): dano físico 20, arco de 100°, alcance 2, recarga 2 s.
+- **IA:** `ai.brute`. A Rocha é a primeira da lista e sai sempre que está pronta (o alcance de 14 cobre o alvo de perto e de longe); de longe, só ela alcança. Persegue até `approachRange` 2. `aggroRange` 14.
+- **Onde aparece:** Boca das Minas, na Serra Partida (mapa da T-532; renasce em 3 min); Minas Fundas (T-533), na rota opcional, no nível 26. Encontro de teste Golem de Pedra na Boca das Minas.
+- **Arte:** sprite da T-521.
+- **Quedas:** tabela elite.
+
+### Capataz Forjado — `monster.forged_overseer`
+
+Nível 27, **chefe** (chefe das Minas Fundas, masmorra para 4). Vida 70000 (616 000 no nível 27), velocidade 3,0, raio 0,9. Tags: construct, boss. Design: `design/combat-encounters-v0.1.md` § Minas Fundas.
+
+| Habilidade | Id | Resumo |
+|---|---|---|
+| Chamar a Equipe | `forged_overseer.call_crew` | conjuração de 2 s (interrompível); invoca 1 Mineiro Possuído em raio 2,5 (máximo 3 vivos); recarga 20 s |
+| Sopro da Fornalha | `forged_overseer.furnace_blast` | círculo de raio 30 em volta dele (a sala toda), sem aviso; dano de fogo 22 em todo inimigo; recarga 5 s |
+| Escória Ardente | `forged_overseer.slag_throw` | `ai.ranged`: só com o alvo a 3 tiles ou mais; dano de fogo 25 num alvo a até 14; recarga 2,5 s |
+| Martelo | `forged_overseer.hammer` | cone de 100° × 3,5 à frente, com aviso de 1 s; dano físico 90; recarga 9 s |
+| Martelo Acelerado | `forged_overseer.hammer_fast` | o mesmo Martelo, recarga 6 s |
+| Punho de Ferro | `forged_overseer.iron_fist` | dano físico 62, arco de 100°, alcance 2,4, recarga 1,6 s |
+
+- **Fases** (`phases`):
+
+| Fase | Id | Vida | Ao entrar | Habilidades |
+|---|---|---|---|---|
+| Martelo | `phase.hammer` | 100% | — | Escória Ardente, Martelo, Punho de Ferro |
+| Fornalha | `phase.furnace` | 60% | **Fornalha Esquentando** (`status.overseer_heat`, 190 s); quando acaba, **Fornalha Transbordando** (`status.overseer_meltdown`: dano × 4 até o fim) | Sopro da Fornalha, Escória Ardente, Martelo, Punho de Ferro |
+| Chamar a Equipe | `phase.call_the_crew` | 30% | invoca 2 Mineiros Possuídos em raio 2,5 (máximo 3 vivos); **Fornalha Acesa** (`status.overseer_overdrive`: velocidade × 1,3, dano × 1,15, até o fim) | Chamar a Equipe, Sopro da Fornalha, Escória Ardente, Martelo Acelerado, Punho de Ferro |
+
+- **IA:** `ai.boss`. `aggroRange` 40, `approachRange` 2,4, **`meleeTargetRange` 3,5**: entre os da tabela de ameaça a até 3,5 tiles, bate no de maior ameaça; sem ninguém perto, segue a tabela (T-512).
+- **Onde aparece:** Fundição, no fundo das Minas Fundas (mapa da T-533). Encontro de teste O Capataz Forjado (nv. 27).
+- **Arte:** não tem corpo no gerador LPC; a T-521 resolve (encomenda ou pacote).
+- **Quedas:** tabela chefe.
+
 ## Pontos em aberto nos dados
 
 - O campo `level` de cada monstro (ex.: Guarda Esquelético 9, Aranha Menor 5) só vale quando o local de nascimento não define nível; nas zonas atuais o nível vem do ponto de nascimento e, nas invocações, de quem invoca.
 - Elite não tem crescimento próprio (`rules.monsters.elite` ausente): usa o crescimento normal.
+- A Poça Venenosa da Bruxa não aplica o estado Veneno (só dano de natureza na área), ao contrário da Poça de Veneno da Matriarca (T-510, balance-v0.24).
 - O Frenesi dura 3600 s (`defaultDuration`), o que na prática cobre o resto da luta.
 - A Teia Sufocante não tem `telegraph` (aviso), ao contrário das Poças de Veneno.
 - `ringRadius` e `retargetChance` do Rato têm o significado descrito no código da IA (`src/Game.Core/Combat/Ai/Profiles`), não no esquema de dados.

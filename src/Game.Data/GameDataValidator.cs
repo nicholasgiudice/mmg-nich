@@ -49,7 +49,7 @@ internal static partial class GameDataValidator
         var arenaDefs = c.Arenas.GroupBy(a => a.Value.Id).ToDictionary(g => g.Key, g => g.First().Value, StringComparer.Ordinal);
         foreach (var e in c.Arenas.Where(a => a.Value.Source is not null))
         {
-            ValidateMapReferences(e, monsters, zones, arenaDefs, errors);
+            ValidateMapReferences(e, monsters, statuses, zones, arenaDefs, errors);
         }
     }
 
@@ -61,6 +61,7 @@ internal static partial class GameDataValidator
     private static void ValidateMapReferences(
         Entry<ArenaDefinition> e,
         HashSet<string> monsters,
+        HashSet<string> statuses,
         Dictionary<string, ZoneDefinition> zones,
         Dictionary<string, ArenaDefinition> arenas,
         List<LoadError> errors)
@@ -71,6 +72,15 @@ internal static partial class GameDataValidator
             if (!monsters.Contains(s.Monster!))
             {
                 errors.Add(new LoadError(e.File, $"layers[spawns].objects[{s.Name}]", $"Monstro desconhecido: '{s.Monster}'."));
+            }
+        }
+
+        // T-502: o estado de uma área slow_terrain existe.
+        foreach (var a in x.Areas.Where(a => a.Kind == Game.Core.Spatial.TerrainArea.SlowTerrainClass))
+        {
+            if (a.Properties.GetValueOrDefault(Game.Core.Spatial.TerrainArea.StatusProperty) is { Length: > 0 } status && !statuses.Contains(status))
+            {
+                errors.Add(new LoadError(e.File, $"layers[areas].objects[{a.Name}]", $"Estado desconhecido: '{status}'."));
             }
         }
 

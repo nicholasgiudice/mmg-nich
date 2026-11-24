@@ -25,6 +25,9 @@ public sealed record BatchSummary
 
     /// <summary>T-408: dano recebido por classe do jogador, média por execução.</summary>
     public IReadOnlyDictionary<string, double> DamageTakenByClass { get; init; } = new Dictionary<string, double>();
+
+    /// <summary>T-512: dano recebido pelos jogadores por id da fonte (habilidade ou estado), média por execução.</summary>
+    public IReadOnlyDictionary<string, double> DamageTakenBySource { get; init; } = new Dictionary<string, double>();
     public double DamageDealt { get; init; }
     public double Healing { get; init; }
     public double Overheal { get; init; }
@@ -94,6 +97,15 @@ public static class Batch
             }
         }
 
+        var takenBySource = new SortedDictionary<string, double>(StringComparer.Ordinal);
+        foreach (var r in results)
+        {
+            foreach (var (source, amount) in r.DamageTakenBySource)
+            {
+                takenBySource[source] = takenBySource.GetValueOrDefault(source) + (amount / n);
+            }
+        }
+
         return new BatchSummary
         {
             Encounter = spec.EncounterId,
@@ -109,6 +121,7 @@ public static class Batch
             TimeToWinP90 = Percentile(wins, 0.90),
             DamageTaken = Avg(r => r.DamageTaken),
             DamageTakenByClass = takenByClass,
+            DamageTakenBySource = takenBySource,
             DamageDealt = Avg(r => r.DamageDealt),
             Healing = Avg(r => r.Healing),
             Overheal = Avg(r => r.Overheal),
