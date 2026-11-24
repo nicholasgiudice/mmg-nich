@@ -6,6 +6,7 @@
     { "id": "zone.lower_forest", "name": "Floresta Baixa", "arena": "map.lower_forest", "kind": "field", "corpse": 10, "levels": { "min": 5, "max": 8 } },
     { "id": "zone.matriarch_lair", "name": "Covil da Matriarca", "arena": "map.matriarch_lair", "kind": "field", "corpse": 30, "levels": { "min": 8, "max": 8 } },
     { "id": "zone.old_road_ruins", "name": "Ruínas da Estrada Antiga", "arena": "map.old_road_ruins", "kind": "field", "corpse": 10, "levels": { "min": 9, "max": 11 } },
+    { "id": "zone.drowned_marsh", "name": "Brejo dos Afogados", "arena": "map.drowned_marsh", "kind": "field", "corpse": 10, "levels": { "min": 16, "max": 20 } },
     { "id": "zone.test_instance", "name": "Covil de Teste (instância)", "arena": "map.matriarch_lair", "kind": "instance", "corpse": 30, "levels": { "min": 8, "max": 8 }, "maxPlayers": 4, "emptyTimeout": 300, "outsiderTimeout": 30 },
     { "id": "zone.watcher_crypt", "name": "Cripta do Vigia", "arena": "map.watcher_crypt", "kind": "instance", "corpse": 30, "levels": { "min": 12, "max": 15 }, "maxPlayers": 4, "emptyTimeout": 300, "outsiderTimeout": 30 }
   ]
