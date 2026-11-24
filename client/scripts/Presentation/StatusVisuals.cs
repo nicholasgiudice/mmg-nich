@@ -37,6 +37,9 @@ public static class StatusVisuals
     private static readonly Color Mark = new(1.00f, 0.55f, 0.15f);
     private static readonly Color Poison = new(0.55f, 0.90f, 0.25f);
 
+    /// <summary>T-540: estado do terreno (Água Funda): azul-água, para não parecer um golpe de monstro.</summary>
+    public static readonly Color Terrain = new(0.42f, 0.77f, 0.91f);
+
     public static (IReadOnlyList<StatusChip> Chips, ControlMarks Marks) From(StatusEffects? effects, ContentCatalog content, double now)
     {
         if (effects is null || effects.Active.Count == 0)
@@ -71,7 +74,8 @@ public static class StatusVisuals
                 continue;
             }
 
-            var color = tags.Contains("control") ? Control
+            var color = tags.Contains("terrain") ? Terrain
+                : tags.Contains("control") ? Control
                 : tags.Contains("poison") ? Poison
                 : tags.Contains("mark") ? Mark
                 : tags.Contains("buff") ? Buff

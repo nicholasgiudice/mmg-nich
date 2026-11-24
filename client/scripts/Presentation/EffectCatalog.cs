@@ -80,6 +80,9 @@ public enum AuraKind
 
     /// <summary>T-444, Sifão Arcano: anel nos pés e gotas subindo (a Mana sobe mais rápido).</summary>
     Mana,
+
+    /// <summary>T-540, Água Funda (<c>status.deep_water</c>): ondas abrindo nos pés e respingos, enquanto o personagem está na água.</summary>
+    Ripple,
 }
 
 /// <summary>Formato dos sinais de <see cref="AuraKind.Motes"/> (T-424).</summary>

@@ -121,6 +121,10 @@ public partial class AreaView : Node2D
                 DrawCloud(r, color, a);
                 break;
 
+            case Kind.Mud:
+                DrawMud(r, color, a);
+                break;
+
             case Kind.None:
                 break;
 
@@ -251,6 +255,39 @@ public partial class AreaView : Node2D
         }
     }
 
+    /// <summary>
+    /// T-540, Lodo que Puxa da Bruxa do Brejo: lama marrom em volta dela, com braços em espiral girando para dentro (o lodo
+    /// puxa) e bolhas estourando. A área acompanha a Bruxa; quem está dentro entra na Água Funda.
+    /// </summary>
+    private void DrawMud(float r, Color color, float a)
+    {
+        DrawCircle(Vector2.Zero, r, new Color(color.Darkened(0.35f), 0.42f * a));
+        DrawCircle(Vector2.Zero, r * 0.62f, new Color(color.Darkened(0.5f), 0.30f * a));
+        var t = (float)_time;
+        const int arms = 3;
+        for (var arm = 0; arm < arms; arm++)
+        {
+            var points = new Vector2[14];
+            for (var i = 0; i < points.Length; i++)
+            {
+                var k = i / (points.Length - 1f);
+                // Espiral que fecha em direção ao centro, girando no sentido de puxar.
+                var angle = (arm * Mathf.Tau / arms) + (k * 2.2f) - (t * 0.9f);
+                points[i] = Vector2.FromAngle(angle) * r * (1f - (k * 0.85f));
+            }
+
+            DrawPolyline(points, new Color(0.12f, 0.08f, 0.03f, 0.7f * a), 6f);
+            DrawPolyline(points, new Color(color.Lightened(0.25f), 0.95f * a), 3.5f);
+        }
+
+        for (var i = 0; i < 6; i++)
+        {
+            var phase = ((t * 0.5f) + (i / 6f)) % 1f;
+            var at = Vector2.FromAngle((i * 2.4f) + _seed) * r * (0.25f + (0.6f * ((i * 0.37f) % 1f)));
+            DrawCircle(at, 2f + (3f * phase), new Color(color.Lightened(0.5f), 0.7f * (1f - phase) * a));
+        }
+    }
+
     private void DrawDashedRing(float r, Color color)
     {
         const int dashes = 16;
@@ -275,6 +312,9 @@ public partial class AreaView : Node2D
         /// <summary>Gás no chão (T-434, Nuvem Tóxica).</summary>
         Cloud,
 
+        /// <summary>T-540: lama que puxa (Lodo que Puxa da Bruxa do Brejo).</summary>
+        Mud,
+
         /// <summary>Não desenha nada, nem o contorno: área que acompanha outra no mesmo lugar (a cura da Consagração, T-424; o veneno da Nuvem Tóxica, T-434).</summary>
         Hidden,
     }
@@ -283,6 +323,8 @@ public partial class AreaView : Node2D
     {
         "area.venom_pool" => (new Color(0.45f, 0.85f, 0.25f), Kind.Pool),
         "area.sticky_web" => (new Color(0.92f, 0.92f, 0.85f), Kind.Web),
+        "area.witch_poison_puddle" => (new Color(0.50f, 0.88f, 0.30f), Kind.Pool),
+        "area.pulling_mud" => (new Color(0.52f, 0.38f, 0.20f), Kind.Mud),
         "area.containment_trap" => (new Color(0.95f, 0.75f, 0.30f), Kind.Trap),
         _ when areaId.StartsWith("area.toxic_cloud_venom", StringComparison.Ordinal) => (Colors.Transparent, Kind.Hidden),
         _ when areaId.StartsWith("area.toxic_cloud", StringComparison.Ordinal) => (new Color(0.62f, 0.86f, 0.18f), Kind.Cloud),

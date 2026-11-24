@@ -39,6 +39,7 @@
     <Compile Include="..\..\client\scripts\Hud\SecondClassText.cs" Link="Client\SecondClassText.cs" />
     <Compile Include="..\..\client\scripts\Hud\ClassMasters.cs" Link="Client\ClassMasters.cs" />
     <Compile Include="..\..\client\scripts\Match\DeathDestination.cs" Link="Client\DeathDestination.cs" />
+    <Compile Include="..\..\client\scripts\Hud\FieldBossText.cs" Link="Client\FieldBossText.cs" />
   </ItemGroup>
 
   <ItemGroup>

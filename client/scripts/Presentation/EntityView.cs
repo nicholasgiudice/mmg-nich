@@ -684,6 +684,36 @@ public partial class EntityView : Node2D
                         HorizontalAlignment.Center, d * 2, 12, Colors.White);
                     break;
 
+                case AuraKind.Ripple when !front:
+                    // T-540, Água Funda: poça azul nos pés com duas ondas abrindo, uma atrás da outra (contorno escuro por baixo,
+                    // para ler sobre a grama), e some junto com o estado.
+                    DrawSetTransform(Godot.Vector2.Zero, 0, new Godot.Vector2(1, 0.45f));
+                    DrawCircle(Godot.Vector2.Zero, _radiusPx * 1.35f, new Color(aura.Color.Darkened(0.35f), 0.40f));
+                    for (var i = 0; i < 2; i++)
+                    {
+                        var k = (t * 0.9f + (i * 0.5f)) % 1f;
+                        var wave = _radiusPx * (0.8f + (1.6f * k));
+                        DrawArc(Godot.Vector2.Zero, wave, 0, Mathf.Tau, 32, new Color(0.04f, 0.15f, 0.25f, 0.8f * (1f - k)), 5f);
+                        DrawArc(Godot.Vector2.Zero, wave, 0, Mathf.Tau, 32, new Color(aura.Color.Lightened(0.25f), 1f - (k * 0.7f)), 3f);
+                    }
+
+                    DrawSetTransform(Godot.Vector2.Zero, 0, Godot.Vector2.One);
+                    break;
+
+                case AuraKind.Ripple when front:
+                    // Respingos subindo dos pés (por cima do sprite, para a água ler mesmo atrás das pernas).
+                    for (var i = 0; i < 5; i++)
+                    {
+                        var k = (t * 1.1f + (i / 5f)) % 1f;
+                        var x = Mathf.Sin((i * 2.1f) + 1f) * _radiusPx * 1.0f;
+                        var y = -k * _radiusPx * 1.3f;
+                        var size = 3f * (1f - (k * 0.5f));
+                        DrawCircle(new Godot.Vector2(x, y), size + 1f, new Color(0.04f, 0.15f, 0.25f, 0.8f * (1f - k)));
+                        DrawCircle(new Godot.Vector2(x, y), size, new Color(aura.Color.Lightened(0.5f), 1f - k));
+                    }
+
+                    break;
+
                 case AuraKind.Mana when !front:
                     var manaPulse = 0.5f + 0.5f * Mathf.Sin(t * 5f);
                     DrawSetTransform(Godot.Vector2.Zero, 0, new Godot.Vector2(1, 0.5f));

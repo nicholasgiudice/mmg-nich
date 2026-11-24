@@ -28,7 +28,7 @@ public sealed class LocalAuthority : IGameAuthority, ICombatLogSource
         _world = world;
         _beforeStep = beforeStep;
         ControlledEntity = controlledEntity;
-        _log = new CombatLogRecorder(viewer: controlledEntity);
+        _log = new CombatLogRecorder(MmoRpgClient.Hud.FieldBossText.Formatters(), viewer: controlledEntity);
         Latest = world.Snapshot(SnapshotScope.Replicated);
     }
 
