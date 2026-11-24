@@ -595,6 +595,9 @@ public partial class Hud : Control
         }
     }
 
+    /// <summary>T-541: o mestre das classes abre a tela de habilidades, na escolha da segunda classe ou na aba da classe base.</summary>
+    public void OpenSkills(bool secondClassTab) => _skills.OpenOnTab(secondClassTab);
+
     /// <summary>NPC da loja aberta (T-323); null = nenhuma.</summary>
     public EntityId? ShopNpc => _shop.Npc;
 

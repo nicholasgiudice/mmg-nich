@@ -3,7 +3,10 @@ namespace Game.Core.Definitions;
 /// <summary>Tipo de zona aberta (T-214).</summary>
 public enum ZoneKind
 {
-    /// <summary>Cidade: sem monstros, regenera mais rápido; onde o personagem nasce e renasce.</summary>
+    /// <summary>
+    /// Cidade (e o Forte do Passo): sem monstros, regenera mais rápido; onde o personagem nasce e renasce (T-501:
+    /// <see cref="ZoneDefinition.Respawn"/> diz qual).
+    /// </summary>
     Safe,
 
     /// <summary>Área externa com monstros que renascem; nunca termina.</summary>
@@ -35,6 +38,12 @@ public sealed record ZoneDefinition
     /// <c>player_spawn</c> chamado <c>spawn</c>.
     /// </summary>
     public PositionDefinition Spawn { get; init; } = new(0, 0);
+
+    /// <summary>
+    /// T-501: zona segura onde renasce quem morre aqui (vai para o <see cref="Spawn"/> dela). Null = a zona inicial do
+    /// servidor (a Cidade). Vale também para as instâncias. Só em zona que não é segura.
+    /// </summary>
+    public string? Respawn { get; init; }
 
     /// <summary>Fração da vida e da Mana máximas recuperada por segundo (descanso; só zona segura). 0 = nada.</summary>
     public double RestPerSecond { get; init; }

@@ -37,6 +37,8 @@
     <Compile Include="..\..\client\scripts\Hud\MiniMapView.cs" Link="Client\MiniMapView.cs" />
     <Compile Include="..\..\client\scripts\Match\DevToolText.cs" Link="Client\DevToolText.cs" />
     <Compile Include="..\..\client\scripts\Hud\SecondClassText.cs" Link="Client\SecondClassText.cs" />
+    <Compile Include="..\..\client\scripts\Hud\ClassMasters.cs" Link="Client\ClassMasters.cs" />
+    <Compile Include="..\..\client\scripts\Match\DeathDestination.cs" Link="Client\DeathDestination.cs" />
   </ItemGroup>
 
   <ItemGroup>
