@@ -29,7 +29,7 @@ public class ForestZoneDesignTests(ITestOutputHelper output)
     private static readonly Lazy<IReadOnlyList<FieldGroup>> AllGroups = new(() => FieldGroups.Of(Zone));
 
     /// <summary>Um grupo por composição.</summary>
-    private static IReadOnlyList<FieldGroup> Typical => AllGroups.Value.GroupBy(g => g.Key).Select(g => g.First()).ToList();
+    internal static IReadOnlyList<FieldGroup> Typical => AllGroups.Value.GroupBy(g => g.Key).Select(g => g.First()).ToList();
 
     public static TheoryData<string, string> GroupsAndClasses()
     {
@@ -94,7 +94,7 @@ public class ForestZoneDesignTests(ITestOutputHelper output)
     private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, Lazy<BatchSummary>> Cache = new();
 
     /// <summary>Lote do perfil esperado do nível do grupo, sozinho.</summary>
-    private static BatchSummary Run(FieldGroup group, string cls) =>
+    internal static BatchSummary Run(FieldGroup group, string cls) =>
         Cache.GetOrAdd($"{group.Key}|{cls}", _ => new Lazy<BatchSummary>(() =>
         {
             var (content, encounter) = FieldGroups.Encounter(group, [cls]);

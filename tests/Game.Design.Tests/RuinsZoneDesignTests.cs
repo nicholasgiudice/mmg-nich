@@ -39,7 +39,7 @@ public class RuinsZoneDesignTests(ITestOutputHelper output)
     private static readonly Lazy<IReadOnlyList<FieldGroup>> AllGroups = new(() => FieldGroups.Of(Zone));
 
     /// <summary>Um grupo por composição.</summary>
-    private static IReadOnlyList<FieldGroup> Typical => AllGroups.Value.GroupBy(g => g.Key).Select(g => g.First()).ToList();
+    internal static IReadOnlyList<FieldGroup> Typical => AllGroups.Value.GroupBy(g => g.Key).Select(g => g.First()).ToList();
 
     /// <summary>Grupos feitos para caçar sozinho (fora do Pátio e da Torre).</summary>
     private static IEnumerable<FieldGroup> SoloGroups(IEnumerable<FieldGroup> groups) => groups.Where(g => g.Area is not Courtyard and not Tower);
@@ -170,7 +170,7 @@ public class RuinsZoneDesignTests(ITestOutputHelper output)
     private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, Lazy<BatchSummary>> Cache = new();
 
     /// <summary>Lote do perfil esperado do nível do grupo (as classes, na ordem; a primeira dá a estratégia base).</summary>
-    private static BatchSummary Run(FieldGroup group, params string[] classes) =>
+    internal static BatchSummary Run(FieldGroup group, params string[] classes) =>
         Cache.GetOrAdd($"{group.Key}|{string.Join(",", classes)}", _ => new Lazy<BatchSummary>(() =>
         {
             // O Pátio usa o limite do encontro da T-341 (240 s): sozinho, o Clérigo vence devagar.

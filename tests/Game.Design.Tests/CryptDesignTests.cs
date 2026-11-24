@@ -127,7 +127,7 @@ public class CryptDesignTests(ITestOutputHelper output)
 
     private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, Lazy<BatchSummary>> Cache = new();
 
-    private static BatchSummary Room(FieldGroup group) =>
+    internal static BatchSummary Room(FieldGroup group) =>
         Cache.GetOrAdd(group.Key, _ => new Lazy<BatchSummary>(() =>
         {
             var (content, encounter) = FieldGroups.Encounter(group, Party, 180);
@@ -144,7 +144,7 @@ public class CryptDesignTests(ITestOutputHelper output)
         })).Value;
 
     /// <summary>O Vigia da T-351 na Sala do Vigia do mapa, com a estratégia correta e raros (como <see cref="WatcherDesignTests"/>).</summary>
-    private static BatchSummary Boss(int level) =>
+    internal static BatchSummary Boss(int level) =>
         Cache.GetOrAdd($"boss|{level}", _ => new Lazy<BatchSummary>(() =>
         {
             var options = new Dictionary<string, string>(Options)
