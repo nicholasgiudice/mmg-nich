@@ -33,7 +33,16 @@ Hoje, clicar num NPC sem loja só mostra "não tenho nada para vender" (`Main.Ta
 
 ## Resultado
 
-**Estado: parcial.** Requisitos 1 e 2 (mestre das classes) prontos e verificados no jogo. **Pendente: requisito 3 (tela de morte com o destino)**, que depende do campo `respawn` por zona da T-501 (ainda em outra sessão); fazer depois de rebasear na T-501. O critério "morrer na Cidade/Brejo/Serra" e a aprovação do designer (requisito 4) também ficam para essa segunda parte.
+**Estado: completo, falta a aprovação do designer (requisito 4).** Esta branch contém a T-501 (merge de `task/T-501-renascer-no-ponto-seguro`, `5cfb185`) e entra na `main` depois dela. Os requisitos 1 e 2 (mestre) e 3 (tela de morte) estão prontos e verificados no jogo.
+
+### Tela de morte (requisito 3)
+
+- `client/scripts/Match/DeathDestination.cs` (novo): o destino é `ZoneDefinition.Respawn` da zona em que o personagem morreu, ou a Cidade (`zone.city`, a zona inicial padrão) quando a zona não tem o campo. O cliente já tem esses dados (`ContentCatalog.Zones`); o protocolo não mudou.
+- `DeathScreen.Open(zona, destino)` e `ZoneScreen.SetDeath(..., destino)`: o botão vira "Retornar à Cidade" ou "Retornar ao Forte do Passo", e a nota de baixo ("Você volta à Cidade com vida e Mana cheias...") acompanha. `Main.UpdateDeath` calcula o destino.
+- O artigo certo ("à Cidade", "ao Forte do Passo") vem de uma tabela por id de zona em `DeathDestination` (`zone.city`, `zone.pass_fort`); uma zona segura fora da tabela sai "Retornar para {nome}". Uma zona nova de renascimento pede uma linha na tabela.
+- Decisão: o cliente não sabe do `--start-zone` do servidor; zona sem `respawn` mostra a Cidade, o padrão. Só importa em servidor de teste com outra zona inicial.
+- Testes: `tests/Game.Client.Tests/DeathDestinationTests.cs` (sem `respawn` → Cidade; com `respawn` → Forte; zona fora da tabela; zona desconhecida).
+- No jogo, com uma zona de teste (`data/zones.json` editado só durante o teste e revertido: `zone.pass_fort` como cópia da Cidade e `respawn` nos Campos da Vigília), usando `--death-sample`: `tasks/reports/T-541/morte-cidade.png` ("Retornar à Cidade", morte na Cidade) e `tasks/reports/T-541/morte-campos-forte.png` (morte nos Campos, "Retornar ao Forte do Passo" e a nota com o Forte). Não foi possível mostrar a Serra: ela só existe depois da T-532.
 
 ### O que foi feito (mestre)
 
@@ -57,7 +66,7 @@ O mestre do Forte não foi testado no jogo (o NPC ainda não existe no mapa; ent
 
 ### Verificação
 
-`dotnet format` limpo, `dotnet build -warnaserror` sem avisos, e `./scripts/check.sh` completo: todos os projetos passam, menos `Game.Design.Tests` com **4 falhas em 304** (43 min, máquina disputada por outras sessões). São as mesmas 4 já registradas na T-500, que existiam na `main` antes desta tarefa (Vigia sem o Clérigo, Cripta 71%, Guardião 10% e 6%); esta tarefa só mexe no cliente e não toca o Core.
+`dotnet format` limpo, `dotnet build -warnaserror` sem avisos, e `./scripts/check.sh` completo (depois do merge da T-501, 14 min): todos os projetos passam, menos `Game.Design.Tests` com **4 falhas em 304** (43 min na primeira rodada, 15 na segunda; a máquina é disputada por outras sessões). São as mesmas 4 já registradas na T-500, que existiam na `main` antes desta tarefa (Vigia sem o Clérigo, Cripta 71%, Guardião 10% e 6%); esta tarefa só mexe no cliente e não toca o Core.
 
 ### Para o designer aprovar
 
@@ -70,5 +79,5 @@ Servidor: `dotnet run --project src/Game.Server -- --world --dev-login --dev-too
 
 ### Pendente
 
-- Requisito 3 (tela de morte lê `respawn` da zona, T-501): `client/scripts/Match/DeathScreen.cs` e `Main` (`UpdateDeath`), depois da T-501.
-- Requisito 4: aprovação do designer.
+- Requisito 4: aprovação do designer no jogo.
+- Quando a T-531 criar `zone.pass_fort`, conferir morrendo de verdade na Serra (T-532): o botão deve dizer "Retornar ao Forte do Passo".

@@ -9,8 +9,8 @@ namespace MmoRpgClient.Match;
 
 /// <summary>
 /// Tela de morte do mundo aberto (T-397): a tela escurece e perde a cor aos poucos e, no centro, uma janela de pedra e ouro
-/// com o emblema, "Você morreu", a zona, o golpe final, o resumo de dano e o botão "Retornar à Cidade". O renascimento é
-/// do servidor (<c>RespawnRequest</c>); a tela só mostra e pede.
+/// com o emblema, "Você morreu", a zona, o golpe final, o resumo de dano e o botão com o destino ("Retornar à Cidade",
+/// "Retornar ao Forte do Passo": T-541, do <c>respawn</c> da zona). O renascimento é do servidor (<c>RespawnRequest</c>); a tela só mostra e pede.
 /// </summary>
 public partial class DeathScreen : Control
 {
@@ -35,6 +35,13 @@ public partial class DeathScreen : Control
     private readonly Label _killer = new() { HorizontalAlignment = HorizontalAlignment.Center };
     private readonly RichTextLabel _summary = new();
     private readonly Button _respawn = new() { Text = "Retornar à Cidade" };
+    private readonly Label _note = new()
+    {
+        HorizontalAlignment = HorizontalAlignment.Center,
+        AutowrapMode = TextServer.AutowrapMode.WordSmart,
+        CustomMinimumSize = new Vector2(380, 0),
+        Modulate = new Color(1, 1, 1, 0.8f),
+    };
     private ShaderMaterial? _grayMaterial;
     private double _shownFor = -1;
 
@@ -120,16 +127,9 @@ public partial class DeathScreen : Control
         _summary.AddThemeFontSizeOverride("bold_font_size", 13);
         box.AddChild(_summary);
 
-        var note = new Label
-        {
-            Text = "Você volta à Cidade com vida e Mana cheias. Nada é perdido.",
-            HorizontalAlignment = HorizontalAlignment.Center,
-            AutowrapMode = TextServer.AutowrapMode.WordSmart,
-            CustomMinimumSize = new Vector2(380, 0),
-            Modulate = new Color(1, 1, 1, 0.8f),
-        };
-        note.AddThemeFontSizeOverride("font_size", 12);
-        box.AddChild(note);
+        _note.Text = DeathDestination.Note("à Cidade");
+        _note.AddThemeFontSizeOverride("font_size", 12);
+        box.AddChild(_note);
 
         HudTheme.StoneButton(_respawn);
         _respawn.FocusMode = FocusModeEnum.None;
@@ -140,14 +140,19 @@ public partial class DeathScreen : Control
         box.AddChild(_respawn);
     }
 
-    /// <summary>Abre a tela (a morte acabou de acontecer); o resumo chega depois por <see cref="SetSummary"/>.</summary>
-    public void Open(string zoneName)
+    /// <summary>
+    /// Abre a tela (a morte acabou de acontecer); o resumo chega depois por <see cref="SetSummary"/>. <paramref name="destination"/>
+    /// é o destino com o artigo ("à Cidade", "ao Forte do Passo"; ver <see cref="DeathDestination"/>).
+    /// </summary>
+    public void Open(string zoneName, string destination = "à Cidade")
     {
         if (Visible)
         {
             return;
         }
 
+        _respawn.Text = DeathDestination.Button(destination);
+        _note.Text = DeathDestination.Note(destination);
         _zone.Text = $"em {zoneName}";
         _killer.Text = "";
         _killer.Visible = false;

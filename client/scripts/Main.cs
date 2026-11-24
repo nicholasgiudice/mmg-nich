@@ -30,7 +30,7 @@ namespace MmoRpgClient;
 /// imprime as respostas da autoridade; também <c>spend:str</c>, <c>raise:habilidade</c> e <c>reset_points</c>, os botões das
 /// telas de personagem e de habilidades, T-221; <c>equip:n</c>, <c>unequip:weapon</c>, <c>drop:n</c> e <c>pickup</c>, T-222; mouse na interface: <c>click:x;y</c>, <c>hover:x;y</c>, <c>drag:x1;y1;x2;y2</c>..., T-082) e <c>--capture=caminho.png</c> (salva a tela e fecha; após 2 s, ou
 /// <c>--capture-after=segundos</c>, ou ao fim do demo; com <c>--capture-every=segundos</c>, uma série até <c>--capture-after</c>, T-345). <c>--circles</c> desenha as unidades como círculos, sem sprites (T-053).
-/// Mundo aberto (T-223): <c>--auto-respawn=segundos</c> aperta "Retornar à Cidade" sozinho depois de morrer.
+/// Mundo aberto (T-223): <c>--auto-respawn=segundos</c> aperta o botão de retornar (T-541: Cidade ou Forte) sozinho depois de morrer.
 /// <c>--death-sample</c> (T-397): mostra a tela de morte com um resumo de exemplo ao entrar na zona, sem morrer (prévia).
 /// Capturas (T-345): <c>--enemy-level=n</c> põe todos os inimigos e objetivos do encontro local no nível n, e
 /// <c>--enemy-health=f</c> faz os inimigos começarem com a fração f da vida.
@@ -811,7 +811,7 @@ public partial class Main : Node2D
         {
             if (!_zoneScreen.DeathVisible)
             {
-                _zoneScreen.SetDeath(true, _zone.Name);
+                _zoneScreen.SetDeath(true, _zone.Name, DeathDestination.Phrase(DeathDestination.ZoneId(_zone), _content.Zones));
                 _zoneScreen.Death.SetSummary(DeathSample.Summary(me));
             }
 
@@ -824,7 +824,7 @@ public partial class Main : Node2D
             GD.Print($"[zone] morto em {_zone.Id}");
         }
 
-        _zoneScreen.SetDeath(dead && !_respawnSent, _zone.Name);
+        _zoneScreen.SetDeath(dead && !_respawnSent, _zone.Name, DeathDestination.Phrase(DeathDestination.ZoneId(_zone), _content.Zones));
         if (dead && !_respawnSent && _args.TryGetValue("auto-respawn", out var wait)
             && double.TryParse(wait, System.Globalization.CultureInfo.InvariantCulture, out var seconds) && _elapsed - _diedAt >= seconds)
         {
