@@ -40,6 +40,19 @@ public sealed class Describe
             return s.Name;
         }
 
+        // T-432: o status que é trocado pelo do NH de outra habilidade (Veneno do Caçador).
+        if (s.ByRank is { } byRank && _db.Abilities.TryGetValue(byRank.Ability, out var by))
+        {
+            return $"{s.Name} (pelo NH de {by.Name})";
+        }
+
+        // T-441: variantes de um grupo exclusivo (Queimadura) se distinguem pela força.
+        if (s.Exclusive is { } ex && same.All(x => x.Exclusive?.Group == ex.Group || x.ByRank is not null)
+            && same.Count(x => x.Exclusive?.Tier == ex.Tier) == 1)
+        {
+            return $"{s.Name} (força {ex.Tier})";
+        }
+
         var labels = same.ToDictionary(x => x.Id, SourceLabel, StringComparer.Ordinal);
         var mine = labels[s.Id];
         return mine.Length > 0 && labels.Values.Count(l => l == mine) == 1
@@ -60,8 +73,25 @@ public sealed class Describe
             .Where(x => x.Length > 0)
             .Distinct());
 
-    /// <summary>Áreas não têm nome nos dados: usa o nome da habilidade que a cria (ou o id).</summary>
+    /// <summary>
+    /// Áreas não têm nome nos dados: usa o nome da habilidade que a cria. Duas áreas da mesma habilidade (Consagração: uma
+    /// fere, outra cura) se distinguem por quem afetam.
+    /// </summary>
     public string AreaLabel(string id)
+    {
+        var label = RawAreaLabel(id);
+        if (!_db.Areas.TryGetValue(id, out var area))
+        {
+            return label;
+        }
+
+        var twins = _db.Areas.Values.Where(a => a.Id != id && _usage.IsAreaUsed(a.Id) && RawAreaLabel(a.Id) == label).ToList();
+        return twins.Count > 0 && twins.All(t => t.Affects != area.Affects)
+            ? $"{label} ({Faction(area.Affects, plural: true)})"
+            : label;
+    }
+
+    private string RawAreaLabel(string id)
     {
         if (_usage.AreaSources.TryGetValue(id, out var sources))
         {
@@ -91,14 +121,17 @@ public sealed class Describe
         _db.Abilities.TryGetValue(id, out var a) ? p.A(Url.Ability(id), a.Name) : "habilidade desconhecida";
 
     public string ClassLink(Page p, string id) =>
-        _db.Classes.TryGetValue(id, out var c) ? p.A(Url.Class(id), c.Name) : "classe desconhecida";
+        _db.Classes.TryGetValue(id, out var c) ? p.A(Url.Class(id), c.Name)
+        : _usage.SecondClasses.TryGetValue(id, out var sc) ? p.A(Url.Class(id), sc.Def.Name) // T-075
+        : "classe desconhecida";
 
     public static string Targeting(TargetingDefinition t) => t switch
     {
         SelfTargeting => "em si mesmo",
         UnitTargeting u => $"alvo único {Faction(u.Faction)}, alcance {Num(u.Range)}",
         MeleeArcTargeting m => $"arco corpo a corpo, alcance {Num(m.Range)}, {Num(m.Angle)}°",
-        LineTargeting l => $"linha {Num(l.Length)} × {Num(l.Width)}",
+        LineTargeting l => $"linha {Num(l.Length)} × {Num(l.Width)}"
+            + (l.ExplodeRadius is { } r ? $", explode no primeiro atingido (raio {Num(r)})" : ""),
         CircleAtPointTargeting c => $"círculo no ponto, alcance {Num(c.Range)}, raio {Num(c.Radius)}",
         CircleSelfTargeting c => $"círculo em volta, raio {Num(c.Radius)}",
         _ => t.GetType().Name,
@@ -144,7 +177,36 @@ public sealed class Describe
     }
 
     public static string Cast(AbilityDefinition a) =>
-        a.CastTimeTicks > 0 ? Seconds(a.CastTimeTicks) + (a.CastWhileMoving ? " (andando)" : "") : "instantânea";
+        a.Channel is not null ? "canalizada"
+        : a.CastTimeTicks > 0 ? Seconds(a.CastTimeTicks) + (a.CastWhileMoving ? " (andando)" : "") : "instantânea";
+
+    /// <summary>
+    /// Canalização (T-442): pulsos, intervalo, crescimento por pulso, andar canalizando e o que sai ao ir até o fim.
+    /// Os efeitos da habilidade saem a cada pulso.
+    /// </summary>
+    public string Channel(Page p, ChannelDefinition? c)
+    {
+        if (c is null)
+        {
+            return "—";
+        }
+
+        var text = $"{c.Pulses} {(c.Pulses == 1 ? "pulso" : "pulsos")}, um a cada {Seconds(c.IntervalTicks)}";
+        if (c.PulseGrowth != 0)
+        {
+            text += $"; cada pulso causa {Pct(c.PulseGrowth)} a mais que o anterior (acumulando)";
+        }
+
+        text += c.MoveSpeedMultiplier is { } move
+            ? $"; pode andar canalizando, com velocidade {Mult(move)}"
+            : "; andar corta";
+        if (c.OnComplete.Count > 0)
+        {
+            text += "; se for até o fim, depois do último pulso:" + Effects(p, c.OnComplete);
+        }
+
+        return text;
+    }
 
     /// <summary>Lista de efeitos como itens de lista HTML.</summary>
     public string Effects(Page p, IEnumerable<EffectDefinition> effects)
@@ -157,11 +219,11 @@ public sealed class Describe
     {
         var text = e switch
         {
-            DamageEffect d => $"dano {School(d.School)} <b>{Scaled(d.Base, d.Scaling)}</b>{Bonus(d.BonusVsTags)}",
-            HealEffect h => $"cura <b>{Scaled(h.Base, h.Scaling)}</b>",
+            DamageEffect d => $"dano {School(d.School)} <b>{Scaled(d.Base, d.Scaling)}</b>{Bonus(d.BonusVsTags)}{DamageExtras(d)}",
+            HealEffect h => $"cura <b>{HealValue(h)}</b>",
             ShieldEffect s => $"escudo <b>{Scaled(s.Amount, s.Scaling)}</b> por {Seconds(s.DurationTicks)}"
                 + (s.Refund is { } r ? $"; ao expirar, devolve {Pct(r.Fraction)} da sobra em {Resource(r.Resource)}" : ""),
-            ApplyStatusEffect s => $"aplica {StatusLink(p, s.Status)} por {StatusDuration(s)}",
+            ApplyStatusEffect s => $"aplica {(s.Stacks > 1 ? $"{s.Stacks} acúmulos de " : "")}{StatusLink(p, s.Status)} {StatusDuration(s)}",
             RemoveStatusEffect r => RemoveText(r),
             DisplacementEffect d => d.Kind == DisplacementKind.Dash
                 ? $"salta {Num(d.Distance)} {Direction(d.Direction)}"
@@ -177,10 +239,16 @@ public sealed class Describe
                 + Effects(p, c.Effects),
             ExtraTargetsEffect x => ExtraText(p, x),
             ReviveEffect r => $"levanta até {r.Count} {(r.Count == 1 ? "aliado caído" : "aliados caídos")} a até {Num(r.Radius)} com {Pct(r.HealthFraction)} da vida máxima",
-            _ => Esc(e.GetType().Name),
+            CopyStatusEffect c => CopyText(c),
+            IfStatusEffect i => $"só nos alvos que têm {TagsOr(i.Tags)} no momento do uso"
+                + (i.Consume ? ", que perdem esses status depois dos efeitos" : "") + ":" + Effects(p, i.Effects),
+            CurrentTargetEffect c => $"{(c.Count == 1 ? "1 disparo" : $"{c.Count} disparos")} no alvo atual de quem tem o status "
+                + $"(o último {Faction(c.Affects)} que ele escolheu como alvo), a até {Num(c.Range)} e com linha de visão; sem alvo atual, nada sai:"
+                + Effects(p, c.Effects),
+            _ => Esc(e.GetType().Name), // efeito novo sem texto: o teste do site acusa o nome do tipo
         };
 
-        if (e.Target == EffectTarget.Self && e is not ChainEffect and not ExtraTargetsEffect)
+        if (e.Target == EffectTarget.Self && e is not ChainEffect and not ExtraTargetsEffect and not IfStatusEffect and not CurrentTargetEffect)
         {
             text += " <span class=\"muted\">(em quem usa)</span>";
         }
@@ -188,18 +256,99 @@ public sealed class Describe
         return e.OnHit is { } hit ? $"no {hit}º acerto: {text}" : text;
     }
 
+    /// <summary>"por 4 s", "por 4 s (duração padrão)" ou, no status trocado pelo do NH, "pela duração do status do NH".</summary>
     private string StatusDuration(ApplyStatusEffect s)
     {
         if (s.DurationTicks is { } d)
         {
-            return Seconds(d);
+            return "por " + Seconds(d);
         }
 
-        return _db.Statuses.TryGetValue(s.Status, out var st) ? $"{Seconds(st.DefaultDurationTicks)} (duração padrão)" : "duração padrão";
+        if (_db.Statuses.TryGetValue(s.Status, out var ranked) && ranked.ByRank is not null)
+        {
+            return "pela duração padrão do status do NH";
+        }
+
+        return _db.Statuses.TryGetValue(s.Status, out var st) ? $"por {Seconds(st.DefaultDurationTicks)} (duração padrão)" : "pela duração padrão";
     }
 
     private string AreaSummary(string id) =>
-        _db.Areas.TryGetValue(id, out var a) ? $" (raio {Num(a.Radius)}, {Seconds(a.DurationTicks)})" : "";
+        _db.Areas.TryGetValue(id, out var a)
+            ? $" (raio {Num(a.Radius)}, {Seconds(a.DurationTicks)}{(a.FollowOwner ? ", acompanha quem a criou" : "")})"
+            : "";
+
+    /// <summary>Tags com rótulo, ligadas por "ou"; sem nenhum rótulo, "alguns status".</summary>
+    private string TagsOr(IEnumerable<string> tags)
+    {
+        var list = TagList(tags, " ou ");
+        return list.Length == 0 ? "alguns status" : list;
+    }
+
+    private static string HealValue(HealEffect h)
+    {
+        if (h.MaxHealthFraction <= 0)
+        {
+            return Scaled(h.Base, h.Scaling);
+        }
+
+        var max = $"{Pct(h.MaxHealthFraction)} da vida máxima de quem recebe";
+        return h.Base == 0 && h.Scaling.Count == 0 ? max : $"{Scaled(h.Base, h.Scaling)} + {max}";
+    }
+
+    /// <summary>O que um dano faz além do valor (T-406, T-407, T-422, T-431, T-432).</summary>
+    private static string DamageExtras(DamageEffect d)
+    {
+        var parts = new List<string>();
+        if (d.BehindFraction is { } behind)
+        {
+            parts.Add($"o primeiro alvo leva o dano inteiro, e quem está atrás dele leva {Pct(behind)}");
+        }
+
+        if (d.IgnoreArmor > 0)
+        {
+            parts.Add($"ignora {Pct(d.IgnoreArmor)} da {(d.School == DamageSchool.Physical ? "armadura" : "resistência")} do alvo");
+        }
+
+        if (d.LowHealthBonus is { } low)
+        {
+            parts.Add($"+{Pct(low.Bonus)} em alvo com menos de {Pct(low.BelowHealth)} da vida");
+        }
+
+        if (d.ResetCooldownOnKill)
+        {
+            parts.Add("se matar o alvo, a recarga volta a zero");
+        }
+
+        if (d.MovingBonus > 0)
+        {
+            parts.Add($"+{Pct(d.MovingBonus)} nos pulsos em que o alvo andou");
+        }
+
+        if (d.ThreatMultiplier is { } threat)
+        {
+            parts.Add($"gera {Num(threat)} vezes o dano em ameaça");
+        }
+
+        if (d.SelfHeal > 0)
+        {
+            parts.Add($"quem causou se cura em {Pct(d.SelfHeal)} do dano causado");
+        }
+
+        if (d.AllyHeal is { } ally)
+        {
+            parts.Add($"a cada acerto, os aliados a até {Num(ally.Radius)} de quem causou{(ally.IncludeSelf ? ", inclusive ele," : "")} se curam em {Pct(ally.Fraction)} do dano causado");
+        }
+
+        return parts.Count == 0 ? "" : "; " + string.Join("; ", parts);
+    }
+
+    private string CopyText(CopyStatusEffect c)
+    {
+        var who = c.Count == 0
+            ? $"todos os {Faction(c.Affects, plural: true)}"
+            : c.Count == 1 ? $"o {Faction(c.Affects)} mais próximo" : $"os {c.Count} {Faction(c.Affects, plural: true)} mais próximos";
+        return $"copia os status de {TagsOr(c.Tags)} do alvo, com os mesmos acúmulos e o tempo que falta, para {who} a até {Num(c.Radius)} dele";
+    }
 
     private string Bonus(IReadOnlyDictionary<string, double> bonus) =>
         bonus.Count == 0
@@ -339,6 +488,16 @@ public sealed class Describe
             parts.Add("com medo (não age e foge de onde veio o medo)");
         }
 
+        if (s.Flags.KnockbackImmune)
+        {
+            parts.Add("não é empurrado por inimigos");
+        }
+
+        if (s.Flags.Undying)
+        {
+            parts.Add("não cai: um dano que o mataria o deixa com 1 de vida");
+        }
+
         if (s.Frontal is { } f)
         {
             var reflect = f.ReflectMeleeFraction > 0 ? $"; devolve {Pct(f.ReflectMeleeFraction)} do dano corpo a corpo bloqueado a quem atacou" : "";
@@ -357,6 +516,117 @@ public sealed class Describe
             parts.Add($"o próximo uso de {names} sai com potência {Mult(emp.Multiplier)} e consome o status");
         }
 
+        parts.AddRange(SecondClassParts(p, s));
         return parts.Count == 0 ? "—" : string.Join("; ", parts);
+    }
+
+    /// <summary>Campos de status das segundas classes (T-406 a T-442).</summary>
+    private IEnumerable<string> SecondClassParts(Page p, StatusDefinition s)
+    {
+        var stacks = s.Stacking == StackingMode.Stack && s.MaxStacks > 1 ? " por acúmulo" : "";
+        if (s.ByRank is { } byRank)
+        {
+            var ranks = string.Join(", ", byRank.Statuses.Select((id, i) => $"NH{i + 1}: {StatusLink(p, id)}"));
+            yield return $"não fica em ninguém: no lugar dele vai o status do NH de {AbilityLink(p, byRank.Ability)} de quem aplica ({ranks}); sem NH, o do NH1";
+        }
+
+        if (s.Redirect is { } r)
+        {
+            var reduction = r.Reduction > 0 ? $", que o recebe {Pct(r.Reduction)} menor" : "";
+            yield return $"{Pct(r.Fraction)} do dano que receberia vai para quem aplicou o status{reduction}, se ele estiver vivo e a até {Num(r.MaxDistance)}";
+        }
+
+        if (s.Lifesteal is { } l)
+        {
+            yield return $"cura {Pct(l.Fraction)}{stacks} do dano que causa em outros" + LifestealExtras(l);
+        }
+
+        if (s.AttackerLifesteal is { } al)
+        {
+            yield return $"quem bate nele (aliados de quem aplicou, inclusive ele) cura {Pct(al.Fraction)} do dano causado" + LifestealExtras(al);
+        }
+
+        if (s.Stats is { } st)
+        {
+            foreach (var (key, value) in st.Attributes.OrderBy(kv => kv.Key == "all" ? "" : kv.Key, StringComparer.Ordinal))
+            {
+                var what = key == "all" ? "todos os atributos" : ScalingLabel(key);
+                yield return $"+<b>{Scaled(value.Base, value.Scaling)}</b>{stacks} em {what}{FromCaster(value)}";
+            }
+
+            if (st.ManaRegen is { } mana)
+            {
+                yield return $"+<b>{Scaled(mana.Base, mana.Scaling)}</b>{stacks} de Mana por segundo{FromCaster(mana)}";
+            }
+        }
+
+        if (s.Crit is { } c)
+        {
+            var range = c.MinDistance > 0 ? $" contra alvos a {Num(c.MinDistance)} tiles ou mais" : "";
+            if (c.Guaranteed)
+            {
+                yield return $"todo dano de habilidade e do ataque básico é crítico{range}";
+            }
+
+            if (c.Bonus > 0)
+            {
+                yield return $"+{Pct(c.Bonus)}{stacks} de chance de crítico nas habilidades e no ataque básico{range}";
+            }
+
+            if (c.Multiplier is { } m)
+            {
+                yield return $"crítico {Mult(m)} em vez de {Mult(_db.Rules.Stats.CritMultiplier)}{range}";
+            }
+        }
+
+        if (s.RangeBonus != 0)
+        {
+            yield return $"+{Num(s.RangeBonus)}{stacks} de alcance nas habilidades à distância";
+        }
+
+        if (s.BasicAttack is { } basic)
+        {
+            yield return $"o ataque básico vira {AbilityLink(p, basic)}";
+        }
+
+        if (s.HitEffects.Count > 0)
+        {
+            yield return "a cada acerto de habilidade ou do ataque básico, no alvo: " + string.Join("; ", s.HitEffects.Select(e => Effect(p, e)));
+        }
+
+        if (s.OnExpire.Count > 0)
+        {
+            yield return "ao acabar pelo tempo (não se for tirado nem se quem o tem morrer): " + string.Join("; ", s.OnExpire.Select(e => Effect(p, e)));
+        }
+
+        if (s.JumpOnExpire is { } jump)
+        {
+            yield return $"quando um status de {TagsOr(jump.Tags)} aplicado por quem tem este status acaba pelo tempo num inimigo, ele pula, "
+                + $"com todos os acúmulos, para o inimigo mais perto a até {Num(jump.Radius)} que ainda não tem nenhum desses status";
+        }
+
+        if (s.Exclusive is not null)
+        {
+            yield return "não convive com as outras variantes do mesmo grupo: fica a mais forte, com a maior duração";
+        }
+    }
+
+    private static string FromCaster(ScaledValueDefinition v) =>
+        v.Scaling.Count > 0 ? " <span class=\"muted\">(pelos atributos de quem aplicou, calculado ao aplicar)</span>" : "";
+
+    private static string LifestealExtras(LifestealDefinition l)
+    {
+        var text = "";
+        if (l.BelowHealth > 0)
+        {
+            text += $"; com menos de {Pct(l.BelowHealth)} da vida, essa parte {Mult(l.BelowHealthMultiplier)}";
+        }
+
+        if (l.KillHeal > 0)
+        {
+            text += $"; ao matar um inimigo, cura também {Pct(l.KillHeal)} da vida máxima";
+        }
+
+        return text;
     }
 }
