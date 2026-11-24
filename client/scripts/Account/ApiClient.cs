@@ -7,8 +7,11 @@ using System.Text.Json.Serialization;
 
 namespace MmoRpgClient.Account;
 
-/// <summary>Personagem da conta como a API devolve (T-211).</summary>
-public sealed record CharacterSummary(Guid Id, string Name, string ClassId, int Level, string ZoneId);
+/// <summary>
+/// Personagem da conta como a API devolve (T-211). <c>SecondClass</c> (T-404): id da segunda classe escolhida; null = não
+/// escolheu.
+/// </summary>
+public sealed record CharacterSummary(Guid Id, string Name, string ClassId, int Level, string ZoneId, string? SecondClass = null);
 
 /// <summary>Token de jogo de <c>POST /characters/{id}/play</c>: vale 60 s e uma vez só. <c>Address</c> vazio = a API não sabe.</summary>
 public sealed record PlayTicket(string Ticket, DateTimeOffset ExpiresAt, string Server, string? Address);
