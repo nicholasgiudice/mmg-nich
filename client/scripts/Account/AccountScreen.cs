@@ -282,7 +282,7 @@ public partial class AccountScreen : Control
         {
             var c = _characters[i];
             var index = i;
-            var card = CharacterCard.ForCharacter(_sprites.For(c.ClassId), c.Name, ClassName(c.ClassId), c.Level, ZoneName(c.ZoneId));
+            var card = CharacterCard.ForCharacter(_sprites.ForCharacter(c.ClassId, c.SecondClass), c.Name, ClassName(c), c.Level, ZoneName(c.ZoneId));
             card.Chosen += () => Select(index);
             card.Activated += () =>
             {
@@ -571,7 +571,7 @@ public partial class AccountScreen : Control
         var dialog = new ConfirmationDialog
         {
             Title = "Apagar personagem",
-            DialogText = $"Apagar {character.Name} ({ClassName(character.ClassId)}, nível {character.Level})?\nIsso não pode ser desfeito.",
+            DialogText = $"Apagar {character.Name} ({ClassName(character)}, nível {character.Level})?\nIsso não pode ser desfeito.",
             OkButtonText = "Apagar",
             CancelButtonText = "Cancelar",
         };
@@ -772,6 +772,14 @@ public partial class AccountScreen : Control
     private CharacterSummary? Selected() => _selected >= 0 && _selected < _characters.Count ? _characters[_selected] : null;
 
     private string ClassName(string id) => _content.Classes.TryGetValue(id, out var c) ? c.Name : id;
+
+    /// <summary>Nome da segunda classe, se o personagem já escolheu; senão, o da classe base.</summary>
+    private string ClassName(CharacterSummary character) =>
+        character.SecondClass is { } second
+        && _content.Classes.TryGetValue(character.ClassId, out var cls)
+        && cls.SecondClasses.FirstOrDefault(x => x.Id == second) is { } definition
+            ? definition.Name
+            : ClassName(character.ClassId);
 
     private string ZoneName(string id) => _content.Zones.TryGetValue(id, out var zone) ? zone.Name : id;
 
