@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cm8qc4058640w"
-path="res://.godot/imported/pixellab_sul_forte_b.png-ac7ce873595799618bbe651de5a5bfba.ctex"
+uid="uid://bfqei283kjfl6"
+path="res://.godot/imported/pixellab_brejo_1.png-b327f3c813d51f15a8a1c058cd56ad1c.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/art/tiles/pixellab_sul_forte_b.png"
-dest_files=["res://.godot/imported/pixellab_sul_forte_b.png-ac7ce873595799618bbe651de5a5bfba.ctex"]
+source_file="res://assets/art/tiles/pixellab_brejo_1.png"
+dest_files=["res://.godot/imported/pixellab_brejo_1.png-b327f3c813d51f15a8a1c058cd56ad1c.ctex"]
 
 [params]
 

@@ -29,56 +29,48 @@ Lições do primeiro mapa (`tasks/reports/mapas-ruinas-legibilidade/README.md`):
 
 ## Resultado
 
-**Parcial: parou antes da escolha do designer.** Branch `task/T-520-tilesets-do-sul`.
+Concluída. Branch `task/T-520-tilesets-do-sul`. O designer escolheu (2026-11-24): **brejo C, serra B, mina B, forte C**.
 
 ### O que foi feito
 
-- **14 tilesets Pro** de 32 px (visão *low top-down*, mesma receita dos de hoje) no PixelLab, 3 opções por bioma:
-  brejo (A, B, C; cada uma com lama→água rasa e água rasa→água funda, encadeadas), serra (A, B, C), mina (A, B, C) e forte
-  (B e C; a opção A é a muralha da Cidade já existente, `pixellab_city_2`, sem gerar nada).
-- Juncos (2) e trilho reto (1) de 32 px, gerados à parte (1 geração cada) e iguais nas três opções
-  (`pixellab_sul_props.png`; o trilho vertical é o horizontal girado).
-- **12 mapas de amostra** `data/maps/sample_<bioma>_<a|b|c>.tmj` (30×20, não são zonas) e **12 encontros**
-  `encounter.sample_*` em `data/encounters.json` (Guerreiro e Lobo Cinzento nv 2; o nível 2 mantém fora da contagem dos 5 do protótipo, `PrototypeContentTests`), para abrir no jogo.
-- Tudo importado lado a lado: `client/assets/art/tiles/pixellab_sul_*.png` (+ `.import`) e
-  `data/maps/tilesets/pixellab_sul_*.tsx`. As folhas, o autotile e os mapas vêm de
-  `tasks/reports/mapas-sul-tilesets/tools/build_samples.py`.
-- Capturas no jogo, comparação A/B/C por bioma, custo e recomendação em
+- **14 tilesets Pro** de 32 px (visão *low top-down*, mesma receita dos de hoje) no PixelLab, 3 opções por bioma, mais juncos
+  (2) e um trilho reto (1) de 32 px gerados à parte. Cada opção foi montada num mapa de amostra de 30×20 (não é zona) com o
+  Guerreiro e um Lobo Cinzento e aberta no jogo; as 12 capturas, a comparação A/B/C e a recomendação estão em
   **`tasks/reports/mapas-sul-tilesets/README.md`**.
+- **Escolhidos** (em `client/assets/art/tiles/` e `data/maps/tilesets/`, com `.import` e `.tsx`):
+  - brejo C: `pixellab_brejo_0` (lama→água rasa com vitórias-régias) e `pixellab_brejo_1` (água rasa→água funda azul-tinta);
+  - serra B: `pixellab_serra_0` (chão ocre, platô de arenito ferrugem, face do penhasco virada para o sul);
+  - mina B: `pixellab_mina_0` (piso de cascalho carvão, parede de terra escorada por vigas);
+  - forte C: `pixellab_forte_0` (terra batida, muro de pedra bruta com topo de lajes e face escura);
+  - `pixellab_sul_props`: juncos e trilho reto (horizontal e vertical).
+- Metadados das 5 folhas escolhidas (cantos, `pattern_4x4`) em `tasks/reports/mapas-sul-tilesets/tilesets/`, e o montador das
+  amostras em `tasks/reports/mapas-sul-tilesets/tools/build_samples.py`, para a T-530 a T-533.
+- Créditos em `CREDITS.md`.
 
 ### Custo
 
-213 gerações: 14 × 15 (tilesets Pro) + 3 × 1 (sprites). Pagas com as 3 gerações do plano que restavam e US$ 1,62 em
-créditos (saldo antes: US$ 2,52 e 6 gerações; depois: US$ 0,90 e 3). Sem retentativas.
+213 gerações: 14 × 15 (tilesets Pro) + 3 × 1 (sprites). Pagas com as 3 gerações do plano que restavam e US$ 1,62 em créditos
+(saldo antes: US$ 2,52 e 6 gerações; depois: US$ 0,90 e 3). Sem retentativas. Dos 14 tilesets, 5 ficaram (os outros 9 foram
+gerados só para a escolha; o forte A, a muralha da Cidade, não foi gerado).
 
 ### Decisões
 
 - Pro e não Standard: o Standard só desenha em *high top-down*, e o resto do jogo é *low top-down*.
-- Brejo com dois tilesets encadeados pela água rasa (lama→rasa e rasa→funda); a lama nunca encosta na água funda.
-- Chão e água do brejo andáveis; a água funda lenta fica por conta da T-502/T-540. Serra, mina e forte bloqueiam o topo
-  da parede e a face (lição das Ruínas).
-- "Encosta" da serra = o próprio chão de cascalho; rampa de verdade (`step_slope`) custaria mais uma geração por opção.
-- Trilhos só retos; curvas e cruzamentos ficam para quando o mapa da Mina precisar.
-
-### Resultado da avaliação (minha leitura; a decisão é do designer)
-
-Brejo: A ou C bons; **B reprovada** (água âmbar parece areia). Serra: C. Mina: A (ou B). Forte: A (muralha da Cidade).
-Paliçada (B) só como parede de 1 tile.
-
-### O que falta
-
-1. **O designer escolher uma opção por bioma** (a pergunta está no README da pasta de relatório).
-2. Depois: renomear a escolhida para o nome definitivo (`pixellab_brejo_*`, `pixellab_serra_*`, `pixellab_mina_*`,
-   `pixellab_forte_*`), apagar as opções não escolhidas (imagens, `.tsx`, `sample_*.tmj`, os 12 `encounter.sample_*`),
-   e deixar em `CREDITS.md` só o que ficou. Só então a T-520 fecha e libera a T-530 a T-533.
-3. Os mapas de amostra e os encontros `sample_*` existem só para a escolha; não devem ir para a `main` depois dela.
+- Brejo com dois tilesets encadeados pela água rasa; a lama nunca encosta na água funda (não há tile para isso).
+- Água funda lenta (andável) é da T-502/T-540; os tilesets só dão a cara. Nas amostras, serra, mina e forte bloqueavam o topo
+  da parede **e** a face (lição das Ruínas); é a regra a seguir nos mapas reais.
+- "Encosta" da serra = o próprio chão ocre; rampa de verdade (`step_slope`) custaria mais uma geração. Trilhos só retos.
+- Depois da escolha, removi as opções não escolhidas, os 12 mapas `sample_*` e os 12 encontros `encounter.sample_*`
+  (`data/encounters.json` voltou a ser igual ao da `main`). Os ids das folhas descartadas estão no README do relatório.
+- O `.import` das 5 folhas escolhidas foi regenerado com o Godot (`--headless --import`) depois de renomear.
 
 ### Verificação
 
-`./scripts/check.sh` completo: format, build com `-warnaserror` e todos os testes passam, **exceto 4 em `Game.Design.Tests`**
-(vitória do Vigia na Cripta com grupo de 4 e sem o Clérigo, e `Guardian_cuts_the_damage...` nos níveis 30 e 40), que são testes
-de equilíbrio de combate sem relação com mapas. Confirmei que os dois do Guardião **também falham na `main`** (checkout limpo
-de `main`); os do Vigia são estatísticos e não os repeti na `main` (12 min cada). `Game.Data.Tests` passou depois de trazer
-os encontros de amostra para `monsterLevel` 2 (um teste conta os encontros de nível 1).
+`./scripts/check.sh` completo antes da escolha (com as amostras): format, build com `-warnaserror` e todos os testes passam,
+**exceto 4 em `Game.Design.Tests`** (vitória do Vigia na Cripta com grupo de 4, sem o Clérigo, e `Guardian_cuts_the_damage...`
+nos níveis 30 e 40), testes de equilíbrio de combate sem relação com mapas; os dois do Guardião também falham na `main`
+(confirmado em checkout limpo). Depois da limpeza: `Game.Data.Tests` e `dotnet format` conferidos de novo.
 
-Nota: o `.uid` solto `client/scripts/Account/OnlineCounterText.cs.uid` gerado pelo build não entrou no commit.
+### O que falta
+
+Nada nesta tarefa. Libera a T-530, T-531, T-532 e T-533. O Forte (T-531) deve desenhar o muro com 1 a 2 tiles de espessura.

@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://c48nwsoq4dte1"
-path="res://.godot/imported/pixellab_sul_serra_b.png-c960577767fedbd2ff6117209b0a8905.ctex"
+uid="uid://bopcn4jvum7sq"
+path="res://.godot/imported/pixellab_serra_0.png-4cb5d7b2810324165b664cb8eba74917.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/art/tiles/pixellab_sul_serra_b.png"
-dest_files=["res://.godot/imported/pixellab_sul_serra_b.png-c960577767fedbd2ff6117209b0a8905.ctex"]
+source_file="res://assets/art/tiles/pixellab_serra_0.png"
+dest_files=["res://.godot/imported/pixellab_serra_0.png-4cb5d7b2810324165b664cb8eba74917.ctex"]
 
 [params]
 

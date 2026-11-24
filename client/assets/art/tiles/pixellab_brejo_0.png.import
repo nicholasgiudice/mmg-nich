@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://ccvid5wyolqgj"
-path="res://.godot/imported/pixellab_sul_brejo_c2.png-fd4f6d35fcea49edea89f0cb2d7f5b96.ctex"
+uid="uid://c3q1jbeky03by"
+path="res://.godot/imported/pixellab_brejo_0.png-19648e00de1ee611b3d471b544d6b0a4.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/art/tiles/pixellab_sul_brejo_c2.png"
-dest_files=["res://.godot/imported/pixellab_sul_brejo_c2.png-fd4f6d35fcea49edea89f0cb2d7f5b96.ctex"]
+source_file="res://assets/art/tiles/pixellab_brejo_0.png"
+dest_files=["res://.godot/imported/pixellab_brejo_0.png-19648e00de1ee611b3d471b544d6b0a4.ctex"]
 
 [params]
 

@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://5la4u5qr7djm"
-path="res://.godot/imported/pixellab_sul_mina_a.png-cd3e31b15dcfcf1affbbd0b7a7f0b21e.ctex"
+uid="uid://c6c7c88mrgmv5"
+path="res://.godot/imported/pixellab_forte_0.png-713978e0c28ac3b54b7c34fbc096b401.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/art/tiles/pixellab_sul_mina_a.png"
-dest_files=["res://.godot/imported/pixellab_sul_mina_a.png-cd3e31b15dcfcf1affbbd0b7a7f0b21e.ctex"]
+source_file="res://assets/art/tiles/pixellab_forte_0.png"
+dest_files=["res://.godot/imported/pixellab_forte_0.png-713978e0c28ac3b54b7c34fbc096b401.ctex"]
 
 [params]
 

@@ -4,7 +4,7 @@ Quatro biomas novos (`design/mapas-16-40-v0.1.md` §5), três opções de terren
 Cada opção está num mapa de amostra pequeno (30×20, não é zona) com o Guerreiro e um Lobo Cinzento em cima, aberto no
 jogo de verdade (capturas desta pasta). **O designer escolhe uma opção por bioma.**
 
-Para ver no jogo (Windows, a partir da raiz do repositório):
+Para ver no jogo (Windows, a partir da raiz do repositório; os mapas de amostra existem só no commit `11b4284`, foram removidos depois da escolha):
 
 ```powershell
 Godot_v4.7.2-stable_mono_win64.exe --path client res://scenes/Main.tscn -- --encounter=encounter.sample_brejo_a --class=class.warrior
@@ -92,14 +92,37 @@ Saldo antes: US$ 2,52 em créditos e 6 gerações do plano. Depois: US$ 0,90 e 3
 - Sobram US$ 0,90 em créditos (cada tileset Pro custa cerca de US$ 0,12, ou seja, uns 7). As 6 gerações do plano e a
   cota do mês voltam em 2026-12-05.
 
-## A escolha
+## A escolha do designer (2026-11-24)
 
-**Qual opção (A, B ou C) você quer para cada bioma: brejo, serra, mina e forte?** Minha sugestão: brejo A (ou C),
-serra C, mina A, forte A.
+| Bioma | Opção | Tilesets no repositório | ID no PixelLab |
+|---|---|---|---|
+| Brejo | **C** (vitórias-régias, água funda azul-tinta) | `pixellab_brejo_0` (lama→água rasa), `pixellab_brejo_1` (água rasa→água funda) | `685aac1f-3c48-4c98-b0a3-8452946c5eeb`, `97abf67e-bb54-446d-ac3c-f170f9a4065d` |
+| Serra | **B** (ocre e arenito ferrugem) | `pixellab_serra_0` | `614004fa-5264-4a33-bcb0-1486b0ac46ed` |
+| Mina | **B** (escoras de madeira) | `pixellab_mina_0` | `2d9c3df3-fda9-4292-bbd0-27c5d3752a1d` |
+| Forte | **C** (muro de pedra bruta, lajes claras) | `pixellab_forte_0` | `15aacb71-b31c-484f-b787-5f2c91ad48ac` |
 
-## O que falta
+O que ficou de fora: brejo A e B, serra A e C, mina A e C, forte A (muralha da Cidade) e forte B (paliçada). As folhas
+saíram do repositório; continuam na conta do PixelLab (ids no fim desta página).
 
-1. O designer escolher **uma opção por bioma**.
-2. Depois da escolha: apagar as opções não escolhidas (imagens, `.tsx`, mapas de amostra e os 12 encontros
-   `encounter.sample_*` de `data/encounters.json`), e passar a escolhida para o nome definitivo
-   (`pixellab_brejo_*` etc.). As amostras ficam fora do histórico só depois disso.
+Para quem vai montar os mapas (T-530 a T-533):
+- `tilesets/pixellab_*.json` guarda os metadados de cada folha escolhida (cantos, `pattern_4x4`, `bounding_box`), o que o
+  autotile precisa. `tools/build_samples.py` mostra como as amostras foram montadas com eles (terreno por célula, tile
+  centrado no canto entre quatro células, camada com offset -16; parede com face pelo `pattern_4x4`). O script usa os
+  nomes das opções de antes da escolha; para um mapa real, aponte para os nomes definitivos acima.
+- Os juncos e o trilho (reto, horizontal e vertical) estão em `pixellab_sul_props` (4 tiles: junco 1, junco 2, trilho
+  horizontal, trilho vertical). Curvas e cruzamentos de trilho não existem ainda.
+- Pontos de atenção: o forte C tem topo de muro claro, parecido com pavimento, então um muro grosso lê como chão; prefira
+  muro de 1 a 2 tiles com face. No brejo, a lama nunca encosta na água funda (não há tile para isso): sempre uma faixa de
+  água rasa no meio.
+
+## Limpeza feita depois da escolha
+
+Apaguei as opções não escolhidas (imagens, `.tsx`), os 12 mapas `sample_*` e os 12 encontros `encounter.sample_*` de
+`data/encounters.json`. As amostras valem só como as capturas desta pasta (`brejo-c.png`, `serra-b.png`, `mina-b.png` e
+`forte-c.png` são as escolhidas). Para ver os mapas de amostra no jogo, use o commit `11b4284`. Ids das folhas do PixelLab
+que ficaram de fora, para quem quiser recuperar: brejo A `d31c65f2-37e7-4eb5-8955-1c8a8d75416c` +
+`fbddd8b2-da3f-4810-bcc6-dac6a219bdb9`; brejo B `4e27a8fc-cc48-48ec-be19-7c597e72bef8` +
+`aa01db05-253b-4537-bdee-5ec63b036bb5`; serra A `bd2121be-7ffd-4986-87ee-dce810d63a59`, C
+`afd580d0-24bf-4d25-874a-f75379a3059f`; mina A `6e8cda31-982a-42a9-b86c-5eb4cc56cd33`, C
+`db67f422-a629-466c-992d-f668dbe4dff0`; forte B `41f9c764-8639-4117-966c-1db505a67475`; forte A é a muralha da Cidade
+(`59673a38-f94b-45b2-8ccf-a360feb2ef2e`).
