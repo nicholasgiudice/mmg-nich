@@ -10,6 +10,7 @@ public class TiledMapLoaderTests
     private const string Content = """
         {
           "monsters": [ { "id": "monster.rat", "name": "Rat", "health": 10, "speed": 3, "radius": 0.3, "ai": { "id": "ai.passive" } } ],
+          "statuses": [ { "id": "status.deep_water", "name": "Água Funda", "defaultDuration": 1, "modifiers": { "speedMultiplier": 0.6 } } ],
           "arenas": [ { "id": "arena.b", "lines": ["....", "...."] } ],
           "zones": [
             { "id": "zone.a", "name": "A", "arena": "map.zone" },
@@ -118,6 +119,26 @@ public class TiledMapLoaderTests
 
         var bad = Load(Map(Objects("spawns", Obj("seal", "monster_spawn", 48, 48, point: true, props: [("monster", "monster.rat"), ("objective", "sim")]))));
         AssertError(bad, "objects[seal]", "'objective' deve ser bool");
+    }
+
+    /// <summary>T-502: área <c>slow_terrain</c> com <c>status</c> (obrigatória, estado que existe) e <c>ignoreTags</c> (opcional).</summary>
+    [Fact]
+    public void Slow_terrain_needs_an_existing_status()
+    {
+        var ok = Load(Map(Objects("areas",
+            Obj("pond", "slow_terrain", 32, 32, 64, 64, props: [("status", "status.deep_water"), ("ignoreTags", "amphibious")]))));
+        Assert.True(ok.Success, Errors(ok));
+        var pond = ok.Database!.Arenas["map.test"].Areas.Single();
+        Assert.Equal(new RectDefinition(1, 1, 2, 2), pond.Area);
+        Assert.Equal("status.deep_water", pond.Properties["status"]);
+
+        AssertError(Load(Map(Objects("areas", Obj("pond", "slow_terrain", 32, 32, 64, 64)))), "objects[pond]", "Propriedade 'status'");
+        AssertError(
+            Load(Map(Objects("areas", Obj("pond", "slow_terrain", 32, 32, 64, 64, props: [("status", "Deep Water")])))),
+            "objects[pond]", "id inválido");
+        AssertError(
+            Load(Map(Objects("areas", Obj("pond", "slow_terrain", 32, 32, 64, 64, props: [("status", "status.mud")])))),
+            "objects[pond]", "Estado desconhecido: 'status.mud'");
     }
 
     [Fact]

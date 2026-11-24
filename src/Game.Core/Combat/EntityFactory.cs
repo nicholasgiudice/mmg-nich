@@ -122,9 +122,16 @@ public static class EntityFactory
             abilities);
     }
 
-    /// <summary>Mapa de colisão de uma arena (apenas '#' é parede; outros caracteres contam como chão). Scale é ignorado no protótipo.</summary>
-    public static GridMap BuildMap(ArenaDefinition arena) =>
-        GridMap.FromAscii(arena.Lines.Select(l => new string(l.Select(c => c == '#' ? '#' : '.').ToArray())).ToArray());
+    /// <summary>
+    /// Mapa de colisão de uma arena (apenas '#' é parede; outros caracteres contam como chão), com o terreno das áreas
+    /// <c>slow_terrain</c> do mapa do Tiled (T-502). Scale é ignorado no protótipo.
+    /// </summary>
+    public static GridMap BuildMap(ArenaDefinition arena)
+    {
+        var map = GridMap.FromAscii(arena.Lines.Select(l => new string(l.Select(c => c == '#' ? '#' : '.').ToArray())).ToArray());
+        var terrain = TerrainArea.FromAreas(arena.Areas);
+        return terrain.Count == 0 ? map : map.WithTerrain(terrain);
+    }
 }
 
 public sealed record EncounterWorld(World World, IReadOnlyList<Entity> Players, IReadOnlyList<Entity> Enemies)

@@ -154,6 +154,30 @@
       ],
       "victory": "all_enemies_dead",
       "defeat": { "condition": "all_players_dead", "timeLimit": 480 }
+    },
+    {
+      "id": "encounter.terrain_water",
+      "name": "Teste: Salteadores na Água Funda",
+      "arena": "map.terrain_test",
+      "players": [{ "class": "class.warrior", "position": { "x": 17.5, "y": 10.5 } }],
+      "enemies": [
+        { "monster": "monster.road_bandit", "position": { "x": 5.5, "y": 8.5 }, "level": 1 },
+        { "monster": "monster.road_bandit", "position": { "x": 5.5, "y": 12.5 }, "level": 1 }
+      ],
+      "victory": "all_enemies_dead",
+      "defeat": { "condition": "all_players_dead", "timeLimit": 120 }
+    },
+    {
+      "id": "encounter.terrain_dry",
+      "name": "Teste: Salteadores em Terra Seca",
+      "arena": "map.terrain_test",
+      "players": [{ "class": "class.warrior", "position": { "x": 22.5, "y": 10.5 } }],
+      "enemies": [
+        { "monster": "monster.road_bandit", "position": { "x": 34.5, "y": 8.5 }, "level": 1 },
+        { "monster": "monster.road_bandit", "position": { "x": 34.5, "y": 12.5 }, "level": 1 }
+      ],
+      "victory": "all_enemies_dead",
+      "defeat": { "condition": "all_players_dead", "timeLimit": 120 }
     }
   ]
 }
