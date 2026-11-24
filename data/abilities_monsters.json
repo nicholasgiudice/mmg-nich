@@ -322,6 +322,107 @@
       "cooldown": 1.4,
       "targeting": { "type": "melee_arc", "range": 1.6, "angle": 90 },
       "effects": [{ "type": "damage", "school": "arcane", "base": 18 }]
+    },
+    {
+      "id": "drowned.grab",
+      "name": "Agarrão",
+      "cooldown": 6,
+      "targeting": { "type": "melee_arc", "range": 1.6, "angle": 90 },
+      "telegraph": { "shape": "cone", "length": 1.6, "angle": 90, "delay": 0.6, "anchor": "source", "affects": "enemy" },
+      "effects": [{ "type": "damage", "school": "physical", "base": 26 }, { "type": "apply_status", "status": "status.snared", "duration": 1.5 }]
+    },
+    {
+      "id": "drowned.claw",
+      "name": "Garra do Afogado",
+      "cooldown": 1.8,
+      "targeting": { "type": "melee_arc", "range": 1.4, "angle": 90 },
+      "effects": [{ "type": "damage", "school": "physical", "base": 22 }]
+    },
+    {
+      "id": "marsh_lizardman.lunge",
+      "name": "Bote",
+      "cooldown": 6,
+      "targeting": { "type": "line", "length": 4, "width": 1.2 },
+      "telegraph": { "shape": "line", "length": 4, "width": 1.2, "delay": 0.6, "charge": true },
+      "effects": [{ "type": "damage", "school": "physical", "base": 40 }]
+    },
+    {
+      "id": "marsh_lizardman.slash",
+      "name": "Garra do Lagarto",
+      "cooldown": 1.4,
+      "targeting": { "type": "melee_arc", "range": 1.5, "angle": 90 },
+      "effects": [{ "type": "damage", "school": "physical", "base": 16 }]
+    },
+    {
+      "id": "marsh_serpent.spit",
+      "name": "Cuspe Venenoso",
+      "cooldown": 2.8,
+      "targeting": { "type": "unit", "range": 9, "faction": "enemy" },
+      "effects": [{ "type": "damage", "school": "nature", "base": 5 }, { "type": "apply_status", "status": "status.poison", "duration": 1.5 }]
+    },
+    {
+      "id": "marsh_serpent.bite",
+      "name": "Picada da Serpente",
+      "cooldown": 1.6,
+      "targeting": { "type": "melee_arc", "range": 1.4, "angle": 90 },
+      "effects": [{ "type": "damage", "school": "physical", "base": 30 }]
+    },
+    {
+      "id": "marsh_witch.staff_strike",
+      "name": "Golpe de Cajado",
+      "cooldown": 1.6,
+      "targeting": { "type": "melee_arc", "range": 2.0, "angle": 100 },
+      "effects": [{ "type": "damage", "school": "physical", "base": 8 }]
+    },
+    {
+      "id": "marsh_witch.hex_bolt",
+      "name": "Dardo do Brejo",
+      "cooldown": 2.2,
+      "targeting": { "type": "unit", "range": 10, "faction": "enemy" },
+      "effects": [{ "type": "damage", "school": "nature", "base": 10 }]
+    },
+    {
+      "id": "marsh_witch.bog_bolt",
+      "name": "Dardo do Lodo",
+      "cooldown": 1.6,
+      "targeting": { "type": "unit", "range": 12, "faction": "enemy" },
+      "effects": [{ "type": "damage", "school": "nature", "base": 10 }]
+    },
+    {
+      "id": "marsh_witch.poison_puddle",
+      "name": "Poça Venenosa",
+      "tags": ["ai.area"],
+      "cooldown": 9,
+      "targeting": { "type": "circle_at_point", "range": 12, "radius": 2 },
+      "telegraph": { "shape": "circle", "radius": 2, "delay": 1.0, "anchor": "aim" },
+      "effects": [{ "type": "spawn_area", "area": "area.witch_poison_puddle" }]
+    },
+    {
+      "id": "marsh_witch.poison_puddle_fast",
+      "name": "Poça Venenosa Rápida",
+      "tags": ["ai.area"],
+      "cooldown": 7,
+      "targeting": { "type": "circle_at_point", "range": 12, "radius": 2 },
+      "telegraph": { "shape": "circle", "radius": 2, "delay": 1.0, "anchor": "aim" },
+      "effects": [{ "type": "spawn_area", "area": "area.witch_poison_puddle" }]
+    },
+    {
+      "id": "marsh_witch.call_drowned",
+      "name": "Chamar os Afogados",
+      "tags": ["ai.summon"],
+      "cooldown": 20,
+      "castTime": 1.5,
+      "targeting": { "type": "self" },
+      "effects": [{ "type": "summon", "monster": "monster.drowned", "count": 1, "radius": 2.5, "maxAlive": 2 }]
+    },
+    {
+      "id": "marsh_witch.pulling_mud",
+      "name": "Lodo que Puxa",
+      "tags": ["ai.area"],
+      "cooldown": 14,
+      "castTime": 1.0,
+      "targeting": { "type": "self" },
+      "effects": [{ "type": "spawn_area", "area": "area.pulling_mud" }]
     }
   ]
 }

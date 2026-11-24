@@ -62,7 +62,11 @@
     "monster.spectral_knight": "Cavaleiro que jurou guardar a Torre Quebrada e nunca deixou o posto. O escudo espectral devolve parte de cada golpe a quem ataca.",
     "monster.faceless_watcher": "O guardião da cripta, preso a um juramento mais antigo que a cidade. Os Selos do Juramento o protegem, e quanto mais ferido fica, mais o rosto vazio aparece.",
     "monster.shade": "Fragmento do Vigia Sem Rosto. Aparece em bando e queima de frio com um simples toque.",
-    "monster.watcher_seal": "Selo de pedra que prende o juramento do Vigia. Proteja os selos: o Vigia tenta destruí-los no fim da luta."
+    "monster.watcher_seal": "Selo de pedra que prende o juramento do Vigia. Proteja os selos: o Vigia tenta destruí-los no fim da luta.",
+    "monster.drowned": "Morto que o brejo devolveu. Lento, anda em bando e agarra quem se deixa cercar, sobretudo na água funda.",
+    "monster.marsh_lizardman": "Caçador das palafitas. Não sente a água funda e dá o bote em linha em quem luta parado.",
+    "monster.marsh_serpent": "Cobra do Charco Fundo. Cospe veneno de longe, foge de quem chega perto e morde forte quem a alcança.",
+    "monster.marsh_witch": "Senhora da cabana no fundo do brejo. Envenena o chão, chama os afogados e, ferida, puxa o lodo em volta de si."
   },
   "phases": {
     "phase.hunt": "Caçada",
@@ -70,7 +74,10 @@
     "phase.frenzy": "Frenesi",
     "phase.iron_oath": "Juramento de Ferro",
     "phase.empty_face": "O Rosto Vazio",
-    "phase.last_command": "Último Comando"
+    "phase.last_command": "Último Comando",
+    "phase.poison_puddles": "Poças Venenosas",
+    "phase.drowned_call": "Chamado dos Afogados",
+    "phase.pulling_mud": "Lodo que Puxa"
   },
   "ai": {
     "ai.swarm": "Os que miram o mesmo alvo se espalham em volta dele e atacam; de vez em quando um troca de alvo.",

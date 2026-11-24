@@ -1,6 +1,6 @@
 # Bestiário
 
-Status: **referência gerada a partir dos dados** (2026-11-02; Fada da Névoa e Ent Corrompido em 2026-11-06, T-340; Sacerdote Morto e Cavaleiro Espectral em 2026-11-09, T-341; Vigia Sem Rosto, Sombra e Selo do Juramento em 2026-11-10, T-351). Fonte: `data/monsters.json`, `data/abilities_monsters.json`, `data/statuses.json`, `data/areas.json`, `data/zones.json`, `data/encounters.json`, `data/rules.json` e `data/items.json` (tabelas de queda). Os números saem desses arquivos; quando os dados mudarem, este documento deve ser atualizado.
+Status: **referência gerada a partir dos dados** (2026-11-02; Fada da Névoa e Ent Corrompido em 2026-11-06, T-340; Sacerdote Morto e Cavaleiro Espectral em 2026-11-09, T-341; Vigia Sem Rosto, Sombra e Selo do Juramento em 2026-11-10, T-351; Afogado, Homem-lagarto, Serpente do Charco e Bruxa do Brejo em 2026-11-24, T-510). Fonte: `data/monsters.json`, `data/abilities_monsters.json`, `data/statuses.json`, `data/areas.json`, `data/zones.json`, `data/encounters.json`, `data/rules.json` e `data/items.json` (tabelas de queda). Os números saem desses arquivos; quando os dados mudarem, este documento deve ser atualizado.
 
 As habilidades dos monstros estão detalhadas em `design/habilidades.md` (§ Monstros) e os itens em `design/itens.md`.
 
@@ -35,6 +35,10 @@ As habilidades dos monstros estão detalhadas em `design/habilidades.md` (§ Mon
 | Sombra | `monster.shade` | 14 | normal | 150 | 3,6 | 0,4 | undead | `ai.melee_chaser` |
 | Vigia Sem Rosto | `monster.faceless_watcher` | 15 | **chefe** | 45000 | 3,4 | 0,9 | undead, boss | `ai.boss` |
 | Selo do Juramento (objetivo) | `monster.watcher_seal` | 15 | normal | 380 | 0 | 0,6 | seal | `ai.none` |
+| Afogado | `monster.drowned` | 16 | normal | 300 | 2,6 | 0,4 | undead | `ai.brute` |
+| Homem-lagarto do Brejo | `monster.marsh_lizardman` | 17 | normal | 440 | 4,0 | 0,4 | humanoid, amphibious | `ai.brute` |
+| Serpente do Charco | `monster.marsh_serpent` | 18 | normal | 200 | 3,0 | 0,45 | beast | `ai.ranged_kiter` |
+| Bruxa do Brejo | `monster.marsh_witch` | 20 | **chefe** | 5500 | 3,2 | 0,45 | humanoid, boss | `ai.boss` |
 
 ## Quedas (drops)
 
@@ -95,6 +99,11 @@ Arenas fechadas usadas no protótipo e nos testes. Os cinco do protótipo usam `
 | Pátio dos Mortos (`encounter.dead_courtyard`) | `map.broken_gate` | 3 Guardas Esqueléticos nv9 + 1 Sacerdote Morto nv10 | Guerreiro, Clérigo (os testes trocam as classes) | 240 s |
 | Cavaleiro Espectral na Torre Quebrada (`encounter.spectral_knight`) | `map.broken_gate` | 1 Cavaleiro Espectral nv11 | Guerreiro, Arqueiro, Clérigo | 240 s |
 | O Vigia Sem Rosto (`encounter.faceless_watcher`) | `map.watcher_hall` | 1 Vigia nv15; a proteger: 3 Selos do Juramento | Guerreiro, Arqueiro, Mago, Clérigo | 480 s |
+| Bando de Afogados (`encounter.drowned_pack`) | `map.fields` | 3 Afogados nv16 | Guerreiro (os testes trocam a classe) | 120 s |
+| Par de Homens-lagarto (`encounter.marsh_lizardmen`) | `map.fields` | 2 Homens-lagarto nv17 | Guerreiro (os testes trocam a classe) | 120 s |
+| Serpentes do Charco (`encounter.marsh_serpents`) | `map.fields` | 2 Serpentes nv18 | Guerreiro (os testes trocam a classe) | 120 s |
+| Palafitas Assombradas (`encounter.marsh_mixed`) | `map.fields` | 1 Afogado nv16 + 1 Homem-lagarto nv17 | Guerreiro (os testes trocam a classe) | 120 s |
+| Bruxa do Brejo (`encounter.marsh_witch`) | `map.matriarch_nest` | 1 Bruxa nv20 | Guerreiro, Arqueiro, Clérigo | 360 s |
 
 ## Monstros
 
@@ -295,10 +304,77 @@ Nível 15, **chefe**. Vida 45 000 no nível 1; no nível 15 = **234 000** (45 00
 
 Nível 15, normal. Vida 380 (2 508 no nível 15), velocidade 0, raio 0,6. Tag: seal. Não é inimigo: nasce pelo campo `objectives` do encontro, **do lado dos jogadores**, sem IA, e não se move nem é empurrado. Pode ser curado e receber escudo; não puxa aggro e não é revivido. **Se os três caem, a luta falha** (`EncounterFailed`). Sem sprite próprio ainda (T-345).
 
+### Afogado — `monster.drowned`
+
+Nível 16, normal. Vida 300, velocidade 2,6, raio 0,4. Tag: **undead** (recebe +25% do dano sagrado do Clérigo). Resistências: **sagrado −40%** (fraqueza). Design: `design/combat-encounters-v0.1.md` § Brejo dos Afogados.
+
+- **Habilidades:**
+  - Agarrão (`drowned.grab`): cone de 90° × 1,6 à frente, com aviso de 0,6 s; dano físico 26 e **Preso** (`status.snared`) por 1,5 s; recarga 6 s.
+  - Garra do Afogado (`drowned.claw`): dano físico 22, arco de 90°, alcance 1,4, recarga 1,8 s.
+- **IA:** `ai.brute`. Persegue até `approachRange` 1,5; fica parado até o próprio aviso resolver. `aggroRange` 14.
+- **Vida pelo nível de nascimento:** nv. 16 = 2100; nv. 20 (invocado pela Bruxa) = 2580.
+- **Onde aparece:** Brejo dos Afogados (mapa da T-530), em bandos de 3 a 4; invocado pela Bruxa do Brejo. Encontros de teste Bando de Afogados e Palafitas Assombradas.
+- **Arte:** sprite LPC da T-521.
+- **Quedas:** tabela normal.
+
+### Homem-lagarto do Brejo — `monster.marsh_lizardman`
+
+Nível 17, normal. Vida 440, velocidade 4,0, raio 0,4. Tags: humanoid, **amphibious** (não sente a água funda: as áreas `slow_terrain` do Brejo usam `ignoreTags = amphibious`). Design: `design/combat-encounters-v0.1.md` § Brejo dos Afogados.
+
+- **Habilidades:**
+  - Bote (`marsh_lizardman.lunge`): linha 4 × 1,2 com aviso de 0,6 s; avança e causa dano físico 40; recarga 6 s.
+  - Garra do Lagarto (`marsh_lizardman.slash`): dano físico 16, arco de 90°, alcance 1,5, recarga 1,4 s.
+- **IA:** `ai.brute`. O Bote sai sempre que o alvo está na linha, também colado nele. Persegue até `approachRange` 1,5. `aggroRange` 14.
+- **Vida pelo nível de nascimento:** nv. 17 = 3256.
+- **Onde aparece:** Brejo dos Afogados, em pares. Encontros de teste Par de Homens-lagarto e Palafitas Assombradas.
+- **Arte:** sprite LPC da T-521.
+- **Quedas:** tabela normal.
+
+### Serpente do Charco — `monster.marsh_serpent`
+
+Nível 18, normal. Vida 200, velocidade 3,0, raio 0,45. Tag: beast. Design: `design/combat-encounters-v0.1.md` § Brejo dos Afogados.
+
+- **Habilidades:**
+  - Cuspe Venenoso (`marsh_serpent.spit`): dano de natureza 5 num alvo inimigo a até 9 e **Veneno** (`status.poison`) por 1,5 s; recarga 2,8 s.
+  - Picada da Serpente (`marsh_serpent.bite`): dano físico 30, arco de 90°, alcance 1,4, recarga 1,6 s.
+- **IA:** `ai.ranged_kiter`. Distância preferida 6; recua de quem chega a menos de 3, usando só as instantâneas (as duas são). `aggroRange` 14.
+- **Vida pelo nível de nascimento:** nv. 18 = 1560.
+- **Onde aparece:** Charco Fundo, no Brejo, em pares. Encontro de teste Serpentes do Charco.
+- **Arte:** sprite da T-521.
+- **Quedas:** tabela normal.
+
+### Bruxa do Brejo — `monster.marsh_witch`
+
+Nível 20, **chefe** (chefe de campo). Vida 5500 (36 850 no nível 20), velocidade 3,2, raio 0,45. Tags: humanoid, boss. Design: `design/combat-encounters-v0.1.md` § Brejo dos Afogados.
+
+| Habilidade | Id | Resumo |
+|---|---|---|
+| Lodo que Puxa | `marsh_witch.pulling_mud` | conjuração de 1 s; cria o Lodo (`area.pulling_mud`, raio 4,5, 6 s, **preso a ela**): **Água Funda** (`status.deep_water`, velocidade × 0,6) por 0,5 s em todo inimigo dentro, a cada 0,25 s; recarga 14 s |
+| Chamar os Afogados | `marsh_witch.call_drowned` | conjuração de 1,5 s (interrompível); invoca 1 Afogado em raio 2,5 (máximo 2 vivos); recarga 20 s |
+| Poça Venenosa | `marsh_witch.poison_puddle` | aviso de 1 s; cria a Poça Venenosa (`area.witch_poison_puddle`, raio 2, 8 s, natureza 3,5 por segundo) a até 12; recarga 9 s |
+| Poça Venenosa Rápida | `marsh_witch.poison_puddle_fast` | a mesma poça, recarga 7 s |
+| Golpe de Cajado | `marsh_witch.staff_strike` | dano físico 8, arco de 100°, alcance 2, recarga 1,6 s |
+| Dardo do Brejo | `marsh_witch.hex_bolt` | dano de natureza 10 num alvo a até 10; recarga 2,2 s |
+| Dardo do Lodo | `marsh_witch.bog_bolt` | dano de natureza 10 num alvo a até 12; recarga 1,6 s |
+
+- **Fases** (`phases`):
+
+| Fase | Id | Vida | Ao entrar | Habilidades |
+|---|---|---|---|---|
+| Poças Venenosas | `phase.poison_puddles` | 100% | — | Poça Venenosa, Golpe de Cajado, Dardo do Brejo |
+| Chamado dos Afogados | `phase.drowned_call` | 66% | invoca 2 Afogados em raio 2,5 (máximo 3 vivos) | Chamar os Afogados, Poça Venenosa, Golpe de Cajado, Dardo do Brejo |
+| Lodo que Puxa | `phase.pulling_mud` | 33% | sem invocações (`noSummons`) | Lodo que Puxa, Poça Venenosa Rápida, Golpe de Cajado, Dardo do Lodo |
+
+- **IA:** `ai.boss`. `aggroRange` 40.
+- **Onde aparece:** Cabana da Bruxa, no Brejo (mapa da T-530; renasce em 10 min). Encontro de teste Bruxa do Brejo (nv. 20).
+- **Arte:** sprite LPC da T-521.
+- **Quedas:** tabela chefe.
+
 ## Pontos em aberto nos dados
 
 - O campo `level` de cada monstro (ex.: Guarda Esquelético 9, Aranha Menor 5) só vale quando o local de nascimento não define nível; nas zonas atuais o nível vem do ponto de nascimento e, nas invocações, de quem invoca.
 - Elite não tem crescimento próprio (`rules.monsters.elite` ausente): usa o crescimento normal.
+- A Poça Venenosa da Bruxa não aplica o estado Veneno (só dano de natureza na área), ao contrário da Poça de Veneno da Matriarca (T-510, balance-v0.24).
 - O Frenesi dura 3600 s (`defaultDuration`), o que na prática cobre o resto da luta.
 - A Teia Sufocante não tem `telegraph` (aviso), ao contrário das Poças de Veneno.
 - `ringRadius` e `retargetChance` do Rato têm o significado descrito no código da IA (`src/Game.Core/Combat/Ai/Profiles`), não no esquema de dados.

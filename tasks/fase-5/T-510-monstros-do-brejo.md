@@ -39,4 +39,39 @@ Mesmo formato da T-340 e da T-341: design primeiro, depois dados, Core só no qu
 
 ## Resultado
 
-_(a preencher)_
+Feito em 2026-11-24, no Windows (sem tela), na branch `task/T-510-monstros-do-brejo`. **A branch está empilhada sobre a da T-502** (`task/T-502-terreno-que-deixa-lento`, commit `6ee2b2e`): usa o `status.deep_water` dela e muda o `TerrainSystem` dela. **Integrar depois da T-502.** As T-511/T-512/T-513 empilham sobre esta.
+
+**Design.** Seção nova "Brejo dos Afogados" em `design/combat-encounters-v0.1.md`, com papel, habilidades, telegráfos, resposta de cada classe, grupos típicos e falhas de design, mais quatro linhas na matriz de decisões. `design/bestiario.md` atualizado com os quatro monstros e os cinco encontros. As propostas da tarefa valem como decididas (designer ausente); as trocas de números estão no relatório.
+
+**Dados** (números do nível 1; ids fixados mantidos: `monster.drowned`, `monster.marsh_lizardman`, `monster.marsh_serpent`, `monster.marsh_witch`; raio 0,4–0,45):
+- **Afogado** (nv16, `undead`, sagrado −40%, `ai.brute`): vida 300, velocidade 2,6. Agarrão (cone com telegráfo de 0,6 s, `status.snared` 1,5 s) e Garra.
+- **Homem-lagarto** (nv17, `humanoid` + `amphibious`, `ai.brute`): vida 440, velocidade 4,0. Bote (linha de 4 com telegráfo de 0,6 s e avanço) e Garra.
+- **Serpente do Charco** (nv18, `beast`, `ai.ranged_kiter`): vida 200, velocidade 3,0. Cuspe Venenoso (`status.poison`) e Picada forte para quem a alcança.
+- **Bruxa do Brejo** (nv20, chefe, `ai.boss`): vida 5.500 (36.850 no nv20). Fase 1 poças venenosas com telegráfo; fase 2 invoca Afogados (conjuração interrompível, como a Matriarca); fase 3 *Lodo que Puxa*: área presa a ela (`followOwner`, raio 4,5, 6 s) que mantém `status.deep_water` em quem está dentro, mais poças rápidas e o Dardo do Lodo.
+- Áreas novas `area.witch_poison_puddle` e `area.pulling_mud` em `data/areas.json`. Nenhum estado novo em `statuses.json`.
+- Encontros `encounter.drowned_pack`, `encounter.marsh_lizardmen`, `encounter.marsh_serpents`, `encounter.marsh_mixed` (`map.fields`) e `encounter.marsh_witch` (`map.matriarch_nest`). Nenhuma arena nova.
+
+**Core.** Uma mudança: o `TerrainSystem` (T-502) tirava `status.deep_water` de quem estivesse fora da água do mapa, viesse de onde viesse, o que apagaria o Lodo da Bruxa no Brejo real. Agora ele tira só o estado que ele mesmo pôs (sem fonte); o da Bruxa acaba pela duração. Testes novos em `tests/Game.Core.Tests/MarshMonsterTests.cs` (terreno, Lodo que segue a Bruxa e atinge só inimigos, tags e fases); os testes da T-502 continuam passando.
+
+**Testes de design** (`tests/Game.Design.Tests/MarshDesignTests.cs`, 38 casos; relatório **`tasks/reports/balance-v0.24.md`**; o v0.23 é da T-505), 100 seeds:
+- solo, perfil esperado, 4 classes × 4 grupos: 92–100% (meta ≥ 85%);
+- perfil fraco: 0–24% para Guerreiro e Clérigo nos grupos corpo a corpo; quando vence, 1,28–2,22× o tempo (meta ≤ 50% ou ≥ 1,25×). O Clérigo fraco nas Serpentes e nas Palafitas: 1,13× e 1,15× (exceção abaixo);
+- Bruxa, grupo de 3 (Guerreiro + Arqueiro + Clérigo): **93% no nv19, 100% no nv20** (meta ≥ 80%), ~81 s; solo no nv20: **0%** nas 4 classes (meta ≤ 30%).
+
+**Decisões e desvios.**
+- **Afogado fraco a sagrado** (−40%), que não estava na proposta: sem isso o Clérigo perdia para o bando.
+- **Homem-lagarto resistente, não frágil** (vida 440, golpes menores; Bote de 40 e linha de 4): o Bote forte matava o Arqueiro de um golpe e a Garra forte derrubava o Clérigo.
+- **Serpente com a força na Picada**, cuspe e veneno fracos, mais lenta (3,0) e recuando menos (3): assim o Arqueiro sobrevive ao dano à distância e o Guerreiro a alcança (com a proposta, vencia 0%). As duas Serpentes do encontro começam afastadas.
+- **Grupo misto = 1 Afogado + 1 Homem-lagarto.** Os mistos de 3 monstros tiravam o Guerreiro (47–73%) ou o Arqueiro (7–13%) da meta.
+- **Exceção do Clérigo no perfil fraco: ≥ 1,10× o tempo** (a regra geral é 1,25×), como na Floresta e no Guarda. Ele se cura e alcança as Serpentes de longe, e no nível 15–18 três níveis valem menos que no 5–9. Pendência para o designer (relatório §3).
+- **Poças da Bruxa sem Veneno e com dano baixo** (3,5 por segundo): os bots não saem de áreas já no chão, e a poça matava o tanque. Quem sai delas leva menos do que o simulador mostra.
+- **Bruxa no `map.matriarch_nest`** até o mapa do Brejo (T-530).
+- **Fora das "Áreas que pode alterar"** (mínimo): `data/areas.json` (as duas áreas novas); `src/Game.Core/Combat/Areas/TerrainSystem.cs` (está em `src/Game.Core/`, mas é da T-502); `tests/Game.Data.Tests/ProgressionContentTests.cs` (a tabela de níveis por área ganhou os quatro monstros); `site/content/site.json` (nomes das três fases da Bruxa e descrição dos quatro monstros, senão o site mostra o id da fase e `SiteTests.Ids_never_show_up_in_the_text` falha).
+
+**`./scripts/check.sh` completo:** build sem avisos e todos os projetos de teste passam, menos **4 testes de design que já falham na `main`** (`3891ac4`) e na T-502 (`6ee2b2e`), com os mesmos números, e não tocam nos monstros do Brejo: `SecondClassDesignTests.Guardian_cuts_the_damage_on_the_rest_of_the_group_by_at_least_15_percent` (nv30: 94%, nv40: 90%; meta ≤ 85%), `WatcherDesignTests.Without_the_cleric_the_win_rate_drops_clearly` (32%; meta ≤ 30%) e `CryptDesignTests.A_group_of_four_with_rares_beats_the_watcher_in_the_real_room_80_to_99_percent_in_4_to_6_minutes` (média 71%; meta 80–99%). Não investiguei a causa; ficam para quem integrar a fase 5.
+
+**Pendências.**
+- **T-530:** pôr `ignoreTags = amphibious` nas áreas de água funda e medir os grupos de novo com água no mapa.
+- **T-540:** mostrar o cone curto do Agarrão, a linha do Bote, a conjuração e a área do Lodo.
+- **T-550:** conferir as poças da Bruxa com jogadores de verdade e se o Clérigo fraco vencendo no Charco incomoda.
+- `design/habilidades.md` § Monstros não foi atualizado (fora das áreas, como na T-340 e na T-341).

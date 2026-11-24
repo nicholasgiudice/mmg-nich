@@ -178,6 +178,68 @@
       ],
       "victory": "all_enemies_dead",
       "defeat": { "condition": "all_players_dead", "timeLimit": 120 }
+    },
+    {
+      "id": "encounter.drowned_pack",
+      "name": "Bando de Afogados",
+      "arena": "map.fields",
+      "players": [{ "class": "class.warrior", "position": { "x": 5.5, "y": 10.5 } }],
+      "enemies": [
+        { "monster": "monster.drowned", "position": { "x": 17.5, "y": 8.5 }, "level": 16 },
+        { "monster": "monster.drowned", "position": { "x": 18.5, "y": 10.5 }, "level": 16 },
+        { "monster": "monster.drowned", "position": { "x": 17.5, "y": 12.5 }, "level": 16 }
+      ],
+      "victory": "all_enemies_dead",
+      "defeat": { "condition": "all_players_dead", "timeLimit": 120 }
+    },
+    {
+      "id": "encounter.marsh_lizardmen",
+      "name": "Par de Homens-lagarto",
+      "arena": "map.fields",
+      "players": [{ "class": "class.warrior", "position": { "x": 5.5, "y": 10.5 } }],
+      "enemies": [
+        { "monster": "monster.marsh_lizardman", "position": { "x": 18.5, "y": 9.5 }, "level": 17 },
+        { "monster": "monster.marsh_lizardman", "position": { "x": 18.5, "y": 11.5 }, "level": 17 }
+      ],
+      "victory": "all_enemies_dead",
+      "defeat": { "condition": "all_players_dead", "timeLimit": 120 }
+    },
+    {
+      "id": "encounter.marsh_serpents",
+      "name": "Serpentes do Charco",
+      "arena": "map.fields",
+      "players": [{ "class": "class.warrior", "position": { "x": 5.5, "y": 10.5 } }],
+      "enemies": [
+        { "monster": "monster.marsh_serpent", "position": { "x": 21.5, "y": 6.5 }, "level": 18 },
+        { "monster": "monster.marsh_serpent", "position": { "x": 21.5, "y": 14.5 }, "level": 18 }
+      ],
+      "victory": "all_enemies_dead",
+      "defeat": { "condition": "all_players_dead", "timeLimit": 120 }
+    },
+    {
+      "id": "encounter.marsh_mixed",
+      "name": "Palafitas Assombradas",
+      "arena": "map.fields",
+      "players": [{ "class": "class.warrior", "position": { "x": 5.5, "y": 10.5 } }],
+      "enemies": [
+        { "monster": "monster.drowned", "position": { "x": 17.5, "y": 10.5 }, "level": 16 },
+        { "monster": "monster.marsh_lizardman", "position": { "x": 20.5, "y": 10.5 }, "level": 17 }
+      ],
+      "victory": "all_enemies_dead",
+      "defeat": { "condition": "all_players_dead", "timeLimit": 120 }
+    },
+    {
+      "id": "encounter.marsh_witch",
+      "name": "Bruxa do Brejo",
+      "arena": "map.matriarch_nest",
+      "players": [
+        { "class": "class.warrior", "position": { "x": 13.5, "y": 13.5 } },
+        { "class": "class.archer", "position": { "x": 8.5, "y": 11.5 } },
+        { "class": "class.cleric", "position": { "x": 8.5, "y": 15.5 } }
+      ],
+      "enemies": [{ "monster": "monster.marsh_witch", "position": { "x": 28.5, "y": 13.5 }, "level": 20 }],
+      "victory": "all_enemies_dead",
+      "defeat": { "condition": "all_players_dead", "timeLimit": 360 }
     }
   ]
 }

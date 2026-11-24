@@ -178,6 +178,10 @@ public class ProgressionContentTests
     [InlineData("monster.shade", 12, 14, MonsterRank.Normal)] // T-351
     [InlineData("monster.faceless_watcher", 15, 15, MonsterRank.Boss)] // T-351
     [InlineData("monster.watcher_seal", 15, 15, MonsterRank.Normal)] // T-351
+    [InlineData("monster.drowned", 16, 20, MonsterRank.Normal)] // T-510 (também invocado pela Bruxa, no nível dela)
+    [InlineData("monster.marsh_lizardman", 17, 17, MonsterRank.Normal)] // T-510
+    [InlineData("monster.marsh_serpent", 18, 18, MonsterRank.Normal)] // T-510
+    [InlineData("monster.marsh_witch", 20, 20, MonsterRank.Boss)] // T-510
     public void Monster_levels_and_ranks_follow_the_area_table(string id, int min, int max, MonsterRank rank)
     {
         var m = Db.Monsters[id];
@@ -190,9 +194,10 @@ public class ProgressionContentTests
         Assert.Equal(
             new[]
             {
-                "monster.corrupted_ent", "monster.dead_priest", "monster.faceless_watcher", "monster.field_rat",
-                "monster.forest_matriarch", "monster.grey_wolf", "monster.mist_fairy", "monster.road_bandit", "monster.shade",
-                "monster.skeleton_guard", "monster.spectral_knight", "monster.spider_big", "monster.spider_small", "monster.watcher_seal",
+                "monster.corrupted_ent", "monster.dead_priest", "monster.drowned", "monster.faceless_watcher", "monster.field_rat",
+                "monster.forest_matriarch", "monster.grey_wolf", "monster.marsh_lizardman", "monster.marsh_serpent", "monster.marsh_witch",
+                "monster.mist_fairy", "monster.road_bandit", "monster.shade", "monster.skeleton_guard", "monster.spectral_knight",
+                "monster.spider_big", "monster.spider_small", "monster.watcher_seal",
             },
             Db.Monsters.Keys.Order(StringComparer.Ordinal));
 }

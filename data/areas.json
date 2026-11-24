@@ -96,6 +96,25 @@
       "mode": "periodic",
       "affects": "enemy",
       "effects": [{ "type": "damage", "school": "fire", "base": 22 }]
+    },
+    {
+      "id": "area.witch_poison_puddle",
+      "radius": 2,
+      "duration": 8,
+      "interval": 1,
+      "mode": "periodic",
+      "affects": "enemy",
+      "effects": [{ "type": "damage", "school": "nature", "base": 3.5 }]
+    },
+    {
+      "id": "area.pulling_mud",
+      "radius": 4.5,
+      "duration": 6,
+      "interval": 0.25,
+      "mode": "periodic",
+      "affects": "enemy",
+      "followOwner": true,
+      "effects": [{ "type": "apply_status", "status": "status.deep_water", "duration": 0.5 }]
     }
   ]
 }
