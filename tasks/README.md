@@ -57,8 +57,9 @@ Fluxo para você:
 | **2 — Persistência e progressão** | Contas, personagens, inventário, Cidade + Campos online; atributos, níveis, equipamento e habilidades reformuladas (`design/progression-v0.1.md`) | **Concluída** (T-230: playtest aprovado com correções para a fase 3; seção 6d) |
 | **3 — Primeiro mapa completo** | Floresta, Ruínas, Cripta instanciada, Vigia Sem Rosto; grupo, lista de batalha, ouro, lojas e mapas maiores (playtest v0.2) | **Concluída** (T-380: playtest aprovado; seção 6e) |
 | **4 — Segundas classes** | Nível 40, segunda classe no nível 20 com duas opções por classe, passivas, barra de 10 teclas; Guerreiro primeiro (`design/segunda-classe-v0.1.md`) | **Detalhada** nos blocos do Guerreiro (T-390; seção 6f), do Clérigo (T-420; seção 6g), do Arqueiro (T-430; seção 6h) e do Mago (T-440; seção 6i). Em andamento direto na `main` (desde 2026-11-22; antes, na branch `trilha/segundas-classes`) |
-| **5 — Operação** | CI/CD, métricas, testes de carga, produção separada | Esboço |
-| **Depois** | Áreas e mapas novos do nível 16 ao 40 | Ainda sem esboço |
+| **5 — Região do sul, 16 ao 27** | Brejo dos Afogados, Forte do Passo, Serra Partida e Minas Fundas, com renascimento no ponto seguro, água funda, chefe de campo e XP por hora de cada área (`design/mapas-16-40-v0.1.md`) | **Detalhada** (T-500, 2026-11-23; seção 6j) |
+| **6 — Região do sul, 26 ao 40** | Planalto Queimado, Bastião do Juramento e o Salão do Juramento (masmorra final) | Esboço (seção 7); detalhada pela T-560, depois do playtest da fase 5 |
+| **7 — Operação** | CI/CD, métricas, testes de carga, produção separada | Esboço. Era a fase 5 até 2026-11-23; pode correr em paralelo às fases 5 e 6, porque não toca nos mapas |
 
 As fases são detalhadas em arquivos de tarefa somente quando a anterior termina (T-030 detalhou a fase 1; T-120 detalha a fase 2), porque dependem do que a fase anterior ensinar.
 
@@ -732,9 +733,95 @@ Ordem do Core: T-421 → T-422 → T-431 → T-432 → T-441 → T-442
 
 ---
 
+## 6j. Tarefas da fase 5 (região do sul, 16 ao 27)
+
+Detalhadas pela T-500 a partir de `design/mapas-16-40-v0.1.md`, aprovado pelo designer em 2026-11-23. A fase entrega a primeira metade da região ao sul da Cidade: **Brejo dos Afogados** (16–20, campo), **Forte do Passo** (ponto seguro), **Serra Partida** (21–25, campo) e **Minas Fundas** (24–27, masmorra de 4). Mesma ordem da fase 3: peças de sistema e monstros no Core, depois os mapas, depois o playtest.
+
+**Decisões do designer (2026-11-23; `design/mapas-16-40-v0.1.md` §8)**
+- **Região contínua pelo portão sul**, com o Forte do Passo no meio. Temas aprovados.
+- **Curva de XP mantida.** A T-505 mede a XP por hora de cada área; o playtest (T-550) diz se ela muda.
+- **16–27 primeiro**; o 26–40 é a fase 6, detalhada depois do playtest (T-560).
+- **Mestre das classes e tela de habilidades**: as duas formas valem (T-541).
+- **Renascimento no Forte do Passo**, por zona: Serra e Minas renascem no Forte; o Brejo renasce na Cidade (T-501).
+- **Pode começar já.** Os playtests de classe da fase 4 ainda abertos (T-413, T-425, T-435, T-445) não bloqueiam e podem ir junto com o da fase 5.
+- **Fora desta fase:** missões, chave da masmorra, portas que abrem, monstro que anda por uma rota (fase 6) e o Planalto em diante.
+
+### Índice
+
+| ID | Tarefa | Ambiente | Modelo | Depende de |
+|---|---|---|---|---|
+| [T-500](fase-5/T-500-planejar-fase-5.md) | Detalhar a fase 5 em tarefas | Windows | **Forte** | esboço aprovado |
+| **Sistema** | | | | |
+| [T-501](fase-5/T-501-renascer-no-ponto-seguro.md) | Servidor: renascer no ponto seguro da zona (`respawn` em `zones.json`) | VPS | Médio | — |
+| [T-502](fase-5/T-502-terreno-que-deixa-lento.md) | Core: terreno que deixa lento (`slow_terrain`, água funda) | VPS | **Forte** | — |
+| [T-503](fase-5/T-503-anuncio-de-chefe-de-campo.md) | Servidor e protocolo: anúncio de chefe de campo | VPS | Médio | — |
+| [T-505](fase-5/T-505-xp-por-hora-por-area.md) | Simulador: XP por hora de cada área e metas do 16 ao 27 | VPS | Médio | — |
+| **Monstros e dados** | | | | |
+| [T-510](fase-5/T-510-monstros-do-brejo.md) | Monstros do Brejo e a Bruxa do Brejo (chefe de campo) | VPS | **Forte** | — (integrar depois da 502) |
+| [T-511](fase-5/T-511-monstros-da-serra.md) | Monstros da Serra Partida | VPS | **Forte** | 510 |
+| [T-512](fase-5/T-512-capataz-forjado.md) | Core e dados: o Capataz Forjado e os monstros das Minas | VPS | **Forte** | 511 |
+| [T-513](fase-5/T-513-dados-itens-lojas-e-quedas.md) | Dados: itens, loja do Forte, poções e quedas do 16 ao 27 | VPS | Médio | 510, 511, 512 |
+| **Arte** | | | | |
+| [T-520](fase-5/T-520-tilesets-do-sul.md) | Tilesets do sul no PixelLab: brejo, serra, mina e forte | Windows | Humano + Médio | — |
+| [T-521](fase-5/T-521-sprites-dos-monstros-do-sul.md) | Sprites LPC dos monstros do sul | Windows | Humano + Médio | — |
+| **Mapas** | | | | |
+| [T-530](fase-5/T-530-brejo-dos-afogados.md) | Mapa e zona: Brejo dos Afogados (e o portão sul da Cidade) | Windows | Humano + Médio | 502, 503, 505, 510, 520 |
+| [T-531](fase-5/T-531-forte-do-passo.md) | Mapa e zona: Forte do Passo | Windows | Humano + Médio | 501, 513, 520, 530 |
+| [T-532](fase-5/T-532-serra-partida.md) | Mapa e zona: Serra Partida | Windows | Humano + Médio | 505, 511, 520, 531 |
+| [T-533](fase-5/T-533-minas-fundas.md) | Mapa e instância: Minas Fundas | Windows | Humano + Médio | 501, 505, 512, 532 |
+| **Cliente** | | | | |
+| [T-540](fase-5/T-540-cliente-monstros-e-chefe-de-campo.md) | Cliente: monstros do sul, água funda e aviso de chefe de campo | Windows | Médio | 502, 503, 510, 511, 512, 521 |
+| [T-541](fase-5/T-541-cliente-mestre-e-renascimento.md) | Cliente: mestre das classes e tela de morte com o destino | Windows | Médio | 501 (só a tela de morte) |
+| **Fechamento** | | | | |
+| [T-550](fase-5/T-550-playtest-fase-5.md) | Playtest da fase 5 (e os playtests de classe abertos) | Windows | Humano | 513, 530, 531, 532, 533, 540, 541 |
+| [T-560](fase-5/T-560-planejar-fase-6.md) | Detalhar a fase 6 (26 ao 40) em tarefas | VPS ou Windows | **Forte** | 550 |
+
+### Ondas de execução
+
+| Onda | VPS | Windows |
+|---|---|---|
+| 1 | T-501, T-502, T-505 | T-520, T-521 (longas: pedem escolha do designer) |
+| 2 | T-503, T-510 | T-541 (o mestre; a tela de morte espera a 501) |
+| 3 | T-511 | — |
+| 4 | T-512 | T-530 |
+| 5 | T-513 | T-540 |
+| 6 | — | T-531 |
+| 7 | — | T-532 |
+| 8 | — | T-533 |
+| 9 | — | T-550 |
+| 10 | T-560 | — |
+
+**Cuidados de integração**
+- Tudo sai da `main` e entra na `main`, como na fase 4. Testes locais no Windows, como na seção 6f, com `--dev-tools` para subir de nível.
+- **Protocolo:** só a T-503 precisa subir `ProtocolVersion` (para 20, se a `main` ainda estiver no 19). **Não integre a T-503 na `main` sozinha:** a T-540 sai da branch dela, e as duas entram juntas, com um cliente novo. Quem mais subir o número sobe a partir do da `main`, e cliente e servidor saem do mesmo commit.
+- **Core:** a T-502, a T-510, a T-511 e a T-512 podem tocar em estados, efeitos, IA, no validador de dados e no schema. Uma de cada vez, nesta ordem: 502, 510, 511, 512. A T-501, a T-502 e a T-503 tocam na leitura de zonas e mapas (`Zones.cs`, `TiledMapReader`), e a 501 e a 503 também no `WorldServer`: integre na ordem 501, 502, 503 e rebase as seguintes.
+- **Dados:** a T-510, a T-511, a T-512 e a T-513 mexem em `monsters.json` e `abilities_monsters.json`; a T-513 também em `items.json` e `shops.json`. Uma de cada vez.
+- **Mapas:** a T-530, a T-531, a T-532 e a T-533 mexem em `zones.json` e no mapa da zona anterior (para abrir o portão). A ordem das ondas já as separa. A T-530 é a única que mexe em `city.tmj`.
+- **Ids fixados antes:** os ids dos monstros (`monster.drowned`, `monster.marsh_lizardman`, `monster.marsh_serpent`, `monster.marsh_witch`, `monster.possessed_miner`, `monster.mountain_wolf`, `monster.cave_bat`, `monster.stone_golem`, `monster.forged_overseer`), das zonas (`zone.drowned_marsh`, `zone.pass_fort`, `zone.broken_ridge`, `zone.deep_mines`), do estado `status.deep_water` e dos NPCs (`npc.class_master`, `shop.pass_fort`) estão nas tarefas, para a arte e os dados andarem em paralelo. Se uma tarefa trocar um id, registre no Resultado para as outras.
+- A T-540 e a T-541 mexem no `Hud.cs`: uma de cada vez.
+
+### Grafo de dependências
+
+```text
+Core e dados:  T-502 ─► T-510 ─► T-511 ─► T-512 ─► T-513
+               T-501, T-503, T-505 (independentes)
+Arte:          T-520, T-521 (independentes)
+
+Mapas:         T-530 ◄── 502, 503, 505, 510, 520
+                 └─► T-531 ◄── 501, 513
+                       └─► T-532 ◄── 511
+                             └─► T-533 ◄── 512
+Cliente:       T-540 ◄── 502, 503, 510, 511, 512, 521
+               T-541 ◄── 501
+
+Fechamento:    T-513, T-530 a T-533, T-540, T-541 ─► T-550 ─► T-560
+```
+
+---
+
 ## 7. Fases seguintes (esboço)
 
-Serão convertidas em arquivos de tarefa no fim de cada fase. As fases 1, 2 e 3 estão detalhadas nas seções 6b, 6d e 6e, e os blocos do Guerreiro, do Clérigo, do Arqueiro e do Mago da fase 4 nas seções 6f a 6i.
+Serão convertidas em arquivos de tarefa no fim de cada fase. As fases 1, 2 e 3 estão detalhadas nas seções 6b, 6d e 6e, os blocos do Guerreiro, do Clérigo, do Arqueiro e do Mago da fase 4 nas seções 6f a 6i, e a fase 5 na seção 6j.
 
 ### Fase 2 — Persistência e progressão
 
@@ -785,9 +872,23 @@ Decidida pelo designer depois do playtest v0.3 (2026-11-19 a 2026-11-21). Design
 | Arqueiro | Atirador de Elite (Tiro Certeiro sem conjuração, Olho de Falcão de 15 a 20 s) e Caçador | **aprovado** (2026-11-22); detalhado na seção 6h (T-430) |
 | Mago | Piromante e Arcanista (Sifão Arcano com regeneração de Mana) | **aprovado** (2026-11-22); detalhado na seção 6i (T-440) |
 
-### Fase 5 — Operação
+### Fase 6 — Região do sul, 26 ao 40
 
-Era a fase 4 até 2026-11-21.
+Segunda parte de `design/mapas-16-40-v0.1.md` (§3.5 e §3.6). A T-560 detalha depois do playtest da fase 5.
+
+| Tarefa | Ambiente | Modelo |
+|---|---|---|
+| Core: monstro que anda por uma rota (o Chefe de Guerra do Planalto) | VPS | Forte |
+| Monstros do Planalto Queimado (acampamentos orcs de 6 a 10, com xamã que cura) e o Chefe de Guerra | VPS | Forte |
+| Monstros do Bastião do Juramento (cavaleiros corrompidos, elites em todo grupo) e o chefe final, nível 40, para 4 | VPS | Forte |
+| Dados: itens e loja do 27 ao 40 | VPS | Médio |
+| Tilesets: planalto queimado e fortaleza do Juramento; sprites dos monstros | Windows | Humano + Médio |
+| Mapas: Planalto Queimado (26–32), Bastião (33–37), Salão do Juramento (38–40, instância) | Windows | Humano + Médio |
+| Cliente e playtest | Windows | Médio + Humano |
+
+### Fase 7 — Operação
+
+Era a fase 4 até 2026-11-21 e a fase 5 até 2026-11-23.
 
 | Tarefa | Ambiente | Modelo |
 |---|---|---|
