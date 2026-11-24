@@ -75,8 +75,11 @@ Propriedades do `monster_spawn` (T-331):
 | `count` | int | não | 1 | quantos monstros o ponto mantém (≥ 1) |
 | `radius` | float | não | 0 | raio em tiles, em volta do ponto, onde eles nascem (≥ 0) |
 | `respawn` | float | não | 30 | segundos até renascer depois de morrer (> 0) |
+| `announce` | bool | não | `false` | anuncia a **toda a zona** quando um monstro do ponto nasce e quando morre (chefe de campo, T-503) |
 
 Todo objeto tem **nome único na camada** (ex.: `spawn`, `wolf_1`). O nome aparece nas mensagens de erro e é como transições e código se referem ao ponto. Monstro desconhecido é erro de carga.
+
+**Anúncio (`announce`, T-503).** Num ponto com `announce` verdadeiro, cada nascimento e cada morte de monstro do ponto vira o evento `FieldBossAnnounced` (id do monstro, nome da subárea do ponto ou vazio, nasceu ou morreu), enviado a **todos os jogadores da zona**, perto ou longe (os demais eventos só chegam a quem vê a entidade). Só se anuncia o que acontece com a zona andando: o nascimento inicial da zona e o que ocorre com ela parada e vazia não geram evento, e quem entra depois não recebe o estado atual do chefe (vê o chefe se chegar perto). Um valor que não é `true`/`false` é erro de carga.
 
 **Ordem.** Os `monster_spawn` valem na ordem do arquivo (a ordem em que foram criados no Tiled). Cada ponto é um grupo de aggro (puxar um monstro puxa os do mesmo ponto, T-301). Uma matilha de 3 lobos é **um** ponto com `count` 3, não três pontos.
 

@@ -120,6 +120,26 @@ public class TiledMapLoaderTests
         AssertError(bad, "objects[seal]", "'objective' deve ser bool");
     }
 
+    /// <summary>T-503: a propriedade <c>announce</c> (bool, padrão false) marca um chefe de campo anunciado à zona.</summary>
+    [Fact]
+    public void Announce_property_marks_a_monster_spawn_as_a_field_boss_and_must_be_a_bool()
+    {
+        var r = Load(Map(Objects("spawns",
+            Obj("boss", "monster_spawn", 48, 48, point: true, props: [("monster", "monster.rat"), ("announce", true)]),
+            Obj("quiet", "monster_spawn", 80, 48, point: true, props: [("monster", "monster.rat"), ("announce", false)]),
+            Obj("rat", "monster_spawn", 112, 48, point: true, props: [("monster", "monster.rat")]))));
+        Assert.True(r.Success, Errors(r));
+        var spawns = r.Database!.Arenas["map.test"].Spawns;
+        Assert.True(spawns.Single(s => s.Name == "boss").Announce);
+        Assert.False(spawns.Single(s => s.Name == "quiet").Announce);
+        Assert.False(spawns.Single(s => s.Name == "rat").Announce);
+
+        var bad = Load(Map(Objects("spawns", Obj("boss", "monster_spawn", 48, 48, point: true, props: [("monster", "monster.rat"), ("announce", "sim")]))));
+        AssertError(bad, "objects[boss]", "'announce' deve ser bool");
+        var number = Load(Map(Objects("spawns", Obj("boss", "monster_spawn", 48, 48, point: true, props: [("monster", "monster.rat"), ("announce", 1)]))));
+        AssertError(number, "objects[boss]", "'announce' deve ser bool");
+    }
+
     [Fact]
     public void Map_becomes_an_arena_with_collision_spawns_areas_and_transitions()
     {

@@ -30,6 +30,7 @@ public static class EventCodecs
         [typeof(EntityDied)] = 2,
         [typeof(EntityRemoved)] = 3,
         [typeof(EntityRevived)] = 4,
+        [typeof(FieldBossAnnounced)] = 5,
         [typeof(AbilityStarted)] = 10,
         [typeof(AbilityExecuted)] = 11,
         [typeof(AbilityRejected)] = 12,
@@ -98,6 +99,7 @@ public static class EventCodecs
             case EntityDied x: w.Id(x.Entity); break;
             case EntityRemoved x: w.Id(x.Entity); break;
             case EntityRevived x: w.Id(x.Entity); w.Id(x.By); w.S(x.SourceId); w.F(x.Health); break;
+            case FieldBossAnnounced x: w.S(x.MonsterId); w.S(x.Area); w.B(x.Spawned); break;
 
             case AbilityStarted x:
                 w.Id(x.Source); w.S(x.AbilityId); w.I(x.CastTicks); w.L(x.EndTick); w.IdOpt(x.Target); w.VOpt(x.AimPoint);
@@ -209,6 +211,7 @@ public static class EventCodecs
             2 => new EntityDied(r.Id()),
             3 => new EntityRemoved(r.Id()),
             4 => new EntityRevived(r.Id(), r.Id(), r.S(), r.F()),
+            5 => new FieldBossAnnounced(r.S(), r.SOpt(), r.B()),
 
             10 => new AbilityStarted(r.Id(), r.S(), r.I(), r.L(), r.IdOpt(), r.VOpt()),
             11 => new AbilityExecuted(r.Id(), r.S(), r.Ids(), r.SOpt(), r.F(), r.B(), r.L()),

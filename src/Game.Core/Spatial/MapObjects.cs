@@ -36,6 +36,9 @@ public sealed record MapSpawn
 
     /// <summary>T-352: objetivo a proteger (propriedade <c>objective</c>, ex.: os selos do Vigia), aliado dos jogadores e sem IA.</summary>
     public bool Objective { get; init; }
+
+    /// <summary>T-503: anuncia o nascimento e a morte do monstro a toda a zona (propriedade <c>announce</c>, padrão false).</summary>
+    public bool Announce { get; init; }
 }
 
 /// <summary>

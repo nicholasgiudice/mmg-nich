@@ -133,4 +133,7 @@ public sealed record MonsterSpawnDefinition
     /// jogadores e sem IA. A queda do último publica <c>EncounterFailed</c>.
     /// </summary>
     public bool Objective { get; init; }
+
+    /// <summary>T-503: anuncia a toda a zona quando um monstro do ponto nasce e quando morre (chefes de campo).</summary>
+    public bool Announce { get; init; }
 }
