@@ -651,6 +651,133 @@ Nenhuma arena nova: os grupos rodam na arena aberta do protótipo e a Bruxa no n
 
 ---
 
+## Serra Partida — Mineiro Possuído, Lobo da Montanha, Morcego das Cavernas e o Golem de Pedra (T-511)
+
+Campo do nível 21 ao 25 (`design/mapas-16-40-v0.1.md` §3.3), a **primeira área de segunda classe**. Corredores de rocha e trilhas em encosta. O truque é o **desfiladeiro**: os monstros vêm **em fila** (o Atirador de Elite fura a fila, o Berserker a recebe de frente), e os grupos ficam maiores — do 21 em diante parte deles tem de 5 a 10 monstros, o que pede dano em área (Piromante, Berserker, a Praga do Caçador; §4 do esboço). A **Rocha Rolante** do Golem é o telegráfo grande da área: uma linha que atravessa o desfiladeiro.
+
+Números nos dados no **nível 1** (`data/monsters.json`, `data/abilities_monsters.json`); entre parênteses, no nível do monstro (escala da T-206; a elite cresce como o monstro normal), antes da defesa do jogador. Os humanoides e os animais têm raio de 0,3 a 0,4; o Golem, 0,7.
+
+**Decidido:** as propostas da tarefa foram mantidas (o designer estava ausente; valem como decididas). Nenhuma mecânica nova de Core: telegráfo em linha, cone com atordoamento, `ai.pack`, `ai.swarm` e resistências por escola já existiam. As trocas de números estão marcadas abaixo e no `tasks/reports/balance-v0.25.md`.
+
+### Mineiro Possuído (`monster.possessed_miner`, nível 21)
+
+**Papel:** os mineiros que fugiram das Minas Fundas e voltaram possuídos. Corpo a corpo em grupos de 3 a 5 (e de 6 a 10 no Acampamento, T-532). No desfiladeiro, chegam em fila. Ensina a **ler o aviso no meio do grupo**: a Picaretada atordoa.
+
+| | |
+|---|---|
+| Vida | 320 (2.880) |
+| Velocidade / raio | 3,2 / 0,4 |
+| Tags | `humanoid` |
+| IA | `ai.brute` (fica parado até o próprio aviso resolver) |
+
+Habilidades:
+
+- **Picaretada** (`possessed_miner.pickaxe_blow`): cone de 70° e 1,8 à frente, com **telegráfo de 0,8 s**. Físico 30 (132) e **Atordoado** (`status.stunned`) por **1 s**. Recarga de 7 s. É controle: vale o retorno decrescente (15 s, 100% → 50% → 25% → imune), então quatro mineiros não deixam o jogador preso.
+- **Golpe de Picareta** (`possessed_miner.pick_strike`): corpo a corpo, alcance 1,4, a cada 1,8 s. Físico 14 (62).
+
+Resposta de cada classe:
+
+- **Guardião:** segura a fila na frente, sai do cone; o Bastião aguenta o atordoamento que não der para evitar.
+- **Berserker:** Fúria e Golpe Circular quando a fila encosta; o atordoamento é o risco de entrar no meio.
+- **Atirador de Elite:** o Tiro Certeiro atravessa a fila inteira no desfiladeiro; o mineiro é mais lento que ele.
+- **Caçador:** Praga e Nuvem Tóxica no grupo junto, recuando.
+- **Piromante / Arcanista:** o grupo lento é o alvo ideal de área; o Arcanista mata um por vez de longe.
+- **Sacerdote / Inquisidor:** trocam golpes e se curam; saem do cone quando o aviso aparece.
+
+### Lobo da Montanha (`monster.mountain_wolf`, nível 22)
+
+**Papel:** o Lobo Cinzento da serra, maior e mais forte. Matilha de 4 a 5 (`ai.pack`): os lobos escolhem o mesmo alvo e uivam juntos (Fúria da Matilha). Pode usar o sprite do Lobo Cinzento com outra cor (`tint`, T-521/T-540).
+
+| | |
+|---|---|
+| Vida | 260 (2.444) |
+| Velocidade / raio | 4,2 (abaixo dos 4,5 da classe mais lenta, como todo monstro normal; com a Fúria, 4,8, alcança quem corre) / 0,4 |
+| Tags | `beast` |
+| IA | `ai.pack` (foco de 4 s, janela de 2 s para uivar junto) |
+
+Habilidades:
+
+- **Mordida do Lobo da Montanha** (`mountain_wolf.bite`): corpo a corpo, alcance 1,3, a cada 1,4 s. Físico 12 (55).
+- **Uivo da Montanha** (`mountain_wolf.pack_fury`): a mesma **Fúria da Matilha** do Lobo Cinzento (`status.pack_aggression`: +30% de dano e +15% de velocidade por 8 s), recarga de 20 s.
+
+**Decidido (troca de números):** a matilha de 5 com mordida 14 matava o Clérigo (0% nas duas segundas classes). O encontro de teste ficou com 4 lobos e a mordida com 12; a matilha de 5 fica para o mapa, com o grupo de jogadores.
+
+Resposta de cada classe: como contra os Três Lobos, mais longa. O Guardião provoca e segura; o Berserker usa o Golpe Circular nos quatro; Arqueiro e Mago recuam (fora da Fúria, todos correm mais que eles); o Clérigo se cura enquanto a Fúria dura.
+
+### Morcego das Cavernas (`monster.cave_bat`, nível 22)
+
+**Papel:** bando de 5 a 6 (`ai.swarm`), pouca vida, rápido. É o **alvo de dano em área**: sozinho não mata, mas seis juntos mordendo cansam quem só tem golpe de alvo único.
+
+| | |
+|---|---|
+| Vida | 90 (846) |
+| Velocidade / raio | 4,4 (logo abaixo dos 4,5 da classe mais lenta) / 0,3 |
+| Tags | `beast` |
+| IA | `ai.swarm` (anel de 1,2 em volta do alvo; 25% de chance de trocar de alvo) |
+
+Habilidades:
+
+- **Mordida do Morcego** (`cave_bat.bite`): corpo a corpo, alcance 1,1, a cada 1 s. Físico 5 (23).
+
+**Decidido (troca de números):** a mordida baixou de 6 para 5, para o Acampamento (8 monstros) não matar o Berserker que só tem a base do 20 (§ Grupos típicos).
+
+Resposta de cada classe: Golpe Circular, Explosão Elemental, Meteoro, Flecha Dispersa e Nuvem Tóxica limpam o bando; o Clérigo, sem área, mata um por vez e se cura (é a luta mais longa dele na Serra).
+
+### Golem de Pedra (`monster.stone_golem`, nível 25, elite)
+
+**Papel:** a elite da Boca das Minas (renasce em 3 min, no mapa da T-532). Lento, **resiste a físico** e é **fraco a arcano**: o Arcanista é quem mais rende contra ele; o Guerreiro e o Arqueiro, de dano físico, levam a luta mais longa. Dá para vencer sozinho, e em dupla é seguro.
+
+| | |
+|---|---|
+| Vida | 1.200 (12.720) |
+| Velocidade / raio | 2,2 (o mais lento da Serra) / 0,7 |
+| Tags | `construct` |
+| Resistências | **físico 30%** (recebe 70%), **arcano −30%** (recebe 130%) |
+| IA | `ai.brute` (a Rocha Rolante é a primeira da lista: sai sempre que está pronta, de perto ou de longe; fica parado até o aviso resolver) |
+| Controle | como toda elite, sofre 50% da duração |
+
+Habilidades (na ordem de prioridade da IA):
+
+- **Rocha Rolante** (`stone_golem.rolling_boulder`): **linha de 14 × 1,6 com telegráfo de 1,5 s**. Físico 80 (406) em **todo jogador na linha**; nenhum monstro (o telegráfo atinge só os inimigos do Golem). Recarga de 10 s. Pune quem atira de longe parado no corredor e o grupo enfileirado atrás do tanque: no desfiladeiro, sair da linha é ir para a parede.
+- **Pisão de Pedra** (`stone_golem.ground_slam`): círculo de raio 2,6 em volta dele, **telegráfo de 1,2 s**. Físico 45 (229). Recarga de 9 s. Pune quem fica colado.
+- **Punho de Pedra** (`stone_golem.stone_fist`): corpo a corpo, arco de 100°, alcance 2, a cada 2 s. Físico 20 (102).
+
+**Decidido (troca de números):** a primeira versão (vida 1.800, Punho 34, Pisão 60, Rocha 90) matava o Guerreiro sozinho (0%). Com vida 1.500 e golpes menores, Guardião e Berserker venciam 30–40%. Ficou com vida 1.200: o Guerreiro leva 90–125 s e vence sempre, e a dupla ~30–50 s.
+
+Resposta de cada classe:
+
+- **Guardião / Berserker:** lutam colados, saem do Pisão e da linha da Rocha (que ele solta também de perto). A resistência a físico torna a luta longa: é a luta de poção do Guerreiro solo.
+- **Atirador / Caçador:** o Golem não os alcança; a Rocha é o único perigo: sair da linha logo que o aviso aparece.
+- **Piromante / Arcanista:** como o Arqueiro, e o arcano rende 130%.
+- **Sacerdote / Inquisidor:** trocam golpes e se curam; a cura cobre o Punho, não a Rocha somada ao Pisão.
+- **Em dupla:** o tanque vira o Golem para longe do outro, para a Rocha não pegar os dois.
+
+### Grupos típicos e encontros de teste (`data/encounters.json`)
+
+| Encontro | Composição | Nível do grupo | Arena |
+|---|---|---|---|
+| `encounter.miner_gang` (Mineiros no Desfiladeiro) | 4 Mineiros nv21, **em fila** | 21 | `map.fields` |
+| `encounter.mountain_wolves` (Matilha da Montanha) | 4 Lobos da Montanha nv22 | 22 | `map.fields` |
+| `encounter.cave_bats` (Bando de Morcegos) | 6 Morcegos nv22 | 22 | `map.fields` |
+| `encounter.miner_camp` (Acampamento dos Mineiros) | **8**: 4 Mineiros + 4 Morcegos, nv21 | 21 | `map.fields` |
+| `encounter.stone_golem` (Golem de Pedra na Boca das Minas) | Golem nv25; Guerreiro + Clérigo | 25 | `map.fields` |
+
+Nenhuma arena nova: os desfiladeiros ficam no mapa da Serra (T-532). Os Mineiros do teste nascem em fila na frente do jogador, como no corredor. Os testes de design (`RidgeDesignTests`) trocam o jogador por cada classe base e dão a ela cada uma das **8 segundas classes**, no nível do grupo, com a estratégia e as opções de bot da T-408/T-423/T-433/T-443. Dois perfis (relatório §1): o **esperado com segunda classe** (`design/progression-v0.1.md` §8) e o **"desde o 21"** (base parada no 20, todo ponto do 21 em diante na segunda classe). Metas e resultados em `tasks/reports/balance-v0.25.md`:
+
+- solo, nas 8 segundas classes, contra Mineiros, Matilha, Morcegos e o Acampamento: vitória ≥ 85%. **Exceção:** o Sacerdote e o Inquisidor não têm dano em área e não vencem o Acampamento sozinhos (0–1%): para eles o grupo de 8 pede grupo (relatório §4);
+- grupo grande (o Acampamento, 8 monstros): o tempo do Piromante e do Berserker contra o do Arcanista é **só medido**;
+- Golem: solo ≥ 60% em cada segunda classe; em dupla (Guardião + Sacerdote, Berserker + Atirador, Piromante + Inquisidor) ≥ 90%.
+
+### Falhas de design
+
+- quatro Picaretadas em sequência deixarem o jogador atordoado o tempo todo (o retorno decrescente corta a terceira pela metade e a quarta é imune);
+- a Rocha Rolante atingir monstros (não atinge) ou não ter para onde fugir: o desfiladeiro do mapa (T-532) precisa de 3 a 5 tiles de largura, mais que os 1,6 da linha;
+- o Golem ser imune ao Guerreiro (30% de resistência; a luta é longa, não impossível);
+- o grupo grande ser obrigatório para seguir pela Serra (o mapa põe o Acampamento fora da trilha principal; os grupos da trilha são de 3 a 6);
+- o Lobo da Montanha parecer o Lobo Cinzento sem diferença: cor, tamanho e o nível no nome (T-540).
+
+---
+
 ## Matriz de decisões
 
 | Encontro | Posicionamento | Prioridade | Gestão de recurso | Controle | Cura/suporte |
@@ -669,6 +796,11 @@ Nenhuma arena nova: os grupos rodam na arena aberta do protótipo e a Bruxa no n
 | Homens-lagarto | Alto | Médio | Médio | Baixo | Médio |
 | Serpentes do Charco | Médio | Alto | Baixo | Baixo | Médio |
 | Bruxa do Brejo | **Alto** | Alto | Médio | Alto | Alto |
+| Mineiros no Desfiladeiro | **Alto** | Médio | Médio | Alto | Médio |
+| Matilha da Montanha | Médio | Médio | Médio | Alto | Médio |
+| Bando de Morcegos | Médio | Baixo | Médio | Médio | Baixo |
+| Acampamento dos Mineiros | Alto | **Alto** | Alto | Alto | Médio |
+| Golem de Pedra | **Alto** | Baixo | Alto | Baixo | Médio |
 
 ## Critérios gerais de sucesso
 
