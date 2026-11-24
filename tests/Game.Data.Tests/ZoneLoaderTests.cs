@@ -314,6 +314,38 @@ public class ZoneLoaderTests
     }
 
     [Fact]
+    public void Respawn_names_the_safe_zone_where_who_dies_here_comes_back()
+    {
+        var r = Load(ZoneA + ", " + ZoneB.Replace("\"corpse\"", "\"respawn\": \"zone.a\", \"corpse\"", StringComparison.Ordinal));
+
+        Assert.True(r.Success, Errors(r));
+        Assert.Equal("zone.a", r.Database!.Zones["zone.b"].Respawn);
+        Assert.Null(r.Database.Zones["zone.a"].Respawn);
+    }
+
+    [Theory]
+    [InlineData("zone.x", "Zona desconhecida: 'zone.x'")]
+    [InlineData("zone.b", "precisa ser segura")]
+    public void Respawn_to_an_unknown_or_unsafe_zone_is_an_error(string respawn, string fragment)
+    {
+        var r = Load(ZoneA + ", " + ZoneB.Replace("\"corpse\"", $"\"respawn\": \"{respawn}\", \"corpse\"", StringComparison.Ordinal));
+
+        Assert.False(r.Success);
+        Assert.Contains(r.Errors, e => e.File == "t.json" && e.Path.EndsWith(".respawn", StringComparison.Ordinal)
+            && e.Message.Contains(fragment, StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void Safe_zone_with_respawn_is_an_error()
+    {
+        var r = Load(ZoneA.Replace("\"kind\"", "\"respawn\": \"zone.a\", \"kind\"", StringComparison.Ordinal) + ", " + ZoneB);
+
+        Assert.False(r.Success);
+        Assert.Contains(r.Errors, e => e.File == "t.json" && e.Path.EndsWith(".respawn", StringComparison.Ordinal)
+            && e.Message.Contains("não é segura", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public void Real_data_has_the_city_and_the_fields_linked_by_gates()
     {
         var dir = new DirectoryInfo(AppContext.BaseDirectory);
