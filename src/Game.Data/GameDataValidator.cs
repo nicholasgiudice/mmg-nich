@@ -43,7 +43,7 @@ internal static partial class GameDataValidator
         var zones = c.Zones.GroupBy(z => z.Value.Id).ToDictionary(g => g.Key, g => g.First().Value, StringComparer.Ordinal);
         foreach (var e in c.Zones)
         {
-            ValidateZone(e, c.Arenas.GroupBy(a => a.Value.Id).ToDictionary(g => g.Key, g => g.First().Value), errors);
+            ValidateZone(e, c.Arenas.GroupBy(a => a.Value.Id).ToDictionary(g => g.Key, g => g.First().Value), zones, errors);
         }
 
         var arenaDefs = c.Arenas.GroupBy(a => a.Value.Id).ToDictionary(g => g.Key, g => g.First().Value, StringComparer.Ordinal);
@@ -100,15 +100,35 @@ internal static partial class GameDataValidator
     }
 
     /// <summary>
-    /// Zona (T-214, T-331): arena existe, nome, descanso só em zona segura, tempo do corpo e faixa de nível. O que é posição
-    /// (nascimento, portões, surgimentos, NPCs) vem do mapa e já foi conferido pelo <see cref="TiledMapReader"/> e pelo
-    /// <see cref="ZoneComposer"/>.
+    /// Zona (T-214, T-331): arena existe, nome, descanso só em zona segura, tempo do corpo e faixa de nível; T-501: zona de
+    /// renascimento existe e é segura. O que é posição (nascimento, portões, surgimentos, NPCs) vem do mapa e já foi
+    /// conferido pelo <see cref="TiledMapReader"/> e pelo <see cref="ZoneComposer"/>.
     /// </summary>
-    private static void ValidateZone(Entry<ZoneDefinition> e, Dictionary<string, ArenaDefinition> arenas, List<LoadError> errors)
+    private static void ValidateZone(
+        Entry<ZoneDefinition> e,
+        Dictionary<string, ArenaDefinition> arenas,
+        Dictionary<string, ZoneDefinition> zones,
+        List<LoadError> errors)
     {
         var x = e.Value;
         var ctx = new Ctx(e.File, e.Path, errors);
         if (!arenas.ContainsKey(x.Arena)) { ctx.Error("arena", $"Referência inexistente: arena '{x.Arena}'."); }
+        if (x.Respawn is { } respawn)
+        {
+            if (x.Kind == ZoneKind.Safe)
+            {
+                ctx.Error("respawn", "Só zona que não é segura tem 'respawn' (onde renasce quem morre nela).");
+            }
+            else if (!zones.TryGetValue(respawn, out var target))
+            {
+                ctx.Error("respawn", $"Zona desconhecida: '{respawn}'.");
+            }
+            else if (target.Kind != ZoneKind.Safe)
+            {
+                ctx.Error("respawn", $"A zona de renascimento '{respawn}' precisa ser segura (kind 'safe').");
+            }
+        }
+
         if (string.IsNullOrWhiteSpace(x.Name)) { ctx.Error("name", "Nome obrigatório."); }
         if (x.RestPerSecond < 0 || x.RestPerSecond > 1) { ctx.Error("restPerSecond", "Deve estar entre 0 e 1."); }
         if (x.Kind != ZoneKind.Safe && x.RestPerSecond > 0) { ctx.Error("restPerSecond", "Descanso só em zona segura."); }
