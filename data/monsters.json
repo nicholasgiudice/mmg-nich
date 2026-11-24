@@ -352,6 +352,53 @@
       "resistances": { "physical": 0.3, "arcane": -0.3 },
       "abilities": ["stone_golem.rolling_boulder", "stone_golem.ground_slam", "stone_golem.stone_fist"],
       "ai": { "id": "ai.brute", "parameters": { "aggroRange": 14, "approachRange": 2.0, "farDistance": 4 } }
+    },
+    {
+      "id": "monster.forged_overseer",
+      "name": "Capataz Forjado",
+      "level": 27,
+      "rank": "boss",
+      "health": 70000,
+      "speed": 3.0,
+      "radius": 0.9,
+      "tags": ["construct", "boss"],
+      "abilities": [
+        "forged_overseer.call_crew",
+        "forged_overseer.furnace_blast",
+        "forged_overseer.slag_throw",
+        "forged_overseer.hammer",
+        "forged_overseer.hammer_fast",
+        "forged_overseer.iron_fist"
+      ],
+      "ai": { "id": "ai.boss", "parameters": { "aggroRange": 40, "approachRange": 2.4, "meleeTargetRange": 3.5 } },
+      "phases": [
+        {
+          "id": "phase.hammer",
+          "healthPercent": 100,
+          "abilities": ["forged_overseer.slag_throw", "forged_overseer.hammer", "forged_overseer.iron_fist"]
+        },
+        {
+          "id": "phase.furnace",
+          "healthPercent": 60,
+          "onEnter": [{ "type": "apply_status", "status": "status.overseer_heat" }],
+          "abilities": ["forged_overseer.furnace_blast", "forged_overseer.slag_throw", "forged_overseer.hammer", "forged_overseer.iron_fist"]
+        },
+        {
+          "id": "phase.call_the_crew",
+          "healthPercent": 30,
+          "onEnter": [
+            { "type": "summon", "monster": "monster.possessed_miner", "count": 2, "radius": 2.5, "maxAlive": 3 },
+            { "type": "apply_status", "status": "status.overseer_overdrive" }
+          ],
+          "abilities": [
+            "forged_overseer.call_crew",
+            "forged_overseer.furnace_blast",
+            "forged_overseer.slag_throw",
+            "forged_overseer.hammer_fast",
+            "forged_overseer.iron_fist"
+          ]
+        }
+      ]
     }
   ]
 }

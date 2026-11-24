@@ -70,7 +70,8 @@
     "monster.possessed_miner": "Mineiro que fugiu das Minas Fundas e voltou com outra coisa por dentro. Anda em grupo e a picaretada, avisada, atordoa.",
     "monster.mountain_wolf": "Primo maior do Lobo Cinzento. Caça em matilha pelas trilhas da serra e uiva para atacar junto.",
     "monster.cave_bat": "Mora nas fendas da serra e sai em bando. Morre fácil, mas nunca vem sozinho.",
-    "monster.stone_golem": "Guardião de pedra da Boca das Minas. Lento e duro contra lâminas, racha com magia arcana e rola rochas pelo desfiladeiro."
+    "monster.stone_golem": "Guardião de pedra da Boca das Minas. Lento e duro contra lâminas, racha com magia arcana e rola rochas pelo desfiladeiro.",
+    "monster.forged_overseer": "Golem de ferro que manda nas Minas Fundas. O martelo derruba quem fica na frente, a fornalha do peito queima a sala inteira e, ferido, chama os mineiros possuídos para o trabalho."
   },
   "phases": {
     "phase.hunt": "Caçada",
@@ -81,7 +82,10 @@
     "phase.last_command": "Último Comando",
     "phase.poison_puddles": "Poças Venenosas",
     "phase.drowned_call": "Chamado dos Afogados",
-    "phase.pulling_mud": "Lodo que Puxa"
+    "phase.pulling_mud": "Lodo que Puxa",
+    "phase.hammer": "Martelo",
+    "phase.furnace": "Fornalha",
+    "phase.call_the_crew": "Chamar a Equipe"
   },
   "ai": {
     "ai.swarm": "Os que miram o mesmo alvo se espalham em volta dele e atacam; de vez em quando um troca de alvo.",

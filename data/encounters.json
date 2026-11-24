@@ -324,6 +324,22 @@
       ],
       "victory": "all_enemies_dead",
       "defeat": { "condition": "all_players_dead", "timeLimit": 240 }
+    },
+    {
+      "id": "encounter.forged_overseer",
+      "name": "O Capataz Forjado",
+      "arena": "map.watcher_hall",
+      "players": [
+        { "class": "class.warrior", "position": { "x": 14.5, "y": 13.5 } },
+        { "class": "class.archer", "position": { "x": 9.5, "y": 11.5 } },
+        { "class": "class.mage", "position": { "x": 9.5, "y": 15.5 } },
+        { "class": "class.cleric", "position": { "x": 7.5, "y": 13.5 } }
+      ],
+      "enemies": [
+        { "monster": "monster.forged_overseer", "position": { "x": 27.5, "y": 13.5 } }
+      ],
+      "victory": "all_enemies_dead",
+      "defeat": { "condition": "all_players_dead", "timeLimit": 480 }
     }
   ]
 }
