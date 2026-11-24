@@ -33,7 +33,7 @@ Com a curva de hoje (XP para o próximo nível `68 × L^1,8`, monstro dá `6 × 
 
 Ou seja: **cinco vezes** o que o primeiro mapa oferece. Como os monstros renascem, o que limita não é a XP disponível, é **quanto tempo o jogador aguenta caçar no mesmo lugar**. Hoje cada área segura de 1 a 3 horas. A proposta tenta manter cada faixa em **um campo grande mais uma coisa que se repete bem** (masmorra, elite ou chefe de campo), em vez de dobrar o número de campos.
 
-A queda de XP para quem está muito acima (piso de 40%, branch `fix/xp-monstros-abaixo`) ajuda: quem volta para ajudar um amigo ainda ganha alguma coisa.
+A queda de XP para quem está muito acima (piso de 40%, commit `b41407d`) ajuda: quem volta para ajudar um amigo ainda ganha alguma coisa.
 
 ## 2. Estrutura geral
 

@@ -45,4 +45,8 @@ Feito em 2026-11-23, no Windows, na branch `task/T-500-planejar-fase-5`.
 **Verificação:** a tarefa só mexe em `.md`.
 - O `dotnet format` não roda nesta máquina: o processo auxiliar do MSBuild cai ao abrir a solução ("The server disconnected unexpectedly"), antes de olhar qualquer arquivo.
 - `dotnet build -warnaserror` passou, sem avisos.
-- `dotnet test` passou em todos os projetos menos o `Game.Design.Tests`, que ainda rodava depois de 20 min quando o commit foi feito. Nenhum código mudou, então o resultado dele é o mesmo da `main`.
+- `dotnet test` passou em todos os projetos menos o `Game.Design.Tests`, que deu **4 falhas em 304** (21 min). Elas já existiam antes desta tarefa: o build testado era o código da `main` em `2cd506b`, sem nenhuma mudança da T-500. Falharam:
+  - `WatcherDesignTests.Without_the_cleric_the_win_rate_drops_clearly`: sem o Clérigo, o grupo ainda vence 99%;
+  - `CryptDesignTests.A_group_of_four_with_rares_beats_the_watcher_in_the_real_room_80_to_99_percent_in_4_to_6_minutes`: 71%, a meta é de 80 a 99%;
+  - `SecondClassDesignTests.Guardian_cuts_the_damage_on_the_rest_of_the_group_by_at_least_15_percent`, níveis 30 e 40: o Guardião corta 10% e 6%.
+  As duas primeiras provavelmente vêm das mudanças recentes no Vigia (`e3f039e`, chefe persegue o alvo; `6799131`, chuva de 3 a 5 círculos). Precisam de uma correção à parte.
