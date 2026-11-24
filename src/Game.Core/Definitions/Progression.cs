@@ -47,9 +47,12 @@ public sealed record ProgressionRules
     public double XpBonusPerLevelAbove { get; init; } = 0.1;
     public double XpMaxBonus { get; init; } = 0.3;
 
-    /// <summary>Monstro abaixo do personagem: − penalidade por nível; com <see cref="XpZeroLevelsBelow"/> ou mais níveis abaixo, 0.</summary>
+    /// <summary>
+    /// Monstro abaixo do personagem: − penalidade por nível, sem cair abaixo de <see cref="XpMinLevelModifier"/> (a XP
+    /// nunca zera, por mais níveis abaixo que o monstro esteja).
+    /// </summary>
     public double XpPenaltyPerLevelBelow { get; init; } = 0.2;
-    public int XpZeroLevelsBelow { get; init; } = 5;
+    public double XpMinLevelModifier { get; init; } = 0.4;
 
     /// <summary>Em grupo, a XP é dividida entre os participantes e ganha este bônus por participante além do primeiro.</summary>
     public double GroupBonusPerMember { get; init; } = 0.1;
@@ -130,8 +133,8 @@ public sealed record ProgressionRules
     public int SkillPointsAt(int level) => level * SkillPointsPerLevel;
 
     /// <summary>
-    /// Modificador de diferença de nível: acima +bônus por nível (teto), abaixo −penalidade por nível, e 0 a partir de
-    /// <see cref="XpZeroLevelsBelow"/> abaixo.
+    /// Modificador de diferença de nível: acima +bônus por nível (teto), abaixo −penalidade por nível até o piso
+    /// <see cref="XpMinLevelModifier"/>.
     /// </summary>
     public double LevelDifferenceModifier(int monsterLevel, int characterLevel)
     {
@@ -141,8 +144,7 @@ public sealed record ProgressionRules
             return 1 + Math.Min(XpMaxBonus, diff * XpBonusPerLevelAbove);
         }
 
-        var below = -diff;
-        return below >= XpZeroLevelsBelow ? 0 : Math.Max(0, 1 - (below * XpPenaltyPerLevelBelow));
+        return Math.Max(XpMinLevelModifier, 1 - (-diff * XpPenaltyPerLevelBelow));
     }
 
     /// <summary>XP do monstro para um personagem, antes da divisão em grupo.</summary>

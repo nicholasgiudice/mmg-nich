@@ -20,7 +20,7 @@ Todo número abaixo é ponto de partida para o simulador, não valor final. Regr
 - Nível máximo: **40** (era 15 no MVP, até a T-401). No nível **20** o personagem escolhe a segunda classe (§7 e `design/segunda-classe-v0.1.md`).
 - XP para passar do nível L para L+1: `round(68 × L^1,8)` (era `50 × L^1,8` até a T-302: +36%, pedido do playtest v0.2).
 - XP por monstro: `6 × nível do monstro × multiplicador de categoria` (normal 1, elite 5, chefe 30) × modificador de diferença de nível.
-- Modificador de diferença: monstro acima do jogador +10% por nível (máx. +30%); abaixo, −20% por nível; 5 ou mais níveis abaixo dá 0 (evita farm de área fácil).
+- Modificador de diferença: monstro acima do jogador +10% por nível (máx. +30%); abaixo, −20% por nível, até o piso de **40%** da XP base (a partir de 3 níveis abaixo). A XP nunca zera: monstro de área fácil ainda rende, só bem menos. Até o ajuste de 23/11/2026, 5 ou mais níveis abaixo dava 0.
 - Em grupo, a XP do monstro é dividida entre quem participou e recebe +10% por membro além do primeiro (incentivo a grupo sem punir solo).
 
 | Nível | XP para o próximo | XP total | Monstros normais do próprio nível |

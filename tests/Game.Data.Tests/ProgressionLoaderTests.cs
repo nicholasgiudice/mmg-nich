@@ -35,7 +35,7 @@ public class ProgressionLoaderTests
     [InlineData("""{ "maxLevel": 0 }""", "maxLevel")]
     [InlineData("""{ "xpCurveBase": 0 }""", "xpCurveBase")]
     [InlineData("""{ "xpPenaltyPerLevelBelow": 1.5 }""", "xpPenaltyPerLevelBelow")]
-    [InlineData("""{ "xpZeroLevelsBelow": 0 }""", "xpZeroLevelsBelow")]
+    [InlineData("""{ "xpMinLevelModifier": 1.5 }""", "xpMinLevelModifier")]
     [InlineData("""{ "participationWindow": 0 }""", "participationWindow")]
     [InlineData("""{ "skillRankLevels": [1, 3, 5, 7] }""", "skillRankLevels")]
     [InlineData("""{ "skillRankLevels": [1, 3, 2, 7, 9] }""", "skillRankLevels[2]")]
