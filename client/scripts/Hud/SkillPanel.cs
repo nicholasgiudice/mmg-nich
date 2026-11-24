@@ -45,6 +45,14 @@ public partial class SkillPanel : ProgressionPanel
     /// <summary>Janela de pedra e ouro (T-097).</summary>
     protected override bool StoneWindow => true;
 
+    /// <summary>T-541: abre a tela (se estava fechada) na aba pedida; é o que o mestre das classes faz.</summary>
+    public void OpenOnTab(bool secondClass)
+    {
+        _secondTab = secondClass;
+        Visible = true;
+        SetMessage("");
+    }
+
     protected override string StateKey(EntitySnapshot self)
     {
         var s = self.TryGet<CharacterStats>();
