@@ -46,6 +46,54 @@
       "role": "Cura, proteção, purificação, suporte e dano sagrado.",
       "strengths": "Sustenta grupos, remove condições e é eficiente contra mortos-vivos e corrupção.",
       "weaknesses": "Menor dano geral, vulnerável quando isolado e precisa escolher entre atacar e apoiar."
+    },
+    "second_class.guardian": {
+      "summary": "Escudo do grupo: toma para si parte do dano dos aliados e segura os chefes.",
+      "role": "Proteção do grupo, desvio de dano, controle e ameaça.",
+      "strengths": "Protege aliados de perto, reduz o dano do grupo inteiro e não se deixa atordoar nem prender.",
+      "weaknesses": "Pouco dano; rende menos sozinho e precisa ficar perto dos aliados para protegê-los."
+    },
+    "second_class.berserker": {
+      "summary": "Dano corpo a corpo alto, que cresce quando ele se expõe.",
+      "role": "Dano corpo a corpo, finalização de alvos e vida pelo dano causado.",
+      "strengths": "Dano alto, avanço até o alvo, golpes que terminam inimigos feridos e vida de volta a cada golpe.",
+      "weaknesses": "Defesa baixa: a Fúria aumenta o dano que recebe, e ele depende de chegar perto."
+    },
+    "second_class.marksman": {
+      "summary": "Alvo único, de longe: tiros fortes, críticos e armadura ignorada.",
+      "role": "Dano à distância em alvo único, críticos e alcance.",
+      "strengths": "Dano muito alto num alvo, mais crítico contra alvos distantes, ignora parte da armadura e enfraquece quem atinge.",
+      "weaknesses": "Pouco dano contra grupos e vulnerável quando o inimigo chega perto."
+    },
+    "second_class.hunter": {
+      "summary": "Venenos e sangramentos que se espalham por vários alvos.",
+      "role": "Dano contínuo em vários alvos, com veneno e sangramento.",
+      "strengths": "Todo acerto envenena; espalha venenos e sangramentos pelos monstros próximos e pune o alvo que corre.",
+      "weaknesses": "O dano leva tempo para crescer: rende menos em lutas curtas e precisa continuar acertando para manter o veneno."
+    },
+    "second_class.pyromancer": {
+      "summary": "Fogo em área: queima grupos inteiros e detona as queimaduras.",
+      "role": "Dano mágico em área e dano contínuo de fogo.",
+      "strengths": "Dano alto em grupos, queimaduras que somam ao dano das habilidades e áreas de fogo no chão.",
+      "weaknesses": "Menos dano num alvo só, pouca resistência e muita dependência de Mana."
+    },
+    "second_class.arcanist": {
+      "summary": "Dano arcano constante num alvo, que cresce quanto mais tempo fica nele.",
+      "role": "Dano mágico constante em alvo único, canalização e Mana.",
+      "strengths": "Dano alto e estável num alvo, orbes que atiram sozinhos e Mana que volta mais rápido.",
+      "weaknesses": "Trocar de alvo perde o que acumulou; canalizar pede ficar parado ou andar devagar; pouco dano em grupos."
+    },
+    "second_class.priest": {
+      "summary": "Cura do grupo: mantém todos de pé e os deixa mais fortes.",
+      "role": "Cura em área, atributos, velocidade e Mana para os aliados.",
+      "strengths": "Cura vários aliados de uma vez, reforça o grupo inteiro e, por um tempo, impede que os aliados caiam.",
+      "weaknesses": "Pouco dano; depende do grupo perto dele e fica vulnerável quando isolado."
+    },
+    "second_class.inquisitor": {
+      "summary": "Dano sagrado corpo a corpo que cura quem luta ao lado.",
+      "role": "Dano sagrado de perto, controle e cura menor pelo dano causado.",
+      "strengths": "Bom dano sagrado, mais forte contra mortos-vivos e corrompidos; atordoa e cura os aliados enquanto bate.",
+      "weaknesses": "Cura menos que o Sacerdote, precisa lutar de perto e fica exposto na linha de frente."
     }
   },
   "monsters": {
@@ -120,6 +168,30 @@
     "seal_intact": "selo",
     "slow": "lentidão",
     "spectral_shield": "escudo espectral",
-    "stun": "atordoamento"
+    "stun": "atordoamento",
+    "arcane_mark": "marca arcana",
+    "arcane_orbs": "orbes arcanos",
+    "bastion": "bastião",
+    "blessing": "bênção",
+    "burn": "queimadura",
+    "crit": "crítico",
+    "divine_wrath": "ira divina",
+    "fury": "fúria",
+    "haste": "velocidade",
+    "hawk_eye": "olho de falcão",
+    "heal": "cura",
+    "hot": "cura contínua",
+    "hunter_venom": "veneno do caçador",
+    "inspiration": "inspiração",
+    "lifesteal": "vida pelo dano",
+    "mana_regen": "regeneração de Mana",
+    "passive": "passiva",
+    "plague": "praga",
+    "redirect": "desvio de dano",
+    "sanctuary": "santuário",
+    "steadfast": "inabalável",
+    "steel_storm": "tempestade de aço",
+    "void_exposed": "exposto ao vazio",
+    "weaken": "enfraquecimento"
   }
 }

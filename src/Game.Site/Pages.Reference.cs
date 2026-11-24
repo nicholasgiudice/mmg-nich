@@ -35,7 +35,9 @@ internal sealed partial class SiteBuilder
             var kind = _d.TagList(s.Tags);
             p.Add(Dl([
                 ("Tipo", kind.Length == 0 ? "—" : kind),
-                ("Duração padrão", $"<span data-k=\"duration\">{Seconds(s.DefaultDurationTicks)}</span>"),
+                ("Duração padrão", _usage.PassiveStatuses.Contains(s.Id)
+                    ? "<span data-k=\"duration\">permanente</span> (de uma passiva, enquanto ela tiver NH)"
+                    : $"<span data-k=\"duration\">{Seconds(s.DefaultDurationTicks)}</span>"),
                 ("Acúmulo", s.Stacking == StackingMode.Stack ? $"acumula até {s.MaxStacks}" : "renova"),
                 ("Efeito", _d.StatusEffects(p, s)),
                 ("Aplicado por", Sources(p, _usage.StatusSources.GetValueOrDefault(s.Id) ?? [])),
@@ -58,6 +60,7 @@ internal sealed partial class SiteBuilder
                 ("Duração", Seconds(a.DurationTicks) + (a.ArmTimeTicks > 0 ? $" (arma em {Seconds(a.ArmTimeTicks)})" : "")),
                 ("Dispara", trigger),
                 ("Afeta", Faction(a.Affects, plural: true) + " de quem criou"),
+                ("Posição", a.FollowOwner ? "acompanha quem a criou e acaba se ele morrer" : "fixa no chão"),
                 ("Efeitos", _d.Effects(p, a.Effects)),
                 ("Criada por", Sources(p, _usage.AreaSources.GetValueOrDefault(a.Id) ?? [])),
             ]));

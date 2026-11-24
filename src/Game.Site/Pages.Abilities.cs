@@ -18,6 +18,12 @@ internal sealed partial class SiteBuilder
         {
             index.Add($"<h2 id=\"{Esc(c.Id)}\">{index.A(Url.Class(c.Id), c.Name)}</h2>");
             index.Add(AbilityList(index, new[] { c.BasicAttack }.Concat(c.Abilities), c.BasicAttack));
+            foreach (var sc in c.SecondClasses)
+            {
+                // T-075: segundas classes, com o ataque básico que alguma habilidade delas troca (Ira Divina).
+                index.Add($"<h3 id=\"{Esc(sc.Id)}\">{index.A(Url.Class(sc.Id), sc.Name)} <span class=\"badge\">segunda classe</span></h3>");
+                index.Add(AbilityList(index, sc.Abilities.Concat(SwappedBasicAttacks(sc.Abilities)), null));
+            }
         }
 
         var consumables = _db.Items.Values.Where(i => i.UseAbility is not null).Select(i => i.UseAbility!).Distinct().ToList();
@@ -41,14 +47,32 @@ internal sealed partial class SiteBuilder
         }
     }
 
+    /// <summary>Habilidades que viram o ataque básico por um status aplicado por uma de <paramref name="abilities"/> (T-422).</summary>
+    private IEnumerable<string> SwappedBasicAttacks(IEnumerable<string> abilities)
+    {
+        var set = abilities.ToHashSet(StringComparer.Ordinal);
+        return _usage.BasicAttackOf.Where(kv => kv.Value.Any(v => v.Ability is { } a && set.Contains(a))).Select(kv => kv.Key);
+    }
+
+    /// <summary>De onde vem um ataque básico trocado (ex.: "durante Ira Divina NH1–2"); vazio para as outras.</summary>
+    private string SwapNote(Page p, string abilityId) =>
+        _usage.BasicAttackOf.TryGetValue(abilityId, out var swaps)
+            ? " <span class=\"muted\">(durante " + string.Join("; ", swaps.Select(sw => Sources(p, _usage.StatusSources.GetValueOrDefault(sw.Status) ?? []))) + ")</span>"
+            : "";
+
+    private static string Badges(AbilityDefinition a, string? basic, bool swapped = false) =>
+        (a.Id == basic || swapped ? " <span class=\"badge\">ataque básico</span>" : "")
+        + (a.Signature ? " <span class=\"badge\">assinatura</span>" : "")
+        + (a.Passive ? " <span class=\"badge\">passiva</span>" : "");
+
     private string AbilityList(Page p, IEnumerable<string> ids, string? basic)
     {
         var rows = ids.Where(_db.Abilities.ContainsKey).Select(id => _db.Abilities[id]).Select(a => new[]
         {
-            Icon(p, a.Id) + p.A(Url.Ability(a.Id), a.Name) + (a.Id == basic ? " <span class=\"badge\">ataque básico</span>" : "") + (a.Signature ? " <span class=\"badge\">assinatura</span>" : ""),
+            Icon(p, a.Id) + p.A(Url.Ability(a.Id), a.Name) + Badges(a, basic, _usage.BasicAttackOf.ContainsKey(a.Id)) + SwapNote(p, a.Id),
             Describe.Cost(a),
             Describe.Cooldown(a),
-            Esc(Describe.Targeting(a.Targeting)),
+            a.Passive ? "—" : Esc(Describe.Targeting(a.Targeting)),
             a.HighestRank > 1 ? $"1–{a.HighestRank}" : "—",
         });
         return Table(["Habilidade", "Custo", "Recarga", "Alvo", "NH"], rows);
@@ -60,11 +84,24 @@ internal sealed partial class SiteBuilder
     private void BuildAbility(AbilityDefinition a)
     {
         var p = NewPage(Url.Ability(a.Id), a.Name, $"{a.Name}: custo, recarga, alvo e efeitos por nível de habilidade.");
-        p.Add($"<div class=\"head\">{Icon(p, a.Id, 2)}<div><h1>{Esc(a.Name)}</h1>{(a.Signature ? "<p><span class=\"badge\">assinatura</span></p>" : "")}</div></div>");
+        var badges = Badges(a, null).Trim();
+        p.Add($"<div class=\"head\">{Icon(p, a.Id, 2)}<div><h1>{Esc(a.Name)}</h1>{(badges.Length > 0 ? $"<p>{badges}</p>" : "")}</div></div>");
         var users = new List<string>();
         if (_usage.AbilityClasses.TryGetValue(a.Id, out var classes))
         {
-            users.AddRange(classes.Select(id => _d.ClassLink(p, id) + (_db.Classes[id].BasicAttack == a.Id ? " (ataque básico)" : "")));
+            users.AddRange(classes.Select(id => _d.ClassLink(p, id)
+                + (_db.Classes.TryGetValue(id, out var cls) && cls.BasicAttack == a.Id ? " (ataque básico)"
+                    : _usage.SecondClasses.ContainsKey(id) ? " (segunda classe)" : "")));
+        }
+
+        if (_usage.BasicAttackOf.TryGetValue(a.Id, out var swaps))
+        {
+            // T-422: vira o ataque básico enquanto um status dura (Ira Divina).
+            foreach (var sw in swaps)
+            {
+                var owners = sw.Ability is { } by && _usage.AbilityClasses.TryGetValue(by, out var oc) ? string.Join(", ", oc.Select(id => _d.ClassLink(p, id))) + ": " : "";
+                users.Add($"{owners}ataque básico durante {Sources(p, _usage.StatusSources.GetValueOrDefault(sw.Status) ?? [])}");
+            }
         }
 
         var isMonster = _usage.AbilityMonsters.TryGetValue(a.Id, out var monsters);
@@ -91,9 +128,17 @@ internal sealed partial class SiteBuilder
             p.Add("<p class=\"muted\">Valores do nível 1 do monstro; dano, cura e escudo crescem com o nível (veja a página do monstro).</p>");
         }
 
+        if (a.Passive)
+        {
+            p.Add("<p class=\"muted\">Passiva: não ocupa tecla, não tem custo nem recarga e vale sempre, a partir do primeiro ponto.</p>");
+        }
+
         var resolved = Enumerable.Range(1, a.HighestRank).Select(r => AbilityRanks.Resolve(a, r)).ToList();
         var prog = _db.Rules.Progression;
-        var columns = new List<Column>
+        var second = _usage.IsSecondClassAbility(a.Id);
+        var columns = a.Passive
+            ? [new("passive", "Efeito", (x, _) => PassiveEffect(p, x), AlwaysInTable: true)]
+            : new List<Column>
         {
             new("cost", "Custo", (x, _) => Describe.Cost(x), AlwaysInTable: true),
             new("cooldown", "Recarga", (x, _) => Describe.Cooldown(x), AlwaysInTable: true),
@@ -103,9 +148,17 @@ internal sealed partial class SiteBuilder
             new("hits", "Acertos", (x, _) => Describe.Hits(x)),
             new("effects", "Efeitos", (x, _) => _d.Effects(p, x.Effects), AlwaysInTable: true),
         };
+        if (resolved.Any(x => x.Channel is not null))
+        {
+            // T-442: os efeitos da tabela saem a cada pulso.
+            columns.Insert(columns.FindIndex(c => c.Key == "effects"), new("channel", "Canalização", (x, _) => _d.Channel(p, x.Channel)));
+            p.Add("<p class=\"muted\">Canalizada: paga o custo ao começar, e os efeitos saem a cada pulso. Atordoamento, silêncio, interrupção "
+                + "e a morte cortam a canalização (andar também, salvo onde a tabela diz que pode), e os pulsos que faltam não saem.</p>");
+        }
+
         if (a.HighestRank > 1 && classes is not null)
         {
-            columns.Insert(0, new("level", "Nível exigido", (_, r) => Num(prog.RequiredLevel(a.Signature, r)), AlwaysInTable: true));
+            columns.Insert(0, new("level", "Nível exigido", (_, r) => Num(prog.RequiredLevel(a.Signature, r, second)), AlwaysInTable: true));
         }
 
         if (a.HighestRank == 1)
@@ -141,4 +194,10 @@ internal sealed partial class SiteBuilder
 
         p.Add(sb.Append("</tbody></table></div>").ToString());
     }
+
+    /// <summary>O que a passiva mantém no personagem num NH (T-403): o status e o que ele faz.</summary>
+    private string PassiveEffect(Page p, AbilityDefinition resolved) =>
+        resolved.PassiveStatus is { } id && _db.Statuses.TryGetValue(id, out var s)
+            ? $"mantém {_d.StatusLink(p, id)}: {_d.StatusEffects(p, s)}"
+            : "—";
 }
