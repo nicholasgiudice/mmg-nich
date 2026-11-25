@@ -28,6 +28,13 @@ const string Usage = """
                               as poções iniciais. No fim sai a linha LOJA.
       --route <zona>/<área>   mundo aberto (T-343): anda pelo caminho (A*) até o portão para a zona e, nela, até a área do
                               mapa (nome ou classe), ex.: zone.old_road_ruins/crypt_entrance. No fim sai a linha ROTA.
+                              Sem portão direto, passa pelas zonas do caminho mais curto (T-531: zone.pass_fort sai da Cidade
+                              pelo Brejo). Com --shop, na zona que tem a loja o bot compra antes de seguir.
+      --shop-id <id>          com --shop: a loja (padrão shop.temple; T-531: shop.pass_fort)
+      --shop-item <id>        com --shop: o item comprado (padrão consumable.minor_healing_potion)
+      --return <zona>/<área>  com --shop: depois da compra, volta por esta rota (ex.: zone.city/plaza). No fim sai a linha VOLTA.
+      --dev-level             pede o nível máximo à ferramenta de teste ao entrar (servidor com --dev-tools)
+      --earn <ouro>           com --route: numa zona de campo do caminho, luta até ganhar esse ouro e depois segue
       --party-size <n>        com --party: tamanho dos grupos (padrão rules.party.maxMembers)
       --instance <zona>       mundo aberto (T-350): com o grupo completo, anda (A*) até o portão da zona atual que leva à
                               instância e luta lá dentro. No fim sai a linha INSTÂNCIA.
@@ -75,6 +82,11 @@ var roam = a.Contains("--roam");
 var party = a.Contains("--party");
 var shop = a.Contains("--shop");
 var route = Opt("--route", "").Split('/', 2);
+var shopId = Opt("--shop-id", "shop.temple");
+var shopItem = Opt("--shop-item", "consumable.minor_healing_potion");
+var back = Opt("--return", "").Split('/', 2);
+var devLevel = a.Contains("--dev-level");
+var earn = int.Parse(Opt("--earn", "0"), CultureInfo.InvariantCulture);
 var instanceZone = Opt("--instance", "");
 var partySize = int.Parse(Opt("--party-size", content.Rules.Party.MaxMembers.ToString(CultureInfo.InvariantCulture)), CultureInfo.InvariantCulture);
 
@@ -89,6 +101,12 @@ for (var i = 0; i < count; i++)
     {
         Roam = roam,
         Shop = shop,
+        ShopId = shopId,
+        ShopItem = shopItem,
+        ReturnZone = back.Length == 2 ? back[0] : null,
+        ReturnArea = back.Length == 2 ? back[1] : null,
+        DevMaxLevel = devLevel,
+        Earn = earn,
         RouteZone = route.Length == 2 ? route[0] : null,
         RouteArea = route.Length == 2 ? route[1] : null,
         PartyInvites = leader ? Enumerable.Range(i + 1, Math.Min(partySize - 1, count - i - 1)).Select(j => $"netbot{j}").ToArray() : [],
@@ -171,6 +189,12 @@ if (route.Length == 2)
         + $"renascimentos {bots.Sum(b => b.Respawns)} · trocas de zona {bots.Sum(b => b.ZoneChanges)}");
 }
 
+if (back.Length == 2)
+{
+    Console.WriteLine($"VOLTA {back[0]}/{back[1]}: chegaram {bots.Count(b => b.ReachedReturn)}/{count} · ouro dos monstros {string.Join(",", bots.Select(b => b.GoldEarned))} · "
+        + $"percurso {string.Join(" | ", bots.Select(b => string.Join(" > ", b.ZonePath)))}");
+}
+
 if (instanceZone.Length > 0)
 {
     Console.WriteLine($"INSTÂNCIA {instanceZone}: bots dentro {bots.Count(b => b.InstanceId > 0)}/{count} · cópias {bots.Where(b => b.InstanceId > 0).Select(b => b.InstanceId).Distinct().Count()} "
@@ -180,7 +204,7 @@ if (instanceZone.Length > 0)
 if (shop)
 {
     Console.WriteLine($"LOJA chegaram ao NPC {bots.Count(b => b.ReachedShop)}/{count} · compraram {bots.Count(b => b.ShopBuys > 0)}/{count} · "
-        + $"compras {bots.Sum(b => b.ShopBuys)} · vendas {bots.Sum(b => b.ShopSales)} · recusas {bots.Sum(b => b.ShopRejections)}");
+        + $"compras {bots.Sum(b => b.ShopBuys)} · vendas {bots.Sum(b => b.ShopSales)} ({bots.Sum(b => b.ShopGoldFromSales)} de ouro) · recusas {bots.Sum(b => b.ShopRejections)} ({string.Join(",", bots.Select(b => b.LastShopReject ?? "-"))})");
 }
 
 foreach (var b in bots)
