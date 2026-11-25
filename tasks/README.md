@@ -260,11 +260,13 @@ O jogo passa a se chamar **Valdran** (decisão de 2026-11-02) e ganha um site p�
 | [T-072](trilha-valdran/T-072-site-publicacao.md) | Publicar o site em `valdran.nich.click` (Caddy) | VPS | Humano + Leve | 071, DNS |
 | [T-073](trilha-valdran/T-073-logo-valdran.md) | Logo do Valdran no PixelLab (tela de login e página inicial do site) | Windows | Humano + Leve | 070, 088 |
 | [T-074](trilha-valdran/T-074-selecao-e-icone.md) | Tela de seleção de personagem em cartões e ícone do executável (PixelLab) | Windows | Humano + Leve | 073, 220 |
+| [T-075](trilha-valdran/T-075-site-segundas-classes.md) | Site: segundas classes, habilidades e mecânicas da fase 4 | VPS | Médio | 071, 072, 401, 408, 423, 433, 443 |
 
 ```text
 Valdran:      T-070 (independente)
               T-071 ─► T-072 ◄── DNS valdran.nich.click (humano)
               T-073 (logo; depois da T-088) ─► T-074 (seleção e ícone)
+              T-072 + fase 4 (T-401, T-408, T-423, T-433, T-443) ─► T-075 (segundas classes no site)
 ```
 
 ### Trilha de interface (`tasks/trilha-interface/`)

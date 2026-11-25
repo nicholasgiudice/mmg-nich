@@ -26,6 +26,21 @@ public sealed class Usage
     public Dictionary<string, List<UseSource>> AreaSources { get; } = new(StringComparer.Ordinal);
     public Dictionary<string, List<UseSource>> SummonSources { get; } = new(StringComparer.Ordinal);
 
+    /// <summary>Segunda classe (T-075) → classe base e definição, na ordem dos dados.</summary>
+    public Dictionary<string, (ClassDefinition Base, SecondClassDefinition Def)> SecondClasses { get; } = new(StringComparer.Ordinal);
+
+    /// <summary>
+    /// Habilidade que troca o ataque básico (T-422, Ira Divina) → os status que fazem a troca e a habilidade que aplica cada um.
+    /// </summary>
+    public Dictionary<string, List<(string Status, string? Ability)>> BasicAttackOf { get; } = new(StringComparer.Ordinal);
+
+    /// <summary>Status mantidos por uma passiva (T-403): sem duração, enquanto a habilidade tiver NH.</summary>
+    public HashSet<string> PassiveStatuses { get; } = new(StringComparer.Ordinal);
+
+    private readonly Queue<string> _pending = new();
+    private readonly HashSet<string> _walkedAbilities = new(StringComparer.Ordinal);
+    private readonly HashSet<string> _walkingStatuses = new(StringComparer.Ordinal);
+
     public Usage(GameDatabase db)
     {
         _db = db;
@@ -34,6 +49,16 @@ public sealed class Usage
             foreach (var id in new[] { cls.BasicAttack }.Concat(cls.Abilities))
             {
                 Add(AbilityClasses, id, cls.Id);
+            }
+
+            // T-075: as habilidades das segundas classes contam como em uso, pela segunda classe.
+            foreach (var sc in cls.SecondClasses)
+            {
+                SecondClasses[sc.Id] = (cls, sc);
+                foreach (var id in sc.Abilities)
+                {
+                    Add(AbilityClasses, id, sc.Id);
+                }
             }
         }
 
@@ -45,17 +70,14 @@ public sealed class Usage
             }
         }
 
-        // Efeitos das habilidades usadas, NH a NH (herança já resolvida).
+        // Efeitos das habilidades usadas, NH a NH (herança já resolvida). Um status pode trocar o ataque básico por outra
+        // habilidade (Ira Divina): ela entra na fila e passa a contar como usada.
         foreach (var a in db.Abilities.Values.Where(a => IsUsed(a.Id)))
         {
-            for (var rank = 1; rank <= a.HighestRank; rank++)
-            {
-                var resolved = AbilityRanks.Resolve(a, rank);
-                var ranks = a.HighestRank > 1 ? new[] { rank } : [];
-                Walk(resolved.Effects, new UseSource("ability", a.Id, null, ranks));
-            }
+            _pending.Enqueue(a.Id);
         }
 
+        Drain();
         foreach (var m in db.Monsters.Values)
         {
             foreach (var p in m.Phases)
@@ -65,14 +87,53 @@ public sealed class Usage
             }
         }
 
+        Drain(); // um status de fase também pode trocar o ataque básico
+
         Merge(StatusSources);
         Merge(AreaSources);
         Merge(SummonSources);
     }
 
+    private void Drain()
+    {
+        while (_pending.TryDequeue(out var id))
+        {
+            if (_walkedAbilities.Add(id) && _db.Abilities.TryGetValue(id, out var a))
+            {
+                WalkAbility(a);
+            }
+        }
+    }
+
+    private void WalkAbility(AbilityDefinition a)
+    {
+        for (var rank = 1; rank <= a.HighestRank; rank++)
+        {
+            var resolved = AbilityRanks.Resolve(a, rank);
+            var ranks = a.HighestRank > 1 ? new[] { rank } : [];
+            var source = new UseSource("ability", a.Id, null, ranks);
+            Walk(resolved.Effects, source);
+            if (resolved.Channel is { } channel)
+            {
+                Walk(channel.OnComplete, source); // T-442: efeitos ao fim da canalização
+            }
+
+            if (resolved.Passive && resolved.PassiveStatus is { } passive)
+            {
+                PassiveStatuses.Add(passive); // T-403: a passiva mantém o status
+                WalkStatus(passive, source);
+            }
+        }
+    }
+
+    /// <summary>A habilidade é de uma segunda classe (níveis por NH da segunda classe).</summary>
+    public bool IsSecondClassAbility(string abilityId) =>
+        AbilityClasses.TryGetValue(abilityId, out var classes) && classes.Any(SecondClasses.ContainsKey);
+
     public bool IsUsed(string abilityId) =>
         AbilityClasses.ContainsKey(abilityId) || AbilityMonsters.ContainsKey(abilityId)
-        || _db.Items.Values.Any(i => i.UseAbility == abilityId); // T-320: habilidade de consumível
+        || _db.Items.Values.Any(i => i.UseAbility == abilityId) // T-320: habilidade de consumível
+        || BasicAttackOf.ContainsKey(abilityId); // T-075: ataque básico trocado por um status (Ira Divina)
 
     public bool IsStatusUsed(string id) => StatusSources.ContainsKey(id);
 
@@ -94,15 +155,7 @@ public sealed class Usage
             switch (e)
             {
                 case ApplyStatusEffect s:
-                    Add(StatusSources, s.Status, source);
-                    if (_db.Statuses.TryGetValue(s.Status, out var st))
-                    {
-                        foreach (var p in st.Periodic)
-                        {
-                            Walk(p.Effects, source);
-                        }
-                    }
-
+                    WalkStatus(s.Status, source);
                     break;
                 case SpawnAreaEffect a:
                     Add(AreaSources, a.Area, source);
@@ -122,8 +175,48 @@ public sealed class Usage
                 case ExtraTargetsEffect x:
                     Walk(x.Effects, source);
                     break;
+                case IfStatusEffect i:
+                    Walk(i.Effects, source); // T-441
+                    break;
+                case CurrentTargetEffect c:
+                    Walk(c.Effects, source); // T-442
+                    break;
             }
         }
+    }
+
+    /// <summary>Um status aplicado por <paramref name="source"/> e o que ele, por sua vez, aplica.</summary>
+    private void WalkStatus(string id, UseSource source)
+    {
+        Add(StatusSources, id, source);
+        if (!_db.Statuses.TryGetValue(id, out var st) || !_walkingStatuses.Add(id))
+        {
+            return;
+        }
+
+        foreach (var p in st.Periodic)
+        {
+            Walk(p.Effects, source);
+        }
+
+        Walk(st.OnExpire, source); // T-421
+        Walk(st.HitEffects, source); // T-432
+        if (st.ByRank is { } byRank)
+        {
+            // T-432: no lugar do status vai o do NH de outra habilidade de quem aplica (Veneno do Caçador).
+            for (var i = 0; i < byRank.Statuses.Count; i++)
+            {
+                WalkStatus(byRank.Statuses[i], new UseSource("ability", byRank.Ability, null, byRank.Statuses.Count > 1 ? [i + 1] : []));
+            }
+        }
+
+        if (st.BasicAttack is { } basic)
+        {
+            Add(BasicAttackOf, basic, (id, source.Kind == "ability" ? source.Id : null)); // T-422
+            _pending.Enqueue(basic);
+        }
+
+        _walkingStatuses.Remove(id);
     }
 
     private static void Add<T>(Dictionary<string, List<T>> map, string key, T value)

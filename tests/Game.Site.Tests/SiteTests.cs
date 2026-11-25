@@ -82,6 +82,14 @@ public sealed partial class SiteTests : IClassFixture<SiteFixture>
                 }
             }
 
+            // T-075: segundas classes, dentro de cada classe base.
+            if (root.TryGetProperty("classes", out var classes) && classes.ValueKind == JsonValueKind.Array)
+            {
+                ids.AddRange(classes.EnumerateArray()
+                    .SelectMany(c => c.TryGetProperty("secondClasses", out var sc) ? sc.EnumerateArray() : Enumerable.Empty<JsonElement>())
+                    .Select(e => e.GetProperty("id").GetString()!));
+            }
+
             if (root.TryGetProperty("rules", out var rules) && rules.TryGetProperty("items", out var items) && items.TryGetProperty("affixes", out var affixes))
             {
                 ids.AddRange(affixes.EnumerateArray().Select(e => e.GetProperty("id").GetString()!));
@@ -333,6 +341,153 @@ public sealed partial class SiteTests : IClassFixture<SiteFixture>
             Assert.Contains("name=\"viewport\"", html, StringComparison.Ordinal);
             Assert.DoesNotContain("content=\"\"", html, StringComparison.Ordinal);
             _ = page;
+        }
+    }
+
+    /// <summary>Segundas classes de <c>classes.json</c>: classe base, id e habilidades.</summary>
+    private List<(string Base, string Id, List<string> Abilities)> SecondClasses() =>
+        _site.Json("classes.json").GetProperty("classes").EnumerateArray()
+            .SelectMany(c => c.GetProperty("secondClasses").EnumerateArray().Select(sc => (
+                c.GetProperty("id").GetString()!,
+                sc.GetProperty("id").GetString()!,
+                sc.GetProperty("abilities").EnumerateArray().Select(a => a.GetString()!).ToList())))
+            .ToList();
+
+    /// <summary>Habilidades de todos os <c>abilities_*.json</c>, por id.</summary>
+    private Dictionary<string, JsonElement> AbilitiesJson() =>
+        Directory.EnumerateFiles(Path.Combine(_site.Root, "data"), "abilities_*.json")
+            .SelectMany(f => JsonDocument.Parse(File.ReadAllText(f)).RootElement.GetProperty("abilities").EnumerateArray())
+            .ToDictionary(a => a.GetProperty("id").GetString()!, a => a);
+
+    [Fact]
+    public void Every_second_class_and_its_abilities_are_on_the_site()
+    {
+        var list = SecondClasses();
+        Assert.Equal(8, list.Count);
+        var index = _site.Html["habilidades/index.html"];
+        foreach (var (baseId, id, abilities) in list)
+        {
+            var page = Url.Class(id);
+            Assert.True(_site.Html.ContainsKey(page), $"{id}: sem página {page}");
+            // Links relativos: "../classes/x.html" a partir de classes/, "classes/x.html" a partir da raiz.
+            var href = page + "\"";
+            Assert.Contains(href, _site.Html[Url.Class(baseId)], StringComparison.Ordinal);
+            Assert.Contains(href, _site.Html[Url.Classes], StringComparison.Ordinal);
+            Assert.Contains($"href=\"{href}", _site.Html[Url.Home], StringComparison.Ordinal);
+            Assert.Contains($"id=\"{id}\"", index, StringComparison.Ordinal);
+            Assert.False(IsLeftOut(id));
+            Assert.Equal(5, abilities.Count);
+            foreach (var ability in abilities)
+            {
+                Assert.False(IsLeftOut(ability), $"{ability}: ficou fora do site");
+                Assert.True(_site.Html.ContainsKey(Url.Ability(ability)), $"{ability}: sem página");
+                Assert.Contains($"href=\"../{Url.Ability(ability)}\"", _site.Html[page], StringComparison.Ordinal);
+                Assert.Contains($"href=\"../{Url.Ability(ability)}\"", index, StringComparison.Ordinal);
+            }
+        }
+
+        // Nada das segundas classes (nem as etiquetas novas) fica sem texto.
+        Assert.DoesNotContain(_site.Result.Warnings, w => w.Contains("sem texto", StringComparison.Ordinal)
+            || w.Contains("sem rótulo", StringComparison.Ordinal) || w.Contains("sem descrição", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void Second_class_inherited_rank_cost_and_required_level_match_json()
+    {
+        // Primeira habilidade de segunda classe cujo NH2 não declara custo: o NH2 herda o custo do NH1.
+        var json = AbilitiesJson();
+        var (id, ability) = SecondClasses().SelectMany(sc => sc.Abilities).Select(a => (a, json[a])).First(x =>
+            x.Item2.TryGetProperty("cost", out _) && x.Item2.TryGetProperty("ranks", out var r)
+            && r.EnumerateArray().Any(y => y.GetProperty("rank").GetInt32() == 2 && !y.TryGetProperty("cost", out _)));
+        var amount = ability.GetProperty("cost").GetProperty("amount").GetDouble();
+        var html = _site.Html[Url.Ability(id)];
+        Assert.Contains($"data-k=\"cost\">{Fmt.Num(amount)} Mana<", RankRow(html, 2), StringComparison.Ordinal);
+
+        // Nível exigido: as listas da segunda classe em rules.json, não as da base.
+        var prog = _site.Json("rules.json").GetProperty("rules").GetProperty("progression");
+        var signature = ability.TryGetProperty("signature", out var sig) && sig.GetBoolean();
+        var levels = prog.GetProperty(signature ? "secondClassSignatureRankLevels" : "secondClassRankLevels");
+        Assert.Contains($"data-k=\"level\">{levels[0].GetInt32()}<", RankRow(html, 1), StringComparison.Ordinal);
+        Assert.Contains($"data-k=\"level\">{levels[1].GetInt32()}<", RankRow(html, 2), StringComparison.Ordinal);
+
+        // Uma passiva também segue os níveis da segunda classe.
+        var passive = SecondClasses().SelectMany(sc => sc.Abilities).First(a => json[a].TryGetProperty("passive", out var p) && p.GetBoolean());
+        Assert.Contains($"data-k=\"level\">{prog.GetProperty("secondClassRankLevels")[0].GetInt32()}<", RankRow(_site.Html[Url.Ability(passive)], 1), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Channel_pulses_match_json()
+    {
+        var json = AbilitiesJson();
+        var (id, ability) = json.First(kv => kv.Value.TryGetProperty("channel", out _) && kv.Value.TryGetProperty("ranks", out _));
+        var pulses = ability.GetProperty("channel").GetProperty("pulses").GetInt32();
+        Assert.Contains($"data-k=\"channel\">{pulses} pulsos, um a cada", RankRow(_site.Html[Url.Ability(id)], 1), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void No_raw_field_or_type_name_in_the_text()
+    {
+        // Nomes de tipo do Core (ex.: CurrentTargetEffect) e chaves cruas dos dados (ex.: allyHeal, copy_status) nunca
+        // aparecem no texto: todo campo conhecido tem descrição em português.
+        var types = typeof(Core.Definitions.EffectDefinition).Assembly.GetTypes()
+            .Where(t => t.Namespace == "Game.Core.Definitions" && t.IsPublic && t.Name.Length > 6)
+            .Select(t => t.Name)
+            .ToHashSet(StringComparer.Ordinal);
+        var keys = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var file in Directory.EnumerateFiles(Path.Combine(_site.Root, "data"), "*.json"))
+        {
+            var root = JsonDocument.Parse(File.ReadAllText(file)).RootElement;
+            foreach (var section in new[] { "abilities", "statuses", "areas" })
+            {
+                if (root.TryGetProperty(section, out var list))
+                {
+                    CollectKeys(list, keys);
+                }
+            }
+        }
+
+        Assert.Contains("allyHeal", keys);
+        Assert.Contains("current_target", keys);
+        var words = types.Concat(keys.Where(k => k.Any(char.IsUpper) || k.Contains('_', StringComparison.Ordinal))).ToList();
+        var leaks = new List<string>();
+        foreach (var (page, html) in _site.Html.Where(kv => kv.Key != "creditos.html"))
+        {
+            var text = Regex.Replace(Regex.Replace(html, "<script.*?</script>", " ", RegexOptions.Singleline), "<[^>]+>", " ");
+            leaks.AddRange(words.Where(w => Regex.IsMatch(text, $"\\b{Regex.Escape(w)}\\b")).Select(w => $"{page}: {w}"));
+        }
+
+        Assert.Empty(leaks);
+    }
+
+    /// <summary>Chaves de objetos e valores de <c>type</c> (discriminadores de efeito e alvo), em toda a árvore.</summary>
+    private static void CollectKeys(JsonElement e, HashSet<string> keys)
+    {
+        switch (e.ValueKind)
+        {
+            case JsonValueKind.Object:
+                foreach (var p in e.EnumerateObject())
+                {
+                    keys.Add(p.Name);
+                    if (p.Name == "type" && p.Value.ValueKind == JsonValueKind.String)
+                    {
+                        keys.Add(p.Value.GetString()!);
+                    }
+
+                    // Chaves de dicionário (escala, bônus por tag) são dados, não campos.
+                    if (p.Name is not "scaling" and not "bonusVsTags" and not "damageTakenBySchool" and not "attributes")
+                    {
+                        CollectKeys(p.Value, keys);
+                    }
+                }
+
+                break;
+            case JsonValueKind.Array:
+                foreach (var x in e.EnumerateArray())
+                {
+                    CollectKeys(x, keys);
+                }
+
+                break;
         }
     }
 

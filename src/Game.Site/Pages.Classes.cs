@@ -1,3 +1,4 @@
+using Game.Core.Combat;
 using Game.Core.Combat.Items;
 using Game.Core.Combat.Stats;
 using Game.Core.Definitions;
@@ -19,12 +20,83 @@ internal sealed partial class SiteBuilder
         }
 
         index.Add("</div>");
+        index.Add(SecondClassCards(index, ClassesInOrder, withBase: true));
         index.Add(ProgressionSummary(index));
 
         foreach (var c in ClassesInOrder)
         {
             BuildClass(c);
+            foreach (var sc in c.SecondClasses)
+            {
+                BuildSecondClass(c, sc);
+            }
         }
+    }
+
+    /// <summary>Cartões das segundas classes (T-075), com a função de cada uma; vazio se nenhuma classe tem.</summary>
+    private string SecondClassCards(Page p, IEnumerable<ClassDefinition> bases, bool withBase)
+    {
+        var list = bases.SelectMany(c => c.SecondClasses.Select(sc => (Base: c, Def: sc))).ToList();
+        if (list.Count == 0)
+        {
+            return "";
+        }
+
+        var prog = _db.Rules.Progression;
+        var sb = new System.Text.StringBuilder(withBase
+            ? $"<h2 id=\"segundas-classes\">Segundas classes</h2><p>No nível {Num(prog.SecondClassLevel)}, cada personagem escolhe uma segunda classe entre as duas da sua classe base. A escolha é definitiva.</p>"
+            : $"<h2 id=\"segundas-classes\">Segundas classes</h2><p>No nível {Num(prog.SecondClassLevel)}, {Esc(list[0].Base.Name)} escolhe uma destas, de forma definitiva.</p>");
+        sb.Append("<div class=\"cards\">");
+        foreach (var (b, sc) in list)
+        {
+            var text = _content.Classes.GetValueOrDefault(sc.Id);
+            var from = withBase ? $"<span class=\"muted\">{Esc(b.Name)}</span>" : "";
+            sb.Append($"<a class=\"card\" href=\"{Esc(p.Href(Url.Class(sc.Id)))}\">{Sprite(p, sc.Id, sc.Name)}<strong>{Esc(sc.Name)}</strong>{from}<span>{Esc(text?.Role ?? "")}</span></a>");
+        }
+
+        return sb.Append("</div>").ToString();
+    }
+
+    /// <summary>Página de uma segunda classe (T-075): textos, como e quando se escolhe, níveis por NH e habilidades.</summary>
+    private void BuildSecondClass(ClassDefinition baseClass, SecondClassDefinition sc)
+    {
+        var text = _content.Classes.GetValueOrDefault(sc.Id) ?? new ClassText();
+        var p = NewPage(Url.Class(sc.Id), sc.Name, $"{sc.Name}, segunda classe de {baseClass.Name} em Valdran: {text.Role}".TrimEnd(' ', ':'));
+        var prog = _db.Rules.Progression;
+        p.Add($"<div class=\"head\">{Sprite(p, sc.Id, sc.Name, 3)}<div><h1>{Esc(sc.Name)}</h1>"
+            + $"<p><span class=\"badge\">segunda classe</span> de {p.A(Url.Class(baseClass.Id), baseClass.Name)}</p>"
+            + $"<p class=\"lead\">{Esc(text.Summary)}</p></div></div>");
+        p.Add(Dl([
+            ("Função", Esc(text.Role)),
+            ("Forças", Esc(text.Strengths)),
+            ("Fraquezas", Esc(text.Weaknesses)),
+        ]));
+
+        var abilities = sc.Abilities.Where(_db.Abilities.ContainsKey).Select(id => _db.Abilities[id]).ToList();
+        var normal = abilities.Where(a => !a.Signature).ToList();
+        var signature = abilities.Where(a => a.Signature).ToList();
+        var passives = abilities.Count(a => a.Passive);
+        var others = baseClass.SecondClasses.Where(o => o.Id != sc.Id).Select(o => p.A(Url.Class(o.Id), o.Name)).ToList();
+        string Levels(IReadOnlyList<int> levels) => string.Join(", ", levels.Select((l, i) => $"NH{i + 1}: {l}"));
+        var rows = new List<(string, string)>
+        {
+            ("Classe base", p.A(Url.Class(baseClass.Id), baseClass.Name)),
+            ("Escolha", $"no nível {Num(prog.SecondClassLevel)}, definitiva (não dá para trocar)"
+                + (others.Count > 0 ? $"; a outra opção de {Esc(baseClass.Name)} é {string.Join(" ou ", others)}" : "")),
+            ("Pontos de atributo", $"+{Num(prog.SecondClassAttributePoints)} ao escolher"),
+            ("Habilidades", $"{normal.Count} {(normal.Count == 1 ? "normal" : "normais")} com até {normal.Select(a => a.HighestRank).DefaultIfEmpty(0).Max()} NH"
+                + (signature.Count > 0 ? $" e {signature.Count} de assinatura com até {signature.Max(a => a.HighestRank)} NH" : "")
+                + (passives > 0 ? $"; {passives} {(passives == 1 ? "é passiva" : "são passivas")} (não ocupa tecla nem custa Mana)" : "")
+                + "; recebem pontos como as da classe base"),
+            ("Nível exigido por NH", Levels(prog.SecondClassRankLevels)),
+            ("Nível exigido por NH (assinatura)", Levels(prog.SecondClassSignatureRankLevels)),
+        };
+        p.Add("<h2>Como funciona</h2>");
+        p.Add(Dl(rows));
+
+        p.Add("<h2>Habilidades</h2>");
+        p.Add(AbilityCards(p, sc.Abilities));
+        p.Add($"<p class=\"muted\">Os números de cada nível de habilidade estão na página de cada uma e no {p.A($"{Url.Abilities}#{sc.Id}", "índice de habilidades")}.</p>");
     }
 
     private string ProgressionSummary(Page p)
@@ -121,6 +193,7 @@ internal sealed partial class SiteBuilder
         p.Add(AbilityCards(p, [c.BasicAttack]));
         p.Add("<h2>Habilidades</h2>");
         p.Add(AbilityCards(p, c.Abilities));
+        p.Add(SecondClassCards(p, [c], withBase: false));
     }
 
     /// <summary>Estatísticas de um item comum no nível dado, pelas contas do Core (arredondamento e tipo de armadura).</summary>
@@ -142,12 +215,23 @@ internal sealed partial class SiteBuilder
                 continue;
             }
 
-            var badge = a.Signature ? " <span class=\"badge\">assinatura</span>" : "";
+            var badge = Badges(a, null, _usage.BasicAttackOf.ContainsKey(a.Id));
             var ranks = a.HighestRank > 1 ? $" · {a.HighestRank} NH" : "";
-            sb.Append($"<article class=\"ability\"><h3>{Icon(p, a.Id)}{p.A(Url.Ability(a.Id), a.Name)}{badge}</h3>")
-                .Append($"<p class=\"muted\">Custo {Describe.Cost(a)} · recarga {Describe.Cooldown(a)} · {Describe.Targeting(a.Targeting)}{ranks}</p>")
-                .Append(_d.Effects(p, a.Effects))
-                .Append("</article>");
+            sb.Append($"<article class=\"ability\"><h3>{Icon(p, a.Id)}{p.A(Url.Ability(a.Id), a.Name)}{badge}</h3>");
+            if (a.Passive)
+            {
+                // T-403: a passiva não tem custo, recarga nem alvo; mostra o que mantém no NH1.
+                sb.Append($"<p class=\"muted\">Passiva, sempre ativa{ranks}</p>")
+                    .Append($"<p>{PassiveEffect(p, AbilityRanks.Resolve(a, 1))}</p>");
+            }
+            else
+            {
+                var channel = a.Channel is { } ch ? $" · canalizada, {ch.Pulses} pulsos" : "";
+                sb.Append($"<p class=\"muted\">Custo {Describe.Cost(a)} · recarga {Describe.Cooldown(a)} · {Esc(Describe.Targeting(a.Targeting))}{channel}{ranks}</p>")
+                    .Append(_d.Effects(p, a.Effects));
+            }
+
+            sb.Append("</article>");
         }
 
         return sb.Append("</div>").ToString();

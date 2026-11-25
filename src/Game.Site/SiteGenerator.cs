@@ -144,7 +144,7 @@ internal sealed partial class SiteBuilder
             _warnings.Add($"área {a.Id} não é criada por nada usado no jogo: fica fora do site");
         }
 
-        foreach (var c in _db.Classes.Keys.Where(k => !_content.Classes.ContainsKey(k)))
+        foreach (var c in _db.Classes.Keys.Concat(_usage.SecondClasses.Keys).Where(k => !_content.Classes.ContainsKey(k)))
         {
             _warnings.Add($"classe {c} sem texto em site/content/site.json");
         }
@@ -240,11 +240,22 @@ internal sealed partial class SiteBuilder
         }
 
         p.Add("</div>");
+        if (_usage.SecondClasses.Count > 0)
+        {
+            // T-075: as segundas classes numa linha, para não dobrar a página inicial.
+            var links = ClassesInOrder.Where(c => c.SecondClasses.Count > 0).Select(c =>
+                $"{Esc(c.Name)}: {string.Join(" ou ", c.SecondClasses.Select(sc => p.A(Url.Class(sc.Id), sc.Name)))}");
+            p.Add($"<p>No nível {Num(_db.Rules.Progression.SecondClassLevel)}, cada classe escolhe uma {p.A($"{Url.Classes}#segundas-classes", "segunda classe")}. "
+                + string.Join("; ", links) + ".</p>");
+        }
+
         var shownAbilities = _db.Abilities.Keys.Count(_usage.IsUsed);
         p.Add("<h2>Explore</h2><div class=\"cards sections\">");
         void Section(string url, string title, string text) =>
             p.Add($"<a class=\"card\" href=\"{Esc(p.Href(url))}\"><strong>{Esc(title)}</strong><span>{text}</span></a>");
-        Section(Url.Classes, "Classes", $"{_db.Classes.Count} classes, atributos, equipamento e habilidades.");
+        Section(Url.Classes, "Classes", _usage.SecondClasses.Count > 0
+            ? $"{_db.Classes.Count} classes e {_usage.SecondClasses.Count} segundas classes, atributos, equipamento e habilidades."
+            : $"{_db.Classes.Count} classes, atributos, equipamento e habilidades.");
         Section(Url.Abilities, "Habilidades", $"{shownAbilities} habilidades de personagens e monstros, por nível de habilidade.");
         Section(Url.Monsters, "Monstros", $"{_db.Monsters.Count} monstros, onde aparecem e o que deixam cair.");
         Section(Url.Items, "Itens", $"{_db.Items.Count} itens base, raridades, afixos e quedas.");
@@ -308,6 +319,7 @@ internal sealed partial class SiteBuilder
         p.Add("<p><label for=\"q\">Filtrar por nome:</label> <input id=\"q\" type=\"search\" autocomplete=\"off\" placeholder=\"ex.: lobo, veneno, espada\"></p>");
         var entries = new List<(string Kind, string Name, string Id, string Url)>();
         entries.AddRange(_db.Classes.Values.Select(c => ("Classe", c.Name, c.Id, Url.Class(c.Id))));
+        entries.AddRange(_usage.SecondClasses.Values.Select(sc => ("Segunda classe", sc.Def.Name, sc.Def.Id, Url.Class(sc.Def.Id))));
         entries.AddRange(_db.Abilities.Values.Where(a => _usage.IsUsed(a.Id)).Select(a => ("Habilidade", a.Name, a.Id, Url.Ability(a.Id))));
         entries.AddRange(_db.Monsters.Values.Select(m => ("Monstro", m.Name, m.Id, Url.Monster(m.Id))));
         entries.AddRange(_db.Items.Values.Select(i => ("Item", i.Name, i.Id, Url.Item(i.Id))));
