@@ -502,6 +502,153 @@ Os testes de design (`WatcherDesignTests`) e o relatório `tasks/reports/balance
 - os selos caírem antes da fase 3 por ataques em área (por isso ficam intactos até lá);
 - invocações sem fim (máximo de vivas por invocação e nenhuma na fase 3).
 
+## Brejo dos Afogados — Afogado, Homem-lagarto, Serpente do Charco e a Bruxa do Brejo (T-510)
+
+Campo do nível 16 ao 20 (`design/mapas-16-40-v0.1.md` §3.1), a ponte entre o primeiro mapa e a segunda classe: dá para jogar sozinho com a classe base. O truque da área é a **água funda** (T-502, `status.deep_water`: −40% de velocidade enquanto se está nela). Os monstros punem quem luta no lugar errado: o Afogado prende, o Homem-lagarto pune quem fica parado e não sente a água, a Serpente obriga a correr atrás dela, e a Bruxa traz a água funda para perto dela na última fase.
+
+Números nos dados no **nível 1**: `data/monsters.json`, `data/abilities_monsters.json`, `data/areas.json`. Entre parênteses, no nível do monstro, pela escala da T-206 (normal: vida × (1 + 0,4 × (nível − 1)), potência × (1 + 0,17 × (nível − 1)); chefe: vida × (1 + 0,3 × (nível − 1)), potência × (1 + 0,38 × (nível − 1))), antes da defesa do jogador. Os humanoides e o Afogado têm raio de 0,4 a 0,45, para os sprites LPC da T-521.
+
+**Decidido:** as propostas da tarefa foram mantidas (o designer estava ausente; valem como decididas). As trocas de números e de comportamento estão marcadas abaixo e no `tasks/reports/balance-v0.24.md`.
+
+### Afogado (`monster.drowned`, nível 16)
+
+**Papel:** morto-vivo lento em bando (3 a 4). Ensina a não se deixar cercar, sobretudo na água, onde fugir é mais lento.
+
+| | |
+|---|---|
+| Vida | 300 (2.100) |
+| Velocidade / raio | 2,6 (o mais lento do Brejo) / 0,4 |
+| Tags | **`undead`** (as habilidades sagradas do Clérigo causam +25%, `bonusVsTags`) |
+| Resistências | **sagrado −40%** (fraqueza: recebe 140%) |
+| IA | `ai.brute` |
+
+Habilidades:
+
+- **Agarrão** (`drowned.grab`): cone de 90° e 1,6 à frente, com **telegráfo curto de 0,6 s**. Físico 26 (92) e **Preso** (`status.snared`) por 1,5 s. Recarga de 6 s. É controle: vale o retorno decrescente, então três Afogados agarrando juntos não prendem para sempre.
+- **Garra do Afogado** (`drowned.claw`): corpo a corpo, alcance 1,4, a cada 1,8 s. Físico 22 (78).
+
+**Decidido (acréscimo):** a fraqueza a sagrado. Sem ela o Clérigo, que mata devagar, perdia para o bando (50% no perfil esperado) enquanto o Guerreiro fraco ainda vencia. Com ela o Clérigo vence 100%, e o morto-vivo afogado combina com a luz.
+
+Resposta de cada classe:
+
+- **Guerreiro:** puxa o bando para o seco, Golpe Circular nos três e sai do cone do Agarrão. Preso no meio do bando, Guarda Firme.
+- **Arqueiro:** o Afogado é lento demais para alcançá-lo: recua atirando. Chuva de Flechas no bando agrupado.
+- **Mago:** Explosão Elemental no bando junto; Prisão de Gelo segura o primeiro enquanto se afasta.
+- **Clérigo:** é a luta dele: Golpe e Corrente Sagrados com +25% e a fraqueza de 40%; Escudo Sagrado quando o Agarrão pega.
+
+### Homem-lagarto do Brejo (`monster.marsh_lizardman`, nível 17)
+
+**Papel:** brigão rápido e resistente, em pares. **Não sente a água funda** (tag `amphibious`, que as áreas de água funda do mapa põem em `ignoreTags`): na água, é mais rápido que o jogador.
+
+| | |
+|---|---|
+| Vida | 440 (3.256) |
+| Velocidade / raio | 4,0 (como o Lobo; só o jogador em seco é mais rápido) / 0,4 |
+| Tags | `humanoid`, **`amphibious`** |
+| IA | `ai.brute` |
+
+Habilidades:
+
+- **Bote** (`marsh_lizardman.lunge`): **linha** de 4 × 1,2 com **telegráfo de 0,6 s**, e ele avança por ela. Físico 40 (149). Recarga de 6 s. Sai sempre que o alvo está na linha, também colado nele: **pune quem luta parado**. Quem sai da linha não sofre nada.
+- **Garra do Lagarto** (`marsh_lizardman.slash`): corpo a corpo, alcance 1,5, a cada 1,4 s. Físico 16 (60).
+
+**Decidido (troca de números):** a proposta era um monstro rápido e frágil, com um Bote forte. Com o Bote forte (120 de base, 446 no nv17) ele matava o Arqueiro de um golpe (o Arqueiro do nv17 tem ~290 de vida), e com a Garra forte o Clérigo perdia. Ficou mais **resistente** e com dano espalhado: a luta dura mais, o que favorece quem se cura (o Clérigo) e pesa em quem depende das 3 poções (o Guerreiro fraco perde). O Bote encurtou de 5 para 4 tiles, para não alcançar quem atira de longe.
+
+Resposta de cada classe:
+
+- **Guerreiro:** fica de lado para o lagarto, sai da linha do Bote e bate na janela da recarga. Provocação junta os dois na frente para o Golpe Circular.
+- **Arqueiro:** mantém mais de 4 tiles: fora do alcance do Bote. Recuo Rápido quando um dos dois chega perto.
+- **Mago:** Prisão de Gelo num, Explosão nos dois juntos; Barreira Arcana se o Bote pega.
+- **Clérigo:** troca golpes e se cura; o Escudo Sagrado absorve o Bote que não der para evitar.
+
+### Serpente do Charco (`monster.marsh_serpent`, nível 18)
+
+**Papel:** atiradora venenosa do Charco Fundo, em pares. Foge de quem chega perto (`ai.ranged_kiter`). Morde forte quem a alcança.
+
+| | |
+|---|---|
+| Vida | 200 (1.560) |
+| Velocidade / raio | 3,0 (todas as classes a alcançam) / 0,45 |
+| Tags | `beast` |
+| IA | `ai.ranged_kiter` (distância preferida 6, recua com o alvo a menos de 3) |
+
+Habilidades:
+
+- **Cuspe Venenoso** (`marsh_serpent.spit`): projétil instantâneo, alcance 9, a cada 2,8 s. Natureza 5 (19) e **Veneno** (`status.poison`, natureza 7 (27) por segundo) por 1,5 s.
+- **Picada da Serpente** (`marsh_serpent.bite`): corpo a corpo, alcance 1,4, a cada 1,6 s. Físico 30 (117). Instantânea: ela morde também enquanto recua.
+
+**Decidido (troca de números):** o veneno ficou curto e o cuspe fraco, e a força passou para a Picada. Quem ataca de longe (o Arqueiro: ~290 de vida e nenhuma forma de evitar um projétil) aguenta as duas; quem corre atrás dela (o Guerreiro) leva a Picada. Ela recua só de quem chega a 3 tiles e é mais lenta que todas as classes, então o Guerreiro a alcança (com velocidade 3,4 e recuo a 4, ele vencia 0%).
+
+Resposta de cada classe:
+
+- **Guerreiro:** persegue uma de cada vez, encurrala na borda ou num obstáculo e a mata com o Golpe Pesado.
+- **Arqueiro:** troca tiros de longe e vence a corrida de dano. É a luta mais justa dele no Brejo: no perfil esperado termina com pouca vida.
+- **Mago:** as duas começam afastadas, então a Explosão pega uma por vez; mesmo assim as mata em segundos.
+- **Clérigo:** alcança com a Corrente Sagrada e se cura do veneno.
+
+### Bruxa do Brejo (`monster.marsh_witch`, nível 20, chefe de campo)
+
+O "teste" antes da segunda classe: um chefe de campo na Cabana da Bruxa para um **grupo de 3 do nível 19–20**. Renasce em 10 min (o tempo é do mapa, T-530; o anúncio é da T-503). Três fases, como a Matriarca.
+
+| | |
+|---|---|
+| Vida | 5.500 (36.850) |
+| Velocidade / raio | 3,2 / 0,45 (humanoide LPC) |
+| Tags | `humanoid`, `boss` |
+| IA | `ai.boss` (invocar e áreas primeiro, na ordem da definição; depois cajado e dardos) |
+| Controle | como todo chefe, sofre só 25% da duração de controles |
+
+Golpes em todas as fases:
+
+- **Golpe de Cajado** (`marsh_witch.staff_strike`): corpo a corpo, arco de 100°, alcance 2, a cada 1,6 s. Físico 8 (66). O dano contínuo no tanque.
+- **Dardo do Brejo** (`marsh_witch.hex_bolt`, fases 1 e 2): projétil, alcance 10, a cada 2,2 s. Natureza 10 (82).
+
+**Fase 1 — Poças Venenosas (100% a 66%).** **Poça Venenosa** (`marsh_witch.poison_puddle`): círculo de raio 2 no alvo, alcance 12, **telegráfo de 1 s**. Deixa a **Poça Venenosa** (`area.witch_poison_puddle`): raio 2 por 8 s, natureza 3,5 (29) por segundo em quem estiver dentro. Recarga de 9 s. O tanque leva a Bruxa para fora da poça.
+
+**Fase 2 — Chamado dos Afogados (66% a 33%).** Ao entrar, invoca 2 **Afogados** (no nível dela: vida 2.580 cada). **Chamar os Afogados** (`marsh_witch.call_drowned`): **conjuração de 1,5 s, interrompível** (o Golpe Pesado do Guerreiro); invoca mais 1, no máximo 2 vivos por chamado. Recarga de 20 s. As poças continuam. Os invocados são os Afogados do campo, com Agarrão: quem fica cercado numa poça fica preso nela.
+
+**Fase 3 — Lodo que Puxa (33% a 0%).** Sem invocações (`noSummons`).
+
+- **Lodo que Puxa** (`marsh_witch.pulling_mud`): **conjuração de 1 s** (o aviso); cria o **Lodo** (`area.pulling_mud`) **preso a ela** (`followOwner`): raio 4,5 por 6 s, que mantém **Água Funda** (`status.deep_water`, o estado da T-502, −40% de velocidade) em todo inimigo dentro, renovada a cada 0,25 s por 0,5 s. Quem sai do lodo volta à velocidade em até meio segundo. Recarga de 14 s.
+- **Poça Venenosa Rápida** (`marsh_witch.poison_puddle_fast`): a mesma poça, recarga de 7 s. Dentro do lodo, sair da poça demora mais.
+- **Dardo do Lodo** (`marsh_witch.bog_bolt`): substitui o Dardo do Brejo; alcance 12, a cada 1,6 s, natureza 10 (82). São os "mais projéteis" da fase.
+
+**Água funda do lodo e do mapa (Core, T-510).** O terreno da T-502 tirava a Água Funda, no mesmo tick, de quem estivesse fora da água do mapa. No Brejo real (que tem água), isso apagaria o lodo. Agora o terreno tira só o estado que **ele** pôs (sem fonte); o que vem da Bruxa acaba pela própria duração. O Homem-lagarto não sente o lodo de qualquer jeito: o lodo só atinge inimigos dela.
+
+**Decidido (troca de números):** a primeira versão (vida 12.000, cajado 34, poça 10 + Veneno) matava o grupo de 3 em 25 s. As poças eram o maior dano: os bots só saem de telegráfos, não de uma área já no chão, e a poça cai em cima do tanque. A poça perdeu o Veneno e ficou com dano baixo; quem sai dela leva bem menos do que o simulador mostra.
+
+### Resposta de cada classe (Bruxa)
+
+- **Guerreiro:** segura a Bruxa e a tira das poças. Na fase 2, **interrompe o Chamar os Afogados** e junta os Afogados com Provocação e Golpe Circular. Na fase 3, leva a Bruxa para longe do grupo (o lodo vai com ela).
+- **Arqueiro:** fica além dos 4,5 do lodo e fora das poças; mata os Afogados invocados primeiro.
+- **Mago:** Explosão nos Afogados; fica fora do lodo.
+- **Clérigo:** cura o Guerreiro e fica fora do lodo; os Afogados invocados levam +25% e a fraqueza a sagrado.
+
+### Grupos típicos e encontros de teste (`data/encounters.json`)
+
+| Encontro | Composição | Nível do grupo | Arena |
+|---|---|---|---|
+| `encounter.drowned_pack` (Bando de Afogados) | 3 Afogados nv16 | 16 | `map.fields` |
+| `encounter.marsh_lizardmen` (Par de Homens-lagarto) | 2 Homens-lagarto nv17 | 17 | `map.fields` |
+| `encounter.marsh_serpents` (Serpentes do Charco) | 2 Serpentes nv18, a 8 tiles uma da outra | 18 | `map.fields` |
+| `encounter.marsh_mixed` (Palafitas Assombradas) | 1 Afogado nv16 + 1 Homem-lagarto nv17 | 17 | `map.fields` |
+| `encounter.marsh_witch` (Bruxa do Brejo) | Bruxa nv20; Guerreiro + Arqueiro + Clérigo | 20 | `map.matriarch_nest` |
+
+Nenhuma arena nova: os grupos rodam na arena aberta do protótipo e a Bruxa no ninho da Matriarca (aberto), até o mapa do Brejo (T-530), onde a água funda do mapa entra em jogo. Os testes de design (`MarshDesignTests`) trocam o jogador por cada classe. Metas e resultados em `tasks/reports/balance-v0.24.md`:
+
+- solo, perfil esperado do nível do grupo, nas 4 classes: vitória ≥ 85%;
+- perfil fraco (3 níveis abaixo): vitória ≤ 50% ou ≥ 1,25× o tempo do esperado (a regra da balance-v0.18 §4). **Exceção do Clérigo:** ≥ 1,10× (ele se cura e alcança as Serpentes de longe; relatório §3);
+- Bruxa: grupo de 3 (Guerreiro + Arqueiro + Clérigo) nos níveis 19 e 20, vitória ≥ 80%; solo no 20, vitória ≤ 30% em cada classe.
+
+### Falhas de design
+
+- ficar preso pelo Agarrão sem ter visto o aviso (0,6 s é curto: o cliente precisa mostrar bem o cone, T-540);
+- o Bote matar de um golpe quem atira de longe;
+- a Serpente fugir para sempre de quem luta corpo a corpo;
+- o lodo da Bruxa cobrir a arena toda (raio 4,5, e ele vai com ela: o tanque a leva para longe);
+- invocações sem fim (no máximo 2 vivas por chamado e nenhuma na fase 3);
+- a água funda do mapa apagar o lodo (o terreno só tira o próprio estado).
+
 ---
 
 ## Matriz de decisões
@@ -518,6 +665,10 @@ Os testes de design (`WatcherDesignTests`) e o relatório `tasks/reports/balance
 | Pátio dos Mortos | Médio | **Alto** | Médio | Médio | Alto |
 | Cavaleiro Espectral | Alto | Médio | Médio | Alto | Alto |
 | Vigia Sem Rosto | **Alto** | **Alto** | Alto | **Alto** | **Alto** |
+| Bando de Afogados | **Alto** | Baixo | Médio | Alto | Médio |
+| Homens-lagarto | Alto | Médio | Médio | Baixo | Médio |
+| Serpentes do Charco | Médio | Alto | Baixo | Baixo | Médio |
+| Bruxa do Brejo | **Alto** | Alto | Médio | Alto | Alto |
 
 ## Critérios gerais de sucesso
 

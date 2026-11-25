@@ -233,6 +233,79 @@
       "radius": 0.6,
       "tags": ["seal"],
       "ai": { "id": "ai.none" }
+    },
+    {
+      "id": "monster.drowned",
+      "name": "Afogado",
+      "level": 16,
+      "health": 300,
+      "speed": 2.6,
+      "radius": 0.4,
+      "tags": ["undead"],
+      "resistances": { "holy": -0.4 },
+      "abilities": ["drowned.grab", "drowned.claw"],
+      "ai": { "id": "ai.brute", "parameters": { "aggroRange": 14, "approachRange": 1.5, "farDistance": 3 } }
+    },
+    {
+      "id": "monster.marsh_lizardman",
+      "name": "Homem-lagarto do Brejo",
+      "level": 17,
+      "health": 440,
+      "speed": 4.0,
+      "radius": 0.4,
+      "tags": ["humanoid", "amphibious"],
+      "abilities": ["marsh_lizardman.lunge", "marsh_lizardman.slash"],
+      "ai": { "id": "ai.brute", "parameters": { "aggroRange": 14, "approachRange": 1.5, "farDistance": 3 } }
+    },
+    {
+      "id": "monster.marsh_serpent",
+      "name": "Serpente do Charco",
+      "level": 18,
+      "health": 200,
+      "speed": 3.0,
+      "radius": 0.45,
+      "tags": ["beast"],
+      "abilities": ["marsh_serpent.spit", "marsh_serpent.bite"],
+      "ai": { "id": "ai.ranged_kiter", "parameters": { "aggroRange": 14, "preferredDistance": 6, "retreatDistance": 3 } }
+    },
+    {
+      "id": "monster.marsh_witch",
+      "name": "Bruxa do Brejo",
+      "level": 20,
+      "rank": "boss",
+      "health": 5500,
+      "speed": 3.2,
+      "radius": 0.45,
+      "tags": ["humanoid", "boss"],
+      "abilities": [
+        "marsh_witch.pulling_mud",
+        "marsh_witch.call_drowned",
+        "marsh_witch.poison_puddle",
+        "marsh_witch.poison_puddle_fast",
+        "marsh_witch.staff_strike",
+        "marsh_witch.hex_bolt",
+        "marsh_witch.bog_bolt"
+      ],
+      "ai": { "id": "ai.boss", "parameters": { "aggroRange": 40 } },
+      "phases": [
+        {
+          "id": "phase.poison_puddles",
+          "healthPercent": 100,
+          "abilities": ["marsh_witch.poison_puddle", "marsh_witch.staff_strike", "marsh_witch.hex_bolt"]
+        },
+        {
+          "id": "phase.drowned_call",
+          "healthPercent": 66,
+          "onEnter": [{ "type": "summon", "monster": "monster.drowned", "count": 2, "radius": 2.5, "maxAlive": 3 }],
+          "abilities": ["marsh_witch.call_drowned", "marsh_witch.poison_puddle", "marsh_witch.staff_strike", "marsh_witch.hex_bolt"]
+        },
+        {
+          "id": "phase.pulling_mud",
+          "healthPercent": 33,
+          "noSummons": true,
+          "abilities": ["marsh_witch.pulling_mud", "marsh_witch.poison_puddle_fast", "marsh_witch.staff_strike", "marsh_witch.bog_bolt"]
+        }
+      ]
     }
   ]
 }

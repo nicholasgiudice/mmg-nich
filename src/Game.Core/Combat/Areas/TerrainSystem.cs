@@ -13,7 +13,9 @@ namespace Game.Core.Combat.Areas;
 /// O estado é aplicado pelo <see cref="StatusManager.Apply"/> sem fonte (evento <c>StatusApplied</c>, aparece no snapshot como
 /// os outros) e mantido em silêncio enquanto a unidade fica dentro: o fim é empurrado para <c>agora + duração padrão</c> a cada
 /// tick, sem <c>StatusRefreshed</c>, e por isso nunca acaba sozinho lá dentro. Duas áreas com o mesmo estado não acumulam
-/// (uma instância só). O estado de terreno é só do terreno: fora de toda área dele, a unidade não o tem.
+/// (uma instância só). Fora de toda área dele, o terreno tira o estado que ele mesmo pôs (sem fonte). T-510: o mesmo estado
+/// vindo de uma habilidade ou área de monstro (o Lodo que Puxa da Bruxa do Brejo põe <c>status.deep_water</c>, com a Bruxa como
+/// fonte) não é tirado pelo terreno e acaba pela própria duração.
 /// </para>
 /// <para>
 /// Não é controle: o estado não leva a tag <c>control</c> (sem retorno decrescente nem regra de rank) nem as tags que a
@@ -50,7 +52,7 @@ public sealed class TerrainSystem : ISimulationSystem
                 {
                     current!.ExpiresAtTick = world.Tick + world.Content.Statuses[status].DefaultDurationTicks;
                 }
-                else if (!inside && current is not null)
+                else if (!inside && current is not null && current.Source == EntityId.None)
                 {
                     StatusManager.Remove(world, e, status, EntityId.None);
                 }
