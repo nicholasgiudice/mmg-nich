@@ -185,7 +185,7 @@ O mapa do Tiled é a **fonte única** de tudo que é posição numa zona. O `dat
 
 | Em `zones.json` | Do mapa (`arena`) |
 |---|---|
-| `id`, `name`, `kind` (`safe`/`field`), `arena` (precisa ser um mapa do Tiled), `restPerSecond` (só `safe`), `corpse` (segundos), `levels` (faixa de nível mostrada, opcional) | nascimento = `player_spawn` chamado `spawn` (§5); portões = `transitions` (§7); surgimentos = `monster_spawn` (§5); NPCs = áreas `npc` (§6) |
+| `id`, `name`, `kind` (`safe`/`field`), `arena` (precisa ser um mapa do Tiled), `restPerSecond` (só `safe`), `respawn` (T-501: zona `safe` onde renasce quem morre aqui; sem ele, a zona inicial; não vale em zona `safe`), `corpse` (segundos), `levels` (faixa de nível mostrada, opcional) | nascimento = `player_spawn` chamado `spawn` (§5); portões = `transitions` (§7); surgimentos = `monster_spawn` (§5); NPCs = áreas `npc` (§6) |
 
 `spawn`, `gates`, `monsterSpawns` e `npcs` no `zones.json` são erro de carga. Erros da zona saem com o arquivo do mapa e o nome do objeto (§9): monstro desconhecido, ponto na parede ou fora do mapa, `count`/`radius`/`respawn`/`level` inválidos, `to` para zona inexistente, chegada que não é `player_spawn` do destino, zona segura com `monster_spawn`, zona sem `spawn`.
 
