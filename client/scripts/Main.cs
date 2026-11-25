@@ -32,6 +32,7 @@ namespace MmoRpgClient;
 /// <c>--capture-after=segundos</c>, ou ao fim do demo; com <c>--capture-every=segundos</c>, uma série até <c>--capture-after</c>, T-345). <c>--circles</c> desenha as unidades como círculos, sem sprites (T-053).
 /// Mundo aberto (T-223): <c>--auto-respawn=segundos</c> aperta o botão de retornar (T-541: Cidade ou Forte) sozinho depois de morrer.
 /// <c>--death-sample</c> (T-397): mostra a tela de morte com um resumo de exemplo ao entrar na zona, sem morrer (prévia).
+/// Grupo: <c>--party-invite=Nome</c> convida esse personagem e <c>--party-accept</c> aceita o convite recebido.
 /// Capturas (T-345): <c>--enemy-level=n</c> põe todos os inimigos e objetivos do encontro local no nível n, e
 /// <c>--enemy-health=f</c> faz os inimigos começarem com a fração f da vida.
 /// Segunda classe (T-412): <c>--level=n</c> põe o jogador do encontro local no nível n (pela XP normal) e
@@ -662,6 +663,18 @@ public partial class Main : Node2D
         _hud.PartyEnabled = _zone is not null && net.Status == NetStatus.Playing;
         if (_hud.PartyEnabled)
         {
+            // Capturas do HUD do grupo: --party-invite=Nome convida uma vez (depois de 2 s na zona) e --party-accept
+            // aceita sozinho o convite recebido, para formar um grupo entre dois clientes sem clicar.
+            if (_elapsed > 2 && _args.Remove("party-invite", out var inviteName))
+            {
+                net.PartyInviteName(inviteName);
+            }
+
+            if (_args.ContainsKey("party-accept") && net.Party.ActiveInvite(net.ClockSeconds) is { } invite)
+            {
+                net.PartyRespond(invite.InviteId, true);
+            }
+
             _hud.ShowParty(net.Party, net.ClockSeconds);
             foreach (var message in net.TakePartyMessages())
             {

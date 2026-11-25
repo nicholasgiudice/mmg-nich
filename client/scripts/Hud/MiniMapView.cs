@@ -29,10 +29,10 @@ public readonly record struct MapFrame(Vector2 Origin, Vector2 Size, float Scale
 public static class MiniMapView
 {
     /// <summary>Lado do mini mapa na tela, em pixels.</summary>
-    public const int PanelPixels = 168;
+    public const int PanelPixels = 132;
 
-    /// <summary>Tiles mostrados em volta do jogador num mapa grande (56 × 56 com 3 pixels por tile).</summary>
-    public const int ViewTiles = 56;
+    /// <summary>Tiles mostrados em volta do jogador num mapa grande (44 × 44 com 3 pixels por tile).</summary>
+    public const int ViewTiles = 44;
 
     /// <summary>Escala máxima do mapa grande: mapas pequenos não viram blocos enormes.</summary>
     public const int MaxWholeScale = 10;

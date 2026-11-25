@@ -13,7 +13,7 @@ namespace MmoRpgClient.Hud;
 /// </summary>
 public partial class PartyPanel : VBoxContainer
 {
-    public const float FrameWidth = 250f;
+    public const float FrameWidth = 190f;
 
     private readonly HBoxContainer _header = new();
     private readonly Label _title = new();
@@ -49,12 +49,12 @@ public partial class PartyPanel : VBoxContainer
         _header.AddThemeConstantOverride("separation", 6);
         _header.MouseFilter = MouseFilterEnum.Ignore;
         _title.Text = "Grupo";
-        Outline(_title, 13);
+        Outline(_title, 12);
         _header.AddChild(_title);
         _toggleInvite.Text = "+ Convidar";
         _toggleInvite.FocusMode = FocusModeEnum.None;
-        _toggleInvite.AddThemeFontSizeOverride("font_size", 11);
-        HudTheme.StoneButton(_toggleInvite);
+        _toggleInvite.AddThemeFontSizeOverride("font_size", 10);
+        HudTheme.StoneButton(_toggleInvite, compact: true);
         _toggleInvite.Pressed += () =>
         {
             _inviteRow.Visible = !_inviteRow.Visible;
@@ -70,12 +70,12 @@ public partial class PartyPanel : VBoxContainer
         _inviteRow.Visible = false;
         _inviteName.PlaceholderText = "Nome do personagem";
         _inviteName.CustomMinimumSize = new Vector2(160, 0);
-        _inviteName.AddThemeFontSizeOverride("font_size", 12);
+        _inviteName.AddThemeFontSizeOverride("font_size", 11);
         _inviteName.TextSubmitted += _ => SubmitInvite();
         _inviteRow.AddChild(_inviteName);
         var send = new Button { Text = "Convidar", FocusMode = FocusModeEnum.None };
-        send.AddThemeFontSizeOverride("font_size", 11);
-        HudTheme.StoneButton(send);
+        send.AddThemeFontSizeOverride("font_size", 10);
+        HudTheme.StoneButton(send, compact: true);
         send.Pressed += SubmitInvite;
         _inviteRow.AddChild(send);
         AddChild(_inviteRow);
@@ -87,15 +87,15 @@ public partial class PartyPanel : VBoxContainer
         Outline(_message, 12);
         AddChild(_message);
 
-        _members.AddThemeConstantOverride("separation", 4);
+        _members.AddThemeConstantOverride("separation", 2);
         _members.MouseFilter = MouseFilterEnum.Ignore;
         AddChild(_members);
 
         _leave.Text = "Sair do grupo";
         _leave.FocusMode = FocusModeEnum.None;
-        _leave.AddThemeFontSizeOverride("font_size", 11);
+        _leave.AddThemeFontSizeOverride("font_size", 10);
         _leave.SizeFlagsHorizontal = SizeFlags.ShrinkBegin;
-        HudTheme.StoneButton(_leave);
+        HudTheme.StoneButton(_leave, compact: true);
         _leave.Pressed += () => Leave?.Invoke();
         AddChild(_leave);
 
@@ -229,10 +229,10 @@ public partial class PartyPanel : VBoxContainer
             CustomMinimumSize = new Vector2(FrameWidth, 0);
 
             var row = new HBoxContainer { MouseFilter = MouseFilterEnum.Ignore };
-            row.AddThemeConstantOverride("separation", 6);
+            row.AddThemeConstantOverride("separation", 4);
             AddChild(row);
 
-            _icon.CustomMinimumSize = new Vector2(34, 34);
+            _icon.CustomMinimumSize = new Vector2(24, 24);
             _icon.ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize;
             _icon.StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered;
             _icon.TextureFilter = TextureFilterEnum.Nearest;
@@ -241,16 +241,16 @@ public partial class PartyPanel : VBoxContainer
             row.AddChild(_icon);
 
             var column = new VBoxContainer { MouseFilter = MouseFilterEnum.Ignore, SizeFlagsHorizontal = SizeFlags.ExpandFill };
-            column.AddThemeConstantOverride("separation", 2);
+            column.AddThemeConstantOverride("separation", 1);
             row.AddChild(column);
 
             var nameRow = new HBoxContainer { MouseFilter = MouseFilterEnum.Ignore };
             nameRow.AddThemeConstantOverride("separation", 4);
-            PartyPanel.Outline(_name, 12);
+            PartyPanel.Outline(_name, 10);
             _name.AddThemeColorOverride("font_color", HudTheme.StoneText);
             nameRow.AddChild(_name);
             _crown.Texture = HudTheme.Crown();
-            _crown.CustomMinimumSize = new Vector2(16, 16);
+            _crown.CustomMinimumSize = new Vector2(12, 12);
             _crown.ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize;
             _crown.StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered;
             _crown.TextureFilter = TextureFilterEnum.Nearest;
@@ -259,8 +259,8 @@ public partial class PartyPanel : VBoxContainer
             nameRow.AddChild(_crown);
             column.AddChild(nameRow);
 
-            _health.CustomMinimumSize = new Vector2(0, 10);
-            _health.FontSize = 9;
+            _health.CustomMinimumSize = new Vector2(0, 9);
+            _health.FontSize = 8;
             _health.BorderColor = HudTheme.BarBorderGold;
             _health.MouseFilter = MouseFilterEnum.Ignore;
             column.AddChild(_health);
@@ -269,7 +269,7 @@ public partial class PartyPanel : VBoxContainer
             _mana.BorderColor = HudTheme.BarBorderGold;
             _mana.MouseFilter = MouseFilterEnum.Ignore;
             column.AddChild(_mana);
-            PartyPanel.Outline(_zone, 11);
+            PartyPanel.Outline(_zone, 9);
             _zone.AddThemeColorOverride("font_color", new Color(0.8f, 0.78f, 0.7f));
             column.AddChild(_zone);
         }
