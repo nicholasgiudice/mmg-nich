@@ -53,8 +53,11 @@ public class ZoneGoalDesignTests(ITestOutputHelper output)
     public const int MinesFrom = 24;
     public const int MinesTo = 26;
 
-    /// <summary>Grupos de caça solo de uma zona de campo: tudo, menos chefe e objetivo. Troque aqui se a zona tiver áreas que pedem grupo.</summary>
-    private static bool SoloHunt(FieldGroup g) => ZonePace.IsHuntable(g);
+    /// <summary>
+    /// Grupos de caça solo de uma zona de campo: tudo, menos chefe e objetivo. Troque aqui se a zona tiver áreas que pedem grupo.
+    /// T-530: no Brejo, a Cabana da Bruxa (bandos de 4 a 6 Afogados, grupo recomendado) fica de fora.
+    /// </summary>
+    private static bool SoloHunt(FieldGroup g) => ZonePace.IsHuntable(g) && MarshZoneDesignTests.SoloHunt(g);
 
     [FactIfZone(Marsh)]
     public void Marsh_solo_from_level_16_to_20_takes_75_to_130_percent_of_the_curve_time()

@@ -7,7 +7,7 @@ namespace Game.Sim.Tests;
 /// <summary>
 /// T-055: Cidade e Campos são mapas do Tiled. Do nascimento de cada zona, um personagem chega andando (células livres,
 /// 4 vizinhos) a todos os pontos de surgimento, chegadas e portões; e os portões da zona batem com as transições do mapa.
-/// Desde a T-331 a zona inteira (nascimento, portões, surgimentos) é montada a partir do mapa. T-343: Ruínas da Estrada Antiga. T-352: Cripta do Vigia. T-342: Floresta Baixa.
+/// Desde a T-331 a zona inteira (nascimento, portões, surgimentos) é montada a partir do mapa. T-343: Ruínas da Estrada Antiga. T-352: Cripta do Vigia. T-342: Floresta Baixa. T-530: Brejo dos Afogados.
 /// </summary>
 public class ZoneMapTests
 {
@@ -22,7 +22,7 @@ public class ZoneMapTests
         return GameDataLoader.LoadDirectory(Path.Combine(dir.FullName, "data")).GetDatabaseOrThrow();
     });
 
-    public static TheoryData<string> Zones() => new() { "zone.city", "zone.vigil_fields", "zone.matriarch_lair", "zone.old_road_ruins", "zone.watcher_crypt", "zone.lower_forest" };
+    public static TheoryData<string> Zones() => new() { "zone.city", "zone.vigil_fields", "zone.matriarch_lair", "zone.old_road_ruins", "zone.watcher_crypt", "zone.lower_forest", "zone.drowned_marsh" };
 
     [Theory]
     [MemberData(nameof(Zones))]
@@ -139,13 +139,144 @@ public class ZoneMapTests
     }
 
     /// <summary>
+    /// T-530: o Brejo dos Afogados sai pelo portão sul da Cidade (e volta por ele), com as quatro subáreas e os monstros
+    /// nos níveis 16–20. A Bruxa do Brejo é o único chefe: nível 20, anunciada à zona e renasce em 10 min. Quem morre no
+    /// Brejo volta à Cidade (zona sem <c>respawn</c>, T-501).
+    /// </summary>
+    [Fact]
+    public void Marsh_is_south_of_the_city_with_the_four_subareas_and_the_witch()
+    {
+        var marsh = Db.Value.Zones[Marsh];
+        Assert.Equal(ZoneKind.Field, marsh.Kind);
+        Assert.Null(marsh.Respawn);
+        var city = Db.Value.Zones["zone.city"];
+        var cityMap = EntityFactory.BuildMap(Db.Value.Arenas[city.Arena]);
+        var south = Assert.Single(city.Gates, g => g.To == Marsh);
+        Assert.Equal(cityMap.Height, (int)(south.Area.Y + south.Area.Height));
+        var back = Assert.Single(marsh.Gates);
+        Assert.Equal("zone.city", back.To);
+        Assert.Equal(0, back.Area.Y);
+
+        Assert.Equal(["Aldeia das Palafitas", "Cabana da Bruxa", "Charco Fundo", "Estrada dos Juncos"],
+            marsh.MonsterSpawns.Select(s => s.Area).Distinct().Order(StringComparer.Ordinal));
+        Assert.All(marsh.MonsterSpawns, s => Assert.InRange(s.Level ?? 0, 16, 20));
+        var witch = Assert.Single(marsh.MonsterSpawns, s => Db.Value.Monsters[s.Monster].Rank == MonsterRank.Boss);
+        Assert.Equal("monster.marsh_witch", witch.Monster);
+        Assert.Equal("Cabana da Bruxa", witch.Area);
+        Assert.Equal(20, witch.Level);
+        Assert.True(witch.Announce);
+        Assert.Equal(600 * Core.Simulation.World.TickRate, witch.RespawnTicks);
+        Assert.All(marsh.MonsterSpawns.Where(s => s != witch), s => Assert.False(s.Announce));
+    }
+
+    /// <summary>
+    /// T-530: os grupos do Brejo (pontos da mesma subárea a até 4 tiles, como nos testes de design) ficam a pelo menos 12
+    /// tiles uns dos outros, e parte deles tem de 4 a 6 monstros.
+    /// </summary>
+    [Fact]
+    public void Marsh_groups_are_at_least_12_tiles_apart_and_some_have_4_to_6_monsters()
+    {
+        var groups = new List<List<MonsterSpawnDefinition>>();
+        foreach (var p in Db.Value.Zones[Marsh].MonsterSpawns)
+        {
+            var near = groups.FirstOrDefault(g => g[0].Area == p.Area && g.Any(q => Distance(p.Position, q.Position) <= 4));
+            if (near is null)
+            {
+                groups.Add([p]);
+            }
+            else
+            {
+                near.Add(p);
+            }
+        }
+
+        for (var i = 0; i < groups.Count; i++)
+        {
+            for (var j = i + 1; j < groups.Count; j++)
+            {
+                var d = groups[i].SelectMany(a => groups[j].Select(b => Distance(a.Position, b.Position))).Min();
+                Assert.True(d >= 12, $"grupos em ({groups[i][0].Position.X}, {groups[i][0].Position.Y}) e ({groups[j][0].Position.X}, {groups[j][0].Position.Y}) a {d:F1} tiles");
+            }
+        }
+
+        Assert.Contains(groups, g => g.Sum(p => p.Count) is >= 4 and <= 6);
+        Assert.All(groups, g => Assert.InRange(g.Sum(p => p.Count), 1, 6));
+    }
+
+    /// <summary>
+    /// T-530: a água funda do Brejo é terreno lento (T-502) que o Homem-lagarto não sente, e a estrada seca liga o portão
+    /// norte à borda sul (para o Forte do Passo, T-531) sem pisar em <c>slow_terrain</c>. Há água funda onde se luta: em
+    /// todas as subáreas menos a Estrada há grupo a até 8 tiles dela.
+    /// </summary>
+    [Fact]
+    public void Marsh_dry_road_links_the_north_gate_to_the_south_edge_without_deep_water()
+    {
+        var zone = Db.Value.Zones[Marsh];
+        var arena = Db.Value.Arenas[zone.Arena];
+        var map = EntityFactory.BuildMap(arena);
+        var water = arena.Areas.Where(a => a.Kind == "slow_terrain").ToList();
+        Assert.NotEmpty(water);
+        Assert.All(water, a =>
+        {
+            Assert.Equal("status.deep_water", a.Properties["status"]);
+            Assert.Equal("amphibious", a.Properties["ignoreTags"]);
+        });
+        bool Wet(int x, int y) => water.Any(a => x >= a.Area.X && x < a.Area.X + a.Area.Width && y >= a.Area.Y && y < a.Area.Y + a.Area.Height);
+
+        var gate = Assert.Single(zone.Gates).Area;
+        var queue = new Queue<(int X, int Y)>();
+        var seen = new HashSet<(int, int)>();
+        for (var x = (int)gate.X; x < gate.X + gate.Width; x++)
+        {
+            for (var y = (int)gate.Y; y < gate.Y + gate.Height; y++)
+            {
+                if (!map.IsBlocked(x, y) && seen.Add((x, y)))
+                {
+                    queue.Enqueue((x, y));
+                }
+            }
+        }
+
+        var south = false;
+        while (queue.Count > 0 && !south)
+        {
+            var (x, y) = queue.Dequeue();
+            south = y == map.Height - 1;
+            foreach (var (nx, ny) in new[] { (x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1) })
+            {
+                if (nx >= 0 && ny >= 0 && nx < map.Width && ny < map.Height && !map.IsBlocked(nx, ny) && !Wet(nx, ny) && seen.Add((nx, ny)))
+                {
+                    queue.Enqueue((nx, ny));
+                }
+            }
+        }
+
+        Assert.True(south, "a estrada seca não chega à borda sul");
+        foreach (var area in new[] { "Aldeia das Palafitas", "Charco Fundo", "Cabana da Bruxa" })
+        {
+            Assert.Contains(zone.MonsterSpawns, s => s.Area == area && water.Any(a =>
+                Distance(s.Position, new PositionDefinition(Math.Clamp(s.Position.X, a.Area.X, a.Area.X + a.Area.Width), Math.Clamp(s.Position.Y, a.Area.Y, a.Area.Y + a.Area.Height))) <= 8));
+        }
+    }
+
+    /// <summary>T-530: no Brejo, toda célula livre é alcançável a pé e não há fresta sem saída (como nas Ruínas).</summary>
+    [Fact]
+    public void Marsh_has_no_sealed_pockets_or_dead_end_slits() => AssertNoPocketsOrSlits(Marsh);
+
+    private const string Marsh = "zone.drowned_marsh";
+
+    private static double Distance(PositionDefinition a, PositionDefinition b) => Math.Sqrt(((a.X - b.X) * (a.X - b.X)) + ((a.Y - b.Y) * (a.Y - b.Y)));
+
+    /// <summary>
     /// Legibilidade das Ruínas: toda célula livre é alcançável a pé (nenhum bolsão fechado, como a borda das muralhas antes
     /// de ser bloqueada) e nenhuma célula livre fora dos portões é ponta de fresta (no máximo 1 vizinho livre).
     /// </summary>
     [Fact]
-    public void Ruins_have_no_sealed_pockets_or_dead_end_slits()
+    public void Ruins_have_no_sealed_pockets_or_dead_end_slits() => AssertNoPocketsOrSlits("zone.old_road_ruins");
+
+    private static void AssertNoPocketsOrSlits(string zoneId)
     {
-        var zone = Db.Value.Zones["zone.old_road_ruins"];
+        var zone = Db.Value.Zones[zoneId];
         var map = EntityFactory.BuildMap(Db.Value.Arenas[zone.Arena]);
         var reached = Reached(zone);
         var gates = zone.Gates.SelectMany(g => Enumerable.Range((int)g.Area.X, (int)g.Area.Width)
