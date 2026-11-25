@@ -1,0 +1,5 @@
+Serpente do Brejo (marsh_serpent.png)
+Autor: Charles Sanchez (CharlesGabriel), "snake.png" das LPC Base Assets (Liberated Pixel Cup).
+Licença: CC-BY-SA 3.0 (https://creativecommons.org/licenses/by-sa/3.0/); a página também oferece GPL 3.0. A folha derivada continua CC-BY-SA 3.0.
+Origem: https://opengameart.org/content/liberated-pixel-cup-lpc-base-assets-sprites-map-tiles (LPC Base Assets/sprites/monsters/snake.png)
+Modificações: acrescentada uma linha de morte (4 quadros: o primeiro quadro "de frente" achatado e esmaecendo), porque o pacote só tem o andar; a folha passou de 96x128 para 128x160 (2026-11-24, T-521; script em tasks/reports/arte-monstros-fase-5/build_sheets.py).

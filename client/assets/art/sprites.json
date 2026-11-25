@@ -1,5 +1,5 @@
 {
-  "$comment": "Sprite de cada classe/monstro (T-053). Só apresentação: o Core não lê este arquivo. Coordenadas em pixels da folha; pivot = ponto entre os pés, que fica no centro do círculo de colisão. Direções: up, left, down, right. 'grid' usa a linha da primeira direção de 'dirOrder' e desce uma linha por direção; 'all' usa o mesmo trecho em todas as direções. Uma animação pode ter 'frame' e 'pivot' próprios: o gerador LPC exporta o golpe das armas grandes (espada, maça) em quadros de 128 ou 192 px abaixo da linha 54 (y = 3456), e a linha padrão sai sem a arma. Créditos em CREDITS.md e em design/art-direction-v0.1.md. 'tint': [r, g, b] ou [r, g, b, a], de 0 a 1, multiplica a cor do sprite (fantasmas, névoa, sombras; T-056). Os monstros da fase 3 vêm da T-056. O Ent Corrompido (monster.corrupted_ent) usa provisoriamente o esqueleto em tom de madeira, até a encomenda chegar (T-345); o selo do Vigia (monster.watcher_seal) é o medalhão de pedra do tileset, que escurece ao quebrar. 'variants.<nome>' troca sprites só quando o cliente roda com --art=<nome> (mecanismo da T-090; usado para prévias, como na T-056). Um personagem com segunda classe usa a entrada 'second_class.<id>', se a folha existir; senão, a da classe base (SpriteCatalog.ForCharacter). Os NPCs da cidade (npc.*, T-323) usam folhas das classes e monstros como provisório, até terem arte própria.",
+  "$comment": "Sprite de cada classe/monstro (T-053). Só apresentação: o Core não lê este arquivo. Coordenadas em pixels da folha; pivot = ponto entre os pés, que fica no centro do círculo de colisão. Direções: up, left, down, right. 'grid' usa a linha da primeira direção de 'dirOrder' e desce uma linha por direção; 'all' usa o mesmo trecho em todas as direções. Uma animação pode ter 'frame' e 'pivot' próprios: o gerador LPC exporta o golpe das armas grandes (espada, maça) em quadros de 128 ou 192 px abaixo da linha 54 (y = 3456), e a linha padrão sai sem a arma. Créditos em CREDITS.md e em design/art-direction-v0.1.md. 'tint': [r, g, b] ou [r, g, b, a], de 0 a 1, multiplica a cor do sprite (fantasmas, névoa, sombras; T-056). Os monstros da fase 3 vêm da T-056 e os do sul (fase 5) da T-521: os do gerador LPC em characters/, o Golem, o Morcego e a Serpente de pacotes do OpenGameArt em monsters/ (créditos em CREDITS.md); a variante preview_fase5 troca monstros atuais pelos novos (tabela em tasks/reports/arte-monstros-fase-5.md). O Ent Corrompido (monster.corrupted_ent) usa provisoriamente o esqueleto em tom de madeira, até a encomenda chegar (T-345); o selo do Vigia (monster.watcher_seal) é o medalhão de pedra do tileset, que escurece ao quebrar. 'variants.<nome>' troca sprites só quando o cliente roda com --art=<nome> (mecanismo da T-090; usado para prévias, como na T-056). Um personagem com segunda classe usa a entrada 'second_class.<id>', se a folha existir; senão, a da classe base (SpriteCatalog.ForCharacter). Os NPCs da cidade (npc.*, T-323) usam folhas das classes e monstros como provisório, até terem arte própria.",
   "layouts": {
     "ulpc": {
       "frame": [64, 64],
@@ -40,6 +40,48 @@
         "walk": { "grid": { "row": 0, "col": 0, "count": 4 }, "fps": 8, "loop": true },
         "attack": { "grid": { "row": 0, "col": 4, "count": 4 }, "fps": 10 },
         "death": { "grid": { "row": 0, "col": 8, "count": 3 }, "fps": 8 }
+      }
+    },
+    "lpc_snake": {
+      "frame": [32, 32],
+      "pivot": [16, 28],
+      "headPx": 24,
+      "dirOrder": ["up", "left", "down", "right"],
+      "animations": {
+        "idle": { "grid": { "row": 0, "col": 0, "count": 1 } },
+        "walk": { "grid": { "row": 0, "col": 0, "count": 3 }, "fps": 8, "loop": true },
+        "attack": { "grid": { "row": 0, "col": 0, "count": 3 }, "fps": 12 },
+        "death": { "all": { "x": 0, "y": 128, "count": 4 }, "fps": 8 }
+      }
+    },
+    "lpc_bat": {
+      "frame": [32, 32],
+      "pivot": [16, 22],
+      "headPx": 18,
+      "dirOrder": ["up", "left", "down", "right"],
+      "animations": {
+        "idle": { "grid": { "row": 0, "col": 0, "count": 1 } },
+        "walk": { "grid": { "row": 0, "col": 0, "count": 4 }, "fps": 10, "loop": true },
+        "attack": { "grid": { "row": 4, "col": 0, "count": 3 }, "fps": 10 },
+        "death": { "all": { "x": 0, "y": 256, "count": 4 }, "fps": 8 }
+      }
+    },
+    "lpc_golem": {
+      "frame": [64, 64],
+      "pivot": [32, 59],
+      "headPx": 59,
+      "dirOrder": ["up", "left", "down", "right"],
+      "animations": {
+        "idle": { "grid": { "row": 0, "col": 0, "count": 1 } },
+        "walk": { "grid": { "row": 0, "col": 0, "count": 7 }, "fps": 8, "loop": true },
+        "attack": {
+          "fps": 10,
+          "up": { "x": 0, "y": 256, "w": 64, "h": 96, "count": 7, "pivot": [32, 91] },
+          "left": { "x": 0, "y": 352, "w": 64, "h": 96, "count": 7, "pivot": [32, 91] },
+          "down": { "x": 0, "y": 448, "w": 64, "h": 96, "count": 7, "pivot": [32, 91] },
+          "right": { "x": 0, "y": 544, "w": 64, "h": 96, "count": 7, "pivot": [32, 91] }
+        },
+        "death": { "all": { "x": 0, "y": 640, "count": 7 }, "fps": 8 }
       }
     },
     "seal": {
@@ -113,6 +155,15 @@
     "monster.corrupted_ent": { "layout": "ulpc", "texture": "characters/skeleton.png", "scale": 2, "use": { "attack": "slash_128", "cast": "spellcast" }, "tint": [0.62, 0.5, 0.32] },
     "monster.watcher_seal": { "layout": "seal", "texture": "tiles/terrain_summer.png" },
     "monster.mist_fairy": { "layout": "ulpc", "texture": "characters/mist_fairy.png", "use": { "attack": "spellcast", "cast": "spellcast" }, "tint": [0.95, 1.0, 1.1, 0.8] },
+    "monster.drowned": { "layout": "ulpc", "texture": "characters/drowned.png", "use": { "attack": "slash", "cast": "spellcast" }, "tint": [0.62, 0.9, 0.85] },
+    "monster.marsh_lizardman": { "layout": "ulpc", "texture": "characters/marsh_lizardman.png", "use": { "attack": "thrust", "cast": "spellcast" } },
+    "monster.marsh_serpent": { "layout": "lpc_snake", "texture": "monsters/marsh_serpent/marsh_serpent.png" },
+    "monster.marsh_witch": { "layout": "ulpc", "texture": "characters/marsh_witch.png", "scale": 2, "use": { "attack": "spellcast", "cast": "spellcast" } },
+    "monster.possessed_miner": { "layout": "ulpc", "texture": "characters/possessed_miner.png", "use": { "attack": "slash_128", "cast": "spellcast" } },
+    "monster.mountain_wolf": { "layout": "lpc_wolf", "texture": "monsters/grey_wolf/wolf_light_gray.png", "tint": [0.62, 0.72, 0.9] },
+    "monster.cave_bat": { "layout": "lpc_bat", "texture": "monsters/cave_bat/cave_bat.png" },
+    "monster.stone_golem": { "layout": "lpc_golem", "texture": "monsters/stone_golem/stone_golem.png" },
+    "monster.forged_overseer": { "layout": "ulpc", "texture": "characters/forged_overseer.png", "use": { "attack": "slash_128", "cast": "spellcast" } },
     "npc.priest": { "layout": "ulpc", "texture": "characters/cleric.png" },
     "npc.smith": { "layout": "ulpc", "texture": "characters/warrior.png" },
     "npc.merchant": { "layout": "ulpc", "texture": "characters/bandit.png" },
@@ -120,5 +171,17 @@
     "npc.storage": { "layout": "ulpc", "texture": "characters/cleric.png", "tint": [0.85, 0.95, 1.1] },
     "npc.innkeeper": { "layout": "ulpc", "texture": "characters/mage.png" }
   },
-  "variants": {}
+  "variants": {
+    "preview_fase5": {
+      "monster.road_bandit": {"layout": "ulpc", "texture": "characters/drowned.png", "use": {"attack": "slash", "cast": "spellcast"}, "tint": [0.62, 0.9, 0.85]},
+      "monster.skeleton_guard": {"layout": "ulpc", "texture": "characters/marsh_lizardman.png", "use": {"attack": "thrust", "cast": "spellcast"}},
+      "monster.field_rat": {"layout": "lpc_snake", "texture": "monsters/marsh_serpent/marsh_serpent.png"},
+      "monster.grey_wolf": {"layout": "lpc_wolf", "texture": "monsters/grey_wolf/wolf_light_gray.png", "tint": [0.62, 0.72, 0.9]},
+      "monster.spider_small": {"layout": "lpc_bat", "texture": "monsters/cave_bat/cave_bat.png"},
+      "monster.corrupted_ent": {"layout": "lpc_golem", "texture": "monsters/stone_golem/stone_golem.png"},
+      "monster.forest_matriarch": {"layout": "ulpc", "texture": "characters/marsh_witch.png", "scale": 2, "use": {"attack": "spellcast", "cast": "spellcast"}},
+      "monster.dead_priest": {"layout": "ulpc", "texture": "characters/possessed_miner.png", "use": {"attack": "slash_128", "cast": "spellcast"}},
+      "monster.spectral_knight": {"layout": "ulpc", "texture": "characters/forged_overseer.png", "use": {"attack": "slash_128", "cast": "spellcast"}}
+    }
+  }
 }
