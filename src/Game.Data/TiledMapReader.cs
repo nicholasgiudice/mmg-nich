@@ -313,6 +313,7 @@ public static class TiledMapReader
             var radius = 0.0;
             var respawn = TickConversion.SecondsToTicks(30); // padrão, igual ao de MapSpawn e MonsterSpawnDefinition
             var objective = false;
+            var announce = false;
             if (kind == MapSpawnKind.Monster)
             {
                 monster = props.GetValueOrDefault("monster");
@@ -382,6 +383,19 @@ public static class TiledMapReader
                         Error(path, $"Propriedade 'objective' deve ser bool (valor: '{ob}').");
                     }
                 }
+
+                // T-503: chefe de campo, anunciado a toda a zona.
+                if (props.TryGetValue("announce", out var an))
+                {
+                    if (an is "true" or "false")
+                    {
+                        announce = an == "true";
+                    }
+                    else
+                    {
+                        Error(path, $"Propriedade 'announce' deve ser bool (valor: '{an}').");
+                    }
+                }
             }
 
             output.Add(new MapSpawn
@@ -395,6 +409,7 @@ public static class TiledMapReader
                 Radius = radius,
                 RespawnTicks = respawn,
                 Objective = objective,
+                Announce = announce,
             });
         }
 

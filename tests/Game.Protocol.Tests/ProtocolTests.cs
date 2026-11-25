@@ -131,7 +131,28 @@ public class ProtocolTests(ITestOutputHelper output)
         Assert.Equal(27, ProtocolSerializer.Serialize(new DevToolResult(DevToolAction.LevelUp1, DevToolOutcome.Done, 2))[0]);
         Assert.True(RoundTrip(new Welcome(new EntityId(7), 10, "zone.city", "map.city", 1, 0, DevTools: true)).DevTools);
         Assert.False(new Welcome(new EntityId(7), 10, "zone.city", "map.city", 1).DevTools);
-        Assert.Equal(19, ProtocolVersion.Current);
+        Assert.True(ProtocolVersion.Current >= 19);
+    }
+
+    /// <summary>T-503: anúncio de chefe de campo (tag 5, versão 20), com e sem subárea, nascimento e morte.</summary>
+    [Fact]
+    public void Field_boss_announcement_round_trips_with_its_tag()
+    {
+        Assert.Equal((ushort)5, EventCodecs.Tags[typeof(FieldBossAnnounced)]);
+        Assert.True(ProtocolVersion.Current >= 20);
+
+        var events = new GameEvent[]
+        {
+            new FieldBossAnnounced("monster.bog_witch", "Brejo Fundo", Spawned: true),
+            new FieldBossAnnounced("monster.bog_witch", null, Spawned: false),
+        };
+        events[0].GetType().GetProperty(nameof(GameEvent.Tick))!.SetValue(events[0], 77L);
+        events[1].GetType().GetProperty(nameof(GameEvent.Tick))!.SetValue(events[1], 78L);
+
+        var back = RoundTrip(new EventsMessage(78, events)).Events;
+
+        Assert.Equal(events, back);
+        Assert.Equal([77L, 78L], back.Select(e => e.Tick));
     }
 
     [Fact]

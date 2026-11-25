@@ -20,3 +20,10 @@ public sealed record EntityDied(EntityId Entity) : GameEvent;
 public sealed record EntityRevived(EntityId Entity, EntityId By, string SourceId, float Health) : GameEvent;
 
 public sealed record EntityRemoved(EntityId Entity) : GameEvent;
+
+/// <summary>
+/// T-503: um monstro de campo de um ponto com <c>announce</c> nasceu (<paramref name="Spawned"/> = true) ou morreu (false).
+/// Vai para todos os jogadores da zona, perto ou longe: por isso não cita a entidade (o filtro de interesse só deixa passar
+/// evento sem entidade para todos). <paramref name="Area"/> é o nome da subárea do ponto (null se o ponto não está em nenhuma).
+/// </summary>
+public sealed record FieldBossAnnounced(string MonsterId, string? Area, bool Spawned) : GameEvent;

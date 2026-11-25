@@ -26,4 +26,28 @@ A região do sul tem **chefes de campo**: monstros fortes no mundo aberto, com r
 
 ## Resultado
 
-_(a preencher)_
+**Feito.** Branch `task/T-503-anuncio-de-chefe-de-campo`. **Esta branch NÃO entra na `main` sozinha:** `ProtocolVersion` sobe para **20** e o cliente ainda não conhece o evento novo. A T-540 (cliente) sai desta branch e as duas entram juntas, com um cliente novo (cuidados de integração da fase 5, `tasks/README.md` §6j). Ordem de integração da fase: 501, 502, 503 (rebase nos arquivos em comum: `Zones.cs`, `TiledMapReader`).
+
+**Contrato para a T-540**
+- Evento do Core `FieldBossAnnounced(string MonsterId, string? Area, bool Spawned)` (`src/Game.Core/Events/GameEvent.cs`), **tag de rede 5** em `EventCodecs` (campos na ordem: `MonsterId`, `Area`, `Spawned`; `Area` é string opcional, nula se o ponto não está em nenhuma subárea).
+- `Spawned = true`: o monstro nasceu (renascimento); `false`: morreu. `MonsterId` é o id da definição (`monster.bog_witch`); o nome para exibir vem de `data/monsters.json`. `Area` é o nome da subárea do ponto, pronto para mostrar.
+- Chega dentro de um `EventsMessage` normal, a **todos** os jogadores da zona (ou da cópia) onde o monstro está, perto ou longe. O evento não cita nenhuma entidade de propósito: o filtro de interesse (`EventEntities.Relevant`) só deixa passar a todos o evento sem entidade. O cliente não precisa de nada novo no `Welcome`.
+- `ProtocolVersion.Current` = **20** (era 19 na `main`).
+
+**O que mudou**
+- `monster_spawn` ganha a propriedade `announce` (bool, padrão `false`): `MapSpawn.Announce` → `MonsterSpawnDefinition.Announce` (`TiledMapReader`, `ZoneComposer`). Valor que não é `true`/`false` é erro de carga (`'announce' deve ser bool`), como o `objective`. `design/map-conventions-v0.1.md` §5 documenta.
+- `OpenZone` publica `FieldBossAnnounced` quando o monstro de um ponto com `announce` nasce (renascimento) e quando morre (na primeira vez que o ponto o vê morto).
+
+**Decisões e registros**
+- **Só o que acontece com jogador na zona é anunciado** (requisito 3), e foi registrado em §5 do documento de convenções. O nascimento inicial da zona (construtor, sem jogador) não gera evento. Como a zona vazia não avança, nada nasce nem morre sem plateia; o renascimento que vence durante a parada é feito pelo `CatchUp` no primeiro tick com jogador e aí anuncia normalmente. Quem entra depois não recebe o estado do chefe: vê o chefe se chegar perto.
+- O evento é publicado depois do `World.Step()` do tick, então sai com o tick seguinte (50 ms depois). Sem efeito para o jogador.
+- Ponto com `count` > 1 anuncia cada monstro (um evento por monstro); chefe de campo é um ponto com `count` 1.
+- Instâncias também anunciam (mesma classe `OpenZone`); como nenhum ponto de instância usa `announce`, é irrelevante hoje.
+- O dado real ainda não tem chefe de campo (vem na T-510/T-530). O teste de servidor marca o ponto do rato dos Campos com `announce` por conteúdo montado no teste.
+- `ProtocolTests` tinha `Assert.Equal(19, ProtocolVersion.Current)` na prova da T-405; virou `>= 19` para não quebrar a cada subida.
+
+**Testes**
+- Servidor (`FieldBossAnnounceTests`): dois jogadores a 45+ tiles do chefe e entre si recebem a morte e o renascimento, na ordem e com a subárea; um jogador na Cidade não recebe nada; ponto sem `announce` (dado real) não anuncia.
+- Carga (`TiledMapLoaderTests`): `announce` true/false/ausente lido certo; `"sim"` e número dão erro `'announce' deve ser bool`.
+- Protocolo (`ProtocolTests`): ida e volta com e sem subárea e a tag 5; o teste que cobre todo evento do Core e o de ida e volta campo a campo passam com o evento novo.
+- `./scripts/check.sh` completo: `dotnet format` e `dotnet build -warnaserror` sem avisos; todos os projetos de teste passam, **exceto o `Game.Design.Tests`**, com as mesmas falhas de balanceamento que a T-500 já registrou na `main` (`Guardian_cuts_the_damage...` níveis 30 e 40, `A_group_of_four_with_rares_beats_the_watcher...` 71%, e o do Vigia sem Clérigo). Não têm relação com esta tarefa (que só acrescenta um evento e não muda a simulação); precisam de correção à parte.
