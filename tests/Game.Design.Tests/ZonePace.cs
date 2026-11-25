@@ -136,6 +136,10 @@ internal static class ZonePace
         return FightOf(batches, limit);
     }
 
+    /// <summary>T-532: os lotes solo de cada perfil de <see cref="SoloProfiles"/> contra o grupo (os mesmos de <see cref="FightOf(FieldGroup, int, int?)"/>).</summary>
+    public static IReadOnlyList<(PaceMember Member, BatchSummary Batch)> SoloBatches(FieldGroup group) =>
+        SoloProfiles(group.Level).Select(p => (p[0], RunBatch(group, group.Level, p, SoloTimeLimit))).ToList();
+
     private static BatchSummary RunBatch(FieldGroup group, int level, IReadOnlyList<PaceMember> members, int timeLimit) =>
         Cache.GetOrAdd($"{group.Key}|{level}|{timeLimit}|{string.Join(",", members.Select(m => $"{m.Base}/{m.Second}"))}", _ => new Lazy<BatchSummary>(() =>
         {
