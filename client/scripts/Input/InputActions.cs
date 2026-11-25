@@ -54,6 +54,13 @@ public static class InputActions
     public static readonly string[] AbilitySlots =
         ["ability_1", "ability_2", "ability_3", "ability_4", "ability_5", "ability_6", "ability_7", "ability_8", "ability_9", "ability_10"];
 
+    /// <summary>
+    /// A ação só dispara com os modificadores exatos da tecla (Shift+1 não aperta o 1, e o 1 com Shift não aperta o 1). O
+    /// movimento é a exceção: andar segurando Shift (para usar um Shift+1) não pode parar o personagem. O clique de ataque
+    /// (fixo) também: Shift+clique continua atacando.
+    /// </summary>
+    public static bool ExactMatch(string action) => action is not (MoveUp or MoveDown or MoveLeft or MoveRight or Attack);
+
     public static IEnumerable<string> All =>
         new[] { MoveUp, MoveDown, MoveLeft, MoveRight, Attack, AttackKey, TargetNext, TargetPrevious, TargetClear, Consumable, Pause, Restart, CharacterPanel, SkillsPanel, InventoryPanel, PickUp, ToggleDebug, BattleList, ZoneMap }.Concat(AbilitySlots);
 }

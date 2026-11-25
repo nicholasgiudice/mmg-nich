@@ -25,6 +25,7 @@
     <Compile Include="..\..\client\scripts\Presentation\IconIndex.cs" Link="Client\IconIndex.cs" />
     <Compile Include="..\..\client\scripts\Input\HotbarLayout.cs" Link="Client\HotbarLayout.cs" />
     <Compile Include="..\..\client\scripts\Input\InputActions.cs" Link="Client\InputActions.cs" />
+    <Compile Include="..\..\client\scripts\Input\KeyBindings.cs" Link="Client\KeyBindings.cs" />
     <Compile Include="..\..\client\scripts\Input\PlayerInput.cs" Link="Client\PlayerInput.cs" />
     <Compile Include="..\..\client\scripts\Hud\BattleList.cs" Link="Client\BattleList.cs" />
     <Compile Include="..\..\client\scripts\Hud\PartyModel.cs" Link="Client\PartyModel.cs" />

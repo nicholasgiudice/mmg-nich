@@ -126,9 +126,6 @@ public sealed class HotbarLayout
         return -1;
     }
 
-    /// <summary>Tecla do espaço como aparece na barra: "1" a "9" e "0" no décimo (T-409).</summary>
-    public static string KeyLabel(int slot) => ((slot + 1) % 10).ToString(System.Globalization.CultureInfo.InvariantCulture);
-
     /// <summary>Espaço onde o id está, ou -1.</summary>
     public int IndexOf(string id) => Array.IndexOf(_slots, id);
 

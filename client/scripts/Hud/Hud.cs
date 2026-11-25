@@ -93,6 +93,9 @@ public partial class Hud : Control
     /// </summary>
     public bool IsTyping => _partyPanel.IsTyping || _shop.IsTyping;
 
+    /// <summary>A tela de teclas do menu está aberta: as teclas das telas (C, K, I, B, M) não fazem nada.</summary>
+    public bool InputBlocked { get; set; }
+
     /// <summary>Atualiza o painel e a janela do convite com o estado do grupo (chamado a cada frame, online).</summary>
     public void ShowParty(PartyModel model, double now)
     {
@@ -163,11 +166,11 @@ public partial class Hud : Control
         // T-221: telas de personagem e de habilidades (também pelas teclas C e K).
         _panelButtons = new HBoxContainer();
         _panelButtons.AddThemeConstantOverride("separation", 4);
-        _characterButton = PanelButton("Personagem (C)", () => TogglePanel(_character));
-        _skillsButton = PanelButton("Habilidades (K)", () => TogglePanel(_skills));
+        _characterButton = PanelButton("Personagem" + KeyHint(Input.InputActions.CharacterPanel), () => TogglePanel(_character));
+        _skillsButton = PanelButton("Habilidades" + KeyHint(Input.InputActions.SkillsPanel), () => TogglePanel(_skills));
         _panelButtons.AddChild(_characterButton);
         _panelButtons.AddChild(_skillsButton);
-        _inventoryButton = PanelButton("Inventário (I)", () => TogglePanel(_inventory));
+        _inventoryButton = PanelButton("Inventário" + KeyHint(Input.InputActions.InventoryPanel), () => TogglePanel(_inventory));
         _panelButtons.AddChild(_inventoryButton);
         AddChild(_panelButtons);
 
@@ -315,6 +318,10 @@ public partial class Hud : Control
         button.Pressed += pressed;
         return button;
     }
+
+    /// <summary>Tecla da ação entre parênteses para os textos (" (C)"); vazio se a ação está sem tecla.</summary>
+    internal static string KeyHint(string action) =>
+        Input.KeyBindingSettings.Current[action] is null ? "" : $" ({Input.KeyBindingSettings.Label(action)})";
 
     /// <summary>Aviso grande no topo da tela (ex.: mudança de fase do chefe), some sozinho.</summary>
     public void Announce(string text, double seconds = BannerSeconds)
@@ -502,31 +509,29 @@ public partial class Hud : Control
         _skills.Send = authority.Send;
         _inventory.Send = authority.Send;
         _shop.Send = authority.Send;
-        if (IsTyping)
-        {
-            // T-311: digitando o nome do convite, C/K/I/B são letras.
-        }
-        else if (Godot.Input.IsActionJustPressed(Input.InputActions.InventoryPanel))
+        // T-311: digitando o nome do convite, C/K/I/B são letras; com a tela de teclas aberta, também não abrem nada.
+        var keysFree = !IsTyping && !InputBlocked;
+        if (keysFree && Input.KeyBindingSettings.JustPressed(Input.InputActions.InventoryPanel))
         {
             TogglePanel(_inventory);
         }
 
-        if (!IsTyping && Godot.Input.IsActionJustPressed(Input.InputActions.CharacterPanel))
+        if (keysFree && Input.KeyBindingSettings.JustPressed(Input.InputActions.CharacterPanel))
         {
             TogglePanel(_character);
         }
 
-        if (!IsTyping && Godot.Input.IsActionJustPressed(Input.InputActions.SkillsPanel))
+        if (keysFree && Input.KeyBindingSettings.JustPressed(Input.InputActions.SkillsPanel))
         {
             TogglePanel(_skills);
         }
 
-        if (!IsTyping && Godot.Input.IsActionJustPressed(Input.InputActions.BattleList))
+        if (keysFree && Input.KeyBindingSettings.JustPressed(Input.InputActions.BattleList))
         {
             _battle.Visible = BattleListSettings.Visible = !_battle.Visible;
         }
 
-        if (!IsTyping && Godot.Input.IsActionJustPressed(Input.InputActions.ZoneMap))
+        if (keysFree && Input.KeyBindingSettings.JustPressed(Input.InputActions.ZoneMap))
         {
             ToggleZoneMap();
         }
@@ -537,13 +542,13 @@ public partial class Hud : Control
             switch (e)
             {
                 case LevelUp up when up.Entity == me:
-                    Announce($"Nível {up.Level}!  {up.AttributePoints} pontos de atributo (C) · {up.SkillPoints} de habilidade (K)", 4.0);
+                    Announce($"Nível {up.Level}!  {up.AttributePoints} pontos de atributo{KeyHint(Input.InputActions.CharacterPanel)} · {up.SkillPoints} de habilidade{KeyHint(Input.InputActions.SkillsPanel)}", 4.0);
                     break;
                 case SecondClassChosen chosen when chosen.Entity == me:
                     // T-410: a escolha definitiva foi aceita.
                     var chosenName = _content.Classes.Values.SelectMany(c => c.SecondClasses)
                         .FirstOrDefault(s => s.Id == chosen.SecondClassId)?.Name ?? chosen.SecondClassId;
-                    Announce($"Segunda classe: {chosenName}!  +{chosen.AttributePoints} pontos de atributo (C)", 4.0);
+                    Announce($"Segunda classe: {chosenName}!  +{chosen.AttributePoints} pontos de atributo{KeyHint(Input.InputActions.CharacterPanel)}", 4.0);
                     _skills.SetMessage($"Agora você é {chosenName}.", HudTheme.Heal);
                     break;
                 case ProgressionRejected r when r.Entity == me:
@@ -651,8 +656,10 @@ public partial class Hud : Control
     {
         var progress = self.TryGet<CharacterProgress>();
         _panelButtons.Visible = self.TryGet<CharacterStats>() is not null;
-        _characterButton.Text = progress is { AttributePoints: > 0 } p ? $"Personagem (C) ● {p.AttributePoints}" : "Personagem (C)";
-        _skillsButton.Text = progress is { SkillPoints: > 0 } q ? $"Habilidades (K) ● {q.SkillPoints}" : "Habilidades (K)";
+        var character = "Personagem" + KeyHint(Input.InputActions.CharacterPanel);
+        var skills = "Habilidades" + KeyHint(Input.InputActions.SkillsPanel);
+        _characterButton.Text = progress is { AttributePoints: > 0 } p ? $"{character} ● {p.AttributePoints}" : character;
+        _skillsButton.Text = progress is { SkillPoints: > 0 } q ? $"{skills} ● {q.SkillPoints}" : skills;
         _characterButton.Modulate = progress is { AttributePoints: > 0 } ? HudTheme.Removable : Colors.White;
         _skillsButton.Modulate = progress is { SkillPoints: > 0 } ? HudTheme.Removable : Colors.White;
         _character.Render(self);
@@ -661,7 +668,7 @@ public partial class Hud : Control
         if (self.TryGet<Game.Core.Combat.Items.Inventory>() is { } inv)
         {
             var used = inv.Slots.Count(i => i is not null);
-            _inventoryButton.Text = $"Inventário (I) {used}/{inv.Capacity}";
+            _inventoryButton.Text = $"Inventário{KeyHint(Input.InputActions.InventoryPanel)} {used}/{inv.Capacity}";
             _inventoryButton.Modulate = used >= inv.Capacity ? HudTheme.Warning : Colors.White;
         }
     }
@@ -786,13 +793,13 @@ public partial class Hud : Control
 
         for (var i = 0; i < HotbarLayout.Size; i++)
         {
-            entries.Add((Hotbar[i], HotbarLayout.KeyLabel(i), i));
+            entries.Add((Hotbar[i], Input.KeyBindingSettings.ShortLabel(Input.InputActions.AbilitySlots[i]), i));
         }
 
         // T-323: Q usa a primeira poção de vida do inventário; aparece só se ela não está na barra.
         if (QuickConsumable(self) is { } q && Hotbar.IndexOf(q) < 0)
         {
-            entries.Add((q, "Q", -1));
+            entries.Add((q, Input.KeyBindingSettings.ShortLabel(Input.InputActions.Consumable), -1));
         }
 
         FillBarRow(_abilityBar, _slots, entries, self, abilities, byId, selected, aimPoint, now);
@@ -825,7 +832,7 @@ public partial class Hud : Control
             if (id is null)
             {
                 slot.SetState(new AbilitySlotState("", key, "", 0, 0, false, false, false, null, Empty: true),
-                    "Espaço vazio: arraste uma habilidade da tela de habilidades (K).");
+                    $"Espaço vazio: arraste uma habilidade da tela de habilidades{KeyHint(Input.InputActions.SkillsPanel)}.");
                 slot.SetIcon(null);
                 continue;
             }
@@ -833,7 +840,7 @@ public partial class Hud : Control
             var (state, tooltip) = SlotState(self, abilities, byId, selected, aimPoint, now, id, key);
             if (state.NotLearned)
             {
-                tooltip = $"{_content.Abilities.GetValueOrDefault(id)?.Name ?? id}\nNão aprendida: gaste um ponto na tela de habilidades (K).";
+                tooltip = $"{_content.Abilities.GetValueOrDefault(id)?.Name ?? id}\nNão aprendida: gaste um ponto na tela de habilidades{KeyHint(Input.InputActions.SkillsPanel)}.";
             }
 
             if (index >= 0)
