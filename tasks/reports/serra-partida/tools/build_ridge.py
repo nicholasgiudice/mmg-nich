@@ -86,6 +86,9 @@ KEEP_MESA = [(0, 0, 200, 4), (132, 0, 154, 8), (150, 50, 200, 58)]
 CAVE = (140, 2, 146, 8)  # piso escuro + face escura: a entrada da caverna
 MINE = (170, 52, 176, 58)
 MINE_RAILS_TO = 66  # trilho da boca da mina ate o meio da bacia
+# T-533: portao das Minas Fundas na boca da mina (dentro de mines_entrance) e a chegada de volta, fora dela
+MINES_GATE = (171, 53, 4, 2)
+FROM_MINES = (173.5, 63.5)
 
 # ------------------------------------------------------------------ subareas (primeira que contem vale)
 SUBAREAS = [
@@ -405,11 +408,16 @@ def main():
             px, py = x + (2 if i else 0), y
             spawns.append(obj(name if i == 0 else f"{name}_{i + 1}", "monster_spawn", px, py, point=True, properties=p))
 
+    spawns.append(obj("from_mines", "player_spawn", *FROM_MINES, point=True))  # T-533: no fim, para nao mudar os ids
     areas = [obj(name, "subarea", x, y, w, h) for name, (x, y, w, h) in SUBAREAS]
     mx0, my0, mx1, my1 = MINE
-    areas.append(obj("mines_entrance", "mines_entrance", mx0, my0, mx1 - mx0, my1 - my0 + 4))
+    areas.append(obj("mines_entrance", "mines_entrance", mx0, my0, mx1 - mx0, my1 - my0 + 4, properties=[
+        prop("name", "string", "Minas Fundas"), prop("recommended_level", "int", 24),
+        prop("warning", "string", "Conteúdo para grupo de 4. Nível recomendado: 24+.")]))
     transitions = [obj("west_gate", "transition", 0, GATE_Y, 2, 4, properties=[
-        prop("arrival", "string", "from_ridge"), prop("to", "string", "zone.pass_fort")])]
+        prop("arrival", "string", "from_ridge"), prop("to", "string", "zone.pass_fort")]),
+        obj("mines_gate", "transition", *MINES_GATE, properties=[
+            prop("arrival", "string", "from_ridge"), prop("to", "string", "zone.deep_mines")])]
 
     # conferencias
     def free(x, y):

@@ -76,26 +76,36 @@ public class ZoneGoalDesignTests(ITestOutputHelper output)
         AssertWithinCurve(pace, SerraHours);
     }
 
+    /// <summary>
+    /// T-533: uma ida às Minas por cada rota do Veio Partido (<see cref="MinesDesignTests.Run"/>: as salas da rota na ordem do
+    /// mapa e o Capataz na Fornalha real, com o grupo de referência), contra a Serra solo nos mesmos níveis. A meta vale para as
+    /// duas rotas: quem escolhe a rápida (Veio Estreito) também tem de render mais que o campo.
+    /// </summary>
     [FactIfZone(Marsh, Ridge, Mines)]
     public void Mines_in_a_party_of_four_give_at_least_1_3_times_the_xp_per_hour_of_the_field_per_person()
     {
-        var boss = MinesBoss();
-        var ratios = new List<string>();
-        var dungeon = new List<double>();
+        var lines = new List<string>();
         var field = new List<double>();
+        var routes = new Dictionary<string, List<double>> { [MinesDesignTests.RichRoute] = [], [MinesDesignTests.NarrowRoute] = [] };
         for (var level = MinesFrom; level < MinesTo; level++)
         {
-            var run = ZonePace.Dungeon(Mines, level, 4, g => ZonePace.IsHuntable(g), boss);
             var solo = ZonePace.Field(Ridge, level, level + 1, 1, include: SoloHunt);
-            dungeon.Add(run.XpPerHour);
             field.Add(solo.XpPerHour);
-            ratios.Add($"nv{level}: {run.Describe()} | campo {solo.XpPerHour:F0} XP/h");
+            lines.Add($"nv{level}: campo {solo.XpPerHour:F0} XP/h");
+            foreach (var (route, xp) in routes)
+            {
+                var skip = route == MinesDesignTests.RichRoute ? MinesDesignTests.NarrowRoute : MinesDesignTests.RichRoute;
+                var run = MinesDesignTests.Run(4, level, skip);
+                xp.Add(run.XpPerHour);
+                lines.Add($"  pelo {route}: {run.Describe()}");
+            }
         }
 
-        output.WriteLine(string.Join("\n", ratios));
-        var ratio = dungeon.Average() / field.Average();
-        output.WriteLine($"masmorra ÷ campo: {ratio:F2}×");
-        Assert.True(ratio >= DungeonOverField, $"masmorra ÷ campo = {ratio:F2}× (meta {DungeonOverField}×); {string.Join("; ", ratios)}");
+        var ratios = routes.ToDictionary(kv => kv.Key, kv => kv.Value.Average() / field.Average());
+        lines.Add("masmorra ÷ campo: " + string.Join("; ", ratios.Select(kv => $"pelo {kv.Key} {kv.Value:F2}×")));
+        var report = string.Join(Environment.NewLine, lines);
+        output.WriteLine(report);
+        Assert.All(ratios, kv => Assert.True(kv.Value >= DungeonOverField, $"pelo {kv.Key}: masmorra ÷ campo = {kv.Value:F2}× (meta {DungeonOverField}×). {report}"));
     }
 
     /// <summary>Chefe de campo: só a medida, sem meta (a Bruxa do Brejo, nível 20; grupo de 4, que é como se luta com um chefe).</summary>
@@ -105,13 +115,6 @@ public class ZoneGoalDesignTests(ITestOutputHelper output)
         var m = ZonePace.FieldBoss(Marsh, 20, 4);
         output.WriteLine($"{m.Boss}: {m.XpPerPerson:F0} XP por pessoa a cada {m.CycleSeconds / 60:F1} min = {m.XpPerHour:F0} XP/h por pessoa, vitória {m.WinRate:P0}");
         Assert.True(m.XpPerHour > 0 && double.IsFinite(m.XpPerHour));
-    }
-
-    /// <summary>O chefe da masmorra (o monstro de categoria chefe da zona) numa luta de grupo na arena aberta, com o limite dos chefes.</summary>
-    private static (FieldGroup, Fight) MinesBoss()
-    {
-        var boss = FieldGroups.Of(Mines).First(g => g.Points.Any(p => Content.Monsters[p.Monster].Rank == Game.Core.Definitions.MonsterRank.Boss && !p.Objective));
-        return (boss, ZonePace.FightOf(boss, 4, ZonePace.BossTimeLimit));
     }
 
     private static void AssertWithinCurve(FieldPace pace, double curveHours)

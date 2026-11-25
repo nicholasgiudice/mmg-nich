@@ -2862,6 +2862,18 @@
        "value": 180
       }
      ]
+    },
+    {
+     "id": 58,
+     "name": "from_mines",
+     "type": "player_spawn",
+     "x": 5552.0,
+     "y": 2032.0,
+     "width": 0.0,
+     "height": 0.0,
+     "rotation": 0,
+     "visible": true,
+     "point": true
     }
    ],
    "opacity": 1,
@@ -2876,7 +2888,7 @@
    "name": "areas",
    "objects": [
     {
-     "id": 58,
+     "id": 59,
      "name": "Boca das Minas",
      "type": "subarea",
      "x": 4800,
@@ -2887,7 +2899,7 @@
      "visible": true
     },
     {
-     "id": 59,
+     "id": 60,
      "name": "Ninho dos Morcegos",
      "type": "subarea",
      "x": 3328,
@@ -2898,7 +2910,7 @@
      "visible": true
     },
     {
-     "id": 60,
+     "id": 61,
      "name": "Acampamento dos Mineiros",
      "type": "subarea",
      "x": 1408,
@@ -2909,7 +2921,7 @@
      "visible": true
     },
     {
-     "id": 61,
+     "id": 62,
      "name": "Desfiladeiro",
      "type": "subarea",
      "x": 0,
@@ -2920,7 +2932,7 @@
      "visible": true
     },
     {
-     "id": 62,
+     "id": 63,
      "name": "mines_entrance",
      "type": "mines_entrance",
      "x": 5440,
@@ -2928,7 +2940,24 @@
      "width": 192,
      "height": 320,
      "rotation": 0,
-     "visible": true
+     "visible": true,
+     "properties": [
+      {
+       "name": "name",
+       "type": "string",
+       "value": "Minas Fundas"
+      },
+      {
+       "name": "recommended_level",
+       "type": "int",
+       "value": 24
+      },
+      {
+       "name": "warning",
+       "type": "string",
+       "value": "Conteúdo para grupo de 4. Nível recomendado: 24+."
+      }
+     ]
     }
    ],
    "opacity": 1,
@@ -2943,7 +2972,7 @@
    "name": "transitions",
    "objects": [
     {
-     "id": 63,
+     "id": 64,
      "name": "west_gate",
      "type": "transition",
      "x": 0,
@@ -2964,6 +2993,29 @@
        "value": "zone.pass_fort"
       }
      ]
+    },
+    {
+     "id": 65,
+     "name": "mines_gate",
+     "type": "transition",
+     "x": 5472,
+     "y": 1696,
+     "width": 128,
+     "height": 64,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "arrival",
+       "type": "string",
+       "value": "from_ridge"
+      },
+      {
+       "name": "to",
+       "type": "string",
+       "value": "zone.deep_mines"
+      }
+     ]
     }
    ],
    "opacity": 1,
@@ -2974,7 +3026,7 @@
   }
  ],
  "nextlayerid": 8,
- "nextobjectid": 64,
+ "nextobjectid": 66,
  "orientation": "orthogonal",
  "renderorder": "right-down",
  "tiledversion": "1.11.2",

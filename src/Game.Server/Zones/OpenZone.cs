@@ -206,6 +206,7 @@ public sealed class OpenZone
         {
             if (e.IsAlive)
             {
+                ResetIfAbandoned(slot, e);
                 return;
             }
 
@@ -236,6 +237,41 @@ public sealed class OpenZone
             Spawn(slot);
             Announce(slot, spawned: true);
         }
+    }
+
+    /// <summary>
+    /// T-533: chefe de instância que entrou em luta e ficou sem ninguém na tabela de ameaça (o grupo inteiro morreu ou saiu)
+    /// recomeça: ele e as invocações dele somem e ele nasce de novo no ponto, com a vida cheia, na primeira fase e sem estados
+    /// (o Capataz Forjado não pode guardar a Fornalha Transbordando para quem volta pelo portão). Só em instância, onde o chefe
+    /// não renasce; os chefes de campo não mudam.
+    /// </summary>
+    private void ResetIfAbandoned(SpawnSlot slot, Entity boss)
+    {
+        if (Respawns || slot.Monster.Rank != MonsterRank.Boss || boss.TryGet<Core.Combat.Threat.ThreatTable>() is not { } table)
+        {
+            return;
+        }
+
+        if (table.Entries.Count > 0)
+        {
+            slot.Engaged = true;
+            return;
+        }
+
+        if (!slot.Engaged)
+        {
+            return;
+        }
+
+        slot.Engaged = false;
+        foreach (var summon in World.Entities.Where(x => x.TryGet<Core.Combat.Areas.SummonedBy>()?.Owner == boss.Id).ToList())
+        {
+            World.Remove(summon.Id);
+        }
+
+        World.Remove(boss.Id);
+        _slotEntities.Remove(boss.Id);
+        Spawn(slot);
     }
 
     /// <summary>
@@ -291,5 +327,8 @@ public sealed class OpenZone
         public Entity? Entity { get; set; }
         public long? DiedAt { get; set; }
         public long? RespawnAt { get; set; }
+
+        /// <summary>T-533: o chefe já teve alguém na tabela de ameaça (ver <see cref="ResetIfAbandoned"/>).</summary>
+        public bool Engaged { get; set; }
     }
 }
