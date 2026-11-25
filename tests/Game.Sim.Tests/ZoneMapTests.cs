@@ -7,7 +7,7 @@ namespace Game.Sim.Tests;
 /// <summary>
 /// T-055: Cidade e Campos são mapas do Tiled. Do nascimento de cada zona, um personagem chega andando (células livres,
 /// 4 vizinhos) a todos os pontos de surgimento, chegadas e portões; e os portões da zona batem com as transições do mapa.
-/// Desde a T-331 a zona inteira (nascimento, portões, surgimentos) é montada a partir do mapa. T-343: Ruínas da Estrada Antiga. T-352: Cripta do Vigia. T-342: Floresta Baixa. T-530: Brejo dos Afogados. T-531: Forte do Passo.
+/// Desde a T-331 a zona inteira (nascimento, portões, surgimentos) é montada a partir do mapa. T-343: Ruínas da Estrada Antiga. T-352: Cripta do Vigia. T-342: Floresta Baixa. T-530: Brejo dos Afogados. T-531: Forte do Passo. T-532: Serra Partida.
 /// </summary>
 public class ZoneMapTests
 {
@@ -22,7 +22,7 @@ public class ZoneMapTests
         return GameDataLoader.LoadDirectory(Path.Combine(dir.FullName, "data")).GetDatabaseOrThrow();
     });
 
-    public static TheoryData<string> Zones() => new() { "zone.city", "zone.vigil_fields", "zone.matriarch_lair", "zone.old_road_ruins", "zone.watcher_crypt", "zone.lower_forest", "zone.drowned_marsh", "zone.pass_fort" };
+    public static TheoryData<string> Zones() => new() { "zone.city", "zone.vigil_fields", "zone.matriarch_lair", "zone.old_road_ruins", "zone.watcher_crypt", "zone.lower_forest", "zone.drowned_marsh", "zone.pass_fort", "zone.broken_ridge" };
 
     [Theory]
     [MemberData(nameof(Zones))]
@@ -269,12 +269,12 @@ public class ZoneMapTests
 
     /// <summary>
     /// T-531: o Forte do Passo é uma zona segura (descanso igual ao da Cidade, sem monstros) ao sul do Brejo: o portão sul
-    /// do Brejo, na borda de baixo, leva ao portão norte do Forte, na borda de cima, e volta. É o único portão aberto: o
-    /// leste (Serra Partida, T-532) e o sul (Planalto, fase 6) ficam fechados, com o muro inteiro. Zona segura não leva
-    /// <c>respawn</c>: quem morre na Serra e nas Minas renasce no nascimento dela (T-501).
+    /// do Brejo, na borda de baixo, leva ao portão norte do Forte, na borda de cima, e volta. Zona segura não leva
+    /// <c>respawn</c>: quem morre na Serra e nas Minas renasce no nascimento dela (T-501). T-532: o portão leste, no muro
+    /// da direita, leva à Serra Partida; o sul (Planalto, fase 6) continua fechado, com o muro inteiro.
     /// </summary>
     [Fact]
-    public void Fort_is_a_safe_zone_south_of_the_marsh_without_monsters_and_with_only_the_north_gate_open()
+    public void Fort_is_a_safe_zone_south_of_the_marsh_without_monsters_with_the_north_and_east_gates_open()
     {
         var fort = Db.Value.Zones[Fort];
         Assert.Equal(ZoneKind.Safe, fort.Kind);
@@ -287,15 +287,17 @@ public class ZoneMapTests
         var marshMap = EntityFactory.BuildMap(Db.Value.Arenas[marsh.Arena]);
         var south = Assert.Single(marsh.Gates, g => g.To == Fort);
         Assert.Equal(marshMap.Height, (int)(south.Area.Y + south.Area.Height));
-        var north = Assert.Single(fort.Gates);
-        Assert.Equal(Marsh, north.To);
+        Assert.Equal(2, fort.Gates.Count);
+        var north = Assert.Single(fort.Gates, g => g.To == Marsh);
         Assert.Equal(0, north.Area.Y);
 
         var map = EntityFactory.BuildMap(Db.Value.Arenas[fort.Arena]);
         Assert.Equal((60, 45), (map.Width, map.Height));
+        var east = Assert.Single(fort.Gates, g => g.To == Ridge);
+        Assert.Equal(map.Width, (int)(east.Area.X + east.Area.Width));
         for (var y = 0; y < map.Height; y++)
         {
-            Assert.True(map.IsBlocked(map.Width - 1, y), $"muro leste aberto em y = {y}");
+            Assert.True(map.IsBlocked(map.Width - 1, y) || east.Area.Contains(map.Width - 0.5, y + 0.5), $"muro leste aberto fora do portão em y = {y}");
             Assert.True(map.IsBlocked(0, y), $"muro oeste aberto em y = {y}");
         }
 
@@ -335,6 +337,166 @@ public class ZoneMapTests
     /// <summary>T-531: no Forte, toda célula livre é alcançável a pé e não há fresta sem saída.</summary>
     [Fact]
     public void Fort_has_no_sealed_pockets_or_dead_end_slits() => AssertNoPocketsOrSlits(Fort);
+
+    private const string Ridge = "zone.broken_ridge";
+
+    /// <summary>
+    /// T-532: a Serra Partida (campo, 21–25) sai pelo portão leste do Forte do Passo (e volta pelo portão oeste da Serra),
+    /// com as quatro subáreas e os monstros da T-511 nos níveis 21–25. O Golem de Pedra é a única elite: nível 25, na Boca
+    /// das Minas, renasce em 3 min. Quem morre na Serra renasce no Forte (T-501). A entrada das Minas Fundas
+    /// (<c>mines_entrance</c>, T-533) fica na Boca das Minas, alcançável a pé.
+    /// </summary>
+    [Fact]
+    public void Ridge_is_east_of_the_fort_with_the_four_subareas_the_golem_and_the_mines_entrance()
+    {
+        var ridge = Db.Value.Zones[Ridge];
+        Assert.Equal(ZoneKind.Field, ridge.Kind);
+        Assert.Equal(Fort, ridge.Respawn);
+        var back = Assert.Single(ridge.Gates);
+        Assert.Equal(Fort, back.To);
+        Assert.Equal(0, back.Area.X);
+
+        Assert.Equal(["Acampamento dos Mineiros", "Boca das Minas", "Desfiladeiro", "Ninho dos Morcegos"],
+            ridge.MonsterSpawns.Select(s => s.Area).Distinct().Order(StringComparer.Ordinal));
+        Assert.Equal(["monster.cave_bat", "monster.mountain_wolf", "monster.possessed_miner", "monster.stone_golem"],
+            ridge.MonsterSpawns.Select(s => s.Monster).Distinct().Order(StringComparer.Ordinal));
+        Assert.DoesNotContain(ridge.MonsterSpawns, s => Db.Value.Monsters[s.Monster].Rank == MonsterRank.Boss);
+        var golem = Assert.Single(ridge.MonsterSpawns, s => Db.Value.Monsters[s.Monster].Rank == MonsterRank.Elite);
+        Assert.Equal("monster.stone_golem", golem.Monster);
+        Assert.Equal("Boca das Minas", golem.Area);
+        Assert.Equal(25, golem.Level);
+        Assert.Equal(1, golem.Count);
+        Assert.Equal(180 * Core.Simulation.World.TickRate, golem.RespawnTicks);
+        Assert.All(ridge.MonsterSpawns.Where(s => s != golem), s => Assert.InRange(s.Level ?? 0, 21, 24));
+
+        var arena = Db.Value.Arenas[ridge.Arena];
+        var entrance = Assert.Single(arena.Areas, a => a.Kind == "mines_entrance").Area;
+        var reached = Reached(ridge);
+        var cells = Enumerable.Range((int)entrance.X, (int)entrance.Width)
+            .SelectMany(x => Enumerable.Range((int)entrance.Y, (int)entrance.Height).Select(y => (x, y)));
+        Assert.Contains(cells, reached.Contains);
+        Assert.Contains(arena.Areas, a => a.Kind == "subarea" && a.Name == "Boca das Minas" && a.Area.Contains(entrance.X + 0.5, entrance.Y + 0.5));
+    }
+
+    /// <summary>
+    /// T-532: os grupos da Serra (pontos da mesma subárea a até 4 tiles, como nos testes de design) ficam a pelo menos 12
+    /// tiles uns dos outros, têm de 1 a 10 monstros, e pelo menos um terço deles tem 5 ou mais (grupos que pedem dano em área).
+    /// </summary>
+    [Fact]
+    public void Ridge_groups_are_at_least_12_tiles_apart_and_a_third_have_5_to_10_monsters()
+    {
+        var groups = GroupsOf(Ridge);
+        for (var i = 0; i < groups.Count; i++)
+        {
+            for (var j = i + 1; j < groups.Count; j++)
+            {
+                var d = groups[i].SelectMany(a => groups[j].Select(b => Distance(a.Position, b.Position))).Min();
+                Assert.True(d >= 12, $"grupos em ({groups[i][0].Position.X}, {groups[i][0].Position.Y}) e ({groups[j][0].Position.X}, {groups[j][0].Position.Y}) a {d:F1} tiles");
+            }
+        }
+
+        Assert.All(groups, g => Assert.InRange(g.Sum(p => p.Count), 1, 10));
+        var big = groups.Count(g => g.Sum(p => p.Count) >= 5);
+        Assert.True(big * 3 >= groups.Count, $"{big} de {groups.Count} grupos com 5 ou mais monstros");
+        Assert.Contains(groups, g => g.Sum(p => p.Count) == 10);
+    }
+
+    /// <summary>
+    /// T-532: a Serra tem um desfiladeiro reto e longo (uma linha livre de pelo menos 100 tiles, 60 deles com 3 a 5 tiles
+    /// de largura entre os penhascos), onde os monstros vêm em fila, e o Golem fica na linha dele, depois do fim: a Rocha Rolante desce o corredor.
+    /// </summary>
+    [Fact]
+    public void Ridge_has_a_long_straight_gorge_3_to_5_tiles_wide_in_line_with_the_golem()
+    {
+        var ridge = Db.Value.Zones[Ridge];
+        var map = EntityFactory.BuildMap(Db.Value.Arenas[ridge.Arena]);
+
+        // Faixa livre vertical que passa por (x, y): de top a bottom.
+        (int Top, int Bottom) Span(int x, int y)
+        {
+            int top = y, bottom = y;
+            while (top > 0 && !map.IsBlocked(x, top - 1))
+            {
+                top--;
+            }
+
+            while (bottom < map.Height - 1 && !map.IsBlocked(x, bottom + 1))
+            {
+                bottom++;
+            }
+
+            return (top, bottom);
+        }
+
+        bool Gorge(int x, int y)
+        {
+            if (map.IsBlocked(x, y))
+            {
+                return false;
+            }
+
+            var (top, bottom) = Span(x, y);
+            return bottom - top + 1 is >= 3 and <= 5;
+        }
+
+        // Linha reta livre com mais colunas de desfiladeiro (alargamentos e cruzamentos no meio valem); End = a última delas.
+        var best = (Length: 0, Gorge: 0, Y: 0, End: 0);
+        for (var y = 0; y < map.Height; y++)
+        {
+            int run = 0, gorge = 0, last = 0;
+            for (var x = 0; x <= map.Width; x++)
+            {
+                if (x < map.Width && !map.IsBlocked(x, y))
+                {
+                    run++;
+                    if (Gorge(x, y))
+                    {
+                        gorge++;
+                        last = x;
+                    }
+
+                    continue;
+                }
+
+                if (gorge > best.Gorge)
+                {
+                    best = (run, gorge, y, last);
+                }
+
+                run = gorge = 0;
+            }
+        }
+
+        Assert.True(best.Length >= 100 && best.Gorge >= 60, $"desfiladeiro reto mais longo: {best.Length} tiles em linha, {best.Gorge} entre penhascos");
+        var golem = Assert.Single(ridge.MonsterSpawns, s => s.Monster == "monster.stone_golem");
+        var (lineTop, lineBottom) = Span(best.End, best.Y);
+        Assert.InRange(golem.Position.Y, lineTop, lineBottom + 1);
+        Assert.True(golem.Position.X > best.End, $"o Golem ({golem.Position.X}) fica depois do fim do desfiladeiro reto ({best.End})");
+    }
+
+    /// <summary>T-532: na Serra, toda célula livre é alcançável a pé e não há fresta sem saída.</summary>
+    [Fact]
+    public void Ridge_has_no_sealed_pockets_or_dead_end_slits() => AssertNoPocketsOrSlits(Ridge);
+
+    /// <summary>Grupos de uma zona: pontos da mesma subárea a até 4 tiles (a regra dos testes de design).</summary>
+    private static List<List<MonsterSpawnDefinition>> GroupsOf(string zoneId)
+    {
+        var groups = new List<List<MonsterSpawnDefinition>>();
+        foreach (var p in Db.Value.Zones[zoneId].MonsterSpawns)
+        {
+            var near = groups.FirstOrDefault(g => g[0].Area == p.Area && g.Any(q => Distance(p.Position, q.Position) <= 4));
+            if (near is null)
+            {
+                groups.Add([p]);
+            }
+            else
+            {
+                near.Add(p);
+            }
+        }
+
+        return groups;
+    }
 
     private static double Distance(PositionDefinition a, PositionDefinition b) => Math.Sqrt(((a.X - b.X) * (a.X - b.X)) + ((a.Y - b.Y) * (a.Y - b.Y)));
 

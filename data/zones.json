@@ -8,6 +8,7 @@
     { "id": "zone.old_road_ruins", "name": "Ruínas da Estrada Antiga", "arena": "map.old_road_ruins", "kind": "field", "corpse": 10, "levels": { "min": 9, "max": 11 } },
     { "id": "zone.pass_fort", "name": "Forte do Passo", "arena": "map.pass_fort", "kind": "safe", "restPerSecond": 0.05 },
     { "id": "zone.drowned_marsh", "name": "Brejo dos Afogados", "arena": "map.drowned_marsh", "kind": "field", "corpse": 10, "levels": { "min": 16, "max": 20 } },
+    { "id": "zone.broken_ridge", "name": "Serra Partida", "arena": "map.broken_ridge", "kind": "field", "corpse": 10, "respawn": "zone.pass_fort", "levels": { "min": 21, "max": 25 } },
     { "id": "zone.test_instance", "name": "Covil de Teste (instância)", "arena": "map.matriarch_lair", "kind": "instance", "corpse": 30, "levels": { "min": 8, "max": 8 }, "maxPlayers": 4, "emptyTimeout": 300, "outsiderTimeout": 30 },
     { "id": "zone.watcher_crypt", "name": "Cripta do Vigia", "arena": "map.watcher_crypt", "kind": "instance", "corpse": 30, "levels": { "min": 12, "max": 15 }, "maxPlayers": 4, "emptyTimeout": 300, "outsiderTimeout": 30 }
   ]
