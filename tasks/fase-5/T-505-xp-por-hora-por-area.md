@@ -34,4 +34,27 @@ O designer decidiu **manter a curva de XP** (`design/mapas-16-40-v0.1.md` §8, d
 
 ## Resultado
 
-_(a preencher)_
+**Feito (branch `task/T-505-xp-por-hora-por-area`):**
+
+- **Medida de XP por hora** (`tests/Game.Design.Tests/ZonePace.cs`): uma zona qualquer pelo id (`ZonePace.Field`, `FieldBoss`, `Dungeon`), com perfil (4 bases antes do 20; as 8 segundas classes solo e o grupo Guardião + Caçador + Piromante + Sacerdote do 20 em diante), tamanho de grupo, luta do simulador (perfil esperado do nível do grupo), caminhada pelo mapa (`Pathfinder`, circuito dos grupos), descanso (50 s por grupo no campo, 45 s por sala na masmorra), renascimento (teto do que renasce) e divisão de XP da T-310 (`rules.Share`). Detalhes e premissas em `tasks/reports/balance-v0.23.md` §1.
+- **Zonas de hoje medidas** (`ZonePaceDesignTests`, sem meta; reaproveitam os lotes de `FieldsDesignTests`, `ForestZoneDesignTests`, `RuinsZoneDesignTests` e `CryptDesignTests`, então não rodam lutas a mais): Campos 1→5 **0,92 h** (1.759 XP/h; bate com os 55–65 min do teste da T-215), Floresta 5→8 **1,30 h** (4.001 XP/h), Ruínas 9→12 **3,20 h** (4.046 XP/h), Cripta em grupo de 4 do 12 ao 14 **7.296 XP/h por pessoa** (~2,9 h para o 12→15; **1,8×** as Ruínas na faixa delas, **3,0×** no mesmo nível).
+- **Metas das zonas novas** (`ZoneGoalDesignTests`): Brejo 16→20 entre 75% e 130% de 5 h (3,75–6,5 h); Serra 21→25 entre 75% e 130% de 7 h (5,25–9,1 h), com segunda classe; Minas em grupo de 4 ≥ **1,3×** o XP/h do campo (Serra solo, níveis 24 e 25), por pessoa; chefe do Brejo só medido.
+- **Testes do modelo** (rápidos, luta fixa): ciclo, teto de renascimento, divisão de XP do grupo, piso de XP, zona qualquer pelo id, ida à masmorra, perfis com segunda classe do 20 em diante.
+- Relatório `tasks/reports/balance-v0.23.md`.
+
+**Decisões:**
+
+- **Pendentes sem `Skip` manual:** o `PlaytestRebalance.Pending` foi removido na T-402. Em vez dele, `[FactIfZone(...)]` pula o teste enquanto a zona não existe em `data/zones.json` e o **liga sozinho** quando ela entra. Os ids são os das tarefas: `zone.drowned_marsh` (T-530), `zone.broken_ridge` (T-532), `zone.deep_mines` (T-533, que também exige as duas anteriores por comparar com a Serra). Se o teste ligado falhar, a tarefa de mapa ajusta o mapa ou leva o número ao designer.
+- **Onde fica o código:** em `tests/Game.Design.Tests` (não em `tests/Game.Sim`), porque os grupos de uma zona (`FieldGroups`) e o encontro deles já vivem lá. Nada mudou em `tests/Game.Sim`. Tornei internos `ForestZoneDesignTests.Run/Typical`, `RuinsZoneDesignTests.Run/Typical` e `CryptDesignTests.Room/Boss` para reaproveitar os lotes.
+- **Números das metas:** Brejo 5 h; Serra **7 h** (as ~8 h do 20→25 menos ~1 h do nível 20, como pede a tarefa). XP/h que isso exige: Brejo ~9.400 (7.250–12.570), Serra ~10.600 (8.130–14.100), contra ~4.000 das Ruínas hoje (relatório §3 e §4). Nenhum número do jogo mudou; os da meta ficam como constantes em `ZoneGoalDesignTests` para o designer trocar.
+- **Campo "da mesma faixa" das Minas** = a Serra, solo, nos níveis 24 e 25. O chefe da masmorra entra com a luta de grupo na arena aberta (360 s) até a T-533 trocar pela luta real na sala.
+- **Relatório = v0.23** (último era v0.22). A T-510 roda em paralelo e também pode criar relatório de balanceamento: ela deve usar o **v0.24** (não existia nenhum v0.23 além deste na branch dela).
+
+**Pendências / alertas:** as metas do Brejo, Serra e Minas só medem de verdade quando os mapas existirem (T-530, T-532, T-533). A medida usa a arena aberta e não conta mortes, saque nem reentrada; o tempo real vem do playtest (T-550).
+
+**Verificação (`./scripts/check.sh` completo):** `dotnet format --verify-no-changes` e `dotnet build -warnaserror` passaram, e todos os projetos de teste passaram, menos o `Game.Design.Tests`: **4 falhas em 319** (311 aprovados, 4 pulados: as 4 metas das zonas novas), 46 min nesta máquina. As 4 falhas são **as mesmas que a T-500 já registrou na `main`** (`2cd506b`), anteriores a esta tarefa, e não têm relação com ela:
+- `WatcherDesignTests.Without_the_cleric_the_win_rate_drops_clearly` (99% sem o Clérigo);
+- `CryptDesignTests.A_group_of_four_with_rares_beats_the_watcher_in_the_real_room_80_to_99_percent_in_4_to_6_minutes` (71%, meta 80–99%);
+- `SecondClassDesignTests.Guardian_cuts_the_damage_on_the_rest_of_the_group_by_at_least_15_percent` (níveis 30 e 40).
+
+Todos os testes novos (`ZonePaceDesignTests`, 11) passam. A mudança em `CryptDesignTests`, `ForestZoneDesignTests` e `RuinsZoneDesignTests` é só de visibilidade (`private` → `internal`).
