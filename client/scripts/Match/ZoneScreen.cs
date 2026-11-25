@@ -85,11 +85,11 @@ public partial class ZoneScreen : Control
     }
 
     /// <summary>Mostra ou esconde a tela de morte.</summary>
-    public void SetDeath(bool dead, string zoneName = "")
+    public void SetDeath(bool dead, string zoneName = "", string destination = "à Cidade")
     {
         if (dead)
         {
-            _death.Open(zoneName);
+            _death.Open(zoneName, destination);
         }
         else
         {

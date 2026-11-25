@@ -30,7 +30,7 @@ namespace MmoRpgClient;
 /// imprime as respostas da autoridade; também <c>spend:str</c>, <c>raise:habilidade</c> e <c>reset_points</c>, os botões das
 /// telas de personagem e de habilidades, T-221; <c>equip:n</c>, <c>unequip:weapon</c>, <c>drop:n</c> e <c>pickup</c>, T-222; mouse na interface: <c>click:x;y</c>, <c>hover:x;y</c>, <c>drag:x1;y1;x2;y2</c>..., T-082) e <c>--capture=caminho.png</c> (salva a tela e fecha; após 2 s, ou
 /// <c>--capture-after=segundos</c>, ou ao fim do demo; com <c>--capture-every=segundos</c>, uma série até <c>--capture-after</c>, T-345). <c>--circles</c> desenha as unidades como círculos, sem sprites (T-053).
-/// Mundo aberto (T-223): <c>--auto-respawn=segundos</c> aperta "Retornar à Cidade" sozinho depois de morrer.
+/// Mundo aberto (T-223): <c>--auto-respawn=segundos</c> aperta o botão de retornar (T-541: Cidade ou Forte) sozinho depois de morrer.
 /// <c>--death-sample</c> (T-397): mostra a tela de morte com um resumo de exemplo ao entrar na zona, sem morrer (prévia).
 /// Capturas (T-345): <c>--enemy-level=n</c> põe todos os inimigos e objetivos do encontro local no nível n, e
 /// <c>--enemy-health=f</c> faz os inimigos começarem com a fração f da vida.
@@ -562,9 +562,11 @@ public partial class Main : Node2D
             return;
         }
 
-        var self = latest.Entities.FirstOrDefault(e => e.Id == me)?.TryGet<Game.Core.Simulation.Components.Transform>();
+        var player = latest.Entities.FirstOrDefault(e => e.Id == me);
+        var self = player?.TryGet<Game.Core.Simulation.Components.Transform>();
         var at = latest.Entities.FirstOrDefault(e => e.Id == npc)?.TryGet<Game.Core.Simulation.Components.Transform>();
-        if (info.Shop is null)
+        var master = ClassMasters.IsMaster(info.DefinitionId);
+        if (info.Shop is null && !master)
         {
             _worldView.ShowText(me, $"{info.Name}: não tenho nada para vender.", new Color(0.85f, 0.9f, 1f));
             return;
@@ -576,21 +578,56 @@ public partial class Main : Node2D
             return;
         }
 
+        if (master)
+        {
+            TalkToClassMaster(me, player, info);
+            return;
+        }
+
         _hud.OpenShop(npc, info);
     }
 
-    /// <summary>Roteiro (T-323): o mesmo que clicar no NPC com loja mais perto do personagem.</summary>
-    private void DemoShop(EntityId me)
+    /// <summary>
+    /// T-541: o mestre das classes. No nível da segunda classe e sem ela, abre a tela de habilidades já na escolha; abaixo,
+    /// a fala sai sobre o personagem; com a segunda classe escolhida, abre a tela de habilidades. A recusa de verdade
+    /// (nível, combate, escolha definitiva) continua sendo do servidor.
+    /// </summary>
+    private void TalkToClassMaster(EntityId me, Game.Core.Simulation.EntitySnapshot? player, Game.Core.Combat.Shops.NpcInfo info)
+    {
+        var level = player?.TryGet<Game.Core.Combat.Stats.CharacterStats>()?.Level ?? 1;
+        var hasSecond = player?.TryGet<Game.Core.Combat.Progression.CharacterProgress>()?.SecondClass is not null;
+        var needed = _content.Rules.Progression.SecondClassLevel;
+        switch (ClassMasters.Talk(level, needed, hasSecond))
+        {
+            case MasterTalk.TooLow:
+                _worldView.ShowText(me, ClassMasters.TooLowText(info.Name, needed), new Color(0.85f, 0.9f, 1f));
+                break;
+            case MasterTalk.ChooseSecondClass:
+                _hud.OpenSkills(secondClassTab: true);
+                break;
+            default:
+                _hud.OpenSkills(secondClassTab: false);
+                break;
+        }
+    }
+
+    /// <summary>
+    /// Roteiro (T-323): o mesmo que clicar no NPC com loja mais perto do personagem. T-541: com <paramref name="definitionId"/>
+    /// (<c>talk:npc.trainer</c>), o NPC mais perto com esse id, tenha loja ou não.
+    /// </summary>
+    private void DemoShop(EntityId me, string? definitionId = null)
     {
         var latest = _authority?.Latest;
         var self = latest?.Entities.FirstOrDefault(e => e.Id == me)?.TryGet<Game.Core.Simulation.Components.Transform>();
         var npc = latest?.Entities
-            .Where(e => e.TryGet<Game.Core.Combat.Shops.NpcInfo>()?.Shop is not null && e.TryGet<Game.Core.Simulation.Components.Transform>() is not null)
+            .Where(e => e.TryGet<Game.Core.Combat.Shops.NpcInfo>() is { } info
+                && (definitionId is null ? info.Shop is not null : info.DefinitionId == definitionId)
+                && e.TryGet<Game.Core.Simulation.Components.Transform>() is not null)
             .OrderBy(e => self is null ? 0 : System.Numerics.Vector2.Distance(self.Position, e.Get<Game.Core.Simulation.Components.Transform>().Position))
             .FirstOrDefault();
         if (npc is null)
         {
-            GD.PushWarning("[demo] shop: nenhum NPC com loja à vista");
+            GD.PushWarning($"[demo] {(definitionId ?? "shop")}: nenhum NPC à vista");
             return;
         }
 
@@ -774,7 +811,7 @@ public partial class Main : Node2D
         {
             if (!_zoneScreen.DeathVisible)
             {
-                _zoneScreen.SetDeath(true, _zone.Name);
+                _zoneScreen.SetDeath(true, _zone.Name, DeathDestination.Phrase(DeathDestination.ZoneId(_zone), _content.Zones));
                 _zoneScreen.Death.SetSummary(DeathSample.Summary(me));
             }
 
@@ -787,7 +824,7 @@ public partial class Main : Node2D
             GD.Print($"[zone] morto em {_zone.Id}");
         }
 
-        _zoneScreen.SetDeath(dead && !_respawnSent, _zone.Name);
+        _zoneScreen.SetDeath(dead && !_respawnSent, _zone.Name, DeathDestination.Phrase(DeathDestination.ZoneId(_zone), _content.Zones));
         if (dead && !_respawnSent && _args.TryGetValue("auto-respawn", out var wait)
             && double.TryParse(wait, System.Globalization.CultureInfo.InvariantCulture, out var seconds) && _elapsed - _diedAt >= seconds)
         {
@@ -1055,9 +1092,16 @@ public partial class Main : Node2D
 
         // T-323: loja pelo roteiro. shop = clicar no NPC com loja mais perto; buy:oferta;qtd, sell:espaço;qtd e use:espaço
         // mandam as mesmas intenções dos botões da janela e do duplo clique no inventário.
-        if (verb == "shop")
+        // T-541: devtool:ToSecondClassLevel (ou UndoSecondClass...) faz o pedido do menu Esc > ferramenta de teste.
+        if (verb == "devtool" && Enum.TryParse<Game.Protocol.DevToolAction>(arg, out var devAction))
         {
-            DemoShop(me);
+            RequestDevTool(devAction);
+            return;
+        }
+
+        if (verb is "shop" or "talk")
+        {
+            DemoShop(me, verb == "talk" ? arg : null);
             return;
         }
 
