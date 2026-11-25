@@ -181,6 +181,14 @@
       "modifiers": { "speedMultiplier": 0.8 }
     },
     {
+      "id": "status.deep_water",
+      "name": "Água Funda",
+      "tags": ["debuff", "terrain"],
+      "defaultDuration": 1,
+      "stacking": "refresh",
+      "modifiers": { "speedMultiplier": 0.6 }
+    },
+    {
       "id": "status.in_mist",
       "name": "Na Névoa",
       "tags": ["buff", "mist"],

@@ -42,7 +42,8 @@ public sealed record MapSpawn
 /// Área de evento lida da camada <c>areas</c> (T-051): altar, selo, teia... <see cref="Kind"/> é a classe do objeto no
 /// Tiled; as propriedades do objeto ficam em <see cref="Properties"/> (como texto) para quem usar a área. Classes com
 /// significado para as zonas (T-331): <c>subarea</c> (dá o nome da subárea aos pontos de surgimento dentro dela) e
-/// <c>npc</c> (NPC; propriedades <c>npc</c> e <c>shop</c>, conferidas na carga).
+/// <c>npc</c> (NPC; propriedades <c>npc</c> e <c>shop</c>, conferidas na carga). T-502: <c>slow_terrain</c> (terreno que
+/// aplica um estado enquanto a unidade está dentro, <see cref="TerrainArea"/>).
 /// </summary>
 public sealed record MapArea
 {

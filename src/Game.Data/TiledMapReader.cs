@@ -426,6 +426,20 @@ public static class TiledMapReader
                 }
             }
 
+            if (cls == TerrainArea.SlowTerrainClass)
+            {
+                // T-502: o estado tem de existir (conferido em GameDataValidator, que conhece os estados).
+                var status = props.GetValueOrDefault(TerrainArea.StatusProperty);
+                if (string.IsNullOrEmpty(status))
+                {
+                    Error(path, "Propriedade 'status' (id do estado aplicado dentro da área, ex.: status.deep_water) faltando.");
+                }
+                else if (!IdPattern.IsMatch(status))
+                {
+                    Error(path, $"Propriedade 'status' com id inválido '{status}': use snake_case com namespace por ponto (ex.: status.deep_water).");
+                }
+            }
+
             if (Rect(path, o) is { } rect)
             {
                 output.Add(new MapArea { Name = name, Kind = cls ?? "", Area = rect, Properties = props });

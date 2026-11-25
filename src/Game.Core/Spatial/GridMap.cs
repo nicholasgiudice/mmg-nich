@@ -10,8 +10,9 @@ public sealed class GridMap
 {
     private readonly bool[] _blocked;
 
-    public GridMap(int width, int height, Func<int, int, bool>? isBlocked = null)
+    public GridMap(int width, int height, Func<int, int, bool>? isBlocked = null, IReadOnlyList<TerrainArea>? terrain = null)
     {
+        Terrain = terrain ?? [];
         if (width <= 0 || height <= 0)
         {
             throw new ArgumentOutOfRangeException(nameof(width), "Map dimensions must be positive.");
@@ -35,6 +36,15 @@ public sealed class GridMap
     public int Width { get; }
 
     public int Height { get; }
+
+    /// <summary>
+    /// Terreno que aplica estado (T-502, áreas <c>slow_terrain</c> do mapa), lido pelo <see cref="Combat.Areas.TerrainSystem"/>.
+    /// Vazio = sem terreno. Não bloqueia nada: a colisão continua sendo só <see cref="IsBlocked(int, int)"/>.
+    /// </summary>
+    public IReadOnlyList<TerrainArea> Terrain { get; }
+
+    /// <summary>Cópia com o mesmo bloqueio e outro terreno (T-502).</summary>
+    public GridMap WithTerrain(IReadOnlyList<TerrainArea> terrain) => new(Width, Height, (x, y) => _blocked[(y * Width) + x], terrain);
 
     /// <summary>'#' = bloqueado, '.' = livre. Linhas devem ter o mesmo comprimento; a linha 0 é y = 0.</summary>
     public static GridMap FromAscii(params string[] lines)
