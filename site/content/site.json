@@ -114,7 +114,11 @@
     "monster.drowned": "Morto que o brejo devolveu. Lento, anda em bando e agarra quem se deixa cercar, sobretudo na água funda.",
     "monster.marsh_lizardman": "Caçador das palafitas. Não sente a água funda e dá o bote em linha em quem luta parado.",
     "monster.marsh_serpent": "Cobra do Charco Fundo. Cospe veneno de longe, foge de quem chega perto e morde forte quem a alcança.",
-    "monster.marsh_witch": "Senhora da cabana no fundo do brejo. Envenena o chão, chama os afogados e, ferida, puxa o lodo em volta de si."
+    "monster.marsh_witch": "Senhora da cabana no fundo do brejo. Envenena o chão, chama os afogados e, ferida, puxa o lodo em volta de si.",
+    "monster.possessed_miner": "Mineiro que fugiu das Minas Fundas e voltou com outra coisa por dentro. Anda em grupo e a picaretada, avisada, atordoa.",
+    "monster.mountain_wolf": "Primo maior do Lobo Cinzento. Caça em matilha pelas trilhas da serra e uiva para atacar junto.",
+    "monster.cave_bat": "Mora nas fendas da serra e sai em bando. Morre fácil, mas nunca vem sozinho.",
+    "monster.stone_golem": "Guardião de pedra da Boca das Minas. Lento e duro contra lâminas, racha com magia arcana e rola rochas pelo desfiladeiro."
   },
   "phases": {
     "phase.hunt": "Caçada",

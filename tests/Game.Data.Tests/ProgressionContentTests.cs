@@ -182,6 +182,10 @@ public class ProgressionContentTests
     [InlineData("monster.marsh_lizardman", 17, 17, MonsterRank.Normal)] // T-510
     [InlineData("monster.marsh_serpent", 18, 18, MonsterRank.Normal)] // T-510
     [InlineData("monster.marsh_witch", 20, 20, MonsterRank.Boss)] // T-510
+    [InlineData("monster.possessed_miner", 21, 21, MonsterRank.Normal)] // T-511
+    [InlineData("monster.mountain_wolf", 22, 22, MonsterRank.Normal)] // T-511
+    [InlineData("monster.cave_bat", 22, 22, MonsterRank.Normal)] // T-511
+    [InlineData("monster.stone_golem", 25, 25, MonsterRank.Elite)] // T-511
     public void Monster_levels_and_ranks_follow_the_area_table(string id, int min, int max, MonsterRank rank)
     {
         var m = Db.Monsters[id];
@@ -194,10 +198,11 @@ public class ProgressionContentTests
         Assert.Equal(
             new[]
             {
-                "monster.corrupted_ent", "monster.dead_priest", "monster.drowned", "monster.faceless_watcher", "monster.field_rat",
-                "monster.forest_matriarch", "monster.grey_wolf", "monster.marsh_lizardman", "monster.marsh_serpent", "monster.marsh_witch",
-                "monster.mist_fairy", "monster.road_bandit", "monster.shade", "monster.skeleton_guard", "monster.spectral_knight",
-                "monster.spider_big", "monster.spider_small", "monster.watcher_seal",
+                "monster.cave_bat", "monster.corrupted_ent", "monster.dead_priest", "monster.drowned", "monster.faceless_watcher",
+                "monster.field_rat", "monster.forest_matriarch", "monster.grey_wolf", "monster.marsh_lizardman", "monster.marsh_serpent",
+                "monster.marsh_witch", "monster.mist_fairy", "monster.mountain_wolf", "monster.possessed_miner", "monster.road_bandit",
+                "monster.shade", "monster.skeleton_guard", "monster.spectral_knight", "monster.spider_big", "monster.spider_small",
+                "monster.stone_golem", "monster.watcher_seal",
             },
             Db.Monsters.Keys.Order(StringComparer.Ordinal));
 }
