@@ -28,9 +28,14 @@ public static class AbilityText
     /// <summary><see cref="Summary"/> quebrado em linhas de até <paramref name="width"/> caracteres, para tooltip.</summary>
     public static string WrappedSummary(AbilityDefinition a, int width = TooltipWidth) => Wrap(Summary(a), width);
 
-    /// <summary>Linhas de custo/tempo e efeitos; <paramref name="stats"/> null = valores base dos dados.</summary>
-    public static string Describe(AbilityDefinition a, ContentCatalog content, CharacterStats? stats = null)
+    /// <summary>
+    /// Linhas de custo/tempo e efeitos; <paramref name="stats"/> null = valores base dos dados. <paramref name="rankOf"/> dá o
+    /// NH do personagem em outras habilidades, para os estados cuja força vem do NH de outra (Veneno do Caçador pela Flecha
+    /// Envenenada, Marca Arcana do Sifão); null = NH1. O NH da própria <paramref name="a"/> sai da definição resolvida.
+    /// </summary>
+    public static string Describe(AbilityDefinition a, ContentCatalog content, CharacterStats? stats = null, Func<string, int>? rankOf = null)
     {
+        var ctx = new Ctx(content, stats, a, rankOf);
         var lines = new List<string>();
         var timing = new List<string>();
         if (a.Passive)
@@ -86,10 +91,11 @@ public static class AbilityText
             lines.Add($"{a.HitCount} acertos{interval}; cada acerto:");
         }
 
-        lines.AddRange(EffectLines(a.Effects, content, stats, onSelf));
+        lines.AddRange(EffectLines(a.Effects, ctx, onSelf));
         if (a.Passive && a.PassiveStatus is { } passive && content.Statuses.TryGetValue(passive, out var ps))
         {
-            var what = StatusTraits(ps, content, stats);
+            var (status, note) = ByRank(ps, ctx);
+            var what = StatusTraits(status, ctx) + note;
             if (what.Length > 0)
             {
                 lines.Add(Capitalize(what));
@@ -98,7 +104,7 @@ public static class AbilityText
 
         if (a.Channel is { OnComplete.Count: > 0 } done)
         {
-            lines.Add("Se canalizar até o fim: " + Join(done.OnComplete, content, stats, onSelf: false));
+            lines.Add("Se canalizar até o fim: " + Join(done.OnComplete, ctx, onSelf: false));
         }
 
         return string.Join("\n", lines);
@@ -109,11 +115,20 @@ public static class AbilityText
     {
         UnitTargeting u => $"alcance {u.Range.ToString("0.#", Pt)}",
         MeleeArcTargeting m => $"corpo a corpo ({m.Range.ToString("0.#", Pt)}, arco de {m.Angle.ToString("0", Pt)}°)",
+        LineTargeting { ExplodeRadius: { } boom } l =>
+            $"linha de {l.Length.ToString("0.#", Pt)} × {l.Width.ToString("0.#", Pt)}, explode no primeiro inimigo (raio {boom.ToString("0.#", Pt)})",
         LineTargeting l => $"linha de {l.Length.ToString("0.#", Pt)} × {l.Width.ToString("0.#", Pt)}",
         CircleAtPointTargeting c => $"alcance {c.Range.ToString("0.#", Pt)} · raio {c.Radius.ToString("0.#", Pt)}",
         CircleSelfTargeting c => $"em volta de si · raio {c.Radius.ToString("0.#", Pt)}",
         _ => "",
     };
+
+    /// <summary>
+    /// <see cref="Reach"/> (com maiúscula) seguido de <see cref="Describe"/>: o texto inteiro de um NH, como na barra e na
+    /// tela de habilidades.
+    /// </summary>
+    public static string Body(AbilityDefinition a, ContentCatalog content, CharacterStats? stats = null, Func<string, int>? rankOf = null) =>
+        (Reach(a) is { Length: > 0 } reach ? Capitalize(reach) + "\n" : "") + Describe(a, content, stats, rankOf);
 
     /// <summary>
     /// Valor principal da habilidade com as estatísticas (o primeiro dano, cura ou escudo, inclusive dentro de saltos e
@@ -196,48 +211,86 @@ public static class AbilityText
         return string.Join("\n", lines);
     }
 
+    /// <summary>O que o texto precisa saber além do efeito: conteúdo, estatísticas, a habilidade descrita e os NH do personagem.</summary>
+    private sealed record Ctx(ContentCatalog Content, CharacterStats? Stats, AbilityDefinition Ability, Func<string, int>? RankOf)
+    {
+        /// <summary>
+        /// NH do personagem em <paramref name="abilityId"/>, e se ele é conhecido. Para a habilidade descrita, o NH que está
+        /// sendo mostrado (a definição resolvida é a mesma instância do catálogo); para as outras, <see cref="RankOf"/>.
+        /// </summary>
+        public (int Rank, bool Known) RankFor(string abilityId)
+        {
+            if (abilityId == Ability.Id && Content.Abilities.TryGetValue(abilityId, out var baseDef))
+            {
+                for (var r = 1; r <= baseDef.HighestRank; r++)
+                {
+                    if (ReferenceEquals(Content.AbilityAt(abilityId, r), Ability))
+                    {
+                        return (r, true);
+                    }
+                }
+            }
+
+            return RankOf is null ? (1, false) : (Math.Max(1, RankOf(abilityId)), true);
+        }
+    }
+
     /// <summary>Um efeito por linha, começando com maiúscula.</summary>
-    private static IEnumerable<string> EffectLines(IEnumerable<EffectDefinition> effects, ContentCatalog content, CharacterStats? stats, bool onSelf) =>
-        effects.Select(e => Effect(e, content, stats, onSelf)).Where(t => t.Length > 0).Select(Capitalize);
+    private static IEnumerable<string> EffectLines(IEnumerable<EffectDefinition> effects, Ctx ctx, bool onSelf) =>
+        effects.Select(e => Effect(e, ctx, onSelf)).Where(t => t.Length > 0).Select(Capitalize);
 
     /// <summary>Efeitos aninhados (saltos, alvos extras, áreas) numa linha só.</summary>
-    private static string Join(IEnumerable<EffectDefinition> effects, ContentCatalog content, CharacterStats? stats, bool onSelf) =>
-        string.Join("; ", effects.Select(e => Effect(e, content, stats, onSelf)).Where(t => t.Length > 0));
+    private static string Join(IEnumerable<EffectDefinition> effects, Ctx ctx, bool onSelf) =>
+        string.Join("; ", effects.Select(e => Effect(e, ctx, onSelf)).Where(t => t.Length > 0));
 
     /// <summary>
     /// Frase de um efeito, em minúscula. <paramref name="onSelf"/>: a habilidade é em si mesmo, então o alvo do efeito é
     /// quem usa ("você ganha Fúria" em vez de "aplica Fúria").
     /// </summary>
-    private static string Effect(EffectDefinition e, ContentCatalog content, CharacterStats? stats, bool onSelf)
+    private static string Effect(EffectDefinition e, Ctx ctx, bool onSelf)
     {
         var self = onSelf || e.Target == EffectTarget.Self;
         var inYou = e.Target == EffectTarget.Self && !onSelf ? " em você" : "";
         var onHit = e.OnHit is { } h ? $" (só no {h}º acerto)" : "";
+        var stats = ctx.Stats;
         var text = e switch
         {
             DamageEffect d => Damage(d, stats),
-            HealEffect h2 => $"cura {Value(h2.Base, h2.Scaling, stats)} de vida"
-                + (h2.MaxHealthFraction > 0 ? $" + {Percent(h2.MaxHealthFraction)} da vida máxima" : "") + inYou,
+            HealEffect h2 => Heal(h2, stats) + inYou,
             ShieldEffect s => $"escudo de {Value(s.Amount, s.Scaling, stats)} por {Seconds(s.DurationTicks)}{inYou} (absorve dano antes da vida)"
                 + (s.Refund is { } r ? $"; o que sobrar volta {Percent(r.Fraction)} como {ResourceName(r.Resource)}" : ""),
-            ApplyStatusEffect st => ApplyStatus(st, content, stats, self),
+            ApplyStatusEffect st => ApplyStatus(st, ctx, self),
             RemoveStatusEffect rm => (rm.Count == 0 ? "tira todos os efeitos de " : rm.Count == 1 ? "tira um efeito de " : $"tira {rm.Count} efeitos de ")
                 + TagList(rm.Tags.Count > 0 ? rm.Tags : [rm.Tag], rm.Count == 0 ? "e" : "ou") + (e.Target == EffectTarget.Self || onSelf ? " de você" : " do alvo"),
             DisplacementEffect m => Displacement(m),
             InterruptEffect => "interrompe a conjuração do alvo",
             ThreatEffect t => Threat(t),
-            SpawnAreaEffect sa => content.Areas.TryGetValue(sa.Area, out var area) ? Area(area, content, stats) : "deixa uma área no chão",
-            ChainEffect c => $"salta para {c.Jumps} inimigo(s) a até {Number(c.Radius)} tiles, com {Percent(c.Multiplier)} do efeito: {Join(c.Effects, content, stats, false)}",
-            ExtraTargetsEffect x => $"também {ExtraWho(x)}{(x.Multiplier != 1 ? $" ({Percent(x.Multiplier)})" : "")}: {Join(x.Effects, content, stats, false)}",
+            SpawnAreaEffect sa => ctx.Content.Areas.TryGetValue(sa.Area, out var area) ? Area(area, ctx) : "deixa uma área no chão",
+            ChainEffect c => $"salta para {c.Jumps} {Side(c.Affects, c.Jumps)} a até {Number(c.Radius)} tiles, com {Percent(c.Multiplier)} do efeito: {Join(c.Effects, ctx, false)}",
+            ExtraTargetsEffect x => $"também {ExtraWho(x)}{(x.Multiplier != 1 ? $" ({Percent(x.Multiplier)})" : "")}: {Join(x.Effects, ctx, false)}",
             ReviveEffect rv => $"levanta {rv.Count} aliado caído a até {Number(rv.Radius)} tiles com {Percent(rv.HealthFraction)} da vida",
             ResourceEffect res => $"recupera {Number(res.Amount)} de {ResourceName(res.Resource)}",
-            SummonEffect su => $"invoca {su.Count}",
-            CopyStatusEffect cp => $"copia {TagList(cp.Tags, "e")} do alvo para {(cp.Count == 1 ? "1 inimigo" : $"até {cp.Count} inimigos")} a até {Number(cp.Radius)} tiles",
-            IfStatusEffect ifs => $"em cada inimigo com {TagList(ifs.Tags, "ou")}: {Join(ifs.Effects, content, stats, false)}"
+            SummonEffect su => $"invoca {su.Count} {(ctx.Content.Monsters.TryGetValue(su.Monster, out var mon) ? mon.Name : su.Monster)}"
+                + (su.MaxAlive > 0 ? $" (até {su.MaxAlive} ao mesmo tempo)" : ""),
+            CopyStatusEffect cp => $"copia {TagList(cp.Tags, "e")} do alvo para "
+                + (cp.Count == 0 ? $"todos os {Side(cp.Affects, 2)}" : cp.Count == 1 ? $"1 {Side(cp.Affects, 1)}" : $"até {cp.Count} {Side(cp.Affects, 2)}")
+                + $" a até {Number(cp.Radius)} tiles",
+            IfStatusEffect ifs => $"em cada inimigo com {TagList(ifs.Tags, "ou")}: {Join(ifs.Effects, ctx, false)}"
                 + (ifs.Consume ? $" (e tira {TagList(ifs.Tags, "e")})" : ""),
+            CurrentTargetEffect ct => (ct.Count == 1 ? "1 disparo" : $"{ct.Count} disparos")
+                + $" no seu alvo atual a até {Number(ct.Range)} tiles, cada um: {Join(ct.Effects, ctx, false)}",
             _ => "",
         };
         return text.Length == 0 ? "" : text + onHit;
+    }
+
+    private static string Heal(HealEffect h, CharacterStats? stats)
+    {
+        var fixedPart = h.Base != 0 || h.Scaling.Count > 0 || h.MaxHealthFraction == 0 ? Value(h.Base, h.Scaling, stats) : "";
+        var fraction = h.MaxHealthFraction > 0 ? $"{Percent(h.MaxHealthFraction)} da vida máxima" : "";
+        return fixedPart.Length > 0 && fraction.Length > 0 ? $"cura {fixedPart} de vida + {fraction}"
+            : fraction.Length > 0 ? $"cura {fraction}"
+            : $"cura {fixedPart} de vida";
     }
 
     private static string Damage(DamageEffect d, CharacterStats? stats)
@@ -280,7 +333,7 @@ public static class AbilityText
 
         if (d.AllyHeal is { } ally)
         {
-            parts.Add($"aliados a até {Number(ally.Radius)} tiles curam {Percent(ally.Fraction)} do dano");
+            parts.Add($"{(ally.IncludeSelf ? "você e os aliados" : "os aliados")} a até {Number(ally.Radius)} tiles curam {Percent(ally.Fraction)} do dano");
         }
 
         if (d.ResetCooldownOnKill)
@@ -291,26 +344,55 @@ public static class AbilityText
         return string.Join(", ", parts);
     }
 
-    private static string ApplyStatus(ApplyStatusEffect st, ContentCatalog content, CharacterStats? stats, bool self)
+    private static string ApplyStatus(ApplyStatusEffect st, Ctx ctx, bool self)
     {
-        if (!content.Statuses.TryGetValue(st.Status, out var s))
+        if (!ctx.Content.Statuses.TryGetValue(st.Status, out var declared))
         {
             return st.Status;
         }
 
+        var (s, note) = ByRank(declared, ctx);
         var duration = st.DurationTicks ?? s.DefaultDurationTicks;
         var stacks = st.Stacks > 1 ? $"{st.Stacks} pilhas de " : "";
         var head = (self ? "você ganha " : "aplica ") + stacks + s.Name + $" por {Seconds(duration)}";
-        var traits = StatusTraits(s, content, stats);
+        var traits = StatusTraits(s, ctx) + note;
         return traits.Length > 0 ? $"{head} ({traits})" : head;
+    }
+
+    /// <summary>
+    /// O status que vale de fato quando a força vem do NH de outra habilidade (<c>byRank</c>), e a nota que diz qual NH foi
+    /// usado ("; pelo NH II de Flecha Envenenada"); sem <c>byRank</c>, o próprio status e nota vazia.
+    /// </summary>
+    private static (StatusDefinition Status, string Note) ByRank(StatusDefinition s, Ctx ctx)
+    {
+        if (s.ByRank is not { Statuses.Count: > 0 } br)
+        {
+            return (s, "");
+        }
+
+        var (rank, known) = ctx.RankFor(br.Ability);
+        var id = br.Statuses[Math.Clamp(rank, 1, br.Statuses.Count) - 1];
+        if (!ctx.Content.Statuses.TryGetValue(id, out var resolved))
+        {
+            return (s, "");
+        }
+
+        if (br.Ability == ctx.Ability.Id)
+        {
+            return (resolved, "");
+        }
+
+        var name = ctx.Content.Abilities.TryGetValue(br.Ability, out var source) ? source.Name : br.Ability;
+        return (resolved, known ? $"; pelo seu NH {Roman(rank)} de {name}" : $"; com {name} no NH I, mais forte nos NH maiores");
     }
 
     /// <summary>
     /// O que um estado faz, em poucas palavras ("não age", "recebe 25% menos dano"). Cobre as peças comuns; mecânicas
     /// muito próprias de uma habilidade ficam para a descrição dela.
     /// </summary>
-    private static string StatusTraits(StatusDefinition s, ContentCatalog content, CharacterStats? stats)
+    private static string StatusTraits(StatusDefinition s, Ctx ctx)
     {
+        var stats = ctx.Stats;
         var t = new List<string>();
         var f = s.Flags;
         if (f.Stunned) { t.Add("não age"); }
@@ -322,10 +404,26 @@ public static class AbilityText
         if (f.Undying) { t.Add("não cai abaixo de 1 de vida"); }
 
         var m = s.Modifiers;
-        if (s.Frontal is { } fr) { t.Add($"recebe {Percent(1 - fr.DamageTakenMultiplier)} menos dano de frente"); }
+        if (s.Frontal is { } fr)
+        {
+            t.Add($"recebe {Percent(1 - fr.DamageTakenMultiplier)} menos dano de frente");
+            if (fr.ReflectMeleeFraction > 0)
+            {
+                t.Add($"quem bate de frente corpo a corpo leva de volta {Percent(fr.ReflectMeleeFraction)} do dano que a guarda segurou");
+            }
+        }
+
         if (Differs(m.DamageDealtMultiplier)) { t.Add($"causa {MoreLess(m.DamageDealtMultiplier)} dano"); }
         if (Differs(m.SpeedMultiplier)) { t.Add($"anda {Percent(Math.Abs(1 - m.SpeedMultiplier))} mais {(m.SpeedMultiplier < 1 ? "devagar" : "rápido")}"); }
         if (Differs(m.DamageTakenMultiplier)) { t.Add($"recebe {MoreLess(m.DamageTakenMultiplier)} dano"); }
+        foreach (var (school, mult) in m.DamageTakenBySchool.OrderBy(kv => kv.Key, StringComparer.Ordinal))
+        {
+            if (Differs(mult))
+            {
+                t.Add($"recebe {MoreLess(mult)} dano {SchoolName(school)}");
+            }
+        }
+
         if (Differs(m.HealingTakenMultiplier)) { t.Add($"recebe {MoreLess(m.HealingTakenMultiplier)} cura"); }
         if (Differs(m.ControlDurationMultiplier)) { t.Add($"controle dura {Percent(Math.Abs(1 - m.ControlDurationMultiplier))} {(m.ControlDurationMultiplier < 1 ? "menos" : "mais")}"); }
 
@@ -342,23 +440,43 @@ public static class AbilityText
                     case HealEffect h:
                         t.Add($"cura {Value(h.Base, h.Scaling, stats)} {every}");
                         break;
+                    default:
+                        if (Effect(e, ctx, onSelf: false) is { Length: > 0 } other)
+                        {
+                            t.Add($"{(p.IntervalTicks == World.TickRate ? "a cada segundo" : every)}, {other}");
+                        }
+
+                        break;
                 }
             }
         }
 
         if (s.Stacking == StackingMode.Stack && s.MaxStacks > 1) { t.Add($"acumula até {s.MaxStacks}"); }
+        if (s.Exclusive is not null) { t.Add($"não soma com outra {s.Name}: fica a mais forte"); }
         if (s.Lifesteal is { } ls)
         {
-            t.Add($"recupera {Percent(ls.Fraction)} do dano causado como vida"
-                + (ls.BelowHealth > 0 ? $" ({Number(ls.BelowHealthMultiplier)}× com menos de {Percent(ls.BelowHealth)} da vida)" : ""));
+            t.Add($"recupera {Percent(ls.Fraction)} do dano causado como vida" + LifestealExtra(ls));
+            if (ls.KillHeal > 0) { t.Add($"ao matar um inimigo, cura {Percent(ls.KillHeal)} da vida máxima"); }
+        }
+
+        if (s.AttackerLifesteal is { } al)
+        {
+            t.Add($"você e os aliados que baterem nele recuperam {Percent(al.Fraction)} do dano como vida" + LifestealExtra(al));
         }
 
         if (s.Redirect is { } rd)
         {
-            t.Add($"{Percent(rd.Fraction)} do dano recebido vai para quem protege" + (rd.Reduction > 0 ? $", que recebe {Percent(rd.Reduction)} menos" : ""));
+            t.Add($"{Percent(rd.Fraction)} do dano recebido vai para quem protege, se estiver a até {Number(rd.MaxDistance)} tiles"
+                + (rd.Reduction > 0 ? $", que recebe {Percent(rd.Reduction)} menos" : ""));
         }
 
         if (s.Reflect is { } rf) { t.Add($"devolve {Percent(rf.Fraction)} do dano a quem bate"); }
+        if (s.Breaks is { } br)
+        {
+            if (br.DamageFraction > 0) { t.Add($"quebra ao receber {Percent(br.DamageFraction)} da vida máxima em dano"); }
+            if (br.Interrupt) { t.Add("quebra ao ser interrompido"); }
+        }
+
         if (s.Crit is { } cr)
         {
             if (cr.Guaranteed) { t.Add("todo ataque é crítico"); }
@@ -379,15 +497,31 @@ public static class AbilityText
 
         if (s.Empower is { } em)
         {
-            var names = em.Abilities.Select(id => content.Abilities.TryGetValue(id, out var a) ? a.Name : id).Distinct();
+            var names = em.Abilities.Select(id => ctx.Content.Abilities.TryGetValue(id, out var a) ? a.Name : id).Distinct();
             t.Add($"o próximo uso de {string.Join(" ou ", names)} causa {Percent(em.Multiplier - 1)} a mais");
         }
 
+        if (s.HitEffects.Count > 0) { t.Add($"todo acerto seu: {Join(s.HitEffects, ctx, onSelf: false)}"); }
+        if (s.BasicAttack is { } basicId && ctx.Content.AbilityAt(basicId, 1) is { } basic && basic.Id != ctx.Ability.Id)
+        {
+            var reach = Reach(basic);
+            t.Add($"seu ataque básico vira {basic.Name}{(reach.Length > 0 ? $", {reach}" : "")}: {Join(basic.Effects, ctx with { Ability = basic }, onSelf: false)}");
+        }
+
+        if (s.JumpOnExpire is { } jump)
+        {
+            t.Add($"quando {TagList(jump.Tags, "ou")} que você pôs acaba num inimigo, pula para o inimigo mais próximo a até {Number(jump.Radius)} tiles que não o tenha");
+        }
+
+        if (s.OnExpire.Count > 0) { t.Add($"ao acabar o tempo: {Join(s.OnExpire, ctx, onSelf: false)}"); }
         if (s.ImmuneToTags.Count > 0) { t.Add($"imune a {TagList(s.ImmuneToTags, "e")}"); }
         return string.Join(", ", t);
 
         static bool Differs(double multiplier) => Math.Abs(multiplier - 1) > 1e-9;
     }
+
+    private static string LifestealExtra(LifestealDefinition ls) =>
+        ls.BelowHealth > 0 ? $" ({Number(ls.BelowHealthMultiplier)}× com menos de {Percent(ls.BelowHealth)} da vida)" : "";
 
     private static string MoreLess(double multiplier) =>
         $"{Percent(Math.Abs(multiplier - 1))} {(multiplier < 1 ? "menos" : "mais")}";
@@ -416,11 +550,11 @@ public static class AbilityText
         return string.Join(", ", parts);
     }
 
-    private static string Area(AreaDefinition area, ContentCatalog content, CharacterStats? stats)
+    private static string Area(AreaDefinition area, Ctx ctx)
     {
         var where = area.FollowOwner ? $"cria em volta de você uma área de raio {Number(area.Radius)}" : $"deixa no chão uma área de raio {Number(area.Radius)}";
         var who = area.Affects == FactionFilter.Ally ? "nos aliados dentro" : area.Affects == FactionFilter.Any ? "em todos dentro" : "nos inimigos dentro";
-        var effects = Join(area.Effects, content, stats, false);
+        var effects = Join(area.Effects, ctx, false);
         var head = $"{where} por {Seconds(area.DurationTicks)}";
         if (area.ArmTimeTicks > 0)
         {
@@ -443,6 +577,10 @@ public static class AbilityText
         var which = x.Select == TargetSelect.MostInjured ? "mais ferido" : "mais próximo";
         return x.Count == 1 ? $"o {side} {which}" : $"{x.Count} {side}s ({which})";
     }
+
+    /// <summary>"inimigo(s)"/"aliado(s)" pela facção, no singular quando <paramref name="count"/> é 1.</summary>
+    private static string Side(FactionFilter affects, int count) =>
+        (affects == FactionFilter.Ally ? "aliado" : affects == FactionFilter.Any ? "alvo" : "inimigo") + (count == 1 ? "" : "s");
 
     /// <summary>Com estatísticas: o valor escalado; sem: a base e as escalas dos dados ("60 + 2 × VIT").</summary>
     private static string Value(double baseValue, IReadOnlyDictionary<string, double> scaling, CharacterStats? stats)
@@ -483,6 +621,10 @@ public static class AbilityText
         _ => school.ToString().ToLowerInvariant(),
     };
 
+    /// <summary>Escola pelo nome dos dados (snake_case, ex.: <c>holy</c>).</summary>
+    private static string SchoolName(string key) =>
+        Enum.TryParse<DamageSchool>(key.Replace("_", "", StringComparison.Ordinal), ignoreCase: true, out var school) ? SchoolName(school) : key;
+
     private static string TagList(IEnumerable<string> tags, string conjunction)
     {
         var names = tags.Where(t => t.Length > 0).Select(TagName).Distinct().ToList();
@@ -508,6 +650,16 @@ public static class AbilityText
         "corrupted" => "corrompidos",
         "beast" => "feras",
         var other => other.Replace('_', ' '),
+    };
+
+    private static string Roman(int n) => n switch
+    {
+        1 => "I",
+        2 => "II",
+        3 => "III",
+        4 => "IV",
+        5 => "V",
+        _ => n.ToString(Pt),
     };
 
     private static string Seconds(int ticks) => (ticks / (double)World.TickRate).ToString("0.##", Pt) + " s";
