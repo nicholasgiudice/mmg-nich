@@ -101,8 +101,11 @@ public class OverseerDesignTests(ITestOutputHelper output)
     /// Serra (a solo dela, com <c>+dodge</c>), as opções de grupo de <see cref="SecondClassDesignTests.Specs"/> e o Clérigo indo
     /// até o aliado ferido (<c>followInjured</c>), como no Vigia.
     /// </summary>
-    internal static BatchSummary Group(string[] seconds) =>
-        Cache.GetOrAdd(string.Join("|", seconds), _ => new Lazy<BatchSummary>(() =>
+    internal static BatchSummary Group(string[] seconds) => Group(seconds, Content, Encounter);
+
+    /// <summary>T-533: o mesmo lote em outro encontro (o Capataz na Fornalha real das Minas Fundas, <see cref="MinesDesignTests"/>).</summary>
+    internal static BatchSummary Group(string[] seconds, ContentCatalog content, string encounter) =>
+        Cache.GetOrAdd($"{encounter}|{string.Join("|", seconds)}", _ => new Lazy<BatchSummary>(() =>
         {
             var options = new Dictionary<string, string>(Options) { [$"{Cleric}:followInjured"] = "1" };
             foreach (var second in seconds)
@@ -113,9 +116,9 @@ public class OverseerDesignTests(ITestOutputHelper output)
                 }
             }
 
-            return Batch.Run(Content, new RunSpec
+            return Batch.Run(content, new RunSpec
             {
-                EncounterId = Encounter,
+                EncounterId = encounter,
                 Strategy = "rotation+dodge",
                 Roles = seconds.Select(BaseOf).ToDictionary(c => c, c => SoloStrategy(c) + "+dodge"),
                 Options = new BotOptions(options),

@@ -7,7 +7,7 @@ namespace Game.Sim.Tests;
 /// <summary>
 /// T-055: Cidade e Campos são mapas do Tiled. Do nascimento de cada zona, um personagem chega andando (células livres,
 /// 4 vizinhos) a todos os pontos de surgimento, chegadas e portões; e os portões da zona batem com as transições do mapa.
-/// Desde a T-331 a zona inteira (nascimento, portões, surgimentos) é montada a partir do mapa. T-343: Ruínas da Estrada Antiga. T-352: Cripta do Vigia. T-342: Floresta Baixa. T-530: Brejo dos Afogados. T-531: Forte do Passo. T-532: Serra Partida.
+/// Desde a T-331 a zona inteira (nascimento, portões, surgimentos) é montada a partir do mapa. T-343: Ruínas da Estrada Antiga. T-352: Cripta do Vigia. T-342: Floresta Baixa. T-530: Brejo dos Afogados. T-531: Forte do Passo. T-532: Serra Partida. T-533: Minas Fundas.
 /// </summary>
 public class ZoneMapTests
 {
@@ -22,7 +22,7 @@ public class ZoneMapTests
         return GameDataLoader.LoadDirectory(Path.Combine(dir.FullName, "data")).GetDatabaseOrThrow();
     });
 
-    public static TheoryData<string> Zones() => new() { "zone.city", "zone.vigil_fields", "zone.matriarch_lair", "zone.old_road_ruins", "zone.watcher_crypt", "zone.lower_forest", "zone.drowned_marsh", "zone.pass_fort", "zone.broken_ridge" };
+    public static TheoryData<string> Zones() => new() { "zone.city", "zone.vigil_fields", "zone.matriarch_lair", "zone.old_road_ruins", "zone.watcher_crypt", "zone.lower_forest", "zone.drowned_marsh", "zone.pass_fort", "zone.broken_ridge", "zone.deep_mines" };
 
     [Theory]
     [MemberData(nameof(Zones))]
@@ -352,9 +352,10 @@ public class ZoneMapTests
         var ridge = Db.Value.Zones[Ridge];
         Assert.Equal(ZoneKind.Field, ridge.Kind);
         Assert.Equal(Fort, ridge.Respawn);
-        var back = Assert.Single(ridge.Gates);
+        var back = Assert.Single(ridge.Gates, g => g.To != Mines);
         Assert.Equal(Fort, back.To);
         Assert.Equal(0, back.Area.X);
+        Assert.Equal(2, ridge.Gates.Count);
 
         Assert.Equal(["Acampamento dos Mineiros", "Boca das Minas", "Desfiladeiro", "Ninho dos Morcegos"],
             ridge.MonsterSpawns.Select(s => s.Area).Distinct().Order(StringComparer.Ordinal));
@@ -376,7 +377,113 @@ public class ZoneMapTests
             .SelectMany(x => Enumerable.Range((int)entrance.Y, (int)entrance.Height).Select(y => (x, y)));
         Assert.Contains(cells, reached.Contains);
         Assert.Contains(arena.Areas, a => a.Kind == "subarea" && a.Name == "Boca das Minas" && a.Area.Contains(entrance.X + 0.5, entrance.Y + 0.5));
+
+        // T-533: o portão das Minas Fundas fica dentro da boca da mina, e a volta chega fora dela.
+        var gate = Assert.Single(ridge.Gates, g => g.To == Mines).Area;
+        Assert.True(gate.X >= entrance.X && gate.Y >= entrance.Y && gate.X + gate.Width <= entrance.X + entrance.Width
+            && gate.Y + gate.Height <= entrance.Y + entrance.Height, "portão das Minas fora de mines_entrance");
+        var fromMines = arena.Spawns.Single(s => s.Name == "from_mines").Position;
+        Assert.False(entrance.Contains(fromMines.X, fromMines.Y), "a chegada das Minas fica dentro de mines_entrance");
+        Assert.Contains(((int)fromMines.X, (int)fromMines.Y), reached);
     }
+
+    private const string Mines = "zone.deep_mines";
+
+    /// <summary>
+    /// T-533: as Minas Fundas são uma instância de 4 (níveis 24–27) cuja saída leva de volta à Serra, e quem morre nelas
+    /// renasce no Forte (T-501). As salas vêm em sequência (Galeria de Entrada, Poço dos Carrinhos, as duas rotas do Veio
+    /// Partido, a Antessala e a Fornalha); os monstros são os da Serra nos níveis 24–26, com o Golem de Pedra como elite só no Veio Rico,
+    /// e o Capataz Forjado nível 27 na Fornalha, uma arena de pelo menos 30 × 24 livres (tem 40 × 28), sem obstáculo, com área <c>boss_arena</c>.
+    /// </summary>
+    [Fact]
+    public void Mines_are_an_instance_for_four_with_the_rooms_in_sequence_and_the_overseer_in_the_furnace()
+    {
+        var mines = Db.Value.Zones[Mines];
+        Assert.Equal(ZoneKind.Instance, mines.Kind);
+        Assert.Equal(4, mines.MaxPlayers);
+        Assert.Equal(Fort, mines.Respawn);
+        Assert.Equal(Ridge, mines.ExitGate()!.To);
+        var crypt = Db.Value.Zones["zone.watcher_crypt"];
+        Assert.Equal(crypt.EmptyTimeoutTicks, mines.EmptyTimeoutTicks);
+        Assert.Equal(crypt.OutsiderTimeoutTicks, mines.OutsiderTimeoutTicks);
+
+        Assert.Equal(["Galeria de Entrada", "Poço dos Carrinhos", "Veio Rico", "Veio Estreito", "Antessala", "Fornalha"],
+            mines.MonsterSpawns.Select(s => s.Area).Distinct());
+        var boss = Assert.Single(mines.MonsterSpawns, s => Db.Value.Monsters[s.Monster].Rank == MonsterRank.Boss);
+        Assert.Equal("monster.forged_overseer", boss.Monster);
+        Assert.Equal(27, boss.Level);
+        Assert.Equal("Fornalha", boss.Area);
+        var golem = Assert.Single(mines.MonsterSpawns, s => Db.Value.Monsters[s.Monster].Rank == MonsterRank.Elite);
+        Assert.Equal("monster.stone_golem", golem.Monster);
+        Assert.Equal("Veio Rico", golem.Area);
+        Assert.All(mines.MonsterSpawns.Where(s => s != boss), s => Assert.InRange(s.Level ?? 0, 24, 26));
+        Assert.Equal(["monster.cave_bat", "monster.forged_overseer", "monster.mountain_wolf", "monster.possessed_miner", "monster.stone_golem"],
+            mines.MonsterSpawns.Select(s => s.Monster).Distinct().Order(StringComparer.Ordinal));
+
+        var arena = Db.Value.Arenas[mines.Arena];
+        var furnace = Assert.Single(arena.Areas, a => a.Kind == "boss_arena").Area;
+        Assert.True(furnace.Width >= 30 && furnace.Height >= 24, $"Fornalha com {furnace.Width} × {furnace.Height}");
+        Assert.True(furnace.Contains(boss.Position.X, boss.Position.Y));
+        var map = EntityFactory.BuildMap(arena);
+        for (var y = (int)furnace.Y; y < furnace.Y + furnace.Height; y++)
+        {
+            for (var x = (int)furnace.X; x < furnace.X + furnace.Width; x++)
+            {
+                Assert.False(map.IsBlocked(x, y), $"obstáculo na Fornalha em ({x}, {y})");
+            }
+        }
+    }
+
+    /// <summary>
+    /// T-533: o Poço dos Carrinhos tem os grupos grandes (6 a 10 monstros, que pedem dano em área); a Galeria de Entrada, os
+    /// pequenos; o Veio Rico tem mais monstros (e o Golem, mais saque) que o Veio Estreito, que é mais curto a pé. Os grupos
+    /// ficam a 12 tiles ou mais uns dos outros.
+    /// </summary>
+    [Fact]
+    public void Mines_rooms_have_big_groups_in_the_pit_and_two_routes_through_the_vein()
+    {
+        var groups = GroupsOf(Mines);
+        static int Size(List<MonsterSpawnDefinition> g) => g.Sum(p => p.Count);
+        Assert.All(groups.Where(g => g[0].Area == "Poço dos Carrinhos"), g => Assert.InRange(Size(g), 6, 10));
+        Assert.All(groups.Where(g => g[0].Area == "Galeria de Entrada"), g => Assert.InRange(Size(g), 1, 6));
+        var rich = groups.Where(g => g[0].Area == "Veio Rico").Sum(Size);
+        var narrow = groups.Where(g => g[0].Area == "Veio Estreito").Sum(Size);
+        Assert.True(rich > narrow, $"Veio Rico {rich} monstros, Veio Estreito {narrow}");
+        for (var i = 0; i < groups.Count; i++)
+        {
+            for (var j = i + 1; j < groups.Count; j++)
+            {
+                var d = groups[i].SelectMany(a => groups[j].Select(b => Distance(a.Position, b.Position))).Min();
+                Assert.True(d >= 12, $"grupos em ({groups[i][0].Position.X}, {groups[i][0].Position.Y}) e ({groups[j][0].Position.X}, {groups[j][0].Position.Y}) a {d:F1} tiles");
+            }
+        }
+
+        // Percurso: da entrada ao chefe, o Veio Estreito é mais curto a pé que o Veio Rico (passando pelo Golem).
+        var mines = Db.Value.Zones[Mines];
+        var map = EntityFactory.BuildMap(Db.Value.Arenas[mines.Arena]);
+        static System.Numerics.Vector2 V(PositionDefinition p) => new((float)p.X, (float)p.Y);
+        double Walk(params PositionDefinition[] stops)
+        {
+            var total = 0.0;
+            for (var k = 1; k < stops.Length; k++)
+            {
+                var path = Core.Spatial.Pathfinder.FindPath(map, V(stops[k - 1]), V(stops[k]));
+                Assert.NotEmpty(path);
+                total += path.Prepend(V(stops[k - 1])).Zip(path, System.Numerics.Vector2.Distance).Sum();
+            }
+
+            return total;
+        }
+
+        var boss = mines.MonsterSpawns.Single(s => s.Monster == "monster.forged_overseer").Position;
+        var golem = mines.MonsterSpawns.Single(s => s.Monster == "monster.stone_golem").Position;
+        var wolves = mines.MonsterSpawns.First(s => s.Area == "Veio Estreito").Position;
+        Assert.True(Walk(mines.Spawn, wolves, boss) < Walk(mines.Spawn, golem, boss), "o Veio Estreito não é mais curto");
+    }
+
+    /// <summary>T-533: nas Minas, toda célula livre é alcançável a pé e não há fresta sem saída.</summary>
+    [Fact]
+    public void Mines_have_no_sealed_pockets_or_dead_end_slits() => AssertNoPocketsOrSlits(Mines);
 
     /// <summary>
     /// T-532: os grupos da Serra (pontos da mesma subárea a até 4 tiles, como nos testes de design) ficam a pelo menos 12

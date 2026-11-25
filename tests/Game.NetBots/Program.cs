@@ -32,6 +32,8 @@ const string Usage = """
                               pelo Brejo). Com --shop, na zona que tem a loja o bot compra antes de seguir.
       --shop-id <id>          com --shop: a loja (padrão shop.temple; T-531: shop.pass_fort)
       --shop-item <id>        com --shop: o item comprado (padrão consumable.minor_healing_potion)
+      --route-again           com --route (T-533): depois de renascer, quem já chegou refaz a rota; a linha ROTA conta as
+                              chegadas e mostra as cópias de instância em que cada bot entrou, na ordem
       --return <zona>/<área>  com --shop: depois da compra, volta por esta rota (ex.: zone.city/plaza). No fim sai a linha VOLTA.
       --dev-level             pede o nível máximo à ferramenta de teste ao entrar (servidor com --dev-tools)
       --earn <ouro>           com --route: numa zona de campo do caminho, luta até ganhar esse ouro e depois segue
@@ -109,6 +111,7 @@ for (var i = 0; i < count; i++)
         Earn = earn,
         RouteZone = route.Length == 2 ? route[0] : null,
         RouteArea = route.Length == 2 ? route[1] : null,
+        RouteAgain = a.Contains("--route-again"),
         PartyInvites = leader ? Enumerable.Range(i + 1, Math.Min(partySize - 1, count - i - 1)).Select(j => $"netbot{j}").ToArray() : [],
         AcceptPartyInvites = party && !leader,
         InstanceZone = instanceZone.Length > 0 ? instanceZone : null,
@@ -186,7 +189,8 @@ if (route.Length == 2)
 {
     Console.WriteLine($"ROTA {route[0]}/{route[1]}: chegaram {bots.Count(b => b.ReachedRoute)}/{count} · "
         + $"tempo {string.Join(",", bots.Select(b => b.ReachedRouteAfterSeconds is { } s ? s.ToString("0", CultureInfo.InvariantCulture) + "s" : "-"))} · "
-        + $"renascimentos {bots.Sum(b => b.Respawns)} · trocas de zona {bots.Sum(b => b.ZoneChanges)}");
+        + $"renascimentos {bots.Sum(b => b.Respawns)} · trocas de zona {bots.Sum(b => b.ZoneChanges)}"
+        + (a.Contains("--route-again") ? $" · chegadas {string.Join(",", bots.Select(b => b.RouteArrivals))} · cópias {string.Join(" | ", bots.Select(b => string.Join(">", b.InstancesEntered)))}" : ""));
 }
 
 if (back.Length == 2)

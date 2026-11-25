@@ -10,6 +10,7 @@
     { "id": "zone.drowned_marsh", "name": "Brejo dos Afogados", "arena": "map.drowned_marsh", "kind": "field", "corpse": 10, "levels": { "min": 16, "max": 20 } },
     { "id": "zone.broken_ridge", "name": "Serra Partida", "arena": "map.broken_ridge", "kind": "field", "corpse": 10, "respawn": "zone.pass_fort", "levels": { "min": 21, "max": 25 } },
     { "id": "zone.test_instance", "name": "Covil de Teste (instância)", "arena": "map.matriarch_lair", "kind": "instance", "corpse": 30, "levels": { "min": 8, "max": 8 }, "maxPlayers": 4, "emptyTimeout": 300, "outsiderTimeout": 30 },
-    { "id": "zone.watcher_crypt", "name": "Cripta do Vigia", "arena": "map.watcher_crypt", "kind": "instance", "corpse": 30, "levels": { "min": 12, "max": 15 }, "maxPlayers": 4, "emptyTimeout": 300, "outsiderTimeout": 30 }
+    { "id": "zone.watcher_crypt", "name": "Cripta do Vigia", "arena": "map.watcher_crypt", "kind": "instance", "corpse": 30, "levels": { "min": 12, "max": 15 }, "maxPlayers": 4, "emptyTimeout": 300, "outsiderTimeout": 30 },
+    { "id": "zone.deep_mines", "name": "Minas Fundas", "arena": "map.deep_mines", "kind": "instance", "corpse": 30, "respawn": "zone.pass_fort", "levels": { "min": 24, "max": 27 }, "maxPlayers": 4, "emptyTimeout": 300, "outsiderTimeout": 30 }
   ]
 }

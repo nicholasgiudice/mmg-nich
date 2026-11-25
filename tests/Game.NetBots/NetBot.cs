@@ -181,6 +181,15 @@ public sealed class NetBot : IDisposable
     /// <summary>Segundos (relógio do bot) até entrar na área de destino.</summary>
     public double? ReachedRouteAfterSeconds { get; private set; }
 
+    /// <summary>T-533: depois de renascer, o bot que já chegou refaz a rota (e <see cref="ReachedRoute"/> volta a valer na nova chegada).</summary>
+    public bool RouteAgain { get; init; }
+
+    /// <summary>T-533: quantas vezes chegou à área de destino (com <see cref="RouteAgain"/>, mais de uma).</summary>
+    public int RouteArrivals { get; private set; }
+
+    /// <summary>T-533: cópias de instância em que o bot entrou, na ordem (a mesma cópia aparece de novo se ele voltou a ela).</summary>
+    public List<int> InstancesEntered { get; } = [];
+
     /// <summary>
     /// T-531: com <see cref="Shop"/>, depois da compra o bot volta por este destino (zona e área, como a rota), ex.: a praça
     /// da Cidade depois de comprar no Forte.
@@ -293,7 +302,8 @@ public sealed class NetBot : IDisposable
             if (!ReachedRoute && RouteIntent(routeZone, self, RouteZone, RouteArea))
             {
                 ReachedRoute = true;
-                ReachedRouteAfterSeconds = _clock.Elapsed.TotalSeconds;
+                ReachedRouteAfterSeconds ??= _clock.Elapsed.TotalSeconds;
+                RouteArrivals++;
             }
         }
         else if (Roam && Zone is { } here)
@@ -531,6 +541,10 @@ public sealed class NetBot : IDisposable
                 {
                     ZoneChanges++;
                     Respawns += _respawnPending ? 1 : 0;
+                    if (_respawnPending && RouteAgain)
+                    {
+                        ReachedRoute = false;
+                    }
                 }
 
                 _respawnPending = false;
@@ -538,6 +552,10 @@ public sealed class NetBot : IDisposable
                 _shopPath = [];
                 _routePath = [];
                 InstanceEntries += w.InstanceId > 0 && InstanceId == 0 ? 1 : 0;
+                if (w.InstanceId > 0 && InstanceId == 0)
+                {
+                    InstancesEntered.Add(w.InstanceId);
+                }
                 InstanceId = w.InstanceId;
                 Welcome = w;
                 _zoneVisits[w.EncounterId] = _zoneVisits.GetValueOrDefault(w.EncounterId) + 1;
