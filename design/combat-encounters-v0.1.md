@@ -691,7 +691,7 @@ Resposta de cada classe:
 | | |
 |---|---|
 | Vida | 260 (2.444) |
-| Velocidade / raio | 4,2 (abaixo dos 4,5 da classe mais lenta, como todo monstro normal; com a Fúria, 4,8, alcança quem corre) / 0,4 |
+| Velocidade / raio | 4,2 (abaixo dos 5,0 das classes, como todo monstro normal; com a Fúria, 4,8, quase alcança quem corre) / 0,4 |
 | Tags | `beast` |
 | IA | `ai.pack` (foco de 4 s, janela de 2 s para uivar junto) |
 
@@ -711,7 +711,7 @@ Resposta de cada classe: como contra os Três Lobos, mais longa. O Guardião pro
 | | |
 |---|---|
 | Vida | 90 (846) |
-| Velocidade / raio | 4,4 (logo abaixo dos 4,5 da classe mais lenta) / 0,3 |
+| Velocidade / raio | 4,4 (abaixo dos 5,0 das classes) / 0,3 |
 | Tags | `beast` |
 | IA | `ai.swarm` (anel de 1,2 em volta do alvo; 25% de chance de trocar de alvo) |
 
