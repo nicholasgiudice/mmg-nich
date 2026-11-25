@@ -4,6 +4,7 @@
     {
       "id": "mage.arcane_missile",
       "name": "Projétil Arcano",
+      "description": "Ataque básico: um projétil de magia num inimigo à distância.",
       "tags": ["basic", "ranged"],
       "cooldown": 1.0,
       "targeting": { "type": "unit", "range": 9, "faction": "enemy" },
@@ -12,6 +13,7 @@
     {
       "id": "mage.elemental_blast",
       "name": "Explosão Elemental",
+      "description": "Explosão de fogo instantânea no lugar que você mirar, acertando todos os inimigos na área.",
       "tags": ["aoe", "ranged"],
       "cost": { "resource": "mana", "amount": 90 },
       "cooldown": 8,
@@ -35,6 +37,7 @@
     {
       "id": "mage.ice_prison",
       "name": "Prisão de Gelo",
+      "description": "Congela um inimigo: ele não consegue andar e recebe um pouco mais de dano enquanto estiver congelado.",
       "tags": ["control", "ranged"],
       "cost": { "resource": "mana", "amount": 25 },
       "cooldown": 10,
@@ -95,6 +98,7 @@
     {
       "id": "mage.arcane_barrier",
       "name": "Barreira Arcana",
+      "description": "Cria um escudo em você que absorve o dano antes da vida.",
       "tags": ["defensive"],
       "cost": { "resource": "mana", "amount": 30 },
       "cooldown": 15,
@@ -150,6 +154,7 @@
     {
       "id": "mage.lightning_field",
       "name": "Campo de Relâmpagos",
+      "description": "Dano numa área e deixa um campo de raios no chão que fere os inimigos dentro a cada segundo.",
       "tags": ["aoe", "ranged", "zone"],
       "cost": { "resource": "mana", "amount": 40 },
       "cooldown": 12,
@@ -193,6 +198,7 @@
     {
       "id": "mage.arcane_cataclysm",
       "name": "Cataclismo Arcano",
+      "description": "Marca uma área grande no chão e, depois de um instante, causa dano muito alto em todos os inimigos dentro.",
       "tags": ["aoe", "ranged", "signature"],
       "signature": true,
       "cost": { "resource": "mana", "amount": 100 },

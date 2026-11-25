@@ -35,6 +35,7 @@
     <Compile Include="..\..\client\scripts\Account\OnlineCounterText.cs" Link="Client\OnlineCounterText.cs" />
     <Compile Include="..\..\client\scripts\Hud\ShopQuantity.cs" Link="Client\ShopQuantity.cs" />
     <Compile Include="..\..\client\scripts\Hud\SkillDetailText.cs" Link="Client\SkillDetailText.cs" />
+    <Compile Include="..\..\client\scripts\Hud\AbilityText.cs" Link="Client\AbilityText.cs" />
     <Compile Include="..\..\client\scripts\Hud\MiniMapView.cs" Link="Client\MiniMapView.cs" />
     <Compile Include="..\..\client\scripts\Match\DevToolText.cs" Link="Client\DevToolText.cs" />
     <Compile Include="..\..\client\scripts\Hud\SecondClassText.cs" Link="Client\SecondClassText.cs" />

@@ -991,22 +991,24 @@ public partial class Hud : Control
         if (def is not null)
         {
             var stats = self.TryGet<CharacterStats>();
+            var summary = AbilityText.WrappedSummary(def);
+            summary = summary.Length > 0 ? summary + "\n" : "";
             if (item is not null)
             {
                 // T-323: atalho do tipo de consumível; usa a primeira pilha dele no inventário.
-                tooltip += $" — você tem {count}\n" + AbilityText.Describe(def, _content, stats)
+                tooltip += $" — você tem {count}\n" + summary + AbilityText.Describe(def, _content, stats)
                     + (count == 0 ? "\n\nNenhuma no inventário: compre no Templo da Cidade." : "");
             }
             else if (isBasic)
             {
-                tooltip += "\n" + AbilityText.Describe(def, _content, stats);
+                tooltip += " — ataque básico\n" + summary + AbilityText.Describe(def, _content, stats);
             }
             else
             {
                 var baseDef = _content.Abilities.GetValueOrDefault(id);
                 var top = baseDef?.HighestRank ?? rank;
                 tooltip += $" — NH {Match.SkillPlan.Roman(rank)}{(baseDef?.Signature == true ? " (assinatura)" : "")}\n"
-                    + AbilityText.Describe(def, _content, stats);
+                    + summary + AbilityText.Describe(def, _content, stats);
                 tooltip += rank < top && _content.AbilityAt(id, rank + 1) is { } next
                     ? $"\n\nPróximo NH ({Match.SkillPlan.Roman(rank + 1)}):\n{AbilityText.Describe(next, _content, stats)}"
                     : "\n\nNH máximo.";

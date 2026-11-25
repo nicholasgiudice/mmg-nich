@@ -4,6 +4,7 @@
     {
       "id": "inquisitor.hammer_of_justice",
       "name": "Martelo da Justiça",
+      "description": "Golpe sagrado à frente que atordoa o inimigo. Mais forte contra mortos-vivos e corrompidos.",
       "tags": ["melee", "holy", "control"],
       "cost": { "resource": "mana", "amount": 25 },
       "cooldown": 8,
@@ -77,6 +78,7 @@
     {
       "id": "inquisitor.consecration",
       "name": "Consagração",
+      "description": "Consagra o chão onde você está: a cada segundo, fere os inimigos e cura os aliados dentro da área.",
       "tags": ["holy", "aoe", "heal"],
       "cost": { "resource": "mana", "amount": 45 },
       "cooldown": 14,
@@ -119,6 +121,7 @@
     {
       "id": "inquisitor.seal_of_light",
       "name": "Selo da Luz",
+      "description": "Marca um inimigo: todo aliado que bater nele recupera vida com parte do dano.",
       "tags": ["holy", "mark"],
       "cost": { "resource": "mana", "amount": 20 },
       "cooldown": 12,
@@ -134,6 +137,7 @@
     {
       "id": "inquisitor.judgment",
       "name": "Julgamento",
+      "description": "Golpe sagrado forte num inimigo próximo. Muito mais forte contra mortos-vivos.",
       "tags": ["holy"],
       "cost": { "resource": "mana", "amount": 30 },
       "cooldown": 7,
@@ -205,6 +209,7 @@
     {
       "id": "inquisitor.divine_wrath",
       "name": "Ira Divina",
+      "description": "Por alguns segundos, seu ataque básico acerta todos em volta do alvo, causa mais dano e cura os aliados por perto.",
       "tags": ["holy", "aoe", "signature"],
       "signature": true,
       "cost": { "resource": "mana", "amount": 80 },
@@ -219,6 +224,7 @@
     {
       "id": "inquisitor.divine_wrath_strike_1",
       "name": "Golpe Sagrado",
+      "description": "Ataque básico durante a Ira Divina: acerta todos em volta do alvo e cura os aliados próximos com parte do dano.",
       "tags": ["basic", "holy"],
       "cooldown": 1.1,
       "targeting": { "type": "unit", "range": 6, "faction": "enemy" },
@@ -251,6 +257,7 @@
     {
       "id": "inquisitor.divine_wrath_strike_3",
       "name": "Golpe Sagrado",
+      "description": "Ataque básico durante a Ira Divina: acerta todos em volta do alvo e cura os aliados próximos com parte do dano.",
       "tags": ["basic", "holy"],
       "cooldown": 1.1,
       "targeting": { "type": "unit", "range": 6, "faction": "enemy" },

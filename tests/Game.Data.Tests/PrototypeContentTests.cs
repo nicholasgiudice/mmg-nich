@@ -147,6 +147,21 @@ public class PrototypeContentTests
     }
 
     [Fact]
+    public void Every_player_ability_has_a_description()
+    {
+        // O tooltip abre com a descrição: toda habilidade de classe, de segunda classe e de consumível precisa de uma.
+        var db = Db();
+        var ids = db.Classes.Values
+            .SelectMany(c => c.Abilities.Append(c.BasicAttack).Concat(c.SecondClasses.SelectMany(s => s.Abilities)))
+            .Concat(db.Items.Values.Select(i => i.UseAbility).OfType<string>())
+            .Distinct()
+            .ToList();
+        Assert.NotEmpty(ids);
+        var missing = ids.Where(id => string.IsNullOrWhiteSpace(db.Abilities[id].Description)).ToList();
+        Assert.True(missing.Count == 0, "Sem descrição: " + string.Join(", ", missing));
+    }
+
+    [Fact]
     public void Archer_has_a_damage_skill_and_mage_basic_attack_is_free()
     {
         var db = Db();

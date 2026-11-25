@@ -4,6 +4,7 @@
     {
       "id": "pyromancer.combustion",
       "name": "Combustão",
+      "description": "Detona as queimaduras: cada inimigo queimando perto de você sofre dano na hora, e a queimadura acaba.",
       "tags": ["aoe", "fire"],
       "cost": { "resource": "mana", "amount": 40 },
       "cooldown": 10,
@@ -66,6 +67,7 @@
     {
       "id": "pyromancer.flame_burst",
       "name": "Rajada de Chamas",
+      "description": "Solta um cone curto de fogo à sua frente, que causa dano e queima os inimigos.",
       "tags": ["aoe", "fire"],
       "cost": { "resource": "mana", "amount": 35 },
       "cooldown": 6,
@@ -109,6 +111,7 @@
     {
       "id": "pyromancer.burning_ground",
       "name": "Chão em Chamas",
+      "description": "Põe fogo numa área do chão: a cada segundo, quem estiver dentro sofre dano e fica queimando.",
       "tags": ["aoe", "ranged", "zone", "fire"],
       "cost": { "resource": "mana", "amount": 50 },
       "cooldown": 14,
@@ -128,6 +131,7 @@
     {
       "id": "pyromancer.fireball",
       "name": "Bola de Fogo",
+      "description": "Bola de fogo que explode no primeiro inimigo que acertar, causando dano e queimando todos na explosão.",
       "tags": ["aoe", "ranged", "fire"],
       "cost": { "resource": "mana", "amount": 45 },
       "cooldown": 7,
@@ -172,6 +176,7 @@
     {
       "id": "pyromancer.meteor",
       "name": "Meteoro",
+      "description": "Chama um meteoro numa área grande. O aviso aparece no chão e, depois de um instante, o impacto causa dano enorme e queima todos dentro.",
       "tags": ["aoe", "ranged", "fire", "signature"],
       "signature": true,
       "cost": { "resource": "mana", "amount": 100 },

@@ -110,6 +110,11 @@ public static class ItemText
     {
         if (def.UseAbility is { } use && content.AbilityAt(use, 1) is { } ability)
         {
+            if (AbilityText.Summary(ability) is { Length: > 0 } summary)
+            {
+                yield return Hud.Escape(summary);
+            }
+
             yield return Hud.Escape(AbilityText.Describe(ability, content));
             yield return "[color=#aaaaaa]A recarga vale para todas as unidades do mesmo item.[/color]";
         }

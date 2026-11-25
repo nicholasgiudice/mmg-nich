@@ -4,6 +4,7 @@
     {
       "id": "marksman.piercing_arrow",
       "name": "Flecha Perfurante",
+      "description": "Flecha em linha reta que atravessa: o primeiro inimigo recebe o dano inteiro e os que estão atrás dele recebem uma parte.",
       "tags": ["ranged", "damage", "pierce"],
       "cost": { "resource": "mana", "amount": 30 },
       "cooldown": 8,
@@ -43,6 +44,7 @@
     {
       "id": "marksman.crippling_shot",
       "name": "Tiro Debilitante",
+      "description": "Tiro que deixa o inimigo mais lento e causando menos dano por alguns segundos.",
       "tags": ["ranged", "damage", "debuff"],
       "cost": { "resource": "mana", "amount": 20 },
       "cooldown": 12,
@@ -85,6 +87,7 @@
     {
       "id": "marksman.steady_aim",
       "name": "Mira Firme",
+      "description": "Passiva, sempre ativa: mais chance de crítico contra inimigos a 6 tiles ou mais de você.",
       "tags": ["passive", "crit"],
       "passive": true,
       "passiveStatus": "status.steady_aim",
@@ -99,6 +102,7 @@
     {
       "id": "marksman.true_shot",
       "name": "Tiro Certeiro",
+      "description": "Tiro de longe com dano muito alto, que ignora parte da armadura do alvo.",
       "tags": ["ranged", "damage"],
       "cost": { "resource": "mana", "amount": 20 },
       "cooldown": 10,
@@ -137,6 +141,7 @@
     {
       "id": "marksman.hawk_eye",
       "name": "Olho de Falcão",
+      "description": "Por um bom tempo, todos os seus ataques são críticos.",
       "tags": ["buff", "crit", "signature"],
       "signature": true,
       "cost": { "resource": "mana", "amount": 70 },

@@ -331,14 +331,7 @@ public static class HudTheme
         _ => new Color(0.6f, 0.6f, 0.6f),
     };
 
-    public static string ResourceName(string type) => Key(type) switch
-    {
-        "vigor" => "Vigor",
-        "focus" => "Foco",
-        "mana" => "Mana",
-        "faith" => "Fé",
-        var other => other,
-    };
+    public static string ResourceName(string type) => AbilityText.ResourceName(type);
 
     public static Color School(DamageSchool school) => school switch
     {

@@ -58,6 +58,12 @@ public sealed record AbilityDefinition
 {
     public required string Id { get; init; }
     public required string Name { get; init; }
+
+    /// <summary>
+    /// O que a habilidade faz, em uma ou duas frases para o jogador, sem números (os números do NH saem dos efeitos). Só
+    /// apresentação: o Core não usa. Vale para todos os NH.
+    /// </summary>
+    public string? Description { get; init; }
     public IReadOnlyList<string> Tags { get; init; } = [];
     public ResourceCost? Cost { get; init; }
     public int CooldownTicks { get; init; }

@@ -4,6 +4,7 @@
     {
       "id": "warrior.sword_strike",
       "name": "Golpe de Espada",
+      "description": "Ataque básico: golpe de espada nos inimigos logo à sua frente.",
       "tags": ["basic", "melee"],
       "cooldown": 0.9,
       "targeting": { "type": "melee_arc", "range": 1.7, "angle": 100 },
@@ -12,6 +13,7 @@
     {
       "id": "warrior.heavy_strike",
       "name": "Golpe Pesado",
+      "description": "Golpe forte à frente que interrompe a magia que o inimigo estiver conjurando. Guarde para quando um monstro começar a lançar algo perigoso.",
       "tags": ["melee", "interrupt"],
       "cost": { "resource": "mana", "amount": 30 },
       "cooldown": 6,
@@ -64,6 +66,7 @@
     {
       "id": "warrior.whirlwind",
       "name": "Golpe Circular",
+      "description": "Gira a espada e acerta todos os inimigos em volta de você. Bom para chamar a atenção de vários monstros de uma vez.",
       "tags": ["melee", "aoe"],
       "cost": { "resource": "mana", "amount": 25 },
       "cooldown": 5,
@@ -109,6 +112,7 @@
     {
       "id": "warrior.firm_guard",
       "name": "Guarda Firme",
+      "description": "Ergue a guarda: o dano que vem da sua frente cai muito, mas você anda mais devagar enquanto ela dura.",
       "tags": ["defensive"],
       "cooldown": 14,
       "targeting": { "type": "self" },
@@ -129,6 +133,7 @@
     {
       "id": "warrior.taunt",
       "name": "Provocação",
+      "description": "Grita e obriga os monstros por perto a atacar você por alguns segundos. Use para tirar monstros de cima dos aliados.",
       "tags": ["taunt", "aoe"],
       "cooldown": 10,
       "targeting": { "type": "circle_self", "radius": 8 },
@@ -153,6 +158,7 @@
     {
       "id": "warrior.living_wall",
       "name": "Muralha Viva",
+      "description": "Dá um escudo a você e a todos os aliados por perto. O escudo absorve o dano antes da vida.",
       "tags": ["defensive", "group", "signature"],
       "signature": true,
       "cost": { "resource": "mana", "amount": 80 },

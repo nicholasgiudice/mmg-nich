@@ -4,6 +4,7 @@
     {
       "id": "item.minor_healing_potion",
       "name": "Poção de Cura Menor",
+      "description": "Recupera vida na hora.",
       "tags": ["consumable", "heal"],
       "cooldown": 12,
       "targeting": { "type": "self" },
@@ -12,6 +13,7 @@
     {
       "id": "item.minor_mana_potion",
       "name": "Poção de Mana Menor",
+      "description": "Recupera Mana na hora.",
       "tags": ["consumable", "mana"],
       "cooldown": 12,
       "targeting": { "type": "self" },
@@ -20,6 +22,7 @@
     {
       "id": "item.greater_healing_potion",
       "name": "Poção de Cura Maior",
+      "description": "Recupera vida na hora.",
       "tags": ["consumable", "heal"],
       "cooldown": 12,
       "targeting": { "type": "self" },
@@ -28,6 +31,7 @@
     {
       "id": "item.greater_mana_potion",
       "name": "Poção de Mana Maior",
+      "description": "Recupera Mana na hora.",
       "tags": ["consumable", "mana"],
       "cooldown": 12,
       "targeting": { "type": "self" },
@@ -36,6 +40,7 @@
     {
       "id": "item.superior_healing_potion",
       "name": "Poção de Cura Superior",
+      "description": "Recupera vida na hora.",
       "tags": ["consumable", "heal"],
       "cooldown": 12,
       "targeting": { "type": "self" },
@@ -44,6 +49,7 @@
     {
       "id": "item.superior_mana_potion",
       "name": "Poção de Mana Superior",
+      "description": "Recupera Mana na hora.",
       "tags": ["consumable", "mana"],
       "cooldown": 12,
       "targeting": { "type": "self" },

@@ -36,6 +36,9 @@ public partial class SkillPanel : ProgressionPanel
     /// <summary>Habilidade com o detalhe aberto ao lado da grade; null = fechado.</summary>
     private string? _detailId;
 
+    /// <summary>NH mostrado no detalhe (uma aba por NH); null = o NH atual da habilidade.</summary>
+    private int? _detailRank;
+
     /// <summary>T-410: segunda classe com a confirmação aberta; null = mostrando as opções.</summary>
     private string? _confirmId;
 
@@ -59,7 +62,7 @@ public partial class SkillPanel : ProgressionPanel
         var p = self.TryGet<CharacterProgress>();
         var st = self.TryGet<AbilityState>();
         return string.Join(",", s?.Level, s?.Str, s?.Dex, s?.Agi, s?.Int, s?.Vit, s?.WeaponDamage, p?.SkillPoints,
-            st is null ? "" : string.Join(";", st.Known.Select(id => id + st.RankOf(id))), _detailId, p?.SecondClass, _confirmId, _secondTab,
+            st is null ? "" : string.Join(";", st.Known.Select(id => id + st.RankOf(id))), _detailId, _detailRank, p?.SecondClass, _confirmId, _secondTab,
             st is null ? "" : string.Join(";", st.Ranks.Select(kv => kv.Key + kv.Value)));
     }
 
@@ -352,12 +355,14 @@ public partial class SkillPanel : ProgressionPanel
 
             var line = new HBoxContainer();
             line.AddThemeConstantOverride("separation", 4);
-            var summary = AbilityText.Describe(def, Content, stats).Split('\n')[^1]; // efeito do NH1 (a primeira linha é custo e recarga)
-            if (summary.Length == 0 && def.Passive)
+            // O que a habilidade faz; sem descrição nos dados, o último efeito do NH1.
+            var summary = AbilityText.Summary(def);
+            if (summary.Length == 0)
             {
-                summary = "Sempre ativa; não vai para a barra.";
+                summary = AbilityText.Describe(def, Content, stats).Split('\n')[^1];
             }
-            var tip = $"{def.Name}{(def.Passive ? " — passiva" : def.Signature ? " — assinatura" : "")}\n{AbilityText.Describe(def, Content, stats)}";
+            var tip = $"{def.Name}{(def.Passive ? " — passiva" : def.Signature ? " — assinatura" : "")}\n"
+                + Tooltip(def, AbilityText.Describe(def, Content, stats));
             line.AddChild(new SkillIcon
             {
                 Icon = IconCatalog.Shared.For(id),
@@ -587,6 +592,7 @@ public partial class SkillPanel : ProgressionPanel
         button.Pressed += () =>
         {
             _detailId = _detailId == abilityId ? null : abilityId;
+            _detailRank = null;
             Refresh();
         };
         return button;
@@ -643,39 +649,84 @@ public partial class SkillPanel : ProgressionPanel
         close.Pressed += () =>
         {
             _detailId = null;
+            _detailRank = null;
             Refresh();
         };
         head.AddChild(close);
         column.AddChild(head);
-
-        string? previous = null;
-        for (var r = 1; r <= max; r++)
+        if (AbilityText.Summary(ability) is { Length: > 0 } what)
         {
-            if (Content.AbilityAt(ability.Id, r) is not { } def)
+            column.AddChild(Small(what, 12, 0.95f, DetailWidth - 16));
+        }
+
+        // Um NH por vez (abas I, II, III...), para o detalhe não crescer além da tela; abre no NH atual.
+        var shownRank = Math.Clamp(_detailRank ?? Math.Max(rank, 1), 1, max);
+        if (max > 1)
+        {
+            var tabs = new HBoxContainer();
+            tabs.AddThemeConstantOverride("separation", 3);
+            for (var r = 1; r <= max; r++)
             {
-                continue;
+                tabs.AddChild(RankTab(r, r == shownRank, r == rank, requiredLevel(r) is { } need && level < need));
             }
 
-            var required = requiredLevel(r);
-            var header = $"NH {SkillPlan.Roman(r)}" + (required is { } lv ? $" · nível {lv}" : "") + (r == rank ? " · atual" : "");
+            column.AddChild(tabs);
+        }
+
+        if (Content.AbilityAt(ability.Id, shownRank) is { } def)
+        {
+            var required = requiredLevel(shownRank);
+            var header = $"NH {SkillPlan.Roman(shownRank)}" + (required is { } lv ? $" · nível {lv}" : "")
+                + (shownRank == rank ? " · atual" : shownRank > rank ? " · ainda não tem" : "");
             var label = Small(header, 12, 1f, DetailWidth - 16);
-            label.AddThemeColorOverride("font_color", r == rank ? HudTheme.Suggested
+            label.AddThemeColorOverride("font_color", shownRank == rank ? HudTheme.Suggested
                 : required is { } need && level < need ? HudTheme.Warning : HudTheme.StoneText);
             column.AddChild(label);
 
-            var reach = AbilityText.Reach(def);
-            var text = (reach.Length > 0 ? char.ToUpperInvariant(reach[0]) + reach[1..] + "\n" : "") + AbilityText.Describe(def, Content, stats);
-            // NH I inteiro; nos seguintes, só as linhas que mudaram (inteiras, com o trecho novo em dourado).
-            var segments = SkillDetailText.Compare(previous, text);
-            var shown = previous is null ? segments : SkillDetailText.ChangedLines(segments);
-            column.AddChild(shown.Count > 0 ? RankText(shown) : Small("Sem mudança nos números.", 12, 0.6f));
-            previous = text;
+            // Texto inteiro do NH, com o que mudou em relação ao NH anterior em dourado.
+            var previous = shownRank > 1 && Content.AbilityAt(ability.Id, shownRank - 1) is { } before ? RankBody(before, stats) : null;
+            column.AddChild(RankText(SkillDetailText.Compare(previous, RankBody(def, stats))));
         }
 
-        var note = Small(max > 1 ? "Do NH II em diante, só as linhas que mudam; em dourado, o que é novo. Valores com os seus atributos de agora."
+        var note = Small(max > 1 ? "Em dourado, o que mudou desde o NH anterior. Valores com os seus atributos de agora."
             : "Valores com os seus atributos de agora.", 10, 0.6f, DetailWidth - 16);
         column.AddChild(note);
         return panel;
+    }
+
+    /// <summary>Alcance e efeitos de um NH, para o detalhe.</summary>
+    private string RankBody(AbilityDefinition def, CharacterStats? stats)
+    {
+        var reach = AbilityText.Reach(def);
+        return (reach.Length > 0 ? char.ToUpperInvariant(reach[0]) + reach[1..] + "\n" : "") + AbilityText.Describe(def, Content, stats);
+    }
+
+    /// <summary>Aba de um NH no detalhe: dourada se é a aberta; marca o NH atual e os que pedem nível maior.</summary>
+    private Button RankTab(int r, bool selected, bool current, bool locked)
+    {
+        var tab = new Button
+        {
+            Text = SkillPlan.Roman(r),
+            ToggleMode = true,
+            ButtonPressed = selected,
+            FocusMode = FocusModeEnum.None,
+            CustomMinimumSize = new Vector2(34, 22),
+            TooltipText = $"NH {SkillPlan.Roman(r)}" + (current ? " (atual)" : locked ? " (pede nível maior)" : ""),
+        };
+        HudTheme.StoneButton(tab);
+        tab.AddThemeFontSizeOverride("font_size", 11);
+        var color = selected ? HudTheme.Suggested : current ? Colors.White : locked ? HudTheme.Warning : HudTheme.StoneText;
+        foreach (var state in new[] { "font_color", "font_pressed_color", "font_hover_color", "font_hover_pressed_color" })
+        {
+            tab.AddThemeColorOverride(state, color);
+        }
+
+        tab.Pressed += () =>
+        {
+            _detailRank = r;
+            Refresh();
+        };
+        return tab;
     }
 
     /// <summary>Texto de um NH em BBCode: os trechos que mudaram em dourado.</summary>
@@ -751,6 +802,11 @@ public partial class SkillPanel : ProgressionPanel
     private string Tip(string title, AbilityDefinition? current, CharacterStats? stats, (int Rank, AbilityDefinition Def)? next)
     {
         var text = title;
+        if ((current ?? next?.Def) is { } what && AbilityText.WrappedSummary(what) is { Length: > 0 } summary)
+        {
+            text += "\n" + summary;
+        }
+
         if (current is not null)
         {
             text += Section(current, stats);
@@ -773,4 +829,8 @@ public partial class SkillPanel : ProgressionPanel
         var reach = AbilityText.Reach(def);
         return (reach.Length > 0 ? "\n" + char.ToUpperInvariant(reach[0]) + reach[1..] : "") + "\n" + AbilityText.Describe(def, Content, stats);
     }
+
+    /// <summary>Descrição (quebrada para caber no tooltip) seguida de <paramref name="numbers"/>.</summary>
+    private static string Tooltip(AbilityDefinition def, string numbers) =>
+        AbilityText.WrappedSummary(def) is { Length: > 0 } summary ? summary + "\n" + numbers : numbers;
 }
