@@ -149,6 +149,16 @@
       "y": 340,
       "source": "P_Red07.png (vermelhos recoloridos para azul, rolha mantida)"
     },
+    "consumable.superior_healing_potion": {
+      "x": 68,
+      "y": 340,
+      "source": "P_Red07.png (matiz deslocado para dourado, T-513)"
+    },
+    "consumable.superior_mana_potion": {
+      "x": 102,
+      "y": 340,
+      "source": "P_Red07.png (azul deslocado para violeta, T-513)"
+    },
     "weapon.sword": {
       "x": 68,
       "y": 102,
