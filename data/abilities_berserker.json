@@ -4,6 +4,7 @@
     {
       "id": "berserker.charge",
       "name": "Investida",
+      "description": "Avança até o inimigo, causa dano e o atordoa por um instante.",
       "tags": ["melee", "dash", "control"],
       "cost": { "resource": "mana", "amount": 20 },
       "cooldown": 10,
@@ -53,6 +54,7 @@
     {
       "id": "berserker.fury",
       "name": "Fúria",
+      "description": "Entra em fúria: causa mais dano e anda mais rápido, mas também recebe mais dano enquanto ela dura.",
       "tags": ["buff", "fury"],
       "cooldown": 20,
       "targeting": { "type": "self" },
@@ -67,6 +69,7 @@
     {
       "id": "berserker.execution",
       "name": "Execução",
+      "description": "Golpe forte à frente que causa dano extra em inimigos com pouca vida. Guarde para terminar o serviço.",
       "tags": ["melee", "execute"],
       "cost": { "resource": "mana", "amount": 20 },
       "cooldown": 8,
@@ -135,6 +138,7 @@
     {
       "id": "berserker.blood_thirst",
       "name": "Sede de Sangue",
+      "description": "Passiva, sempre ativa: parte de todo dano que você causa volta para você como vida.",
       "tags": ["passive", "lifesteal"],
       "passive": true,
       "passiveStatus": "status.blood_thirst",
@@ -149,6 +153,7 @@
     {
       "id": "berserker.steel_storm",
       "name": "Tempestade de Aço",
+      "description": "Gira sem parar por alguns segundos, acertando todos os inimigos em volta enquanto você anda (mais devagar).",
       "tags": ["melee", "aoe", "signature"],
       "signature": true,
       "cost": { "resource": "mana", "amount": 80 },

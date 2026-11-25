@@ -4,6 +4,7 @@
     {
       "id": "arcanist.arcane_ray",
       "name": "Raio Arcano",
+      "description": "Canaliza um raio num inimigo, parado: o dano sobe a cada pulso. Andar cancela.",
       "tags": ["ranged", "channel"],
       "cost": { "resource": "mana", "amount": 40 },
       "cooldown": 8,
@@ -28,6 +29,7 @@
     {
       "id": "arcanist.arcane_mark",
       "name": "Marca Arcana",
+      "description": "Põe uma marca que causa dano a cada segundo. Cada uso soma uma pilha e renova as outras.",
       "tags": ["ranged", "dot"],
       "cost": { "resource": "mana", "amount": 15 },
       "cooldown": 3,
@@ -43,6 +45,7 @@
     {
       "id": "arcanist.arcane_orbs",
       "name": "Orbes Arcanos",
+      "description": "Invoca orbes que giram em volta de você e atiram sozinhos no seu alvo atual por alguns segundos.",
       "tags": ["buff", "arcane_orbs"],
       "cost": { "resource": "mana", "amount": 45 },
       "cooldown": 16,
@@ -58,6 +61,7 @@
     {
       "id": "arcanist.arcane_siphon",
       "name": "Sifão Arcano",
+      "description": "Dano arcano num inimigo. Depois, você recupera Mana mais rápido por alguns segundos.",
       "tags": ["ranged", "mana_regen"],
       "cooldown": 10,
       "castTime": 1,
@@ -104,6 +108,7 @@
     {
       "id": "arcanist.void_beam",
       "name": "Feixe do Vazio",
+      "description": "Canaliza um feixe longo e forte num inimigo. Dá para andar devagar enquanto canaliza.",
       "tags": ["ranged", "channel", "signature"],
       "signature": true,
       "cost": { "resource": "mana", "amount": 90 },

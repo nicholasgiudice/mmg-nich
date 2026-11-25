@@ -4,6 +4,7 @@
     {
       "id": "archer.shot",
       "name": "Disparo",
+      "description": "Ataque básico: uma flecha num inimigo à distância.",
       "tags": ["basic", "ranged"],
       "cooldown": 1.0,
       "targeting": { "type": "unit", "range": 9, "faction": "enemy" },
@@ -12,6 +13,7 @@
     {
       "id": "archer.power_shot",
       "name": "Disparo Potente",
+      "description": "Flecha forte num único inimigo.",
       "tags": ["ranged", "damage"],
       "cost": { "resource": "mana", "amount": 25 },
       "cooldown": 7,
@@ -41,6 +43,7 @@
     {
       "id": "archer.hunters_mark",
       "name": "Marca do Caçador",
+      "description": "Marca um inimigo: enquanto a marca durar, ele recebe mais dano de todos os ataques, seus e do grupo.",
       "tags": ["ranged", "debuff"],
       "cost": { "resource": "mana", "amount": 10 },
       "cooldown": 12,
@@ -89,6 +92,7 @@
     {
       "id": "archer.quick_retreat",
       "name": "Recuo Rápido",
+      "description": "Salta para trás, abrindo distância dos inimigos.",
       "tags": ["mobility"],
       "cooldown": 8,
       "targeting": { "type": "self" },
@@ -109,6 +113,7 @@
     {
       "id": "archer.rain_of_arrows",
       "name": "Chuva de Flechas",
+      "description": "Faz chover flechas no lugar que você mirar. A área aparece no chão e as flechas caem em ondas, acertando todos os inimigos dentro.",
       "tags": ["ranged", "aoe"],
       "cost": { "resource": "mana", "amount": 45 },
       "cooldown": 12,
@@ -138,6 +143,7 @@
     {
       "id": "archer.devastating_arrow",
       "name": "Flecha Devastadora",
+      "description": "Mira por um instante, parado, e solta uma flecha de dano muito alto num inimigo distante.",
       "tags": ["ranged", "channel", "signature"],
       "signature": true,
       "cost": { "resource": "mana", "amount": 70 },
@@ -162,6 +168,7 @@
     {
       "id": "archer.containment_trap",
       "name": "Armadilha de Contenção",
+      "description": "Arma uma armadilha no chão. O primeiro inimigo que pisar nela sofre dano e fica preso no lugar por alguns segundos.",
       "tags": ["control", "trap"],
       "cost": { "resource": "mana", "amount": 25 },
       "cooldown": 14,

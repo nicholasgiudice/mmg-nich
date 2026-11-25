@@ -465,6 +465,7 @@
       "properties": {
         "id": { "$ref": "#/$defs/id" },
         "name": { "type": "string" },
+        "description": { "type": "string", "minLength": 1, "description": "O que a habilidade faz, para o jogador, sem números (vale para todos os NH). Obrigatória nas habilidades de classe e de consumível." },
         "tags": { "$ref": "#/$defs/stringList" },
         "cost": {
           "type": "object",

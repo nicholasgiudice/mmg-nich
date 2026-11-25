@@ -4,6 +4,7 @@
     {
       "id": "guardian.interception",
       "name": "Interceptação",
+      "description": "Corre até um aliado e, por alguns segundos, toma para si parte do dano que ele receberia.",
       "tags": ["defensive", "group", "dash"],
       "cost": { "resource": "mana", "amount": 20 },
       "cooldown": 12,
@@ -50,6 +51,7 @@
     {
       "id": "guardian.shield_bash",
       "name": "Golpe de Escudo",
+      "description": "Bate com o escudo à frente e atordoa o inimigo. Gera muita ameaça, então o monstro passa a atacar você.",
       "tags": ["melee", "control"],
       "cost": { "resource": "mana", "amount": 25 },
       "cooldown": 8,
@@ -123,6 +125,7 @@
     {
       "id": "guardian.bastion",
       "name": "Bastião",
+      "description": "Você e os aliados por perto recebem menos dano por alguns segundos.",
       "tags": ["defensive", "group"],
       "cost": { "resource": "mana", "amount": 20 },
       "cooldown": 20,
@@ -195,6 +198,7 @@
     {
       "id": "guardian.steadfast",
       "name": "Inabalável",
+      "description": "Livra você de atordoamento, prisão, congelamento e lentidão. Por alguns segundos você fica imune a eles e recebe menos dano.",
       "tags": ["defensive", "cleanse"],
       "cooldown": 25,
       "targeting": { "type": "self" },
@@ -237,6 +241,7 @@
     {
       "id": "guardian.oath",
       "name": "Juramento",
+      "description": "Por alguns segundos, parte do dano que os aliados por perto receberiam vai para você, que o recebe reduzido.",
       "tags": ["defensive", "group", "signature"],
       "signature": true,
       "cost": { "resource": "mana", "amount": 80 },

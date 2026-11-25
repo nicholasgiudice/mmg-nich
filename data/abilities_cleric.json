@@ -4,6 +4,7 @@
     {
       "id": "cleric.holy_strike",
       "name": "Golpe Sagrado",
+      "description": "Ataque básico: golpe de luz sagrada num inimigo à distância. Mais forte contra mortos-vivos e corrompidos.",
       "tags": ["basic", "holy"],
       "cooldown": 1.1,
       "targeting": { "type": "unit", "range": 6, "faction": "enemy" },
@@ -20,6 +21,7 @@
     {
       "id": "cleric.direct_heal",
       "name": "Cura Direta",
+      "description": "Cura a vida de um aliado (ou a sua).",
       "tags": ["heal"],
       "cost": { "resource": "mana", "amount": 20 },
       "cooldown": 4,
@@ -49,6 +51,7 @@
     {
       "id": "cleric.sacred_shield",
       "name": "Escudo Sagrado",
+      "description": "Põe num aliado um escudo que absorve o dano antes da vida. Use antes de o golpe chegar.",
       "tags": ["defensive", "preventive"],
       "cost": { "resource": "mana", "amount": 15 },
       "cooldown": 10,
@@ -89,6 +92,7 @@
     {
       "id": "cleric.holy_chain",
       "name": "Corrente Sagrada",
+      "description": "Dano sagrado num inimigo e uma pequena cura em você. Mais forte contra mortos-vivos e corrompidos.",
       "tags": ["holy", "ranged"],
       "cost": { "resource": "mana", "amount": 25 },
       "cooldown": 6,
@@ -206,6 +210,7 @@
     {
       "id": "cleric.purify",
       "name": "Purificação",
+      "description": "Tira um veneno ou uma maldição de um aliado.",
       "tags": ["cleanse", "holy"],
       "cooldown": 8,
       "targeting": { "type": "unit", "range": 8, "faction": "ally" },
@@ -227,6 +232,7 @@
     {
       "id": "cleric.miracle",
       "name": "Milagre",
+      "description": "Cura grande em você e em todos os aliados por perto.",
       "tags": ["heal", "group", "signature"],
       "signature": true,
       "cost": { "resource": "mana", "amount": 90 },

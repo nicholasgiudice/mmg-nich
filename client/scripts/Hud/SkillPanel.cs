@@ -352,12 +352,14 @@ public partial class SkillPanel : ProgressionPanel
 
             var line = new HBoxContainer();
             line.AddThemeConstantOverride("separation", 4);
-            var summary = AbilityText.Describe(def, Content, stats).Split('\n')[^1]; // efeito do NH1 (a primeira linha é custo e recarga)
-            if (summary.Length == 0 && def.Passive)
+            // O que a habilidade faz; sem descrição nos dados, o último efeito do NH1.
+            var summary = AbilityText.Summary(def);
+            if (summary.Length == 0)
             {
-                summary = "Sempre ativa; não vai para a barra.";
+                summary = AbilityText.Describe(def, Content, stats).Split('\n')[^1];
             }
-            var tip = $"{def.Name}{(def.Passive ? " — passiva" : def.Signature ? " — assinatura" : "")}\n{AbilityText.Describe(def, Content, stats)}";
+            var tip = $"{def.Name}{(def.Passive ? " — passiva" : def.Signature ? " — assinatura" : "")}\n"
+                + Tooltip(def, AbilityText.Describe(def, Content, stats));
             line.AddChild(new SkillIcon
             {
                 Icon = IconCatalog.Shared.For(id),
@@ -647,6 +649,10 @@ public partial class SkillPanel : ProgressionPanel
         };
         head.AddChild(close);
         column.AddChild(head);
+        if (AbilityText.Summary(ability) is { Length: > 0 } what)
+        {
+            column.AddChild(Small(what, 12, 0.95f, DetailWidth - 16));
+        }
 
         string? previous = null;
         for (var r = 1; r <= max; r++)
@@ -751,6 +757,11 @@ public partial class SkillPanel : ProgressionPanel
     private string Tip(string title, AbilityDefinition? current, CharacterStats? stats, (int Rank, AbilityDefinition Def)? next)
     {
         var text = title;
+        if ((current ?? next?.Def) is { } what && AbilityText.WrappedSummary(what) is { Length: > 0 } summary)
+        {
+            text += "\n" + summary;
+        }
+
         if (current is not null)
         {
             text += Section(current, stats);
@@ -773,4 +784,8 @@ public partial class SkillPanel : ProgressionPanel
         var reach = AbilityText.Reach(def);
         return (reach.Length > 0 ? "\n" + char.ToUpperInvariant(reach[0]) + reach[1..] : "") + "\n" + AbilityText.Describe(def, Content, stats);
     }
+
+    /// <summary>Descrição (quebrada para caber no tooltip) seguida de <paramref name="numbers"/>.</summary>
+    private static string Tooltip(AbilityDefinition def, string numbers) =>
+        AbilityText.WrappedSummary(def) is { Length: > 0 } summary ? summary + "\n" + numbers : numbers;
 }

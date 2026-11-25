@@ -4,6 +4,7 @@
     {
       "id": "priest.restoring_prayer",
       "name": "Oração Restauradora",
+      "description": "Cura você e os aliados por perto a cada segundo, por alguns segundos.",
       "tags": ["heal", "group"],
       "cost": { "resource": "mana", "amount": 45 },
       "cooldown": 12,
@@ -76,6 +77,7 @@
     {
       "id": "priest.blessing",
       "name": "Bênção",
+      "description": "Você e os aliados por perto ganham pontos em todos os atributos por um tempo. Quanto mais INT, maior o bônus.",
       "tags": ["buff", "group"],
       "cost": { "resource": "mana", "amount": 35 },
       "cooldown": 30,
@@ -148,6 +150,7 @@
     {
       "id": "priest.swift_grace",
       "name": "Graça Veloz",
+      "description": "Você e os aliados por perto andam mais rápido por um tempo. Ótima para viajar e para se reposicionar na luta.",
       "tags": ["buff", "group", "speed"],
       "cost": { "resource": "mana", "amount": 20 },
       "cooldown": 20,
@@ -234,6 +237,7 @@
     {
       "id": "priest.inspiration",
       "name": "Inspiração",
+      "description": "Os aliados por perto (você não) recuperam Mana mais rápido por um tempo.",
       "tags": ["buff", "group", "mana"],
       "cost": { "resource": "mana", "amount": 30 },
       "cooldown": 30,
@@ -301,6 +305,7 @@
     {
       "id": "priest.sanctuary",
       "name": "Santuário",
+      "description": "Por alguns segundos, você e os aliados por perto não caem abaixo de 1 de vida.",
       "tags": ["defensive", "group", "signature"],
       "signature": true,
       "cost": { "resource": "mana", "amount": 90 },
