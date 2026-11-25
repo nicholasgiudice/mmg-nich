@@ -17,7 +17,7 @@ namespace MmoRpgClient.Hud;
 /// </summary>
 public partial class BossPanel : PanelContainer
 {
-    public const float PanelWidth = 440f;
+    public const float PanelWidth = 330f;
 
     private static readonly CultureInfo Pt = CultureInfo.GetCultureInfo("pt-BR");
     private static readonly Color MustInterrupt = new(1f, 0.25f, 0.2f);
@@ -26,8 +26,8 @@ public partial class BossPanel : PanelContainer
     private static readonly Color SealBroken = new(0.35f, 0.35f, 0.38f);
 
     private readonly Label _name = new();
-    private readonly HudBar _health = new() { CustomMinimumSize = new Vector2(PanelWidth, 18), FontSize = 12, MouseFilter = MouseFilterEnum.Ignore };
-    private readonly HudBar _cast = new() { CustomMinimumSize = new Vector2(PanelWidth, 16), FontSize = 11, MouseFilter = MouseFilterEnum.Ignore };
+    private readonly HudBar _health = new() { CustomMinimumSize = new Vector2(PanelWidth, 13), FontSize = 10, MouseFilter = MouseFilterEnum.Ignore };
+    private readonly HudBar _cast = new() { CustomMinimumSize = new Vector2(PanelWidth, 12), FontSize = 9, MouseFilter = MouseFilterEnum.Ignore };
     private readonly HBoxContainer _seals = new();
     private readonly List<(Label Label, HudBar Bar)> _sealViews = new();
     private double _time;
@@ -35,13 +35,14 @@ public partial class BossPanel : PanelContainer
     public override void _Ready()
     {
         MouseFilter = MouseFilterEnum.Ignore;
-        AddThemeStyleboxOverride("panel", HudTheme.StonePanel());
+        // O painel de pedra em meia escala: o chefe ocupa menos do topo da tela, com o mesmo estilo.
+        AddThemeStyleboxOverride("panel", HudTheme.StonePanelCompact());
         var box = new VBoxContainer { MouseFilter = MouseFilterEnum.Ignore };
-        box.AddThemeConstantOverride("separation", 4);
+        box.AddThemeConstantOverride("separation", 2);
         AddChild(box);
 
         _name.HorizontalAlignment = HorizontalAlignment.Center;
-        _name.AddThemeFontSizeOverride("font_size", 15);
+        _name.AddThemeFontSizeOverride("font_size", 12);
         _name.AddThemeColorOverride("font_color", HudTheme.StoneText);
         _name.AddThemeConstantOverride("outline_size", 3);
         _name.AddThemeColorOverride("font_outline_color", Colors.Black);
@@ -52,7 +53,7 @@ public partial class BossPanel : PanelContainer
         box.AddChild(_cast);
 
         _seals.Alignment = BoxContainer.AlignmentMode.Center;
-        _seals.AddThemeConstantOverride("separation", 10);
+        _seals.AddThemeConstantOverride("separation", 6);
         _seals.MouseFilter = MouseFilterEnum.Ignore;
         box.AddChild(_seals);
     }
@@ -116,9 +117,9 @@ public partial class BossPanel : PanelContainer
         {
             var cell = new VBoxContainer { MouseFilter = MouseFilterEnum.Ignore };
             var label = new Label { HorizontalAlignment = HorizontalAlignment.Center };
-            label.AddThemeFontSizeOverride("font_size", 11);
+            label.AddThemeFontSizeOverride("font_size", 9);
             label.AddThemeColorOverride("font_color", HudTheme.StoneText);
-            var bar = new HudBar { CustomMinimumSize = new Vector2(130, 12), FontSize = 9, MouseFilter = MouseFilterEnum.Ignore, BorderColor = HudTheme.BarBorderGold };
+            var bar = new HudBar { CustomMinimumSize = new Vector2(100, 9), FontSize = 8, MouseFilter = MouseFilterEnum.Ignore, BorderColor = HudTheme.BarBorderGold };
             cell.AddChild(label);
             cell.AddChild(bar);
             _seals.AddChild(cell);

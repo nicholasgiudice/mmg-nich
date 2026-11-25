@@ -125,13 +125,16 @@ public static class HudTheme
         UiPiece("frame_member.png", 9, 10, 7)
         ?? new StyleBoxFlat { BgColor = Panel, ContentMarginLeft = 6, ContentMarginRight = 6, ContentMarginTop = 4, ContentMarginBottom = 4 };
 
-    /// <summary>Botão de pedra e ouro nos quatro estados (T-311); sem as peças, o botão fica com o tema padrão.</summary>
-    public static void StoneButton(Button button)
+    /// <summary>
+    /// Botão de pedra e ouro nos quatro estados (T-311); sem as peças, o botão fica com o tema padrão. Compacto: as mesmas
+    /// peças com menos folga em volta do texto (os botões fixos do HUD, como os do grupo).
+    /// </summary>
+    public static void StoneButton(Button button, bool compact = false)
     {
         foreach (var (state, file) in new[] { ("normal", "button_normal.png"), ("hover", "button_hover.png"),
                      ("pressed", "button_pressed.png"), ("disabled", "button_disabled.png"), ("focus", "button_hover.png") })
         {
-            if (UiPiece(file, 9, 14, 6) is { } style)
+            if ((compact ? UiPiece(file, 9, 9, 2) : UiPiece(file, 9, 14, 6)) is { } style)
             {
                 button.AddThemeStyleboxOverride(state, style);
             }
@@ -205,6 +208,47 @@ public static class HudTheme
             ContentMarginBottom = 24,
         };
         return _stonePanel;
+    }
+
+    private static StyleBox? _stonePanelCompact;
+
+    /// <summary>
+    /// O mesmo painel de pedra em meia escala (bordas, rachaduras e cantos dourados com metade da espessura), para os
+    /// quadros fixos do HUD (jogador, chefe) ocuparem menos tela sem perder o estilo. Gerado do <c>panel.png</c> na
+    /// primeira chamada, com filtro Lanczos (o vizinho mais próximo apagava os cantos de ouro).
+    /// </summary>
+    public static StyleBox StonePanelCompact()
+    {
+        if (_stonePanelCompact is not null)
+        {
+            return _stonePanelCompact;
+        }
+
+        if (StonePanel() is not StyleBoxTexture { Texture: { } full } || full.GetImage() is not { } image)
+        {
+            return _stonePanelCompact = StonePanel();
+        }
+
+        image = (Image)image.Duplicate();
+        if (image.IsCompressed())
+        {
+            image.Decompress();
+        }
+
+        image.Resize(image.GetWidth() / 2, image.GetHeight() / 2, Image.Interpolation.Lanczos);
+        const int margin = StonePanelMargin / 2;
+        return _stonePanelCompact = new StyleBoxTexture
+        {
+            Texture = ImageTexture.CreateFromImage(image),
+            TextureMarginLeft = margin,
+            TextureMarginRight = margin,
+            TextureMarginTop = margin,
+            TextureMarginBottom = margin,
+            ContentMarginLeft = 12,
+            ContentMarginRight = 12,
+            ContentMarginTop = 10,
+            ContentMarginBottom = 12,
+        };
     }
 
     /// <summary>

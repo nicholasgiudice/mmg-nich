@@ -36,7 +36,14 @@ public partial class AbilitySlot : Control
     private static readonly Color NotLearnedShade = new(0.05f, 0.05f, 0.06f, 0.70f);
     private static readonly Color DropHighlight = new(1f, 0.85f, 0.45f, 0.9f);
 
-    public const float SlotSize = 52f;
+    /// <summary>Lado do espaço na barra, numa linha só (metade dos 52 px de antes, mais 10%).</summary>
+    public const float SlotSize = 29f;
+
+    /// <summary>Lado para o qual as fontes e margens do desenho foram pensadas.</summary>
+    private const float ReferenceSize = 52f;
+
+    /// <summary>Menor fonte usada nos textos do espaço.</summary>
+    private const int MinFontSize = 8;
 
     private static readonly Color Background = new(0.18f, 0.20f, 0.26f);
     private static readonly Color CooldownShade = new(0f, 0f, 0f, 0.65f);
@@ -185,10 +192,12 @@ public partial class AbilitySlot : Control
     {
         var rect = new Rect2(Vector2.Zero, Size);
         var font = ThemeDB.FallbackFont;
+        var keyFont = FontFor(11);
+        var top = TopBaseline(font, keyFont);
         if (_state.Empty)
         {
             DrawRect(rect, EmptyBackground);
-            DrawString(font, new Vector2(3, 12), _state.Key, HorizontalAlignment.Left, -1, 11, new Color(1, 1, 1, 0.6f));
+            DrawString(font, new Vector2(2, top), _state.Key, HorizontalAlignment.Left, -1, keyFont, new Color(1, 1, 1, 0.6f));
             DrawRect(rect, _dropHover ? DropHighlight : new Color(1, 1, 1, 0.12f), filled: false, width: _dropHover ? 2f : 1f);
             return;
         }
@@ -196,18 +205,21 @@ public partial class AbilitySlot : Control
         DrawRect(rect, Background);
         if (_icon is not null)
         {
-            DrawTextureRect(_icon, rect.Grow(-3), tile: false);
+            DrawTextureRect(_icon, rect.Grow(-Mathf.Max(1f, Mathf.Round(3 * DrawScale))), tile: false);
         }
         else
         {
-            DrawString(font, new Vector2(0, Size.Y / 2 + 6), _state.Abbreviation, HorizontalAlignment.Center, Size.X, 16, Colors.White);
+            DrawString(font, Middle(font, FontFor(16)), _state.Abbreviation, HorizontalAlignment.Center, Size.X, FontFor(16), Colors.White);
         }
 
         if (_state.NotLearned)
         {
             DrawRect(rect, NotLearnedShade);
-            DrawString(font, new Vector2(0, Size.Y / 2 + 4), "não", HorizontalAlignment.Center, Size.X, 10, new Color(1, 1, 1, 0.8f));
-            DrawString(font, new Vector2(0, Size.Y / 2 + 15), "aprendida", HorizontalAlignment.Center, Size.X, 9, new Color(1, 1, 1, 0.8f));
+            if (Size.X >= 40)
+            {
+                DrawString(font, new Vector2(0, Size.Y / 2 + 4), "não", HorizontalAlignment.Center, Size.X, 10, new Color(1, 1, 1, 0.8f));
+                DrawString(font, new Vector2(0, Size.Y / 2 + 15), "aprendida", HorizontalAlignment.Center, Size.X, 9, new Color(1, 1, 1, 0.8f));
+            }
         }
         else if (_state.Depleted)
         {
@@ -226,28 +238,51 @@ public partial class AbilitySlot : Control
         if (_state.CooldownFraction > 0)
         {
             DrawSweep(_state.CooldownFraction);
-            DrawStringOutline(font, new Vector2(0, Size.Y / 2 + 6), $"{_state.CooldownSeconds:0.0}", HorizontalAlignment.Center, Size.X, 15, 4, Colors.Black);
-            DrawString(font, new Vector2(0, Size.Y / 2 + 6), $"{_state.CooldownSeconds:0.0}", HorizontalAlignment.Center, Size.X, 15, Colors.White);
+            var cdFont = FontFor(15);
+            var at = Middle(font, cdFont);
+            DrawStringOutline(font, at, $"{_state.CooldownSeconds:0.0}", HorizontalAlignment.Center, Size.X, cdFont, 3, Colors.Black);
+            DrawString(font, at, $"{_state.CooldownSeconds:0.0}", HorizontalAlignment.Center, Size.X, cdFont, Colors.White);
         }
 
-        DrawString(font, new Vector2(3, 12), _state.Key, HorizontalAlignment.Left, -1, 11, new Color(1, 1, 1, 0.9f));
+        DrawKeyText(font, new Vector2(2, top), _state.Key, HorizontalAlignment.Left, keyFont, new Color(1, 1, 1, 0.9f));
+        var smallFont = FontFor(10);
+        var bottom = Size.Y - 1 - font.GetDescent(smallFont);
         if (_state.Cost.Length > 0)
         {
-            DrawString(font, new Vector2(0, Size.Y - 3), _state.Cost, HorizontalAlignment.Right, Size.X - 3, 10, new Color(0.8f, 0.9f, 1f));
+            DrawKeyText(font, new Vector2(0, bottom), _state.Cost, HorizontalAlignment.Right, smallFont, new Color(0.8f, 0.9f, 1f));
         }
 
         if (_state.Rank.Length > 0)
         {
-            DrawString(font, new Vector2(3, Size.Y - 3), _state.Rank, HorizontalAlignment.Left, -1, 10, new Color(1f, 0.85f, 0.45f));
+            DrawKeyText(font, new Vector2(2, bottom), _state.Rank, HorizontalAlignment.Left, smallFont, new Color(1f, 0.85f, 0.45f));
         }
 
         if (_state.Charges is { } charges)
         {
-            DrawString(font, new Vector2(0, 12), charges, HorizontalAlignment.Right, Size.X - 3, 11, new Color(1f, 0.9f, 0.5f));
+            DrawKeyText(font, new Vector2(0, top), charges, HorizontalAlignment.Right, keyFont, new Color(1f, 0.9f, 0.5f));
         }
 
         DrawRect(rect, _dropHover ? DropHighlight : _state.Casting ? CastingBorder : Colors.Black, filled: false,
-            width: _dropHover || _state.Casting ? 2.5f : 1f);
+            width: _dropHover || _state.Casting ? 2f : 1f);
+    }
+
+    /// <summary>Quanto o espaço está reduzido em relação ao desenho original de 52 px (fontes e margens acompanham).</summary>
+    private float DrawScale => Size.X / ReferenceSize;
+
+    /// <summary>Fonte do desenho original reduzida com o espaço, sem ficar ilegível.</summary>
+    private int FontFor(int original) => Math.Max(MinFontSize, Mathf.RoundToInt(original * DrawScale));
+
+    private static float TopBaseline(Font font, int fontSize) => font.GetAscent(fontSize);
+
+    private Vector2 Middle(Font font, int fontSize) =>
+        new(0, (Size.Y + font.GetAscent(fontSize) - font.GetDescent(fontSize)) / 2);
+
+    /// <summary>Texto pequeno com contorno, para ler por cima do ícone num espaço pequeno.</summary>
+    private void DrawKeyText(Font font, Vector2 at, string text, HorizontalAlignment align, int fontSize, Color color)
+    {
+        var width = align == HorizontalAlignment.Right ? Size.X - 2 : -1;
+        DrawStringOutline(font, at, text, align, width, fontSize, 2, Colors.Black);
+        DrawString(font, at, text, align, width, fontSize, color);
     }
 
     /// <summary>Setor escuro no sentido horário a partir do topo, proporcional à recarga restante.</summary>

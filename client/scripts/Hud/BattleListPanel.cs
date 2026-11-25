@@ -13,11 +13,11 @@ namespace MmoRpgClient.Hud;
 /// </summary>
 public partial class BattleListPanel : PanelContainer
 {
-    public const float PanelWidth = 220f;
-    private const float RowHeight = 30f;
+    public const float PanelWidth = 180f;
+    private const float RowHeight = 24f;
 
     /// <summary>Lado do quadrado da miniatura (pixels): a altura da linha, menos a margem.</summary>
-    private const int ThumbSize = 28;
+    private const int ThumbSize = 22;
 
     /// <summary>Ícone de "está te atacando" (T-382, kit pedra e ouro); sem o arquivo, volta o "!" de texto.</summary>
     private const string AttackIconFile = "attack_marker.png";
@@ -45,10 +45,10 @@ public partial class BattleListPanel : PanelContainer
         AddThemeStyleboxOverride("panel", new StyleBoxFlat
         {
             BgColor = HudTheme.Panel,
-            ContentMarginLeft = 6,
-            ContentMarginRight = 6,
-            ContentMarginTop = 4,
-            ContentMarginBottom = 6,
+            ContentMarginLeft = 5,
+            ContentMarginRight = 5,
+            ContentMarginTop = 3,
+            ContentMarginBottom = 4,
             CornerRadiusTopLeft = 4,
             CornerRadiusTopRight = 4,
             CornerRadiusBottomLeft = 4,
@@ -56,11 +56,11 @@ public partial class BattleListPanel : PanelContainer
         });
 
         var box = new VBoxContainer();
-        box.AddThemeConstantOverride("separation", 4);
+        box.AddThemeConstantOverride("separation", 2);
         AddChild(box);
 
         _title.Text = "Batalha (B)";
-        _title.AddThemeFontSizeOverride("font_size", 12);
+        _title.AddThemeFontSizeOverride("font_size", 11);
         _title.MouseFilter = MouseFilterEnum.Ignore;
         box.AddChild(_title);
 
@@ -124,6 +124,7 @@ public partial class BattleListPanel : PanelContainer
         private readonly Label _marker = new();
         private readonly TextureRect _markerIcon = new();
         private readonly Label _name = new();
+        private readonly Label _level = new();
         private readonly HudBar _health = new();
         private readonly StyleBoxFlat _style = new() { BgColor = Colors.Transparent, ContentMarginLeft = 2, ContentMarginRight = 2 };
         private EntityId _id;
@@ -153,12 +154,22 @@ public partial class BattleListPanel : PanelContainer
             stack.AddThemeConstantOverride("separation", 1);
             line.AddChild(stack);
 
+            // O nome encolhe (corta) e o nível fica sempre à direita, para caber no painel estreito.
+            var nameRow = new HBoxContainer { MouseFilter = MouseFilterEnum.Ignore };
+            nameRow.AddThemeConstantOverride("separation", 3);
+            stack.AddChild(nameRow);
             _name.MouseFilter = MouseFilterEnum.Ignore;
             _name.ClipText = true;
-            _name.AddThemeFontSizeOverride("font_size", 11);
-            stack.AddChild(_name);
+            _name.TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis;
+            _name.SizeFlagsHorizontal = SizeFlags.ExpandFill;
+            _name.AddThemeFontSizeOverride("font_size", 10);
+            nameRow.AddChild(_name);
+            _level.MouseFilter = MouseFilterEnum.Ignore;
+            _level.AddThemeFontSizeOverride("font_size", 9);
+            _level.AddThemeColorOverride("font_color", HudTheme.StoneText);
+            nameRow.AddChild(_level);
 
-            _health.CustomMinimumSize = new Vector2(0, 7);
+            _health.CustomMinimumSize = new Vector2(0, 5);
             _health.MouseFilter = MouseFilterEnum.Ignore;
             _health.FontSize = 0;
             stack.AddChild(_health);
@@ -200,10 +211,16 @@ public partial class BattleListPanel : PanelContainer
             _id = entry.Id;
             _selected = entry.Selected;
             var star = entry.Rank switch { MonsterRank.Boss => "★ ", MonsterRank.Elite => "◆ ", _ => "" };
-            var text = $"{star}{entry.Name} · nv {entry.Level}";
+            var text = $"{star}{entry.Name}";
             if (_name.Text != text)
             {
                 _name.Text = text;
+            }
+
+            var level = $"nv {entry.Level}";
+            if (_level.Text != level)
+            {
+                _level.Text = level;
             }
 
             _name.AddThemeColorOverride("font_color", entry.Rank switch
@@ -291,7 +308,7 @@ public partial class BattleListPanel : PanelContainer
             }
 
             var font = GetThemeDefaultFont();
-            const int fontSize = 16;
+            const int fontSize = 13;
             var text = font.GetStringSize(_initial, HorizontalAlignment.Left, -1, fontSize);
             var baseline = new Vector2((Size.X - text.X) / 2, (Size.Y + font.GetAscent(fontSize) - font.GetDescent(fontSize)) / 2);
             DrawString(font, baseline.Floor(), _initial, HorizontalAlignment.Left, -1, fontSize, HudTheme.StoneText);

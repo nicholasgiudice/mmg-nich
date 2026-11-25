@@ -26,7 +26,7 @@ namespace MmoRpgClient.Hud;
 /// </summary>
 public partial class Hud : Control
 {
-    private const float FrameWidth = 240f;
+    private const float FrameWidth = 190f;
     private const double BannerSeconds = 3.0;
 
     /// <summary>Largura reservada à linha de ajuda no canto inferior esquerdo.</summary>
@@ -44,12 +44,9 @@ public partial class Hud : Control
     private PopupMenu _worldMenu = null!;
     private EntityId _worldMenuTarget;
     private readonly List<UnitFrame> _partyFrames = new();
-    /// <summary>T-409: a barra em duas linhas, 6–0 em cima de M1, 1–5 e Q.</summary>
-    private VBoxContainer _abilityBar = null!;
-    private HBoxContainer _barTop = null!;
-    private HBoxContainer _barBottom = null!;
-    private readonly List<AbilitySlot> _slotsTop = new();
-    private readonly List<AbilitySlot> _slotsBottom = new();
+    /// <summary>A barra numa linha só: M1, 1–0 e Q (antes, T-409, em duas linhas).</summary>
+    private HBoxContainer _abilityBar = null!;
+    private readonly List<AbilitySlot> _slots = new();
     private HudBar _playerCast = null!;
 
     /// <summary>Barra de atalhos 1–0 do jogador (T-081, T-409); a mesma instância vai para o <c>PlayerInput</c>.</summary>
@@ -175,7 +172,7 @@ public partial class Hud : Control
         AddChild(_panelButtons);
 
         _party = new VBoxContainer();
-        _party.AddThemeConstantOverride("separation", 6);
+        _party.AddThemeConstantOverride("separation", 3);
         _party.MouseFilter = MouseFilterEnum.Ignore;
         AddChild(_party);
 
@@ -191,14 +188,8 @@ public partial class Hud : Control
         // T-383: sem quadro do alvo no topo da tela. A vida do alvo fica na barra sobre a cabeça dele e a conjuração
         // numa barra fina logo abaixo (EntityView); o topo fica só para o painel do chefe.
 
-        _abilityBar = new VBoxContainer();
-        _abilityBar.AddThemeConstantOverride("separation", 4);
-        _barTop = new HBoxContainer { Alignment = BoxContainer.AlignmentMode.Center };
-        _barTop.AddThemeConstantOverride("separation", 4);
-        _barBottom = new HBoxContainer { Alignment = BoxContainer.AlignmentMode.Center };
-        _barBottom.AddThemeConstantOverride("separation", 4);
-        _abilityBar.AddChild(_barTop);
-        _abilityBar.AddChild(_barBottom);
+        _abilityBar = new HBoxContainer { Alignment = BoxContainer.AlignmentMode.Center };
+        _abilityBar.AddThemeConstantOverride("separation", 2);
         AddChild(_abilityBar);
 
         _playerCast = new HudBar { Size = new Vector2(260, 16), MouseFilter = MouseFilterEnum.Ignore, Visible = false };
@@ -320,7 +311,7 @@ public partial class Hud : Control
     private static Button PanelButton(string text, Action pressed)
     {
         var button = new Button { Text = text, FocusMode = FocusModeEnum.None };
-        button.AddThemeFontSizeOverride("font_size", 11);
+        button.AddThemeFontSizeOverride("font_size", 10);
         button.Pressed += pressed;
         return button;
     }
@@ -785,28 +776,26 @@ public partial class Hud : Control
 
         LoadHotbar(self, abilities);
         PlaceNewSecondClassAbilities(self, abilities);
-        // T-409: duas linhas. Embaixo: M1 fixo, 1–5 da barra do jogador (T-081) e Q (poção) só se ela não estiver na
-        // barra. Em cima: 6 a 0, os espaços da segunda classe.
-        var bottom = new List<(string? Id, string Key, int Index)>();
-        var top = new List<(string? Id, string Key, int Index)>();
+        // Uma linha: M1 fixo, 1–5 da barra do jogador (T-081), 6–0 (os espaços da segunda classe, T-409) e Q (poção)
+        // só se ela não estiver na barra.
+        var entries = new List<(string? Id, string Key, int Index)>();
         if (abilities.BasicAttackId is { } basic)
         {
-            bottom.Add((basic, "M1", -1));
+            entries.Add((basic, "M1", -1));
         }
 
         for (var i = 0; i < HotbarLayout.Size; i++)
         {
-            (i < HotbarLayout.RowSize ? bottom : top).Add((Hotbar[i], HotbarLayout.KeyLabel(i), i));
+            entries.Add((Hotbar[i], HotbarLayout.KeyLabel(i), i));
         }
 
         // T-323: Q usa a primeira poção de vida do inventário; aparece só se ela não está na barra.
         if (QuickConsumable(self) is { } q && Hotbar.IndexOf(q) < 0)
         {
-            bottom.Add((q, "Q", -1));
+            entries.Add((q, "Q", -1));
         }
 
-        FillBarRow(_barBottom, _slotsBottom, bottom, self, abilities, byId, selected, aimPoint, now);
-        FillBarRow(_barTop, _slotsTop, top, self, abilities, byId, selected, aimPoint, now);
+        FillBarRow(_abilityBar, _slots, entries, self, abilities, byId, selected, aimPoint, now);
     }
 
     private void FillBarRow(HBoxContainer row, List<AbilitySlot> slots, List<(string? Id, string Key, int Index)> entries,
@@ -1077,40 +1066,41 @@ public partial class Hud : Control
         public UnitFrame(float width, bool showResource, bool compact = false, bool showXp = false)
         {
             MouseFilter = MouseFilterEnum.Ignore;
-            // T-086: o quadro do personagem usa o painel de pedra; os compactos (aliados) seguem escuros.
+            // T-086: o quadro do personagem usa o painel de pedra (em meia escala, para ocupar menos tela); os compactos
+            // (aliados) seguem escuros.
             AddThemeStyleboxOverride("panel", compact
                 ? new StyleBoxFlat
                 {
                     BgColor = HudTheme.Panel,
-                    ContentMarginLeft = 6,
-                    ContentMarginRight = 6,
-                    ContentMarginTop = 4,
-                    ContentMarginBottom = 4,
+                    ContentMarginLeft = 4,
+                    ContentMarginRight = 4,
+                    ContentMarginTop = 2,
+                    ContentMarginBottom = 3,
                 }
-                : HudTheme.StonePanel());
+                : HudTheme.StonePanelCompact());
             var barBorder = compact ? Colors.Black : HudTheme.BarBorderGold;
             var box = new VBoxContainer { MouseFilter = MouseFilterEnum.Ignore };
-            box.AddThemeConstantOverride("separation", 2);
+            box.AddThemeConstantOverride("separation", compact ? 1 : 2);
             AddChild(box);
 
-            _name.AddThemeFontSizeOverride("font_size", compact ? 11 : 13);
+            _name.AddThemeFontSizeOverride("font_size", compact ? 10 : 12);
             box.AddChild(_name);
 
-            _health.CustomMinimumSize = new Vector2(width, compact ? 12 : 18);
-            _health.FontSize = compact ? 10 : 12;
+            _health.CustomMinimumSize = new Vector2(width, compact ? 10 : 14);
+            _health.FontSize = compact ? 9 : 11;
             _health.MouseFilter = MouseFilterEnum.Ignore;
             _health.BorderColor = barBorder;
             box.AddChild(_health);
 
             if (showResource)
             {
-                _resource = new HudBar { CustomMinimumSize = new Vector2(width, compact ? 8 : 12), FontSize = compact ? 0 : 10, MouseFilter = MouseFilterEnum.Ignore, BorderColor = barBorder };
+                _resource = new HudBar { CustomMinimumSize = new Vector2(width, compact ? 5 : 10), FontSize = compact ? 0 : 9, MouseFilter = MouseFilterEnum.Ignore, BorderColor = barBorder };
                 box.AddChild(_resource);
             }
 
             if (showXp)
             {
-                _xp = new HudBar { CustomMinimumSize = new Vector2(width, 11), FontSize = 9, MouseFilter = MouseFilterEnum.Ignore, Visible = false, BorderColor = barBorder };
+                _xp = new HudBar { CustomMinimumSize = new Vector2(width, 9), FontSize = 8, MouseFilter = MouseFilterEnum.Ignore, Visible = false, BorderColor = barBorder };
                 box.AddChild(_xp);
             }
 
@@ -1118,8 +1108,8 @@ public partial class Hud : Control
             _status.FitContent = true;
             _status.ScrollActive = false;
             _status.CustomMinimumSize = new Vector2(width, 0);
-            _status.AddThemeFontSizeOverride("normal_font_size", compact ? 10 : 11);
-            _status.AddThemeFontSizeOverride("bold_font_size", compact ? 10 : 11);
+            _status.AddThemeFontSizeOverride("normal_font_size", 9);
+            _status.AddThemeFontSizeOverride("bold_font_size", 9);
             _status.MouseFilter = MouseFilterEnum.Ignore;
             box.AddChild(_status);
         }
