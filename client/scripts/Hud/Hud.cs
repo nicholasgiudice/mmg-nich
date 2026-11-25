@@ -29,6 +29,9 @@ public partial class Hud : Control
     private const float FrameWidth = 240f;
     private const double BannerSeconds = 3.0;
 
+    /// <summary>T-540: o aviso de chefe de campo fica mais tempo que os outros (some devagar no último segundo).</summary>
+    private const double FieldBossBannerSeconds = 6.0;
+
     /// <summary>Largura reservada à linha de ajuda no canto inferior esquerdo.</summary>
     private const float HelpTextWidth = 410f;
 
@@ -133,6 +136,11 @@ public partial class Hud : Control
     /// </summary>
     public Action<DeathSummary>? DeathSummaryHandler { get; set; }
     private Label _banner = null!;
+
+    /// <summary>T-540: aviso de chefe de campo (pedra e ouro), no alto da tela, separado do banner das fases.</summary>
+    private PanelContainer _fieldBossBanner = null!;
+    private Label _fieldBossLabel = null!;
+    private double _fieldBossLeft;
     private HBoxContainer _panelButtons = null!;
     private Button _characterButton = null!;
     private Button _skillsButton = null!;
@@ -244,6 +252,16 @@ public partial class Hud : Control
         _banner.AddThemeColorOverride("font_outline_color", Colors.Black);
         _banner.AddThemeColorOverride("font_color", new Color(1f, 0.55f, 0.95f));
         AddChild(_banner);
+
+        _fieldBossLabel = new Label { HorizontalAlignment = HorizontalAlignment.Center, MouseFilter = MouseFilterEnum.Ignore };
+        _fieldBossLabel.AddThemeFontSizeOverride("font_size", 24);
+        _fieldBossLabel.AddThemeConstantOverride("outline_size", 6);
+        _fieldBossLabel.AddThemeColorOverride("font_outline_color", new Color(0.10f, 0.07f, 0.03f));
+        _fieldBossLabel.AddThemeColorOverride("font_color", HudTheme.Gold);
+        _fieldBossBanner = new PanelContainer { MouseFilter = MouseFilterEnum.Ignore, Visible = false };
+        _fieldBossBanner.AddThemeStyleboxOverride("panel", HudTheme.StonePanel());
+        _fieldBossBanner.AddChild(_fieldBossLabel);
+        AddChild(_fieldBossBanner);
     }
 
     /// <summary>Mostra/esconde o log de combate, que é informação de debug (T-085). O resumo de morte continua sempre.</summary>
@@ -334,9 +352,25 @@ public partial class Hud : Control
         _banner.ResetSize();
     }
 
+    /// <summary>T-540: aviso de chefe de campo no alto da tela, em painel de pedra com texto dourado; some sozinho.</summary>
+    public void AnnounceFieldBoss(string text, double seconds = FieldBossBannerSeconds)
+    {
+        _fieldBossLabel.Text = text;
+        _fieldBossBanner.Visible = true;
+        _fieldBossLeft = seconds;
+        _fieldBossBanner.ResetSize();
+    }
+
     public override void _Process(double delta)
     {
         _castFlashLeft = Math.Max(0, _castFlashLeft - delta);
+        if (_fieldBossLeft > 0)
+        {
+            _fieldBossLeft -= delta;
+            _fieldBossBanner.Modulate = new Color(1, 1, 1, Mathf.Clamp((float)_fieldBossLeft, 0f, 1f));
+            _fieldBossBanner.Visible = _fieldBossLeft > 0;
+        }
+
         if (_bannerLeft <= 0)
         {
             return;
@@ -389,6 +423,8 @@ public partial class Hud : Control
         var leftColumnBottom = _party.Position.Y + (PartyEnabled ? _partyPanel.Size.Y : _party.Size.Y) + 8;
         _shop.Position = shopX >= panelX ? new Vector2(shopX, 64) : new Vector2(8, leftColumnBottom);
         _banner.Position = new Vector2((screen.X - _banner.Size.X) / 2, screen.Y * 0.18f);
+        // Logo abaixo da tela do chefe quando há um (que ocupa o alto), senão no alto.
+        _fieldBossBanner.Position = new Vector2((screen.X - _fieldBossBanner.Size.X) / 2, _boss.Visible ? _boss.Position.Y + _boss.Size.Y + 8 : 16);
     }
 
     /// <summary>Conteúdo para nomes, custos, alcances e status removíveis (pode ser vazio).</summary>
@@ -545,6 +581,10 @@ public partial class Hud : Control
         {
             switch (e)
             {
+                case FieldBossAnnounced fieldBoss:
+                    // T-540: chefe de campo (T-503) nasceu ou morreu na zona; o servidor manda a todos os jogadores dela.
+                    AnnounceFieldBoss(FieldBossText.Line(_content, fieldBoss));
+                    break;
                 case LevelUp up when up.Entity == me:
                     Announce($"Nível {up.Level}!  {up.AttributePoints} pontos de atributo (C) · {up.SkillPoints} de habilidade (K)", 4.0);
                     break;
@@ -1034,6 +1074,14 @@ public partial class Hud : Control
             var name = def?.Name ?? st.StatusId;
             // T-410: o status de uma passiva não acaba (fim no infinito): só o nome, sem contagem.
             var permanent = st.ExpiresAtTick == Game.Core.Combat.Status.StatusManager.PermanentTick;
+            if (def is not null && def.Tags.Contains("terrain"))
+            {
+                // T-540: estado do terreno (Água Funda) dura enquanto está no lugar: o relógio de 1 s só o mantém vivo, e
+                // mostrá-lo seria enganoso. Ícone ≈ e a cor da água, sem contagem.
+                parts.Add($"[color=#{StatusVisuals.Terrain.ToHtml(false)}][b]≈ {Escape(name)}[/b][/color]");
+                continue;
+            }
+
             var secs = permanent ? "" : " " + ((st.ExpiresAtTick - now) / World.TickRate).ToString("0.0", Pt) + "s";
             var stacks = st.Stacks > 1 ? $" ×{st.Stacks}" : "";
             var text = Escape($"{name}{stacks}{secs}");

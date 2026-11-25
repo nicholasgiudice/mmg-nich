@@ -96,7 +96,7 @@ public sealed class NetAuthority : IGameAuthority, ICombatLogSource, IDisposable
         _content = content;
         _name = name;
         _classId = classId;
-        _log = new CombatLogRecorder(viewer: null);
+        _log = new CombatLogRecorder(MmoRpgClient.Hud.FieldBossText.Formatters(), viewer: null);
         Server = $"{host}:{port}";
         _listener.PeerConnectedEvent += OnConnected;
         _listener.PeerDisconnectedEvent += (_, info) => Fail(NetStatus.Disconnected, info.Reason switch
@@ -467,7 +467,7 @@ public sealed class NetAuthority : IGameAuthority, ICombatLogSource, IDisposable
         _newestTick = 0;
         Latest = null;
         Previous = null;
-        _log = new CombatLogRecorder(viewer: w.ControlledEntity); // mundo novo (entrada ou reinício da sala)
+        _log = new CombatLogRecorder(MmoRpgClient.Hud.FieldBossText.Formatters(), viewer: w.ControlledEntity); // mundo novo (entrada ou reinício da sala)
         _predictor = _content.Arenas.TryGetValue(w.ArenaId, out var arena) ? new MovementPredictor(EntityFactory.BuildMap(arena)) : new MovementPredictor(null);
         _localCast = null;
         _ownAlive = false;
