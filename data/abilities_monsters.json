@@ -487,6 +487,54 @@
       "cooldown": 2.0,
       "targeting": { "type": "melee_arc", "range": 2.0, "angle": 100 },
       "effects": [{ "type": "damage", "school": "physical", "base": 20 }]
+    },
+    {
+      "id": "forged_overseer.iron_fist",
+      "name": "Punho de Ferro",
+      "cooldown": 1.6,
+      "targeting": { "type": "melee_arc", "range": 2.4, "angle": 100 },
+      "effects": [{ "type": "damage", "school": "physical", "base": 62 }]
+    },
+    {
+      "id": "forged_overseer.hammer",
+      "name": "Martelo",
+      "cooldown": 9,
+      "targeting": { "type": "melee_arc", "range": 3.5, "angle": 100 },
+      "telegraph": { "shape": "cone", "length": 3.5, "angle": 100, "delay": 1.0, "anchor": "source", "affects": "enemy" },
+      "effects": [{ "type": "damage", "school": "physical", "base": 90 }]
+    },
+    {
+      "id": "forged_overseer.hammer_fast",
+      "name": "Martelo Acelerado",
+      "cooldown": 6,
+      "targeting": { "type": "melee_arc", "range": 3.5, "angle": 100 },
+      "telegraph": { "shape": "cone", "length": 3.5, "angle": 100, "delay": 1.0, "anchor": "source", "affects": "enemy" },
+      "effects": [{ "type": "damage", "school": "physical", "base": 90 }]
+    },
+    {
+      "id": "forged_overseer.furnace_blast",
+      "name": "Sopro da Fornalha",
+      "tags": ["ai.area"],
+      "cooldown": 5,
+      "targeting": { "type": "circle_self", "radius": 30 },
+      "effects": [{ "type": "damage", "school": "fire", "base": 22 }]
+    },
+    {
+      "id": "forged_overseer.slag_throw",
+      "name": "Escória Ardente",
+      "tags": ["ai.ranged"],
+      "cooldown": 2.5,
+      "targeting": { "type": "unit", "range": 14, "faction": "enemy" },
+      "effects": [{ "type": "damage", "school": "fire", "base": 25 }]
+    },
+    {
+      "id": "forged_overseer.call_crew",
+      "name": "Chamar a Equipe",
+      "tags": ["ai.summon"],
+      "cooldown": 20,
+      "castTime": 2,
+      "targeting": { "type": "self" },
+      "effects": [{ "type": "summon", "monster": "monster.possessed_miner", "count": 1, "radius": 2.5, "maxAlive": 3 }]
     }
   ]
 }

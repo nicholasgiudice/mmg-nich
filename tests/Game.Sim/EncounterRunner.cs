@@ -91,6 +91,9 @@ public sealed record RunResult
     /// <summary>T-408: <see cref="DamageTaken"/> por classe do jogador (ex.: os outros membros com e sem o Guardião).</summary>
     public IReadOnlyDictionary<string, double> DamageTakenByClass { get; init; } = new Dictionary<string, double>();
 
+    /// <summary>T-512: <see cref="DamageTaken"/> por id da fonte (habilidade ou estado que causou o dano; ex.: o Martelo do Capataz).</summary>
+    public IReadOnlyDictionary<string, double> DamageTakenBySource { get; init; } = new Dictionary<string, double>();
+
     /// <summary>T-408: segundos vivos somados dos jogadores de cada classe (para o dano por segundo vivo).</summary>
     public IReadOnlyDictionary<string, double> AliveSecondsByClass { get; init; } = new Dictionary<string, double>();
 
@@ -233,6 +236,7 @@ public static class EncounterRunner
     private sealed class Metrics(ContentCatalog content, HashSet<EntityId> players, Dictionary<EntityId, string> classOf)
     {
         private readonly SortedDictionary<string, double> _takenByClass = new(StringComparer.Ordinal);
+        private readonly SortedDictionary<string, double> _takenBySource = new(StringComparer.Ordinal);
         private readonly SortedDictionary<string, double> _aliveByClass = new(StringComparer.Ordinal);
         private readonly SortedDictionary<string, double> _dealtByClass = new(StringComparer.Ordinal);
         private readonly Dictionary<string, int> _uses = new(StringComparer.Ordinal);
@@ -256,6 +260,7 @@ public static class EncounterRunner
                             _taken += d.Amount;
                             var cls = classOf[d.Target];
                             _takenByClass[cls] = _takenByClass.GetValueOrDefault(cls) + d.Amount;
+                            _takenBySource[d.SourceId] = _takenBySource.GetValueOrDefault(d.SourceId) + d.Amount;
                         }
 
                         if (players.Contains(d.Source))
@@ -425,6 +430,7 @@ public static class EncounterRunner
                 Ticks = ticks,
                 DamageTaken = _taken,
                 DamageTakenByClass = _takenByClass,
+                DamageTakenBySource = _takenBySource,
                 AliveSecondsByClass = _aliveByClass,
                 DamageDealtByClass = _dealtByClass,
                 DamageDealt = _dealt,

@@ -778,6 +778,101 @@ Nenhuma arena nova: os desfiladeiros ficam no mapa da Serra (T-532). Os Mineiros
 
 ---
 
+## Minas Fundas — O Capataz Forjado (T-512)
+
+A masmorra instanciada do nível 24 ao 27, para 4 pessoas (`design/mapas-16-40-v0.1.md` §3.4), e a **primeira com papel de grupo de verdade**: o chefe bate forte em quem está à frente dele (pede tanque, o Guardião) e queima a sala inteira (pede cura em grupo, o Sacerdote). Corredores escuros e salas com grupos grandes, que pedem dano em área. É o "conteúdo que se repete bem" da faixa 21–27.
+
+**Decidido:** a proposta da tarefa foi mantida (o designer estava ausente; vale como decidida): três fases, Martelo, Fornalha e Chamar a Equipe. Três acréscimos, explicados abaixo e no `tasks/reports/balance-v0.26.md`: o chefe **bate em quem está à frente** antes da tabela de ameaça, a **Escória Ardente** em quem foge dele e a **Fornalha Transbordando** (o limite de tempo da luta).
+
+### As salas
+
+Os monstros da Serra (T-511), mais fortes, do nível 24 ao 26. Nenhum monstro novo.
+
+| Sala | Composição | Nível | O que pede |
+|---|---|---|---|
+| Galeria de Entrada | 4 Mineiros Possuídos, em fila no corredor | 24 | o tanque segura a fila; o Atirador fura |
+| Poço dos Morcegos | 6 Morcegos das Cavernas | 24–25 | dano em área (Piromante, Golpe Circular, Nuvem Tóxica) |
+| Alojamento | 5 Mineiros + 3 Morcegos (o grupo grande) | 25 | área e cura; o Clérigo sozinho não segura |
+| Trilha dos Lobos (rota opcional) | 4 Lobos da Montanha + o **Golem de Pedra** (elite) | 26 | o tanque vira o Golem para longe do grupo (a Rocha Rolante) |
+| Fundição | o Capataz Forjado | 27 | os papéis |
+
+Os carrinhos de mina servem de cobertura contra a Escória Ardente e a Rocha Rolante. O mapa e o caminho são da T-533; estes grupos são a proposta para ela, ainda não medidos como sala (o Golem e os grupos da Serra foram medidos na T-511, nos níveis 21–25).
+
+### Capataz Forjado (`monster.forged_overseer`, nível 27, chefe)
+
+Golem de ferro que mandava nos mineiros. A fornalha do peito é o relógio da luta.
+
+Números nos dados no **nível 1**; entre parênteses, no nível 27 (chefe: vida × (1 + 0,3 × 26) = × 8,8 e potência × (1 + 0,38 × 26) = × 10,88; os Mineiros invocados são normais no nível 27: vida × 11,4 e potência × 5,42), antes da defesa do jogador.
+
+| | |
+|---|---|
+| Vida | 70.000 (616.000) |
+| Velocidade / raio | 3,0 (3,9 na fase 3) / 0,9 (golem grande; o corpo é da T-521) |
+| Tags | `construct`, `boss` |
+| IA | `ai.boss`, com o parâmetro novo `meleeTargetRange` 3,5 e o papel `ai.ranged` (abaixo) |
+| Controle | como todo chefe, sofre só 25% da duração de controles |
+
+**Bate em quem está à frente (mecânica nova, `meleeTargetRange`).** Entre os jogadores da tabela de ameaça a até 3,5 tiles dele, o Capataz escolhe o de maior ameaça; sem ninguém tão perto, segue a tabela. A Provocação continua mandando antes disso. **Por quê:** no nível 27 o dano do Piromante gera muito mais ameaça que o do Guardião (o Golpe de Escudo dá 3×; a Provocação, 40 e 3 s); pela tabela, o Capataz passava a luta atrás do Mago, que corre mais que ele, e ninguém levava os golpes. Agora o tanque segura o chefe ficando na frente dele, e o resto do grupo fica a mais de 3,5 tiles.
+
+Golpes em todas as fases:
+
+- **Punho de Ferro** (`forged_overseer.iron_fist`): corpo a corpo, arco de 100°, alcance 2,4, a cada 1,6 s. Físico 62 (675). O dano contínuo no tanque: ~360 por golpe no Guardião de nível 27 com raros (17% da vida).
+- **Escória Ardente** (`forged_overseer.slag_throw`, `ai.ranged`): alvo único, alcance 14, a cada 2,5 s. Fogo 25 (272). **Só sai com o alvo a 3 tiles ou mais** (mecânica nova no `ai.boss`: o papel `ai.ranged`, como no `ai.brute`). Pune quem foge do chefe: se o tanque cai e o Capataz vai atrás do Mago, o Mago não o leva pela sala de graça.
+
+### Fase 1 — Martelo (100% a 60%)
+
+- **Martelo** (`forged_overseer.hammer`): **cone** de 100° e 3,5 tiles à frente dele, **telegráfo de 1 s**, no alvo dele. Físico 90 (979). Recarga de 9 s. **Arqueiro e Mago caem em 2 golpes** (~620 e ~720 com raros, de 1.174 e 1.102 de vida); o Guardião perde ~25% da vida (521 de 2.084). Ele fica parado até o golpe cair: quem lê o cone sai pelos lados ou para trás e volta.
+- Punho de Ferro e Escória Ardente.
+
+### Fase 2 — Fornalha (60% a 30%)
+
+- **Sopro da Fornalha** (`forged_overseer.furnace_blast`): círculo de raio 30 em volta dele, **sem telegráfo**, a cada 5 s. Fogo 22 (239) **em todos na sala**, sem como sair. O ritmo é o aviso (o cliente mostra a fornalha acendendo, T-540). Pede cura em grupo: ~180–200 em cada um a cada 5 s.
+- Ao entrar: **Fornalha Esquentando** (`status.overseer_heat`) por **190 s**. Quando acaba, entra a **Fornalha Transbordando** (`status.overseer_meltdown`, até o fim): **dano × 4**. É o limite de tempo da luta (abaixo). Usa o `onExpire` de estado que já existia (T-421).
+- Martelo, Punho de Ferro e Escória Ardente continuam.
+
+### Fase 3 — Chamar a Equipe (30% a 0%)
+
+- Ao entrar: invoca **2 Mineiros Possuídos** (no nível dele: vida 3.648; Picaretada 163 e atordoa 1 s) e ganha a **Fornalha Acesa** (`status.overseer_overdrive`, até o fim): **velocidade × 1,3 e dano × 1,15**.
+- **Chamar a Equipe** (`forged_overseer.call_crew`): **conjuração de 2 s, interrompível** (o Golpe Pesado). Invoca mais 1 Mineiro, no máximo 3 vivos. Recarga de 20 s.
+- **Martelo Acelerado** (`forged_overseer.hammer_fast`): o mesmo Martelo, recarga de 6 s.
+- Sopro da Fornalha, Punho de Ferro e Escória Ardente continuam.
+
+**A Fornalha Transbordando (o tempo da luta).** O contador começa na fase 2, que só existe em combate (o chefe entra na fase 1 assim que nasce, antes de o grupo chegar). Um grupo com tanque e Sacerdote chega à fase 2 em ~110 s e termina em ~275 s: sobram ~25 s. Sem o Guardião, o Capataz se move mais (vai atrás de quem está mais perto) e o fogo do Piromante, que fica no chão, erra: o Mago rende ~600 de dano por segundo em vez de ~990. Sem o Sacerdote, a Bênção e a Inspiração somem, e o Atirador e o Mago rendem 10–20% menos. Sem os dois, a luta levaria ~360 s e a Fornalha transborda antes do fim.
+
+**Decidido (troca em relação à proposta):** a primeira versão, sem limite, só separava os grupos por um degrau de dano: poucos pontos a mais no Punho levavam os dois grupos de ~90% a ~10%. Os dois aguentavam quase o mesmo dano, porque o Inquisidor cura tanto quanto o Sacerdote (Selo da Luz, Consagração) e a Sede de Sangue do Berserker compensa a defesa do Guardião. A diferença estável entre eles era o tempo: ~275 s contra ~360 s, com pouca variação.
+
+### Resposta de cada classe
+
+- **Guardião:** fica na frente do Capataz e o mantém parado, longe do grupo; sai do cone do Martelo no telegráfo e volta. O Bastião nos pulsos da Fornalha (−25% em quem está perto dele), a Interceptação no Sacerdote, o Inabalável contra a Picaretada dos Mineiros na fase 3. Interrompe o Chamar a Equipe com o Golpe Pesado.
+- **Berserker (no lugar do tanque):** segura o chefe na frente, mas leva 1,7× o dano do Punho que o Guardião leva, e o chefe anda mais.
+- **Atirador / Caçador:** a mais de 3,5 tiles, pelos lados; matam os Mineiros da fase 3.
+- **Piromante / Arcanista:** o Chão em Chamas e o Meteoro rendem com o chefe parado; Explosão nos Mineiros.
+- **Sacerdote:** a Oração Restauradora nos pulsos da Fornalha; a Bênção e a Inspiração (mais dano e Mana do grupo) encurtam a luta; a Cura Direta no tanque.
+- **Inquisidor (no lugar da cura):** cura quase o mesmo (Selo da Luz, Consagração), mas sem os reforços do grupo a luta fica lenta.
+
+### Encontro de teste (`data/encounters.json`)
+
+| Encontro | Composição | Arena | Jogadores |
+|---|---|---|---|
+| `encounter.forged_overseer` (O Capataz Forjado) | Capataz nv27 | `map.watcher_hall` (o salão aberto de 40 × 28 do Vigia, provisório até a Fundição da T-533) | Guerreiro + Arqueiro + Mago + Clérigo, limite de 480 s |
+
+Os testes de design (`OverseerDesignTests`) usam o perfil de grupo do nível 27 com segunda classe (`SecondClassDesignTests.WithSecondClass`) e **raros**, como o Vigia; cada classe com a estratégia solo dela e `+dodge`, as opções de grupo das segundas classes e o Clérigo seguindo o ferido. Metas e resultados em `tasks/reports/balance-v0.26.md`:
+
+- **Guardião + Atirador + Piromante + Sacerdote:** vitória ≥ 75%, em 3–6 min (97%, 273 s);
+- **sem Guardião e sem Sacerdote** (Berserker + Atirador + Piromante + Inquisidor): vitória ≤ 40% (7%);
+- só medidos: só o Guardião (com Inquisidor) 92% em 305 s; só o Sacerdote (com Berserker) 100% em 283 s; Guardião + Caçador + Arcanista + Sacerdote 100% em 275 s.
+
+### Falhas de design
+
+- o chefe correr atrás de quem atira de longe a luta toda (por isso bate em quem está à frente);
+- fugir do chefe pela sala sem custo (a Escória Ardente);
+- vencer sem ninguém sair de um telegráfo (o Martelo: os bots quase sempre saem; o Arqueiro e o Mago que não saem caem em 2);
+- a Fornalha matar quem não errou nada (~200 a cada 5 s; o que pesa é o tempo, não um pulso);
+- a Fornalha Transbordando chegar para um grupo com os papéis certos (sobram ~25 s; com o Caçador e o Arcanista, também);
+- invocações sem fim (no máximo 3 Mineiros vivos, só na fase 3).
+
+---
+
 ## Matriz de decisões
 
 | Encontro | Posicionamento | Prioridade | Gestão de recurso | Controle | Cura/suporte |
@@ -801,6 +896,7 @@ Nenhuma arena nova: os desfiladeiros ficam no mapa da Serra (T-532). Os Mineiros
 | Bando de Morcegos | Médio | Baixo | Médio | Médio | Baixo |
 | Acampamento dos Mineiros | Alto | **Alto** | Alto | Alto | Médio |
 | Golem de Pedra | **Alto** | Baixo | Alto | Baixo | Médio |
+| Capataz Forjado | **Alto** | Médio | Alto | Médio | **Alto** |
 
 ## Critérios gerais de sucesso
 
