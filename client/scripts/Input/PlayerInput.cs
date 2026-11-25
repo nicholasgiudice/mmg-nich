@@ -105,8 +105,12 @@ public sealed class PlayerInput
     /// <summary>Alvo selecionado (clique ou Tab); limpo quando morre ou some.</summary>
     public EntityId? SelectedTarget { get; private set; }
 
-    /// <summary>Esquece o alvo (troca de zona, T-223).</summary>
-    public void ClearTarget() => SelectedTarget = null;
+    /// <summary>Esquece o alvo e os últimos envios (troca de zona, T-223: o tick da zona nova é outro).</summary>
+    public void ClearTarget()
+    {
+        SelectedTarget = null;
+        _lastSent.Clear();
+    }
 
     /// <summary>Escolhe o alvo como o clique no mapa (linha da lista de batalha, T-312).</summary>
     public void Select(EntityId target) => SelectedTarget = target;
@@ -347,7 +351,9 @@ public sealed class PlayerInput
             return false;
         }
 
-        if (!_lastSent.TryGetValue(abilityId, out var last))
+        // Envio num tick à frente do atual veio de outro mundo (cada zona tem o seu tick; reinício da sala volta a 0):
+        // sem isto, o automático e a tecla mantida ficavam parados até o tick novo passar o antigo.
+        if (!_lastSent.TryGetValue(abilityId, out var last) || last.SentTick > tick)
         {
             return true;
         }

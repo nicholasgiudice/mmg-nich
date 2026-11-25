@@ -69,6 +69,23 @@ public class PlayerInputTests
     }
 
     [Fact]
+    public void Auto_attack_works_after_moving_to_a_zone_whose_tick_is_lower()
+    {
+        // Cada zona tem o seu próprio tick: o último envio veio da zona anterior, num tick maior que o da nova.
+        var (input, keys, authority) = Setup(wolfAt: new Vec2(6.5f, 10.5f));
+        authority.Tick = 50_000;
+        Press(input, keys, authority, InputActions.AttackKey);
+
+        input.ClearTarget();
+        authority.Sent.Clear();
+        authority.Tick = 200;
+        Press(input, keys, authority, InputActions.TargetNext);
+
+        var auto = Assert.Single(authority.Sent.OfType<UseAbilityIntent>()); // só o Tab, sem clique nem Espaço
+        Assert.Equal(Wolf, auto.Target);
+    }
+
+    [Fact]
     public void Clicking_another_monster_switches_the_target()
     {
         var (input, keys, authority) = Setup(wolfAt: new Vec2(6.5f, 10.5f), otherAt: new Vec2(5.5f, 11.8f));
