@@ -1,5 +1,6 @@
 using Godot;
 using MmoRpgClient.Hud;
+using MmoRpgClient.Input;
 
 namespace MmoRpgClient.Match;
 
@@ -7,6 +8,7 @@ namespace MmoRpgClient.Match;
 /// Menu do Esc no mundo aberto (T-396): janela de pedra e ouro com Continuar, Trocar de personagem (ou Voltar ao menu, no
 /// login de desenvolvimento), Sair do jogo e a opção de efeitos. Trocar e Sair pedem a saída ao servidor (T-395); em
 /// combate, a janela mostra a contagem e o botão Cancelar. O mundo continua por trás: só a entrada do jogador para.
+/// "Teclas" abre a tela de trocar as teclas (<see cref="KeyBindings"/>): clique numa ação e aperte a tecla nova.
 /// </summary>
 public partial class GameMenu : Control
 {
@@ -29,6 +31,13 @@ public partial class GameMenu : Control
     private readonly Label _confirmText = new() { HorizontalAlignment = HorizontalAlignment.Center };
     private Game.Protocol.DevToolAction _pending;
 
+    // Tela de teclas: um botão por ação configurável, com a tecla atual.
+    private readonly Button _keysEntry = new() { Text = "Teclas" };
+    private readonly VBoxContainer _keys = new();
+    private readonly Dictionary<string, Button> _keyButtons = new(StringComparer.Ordinal);
+    private string? _capturing;
+    private ulong _swallowFrame = ulong.MaxValue;
+
     public event Action? ContinueRequested;
     public event Action? SwitchRequested;
     public event Action? QuitRequested;
@@ -41,6 +50,12 @@ public partial class GameMenu : Control
 
     /// <summary>Uma saída foi pedida e ainda não terminou (a janela mostra a espera).</summary>
     public bool Leaving => Visible && _leaving.Visible;
+
+    /// <summary>A tela de teclas está aberta: as teclas não abrem telas do HUD por trás.</summary>
+    public bool KeysOpen => Visible && _keys.Visible;
+
+    /// <summary>A tela de teclas usou uma tecla neste frame (a tecla escolhida ou o Esc): ninguém mais a trata.</summary>
+    public bool SwallowedInput => _swallowFrame == Engine.GetProcessFrames();
 
     public override void _Ready()
     {
@@ -98,6 +113,8 @@ public partial class GameMenu : Control
             _effects.Text = Presentation.EffectSettings.Label;
         };
         _choices.AddChild(Styled(_effects, small: true));
+        _keysEntry.Pressed += ShowKeys;
+        _choices.AddChild(Styled(_keysEntry, small: true));
 
         // T-411: separada das outras, por último; abre a lista de pedidos.
         _choices.AddChild(_testSeparator);
@@ -128,6 +145,9 @@ public partial class GameMenu : Control
             DevToolRequested?.Invoke(_pending);
         }));
         _confirm.AddChild(MenuButton("Cancelar", ShowTests));
+
+        BuildKeys();
+        box.AddChild(_keys);
 
         _leaving.AddThemeConstantOverride("separation", 10);
         _leaving.Visible = false;
@@ -202,6 +222,9 @@ public partial class GameMenu : Control
 
     private void ShowChoices()
     {
+        StopCapture();
+        _keys.Visible = false;
+        _note.Visible = false;
         _choices.Visible = true;
         _tests.Visible = false;
         _confirm.Visible = false;
@@ -237,12 +260,206 @@ public partial class GameMenu : Control
 
     private void ShowLeaving()
     {
+        StopCapture();
+        _keys.Visible = false;
         _note.Visible = false;
         _choices.Visible = false;
         _tests.Visible = false;
         _confirm.Visible = false;
         _leaving.Visible = true;
         Layout();
+    }
+
+    private void BuildKeys()
+    {
+        _keys.AddThemeConstantOverride("separation", 8);
+        _keys.Visible = false;
+
+        var hint = new Label
+        {
+            Text = "Clique numa ação e aperte a tecla nova (vale Shift, Ctrl ou Alt junto, e os botões do mouse).\n"
+                + "Botão direito deixa a ação sem tecla. Esc cancela.",
+            HorizontalAlignment = HorizontalAlignment.Center,
+        };
+        hint.AddThemeFontSizeOverride("font_size", 11);
+        hint.AddThemeColorOverride("font_color", HudTheme.StoneText);
+        _keys.AddChild(hint);
+
+        // Duas colunas, sem rolagem: movimento e barra à esquerda; combate e telas à direita.
+        var columns = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ShrinkCenter };
+        columns.AddThemeConstantOverride("separation", 24);
+        _keys.AddChild(columns);
+        var left = Column(columns);
+        var right = Column(columns);
+        foreach (var group in KeyBindings.Actions.GroupBy(a => a.Group))
+        {
+            var column = group.Key is KeyBindings.MovementGroup or KeyBindings.HotbarGroup ? left : right;
+            var header = new Label { Text = group.Key };
+            header.AddThemeFontSizeOverride("font_size", 13);
+            header.AddThemeColorOverride("font_color", HudTheme.Suggested);
+            header.AddThemeColorOverride("font_outline_color", Colors.Black);
+            header.AddThemeConstantOverride("outline_size", 4);
+            column.AddChild(header);
+            foreach (var action in group)
+            {
+                column.AddChild(KeyRow(action));
+            }
+        }
+
+        var bottom = new HBoxContainer { Alignment = BoxContainer.AlignmentMode.Center };
+        bottom.AddThemeConstantOverride("separation", 12);
+        var reset = new Button { Text = "Restaurar padrão" };
+        reset.Pressed += () =>
+        {
+            StopCapture();
+            KeyBindingSettings.Current.ResetAll();
+            KeyBindingSettings.SaveAndApply();
+            RefreshKeys();
+            ShowNote("Teclas de volta ao padrão.", ok: true);
+        };
+        bottom.AddChild(Styled(reset, small: true));
+        bottom.AddChild(Styled(MenuButton("Voltar", ShowChoices), small: true));
+        _keys.AddChild(bottom);
+    }
+
+    private static VBoxContainer Column(HBoxContainer parent)
+    {
+        var column = new VBoxContainer();
+        column.AddThemeConstantOverride("separation", 2);
+        parent.AddChild(column);
+        return column;
+    }
+
+    private HBoxContainer KeyRow(BindableAction action)
+    {
+        var row = new HBoxContainer();
+        row.AddThemeConstantOverride("separation", 8);
+        var name = new Label { Text = action.Label, CustomMinimumSize = new Vector2(150, 0), VerticalAlignment = VerticalAlignment.Center };
+        name.AddThemeFontSizeOverride("font_size", 12);
+        name.AddThemeColorOverride("font_color", HudTheme.StoneText);
+        row.AddChild(name);
+
+        var button = new Button { FocusMode = FocusModeEnum.None, CustomMinimumSize = new Vector2(130, 0) };
+        HudTheme.StoneButton(button, compact: true);
+        button.AddThemeFontSizeOverride("font_size", 12);
+        button.Pressed += () => StartCapture(action.Id);
+        button.GuiInput += e =>
+        {
+            if (e is InputEventMouseButton { ButtonIndex: MouseButton.Right, Pressed: true } && _capturing is null)
+            {
+                KeyBindingSettings.Current.Clear(action.Id);
+                KeyBindingSettings.SaveAndApply();
+                RefreshKeys();
+                ShowNote($"{action.Label}: sem tecla.", ok: true);
+                button.AcceptEvent();
+            }
+        };
+        _keyButtons[action.Id] = button;
+        row.AddChild(button);
+        return row;
+    }
+
+    private void ShowKeys()
+    {
+        _choices.Visible = false;
+        _note.Visible = false;
+        _keys.Visible = true;
+        _title.Text = "Teclas";
+        RefreshKeys();
+        Layout();
+    }
+
+    private void RefreshKeys()
+    {
+        var keys = KeyBindingSettings.Current;
+        foreach (var (action, button) in _keyButtons)
+        {
+            var unbound = keys[action] is null;
+            button.Text = action == _capturing ? "Aperte uma tecla..." : unbound ? "—" : KeyBindingSettings.Label(action);
+            button.Modulate = action == _capturing ? HudTheme.Suggested : unbound ? new Color(1, 1, 1, 0.6f) : Colors.White;
+        }
+    }
+
+    private void StartCapture(string action)
+    {
+        _capturing = action;
+        _note.Visible = false;
+        RefreshKeys();
+        Layout();
+    }
+
+    private void StopCapture()
+    {
+        _capturing = null;
+        RefreshKeys();
+    }
+
+    /// <summary>Com uma ação esperando tecla, a próxima tecla ou botão vira o atalho dela; Esc ou clique cancela.</summary>
+    public override void _Input(InputEvent e)
+    {
+        if (!KeysOpen)
+        {
+            return;
+        }
+
+        if (e is InputEventKey { Pressed: true, Echo: false, PhysicalKeycode: Key.Escape })
+        {
+            // Esc: cancela a espera; sem espera, volta ao menu.
+            if (_capturing is not null)
+            {
+                StopCapture();
+            }
+            else
+            {
+                ShowChoices();
+            }
+
+            Swallow();
+            return;
+        }
+
+        if (_capturing is not { } action || KeyBindingSettings.FromEvent(e) is not { } binding)
+        {
+            return;
+        }
+
+        if (binding.Device == BindingDevice.Mouse && binding.Code is KeyBinding.MouseLeft or KeyBinding.MouseRight)
+        {
+            // Clicar cancela (e o clique segue para o botão clicado, que pode começar outra troca).
+            StopCapture();
+            return;
+        }
+
+        Swallow();
+        if (binding.IsModifierKey)
+        {
+            return; // Shift, Ctrl ou Alt sozinhos: espera a tecla que vem junto
+        }
+
+        var keys = KeyBindingSettings.Current;
+        var result = keys.Set(action, binding);
+        _capturing = null;
+        if (!result.Ok)
+        {
+            RefreshKeys();
+            ShowNote(result.Refusal ?? "Essa tecla não pode ser usada.", ok: false);
+            return;
+        }
+
+        KeyBindingSettings.SaveAndApply();
+        RefreshKeys();
+        var label = LabelOf(action);
+        ShowNote(result.Swapped is { } other
+            ? $"{label}: {KeyBindingSettings.Label(action)}. {LabelOf(other)} ficou com {(keys[other] is null ? "nenhuma tecla" : KeyBindingSettings.Label(other))}."
+            : $"{label}: {KeyBindingSettings.Label(action)}.", ok: true);
+    }
+
+    private static string LabelOf(string action) => KeyBindings.Actions.First(a => a.Id == action).Label;
+
+    private void Swallow()
+    {
+        _swallowFrame = Engine.GetProcessFrames();
+        GetViewport().SetInputAsHandled();
     }
 
     private void Layout()

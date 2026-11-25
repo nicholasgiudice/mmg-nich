@@ -53,9 +53,10 @@ public sealed class PlayerInput
     {
         _lookup = (id, _) => abilities.TryGetValue(id, out var def) ? def : null;
 #if GODOT
-        _justPressed = justPressed ?? (a => Godot.Input.IsActionJustPressed(a));
-        _pressed = pressed ?? (a => Godot.Input.IsActionPressed(a));
-        _justReleased = justReleased ?? (a => Godot.Input.IsActionJustReleased(a));
+        // Teclas configuráveis: Shift+1 e 1 são atalhos diferentes, então só o movimento ignora os modificadores.
+        _justPressed = justPressed ?? (a => Godot.Input.IsActionJustPressed(a, InputActions.ExactMatch(a)));
+        _pressed = pressed ?? (a => Godot.Input.IsActionPressed(a, InputActions.ExactMatch(a)));
+        _justReleased = justReleased ?? (a => Godot.Input.IsActionJustReleased(a, InputActions.ExactMatch(a)));
 #else
         // T-386: fora do Godot (Game.Client.Tests), as teclas vêm sempre do teste.
         _justPressed = justPressed ?? (_ => false);
@@ -168,7 +169,7 @@ public sealed class PlayerInput
             SelectedTarget = null;
         }
 
-        // Shift+Tab também dispara a ação do Tab (o Input Map não exige modificador): olhar a de trás primeiro.
+        // Com a correspondência exata, Shift+Tab não dispara o Tab; a de trás continua olhada primeiro (testes sem Godot).
         var tabbed = false;
         if (_justPressed(InputActions.TargetPrevious))
         {

@@ -32,7 +32,6 @@ namespace MmoRpgClient;
 /// <c>--capture-after=segundos</c>, ou ao fim do demo; com <c>--capture-every=segundos</c>, uma série até <c>--capture-after</c>, T-345). <c>--circles</c> desenha as unidades como círculos, sem sprites (T-053).
 /// Mundo aberto (T-223): <c>--auto-respawn=segundos</c> aperta o botão de retornar (T-541: Cidade ou Forte) sozinho depois de morrer.
 /// <c>--death-sample</c> (T-397): mostra a tela de morte com um resumo de exemplo ao entrar na zona, sem morrer (prévia).
-/// Grupo: <c>--party-invite=Nome</c> convida esse personagem e <c>--party-accept</c> aceita o convite recebido.
 /// Capturas (T-345): <c>--enemy-level=n</c> põe todos os inimigos e objetivos do encontro local no nível n, e
 /// <c>--enemy-health=f</c> faz os inimigos começarem com a fração f da vida.
 /// Segunda classe (T-412): <c>--level=n</c> põe o jogador do encontro local no nível n (pela XP normal) e
@@ -119,6 +118,8 @@ public partial class Main : Node2D
         _gameMenu.CancelRequested += CancelLeave;
         _gameMenu.DevToolRequested += RequestDevTool;
 
+        // Teclas do jogador (tela "Teclas" do menu do Esc), por cima do padrão do projeto.
+        KeyBindingSettings.EnsureApplied();
         foreach (var action in InputActions.All.Where(a => !InputMap.HasAction(a)))
         {
             GD.PushError($"Ação ausente no Input Map: {action}");
@@ -256,7 +257,7 @@ public partial class Main : Node2D
                     OfferPartyInvite(mousePx, hovered);
                     var pick = itemUnderMouse is not null && !_hud.IsPointerOverUi() && Godot.Input.IsActionJustPressed(InputActions.Attack)
                         ? itemUnderMouse
-                        : Godot.Input.IsActionJustPressed(InputActions.PickUp, exactMatch: true) ? _worldView.NearestPickableItem(_authority.ControlledEntity) : null;
+                        : KeyBindingSettings.JustPressed(InputActions.PickUp) ? _worldView.NearestPickableItem(_authority.ControlledEntity) : null;
                     if (pick is { } item && _authority.ControlledEntity is { } me)
                     {
                         _authority.Send(new Game.Core.Intents.PickUpItemIntent(me, item));
@@ -304,7 +305,7 @@ public partial class Main : Node2D
                     + (n.Simulation.Length > 0 ? $" · {n.Simulation}" : "")
                 : "";
             _info.Text = $"Core {CoreInfo.Version} · {Engine.GetFramesPerSecond()} FPS · tick {_authority.CurrentTick}{netLine}\n"
-                + "WASD mover · Tab/Shift+Tab/clique (ou a lista, B) seleciona e ataca sozinho · 1-6 atalhos (arraste da tela K) · Q poção · F pegar · I inventário · C personagem · K habilidades · Esc pausa";
+                + HelpLine();
             _info.Visible = DebugView.Visible; // antes do jogo (conectando, erro) o texto fica sempre visível
         }
 
@@ -359,10 +360,22 @@ public partial class Main : Node2D
         return (match.Authority, match.Map, content);
     }
 
+    /// <summary>Linha de ajuda do debug, com as teclas configuradas.</summary>
+    private static string HelpLine()
+    {
+        static string K(string action) => KeyBindingSettings.Current[action] is null ? "—" : KeyBindingSettings.Label(action);
+        var move = K(InputActions.MoveUp) + K(InputActions.MoveLeft) + K(InputActions.MoveDown) + K(InputActions.MoveRight);
+        return $"{move} mover · {K(InputActions.TargetNext)}/{K(InputActions.TargetPrevious)}/clique (ou a lista, {K(InputActions.BattleList)}) seleciona e ataca sozinho"
+            + $" · atalhos {K(InputActions.AbilitySlots[0])}…{K(InputActions.AbilitySlots[^1])} · {K(InputActions.Consumable)} poção · {K(InputActions.PickUp)} pegar"
+            + $" · {K(InputActions.InventoryPanel)} inventário · {K(InputActions.CharacterPanel)} personagem · {K(InputActions.SkillsPanel)} habilidades · Esc menu (Teclas)";
+    }
+
     /// <summary>Esc: limpa o alvo se houver (a ação do PlayerInput); senão pausa/continua. R: reinicia com a mesma seed.</summary>
     private void HandleMatchKeys()
     {
-        if (_settings is null || _hud.IsTyping)
+        // A tela de teclas do menu já usou a tecla deste frame (a escolhida ou o Esc que cancela).
+        _hud.InputBlocked = _gameMenu.KeysOpen || _gameMenu.SwallowedInput;
+        if (_settings is null || _hud.IsTyping || _gameMenu.SwallowedInput)
         {
             return;
         }
@@ -663,18 +676,6 @@ public partial class Main : Node2D
         _hud.PartyEnabled = _zone is not null && net.Status == NetStatus.Playing;
         if (_hud.PartyEnabled)
         {
-            // Capturas do HUD do grupo: --party-invite=Nome convida uma vez (depois de 2 s na zona) e --party-accept
-            // aceita sozinho o convite recebido, para formar um grupo entre dois clientes sem clicar.
-            if (_elapsed > 2 && _args.Remove("party-invite", out var inviteName))
-            {
-                net.PartyInviteName(inviteName);
-            }
-
-            if (_args.ContainsKey("party-accept") && net.Party.ActiveInvite(net.ClockSeconds) is { } invite)
-            {
-                net.PartyRespond(invite.InviteId, true);
-            }
-
             _hud.ShowParty(net.Party, net.ClockSeconds);
             foreach (var message in net.TakePartyMessages())
             {

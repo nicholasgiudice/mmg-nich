@@ -281,7 +281,7 @@ public partial class ShopPanel : ProgressionPanel
 
         if (!any)
         {
-            list.AddChild(Small("A mochila está vazia. Item equipado não se vende: desequipe antes (I).", 12, 0.7f, ListWidth - 20));
+            list.AddChild(Small($"A mochila está vazia. Item equipado não se vende: desequipe antes{Hud.KeyHint(Input.InputActions.InventoryPanel)}.", 12, 0.7f, ListWidth - 20));
         }
     }
 

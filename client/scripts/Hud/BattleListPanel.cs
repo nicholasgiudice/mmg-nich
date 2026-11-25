@@ -59,7 +59,7 @@ public partial class BattleListPanel : PanelContainer
         box.AddThemeConstantOverride("separation", 2);
         AddChild(box);
 
-        _title.Text = "Batalha (B)";
+        _title.Text = "Batalha" + Hud.KeyHint(Input.InputActions.BattleList);
         _title.AddThemeFontSizeOverride("font_size", 11);
         _title.MouseFilter = MouseFilterEnum.Ignore;
         box.AddChild(_title);
@@ -111,7 +111,8 @@ public partial class BattleListPanel : PanelContainer
 
         // Lista vazia: só o título.
         _rows.Visible = entries.Count > 0;
-        _title.Text = total > 0 ? $"Batalha (B) · {total}" : "Batalha (B)";
+        var title = "Batalha" + Hud.KeyHint(Input.InputActions.BattleList);
+        _title.Text = total > 0 ? $"{title} · {total}" : title;
         ResetSize();
     }
 

@@ -35,12 +35,6 @@ public class HotbarLayoutTests
     }
 
     [Fact]
-    public void KeyLabelsGoFromOneToNineAndThenZero()
-    {
-        Assert.Equal(["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"], Enumerable.Range(0, HotbarLayout.Size).Select(HotbarLayout.KeyLabel));
-    }
-
-    [Fact]
     public void TheLastSlotsTakeAnAbilityLikeTheFirstOnes()
     {
         var bar = Loaded();

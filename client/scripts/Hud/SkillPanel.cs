@@ -117,7 +117,7 @@ public partial class SkillPanel : ProgressionPanel
 
         // T-323: as poções são itens do inventário (I), de onde vão para a barra; não aparecem mais aqui.
         box.AddChild(Small("Arraste um ícone para a barra (teclas 1 a 0). Habilidade não aprendida e passiva não vão para a barra. "
-            + "Poções: arraste do inventário (I).", 11, 0.6f,
+            + $"Poções: arraste do inventário{Hud.KeyHint(Input.InputActions.InventoryPanel)}.", 11, 0.6f,
             Columns * CellWidth));
 
         if (progress is not null && stats is not null)
