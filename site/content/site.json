@@ -151,7 +151,9 @@
     "zone.test_instance"
   ],
   "tags": {
+    "amphibious": "anfíbio",
     "beast": "fera",
+    "construct": "constructo",
     "boss": "chefe",
     "corrupted": "corrompido",
     "fey": "feérico",
@@ -182,6 +184,7 @@
     "root": "enraizamento",
     "seal_intact": "selo",
     "slow": "lentidão",
+    "terrain": "terreno",
     "spectral_shield": "escudo espectral",
     "stun": "atordoamento",
     "arcane_mark": "marca arcana",
