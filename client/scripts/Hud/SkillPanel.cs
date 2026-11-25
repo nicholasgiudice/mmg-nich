@@ -36,6 +36,9 @@ public partial class SkillPanel : ProgressionPanel
     /// <summary>Habilidade com o detalhe aberto ao lado da grade; null = fechado.</summary>
     private string? _detailId;
 
+    /// <summary>NH do personagem por habilidade (do plano), para o texto dos estados que dependem do NH de outra.</summary>
+    private Func<string, int>? _rankOf;
+
     /// <summary>NH mostrado no detalhe (uma aba por NH); null = o NH atual da habilidade.</summary>
     private int? _detailRank;
 
@@ -81,6 +84,7 @@ public partial class SkillPanel : ProgressionPanel
 
         var level = stats?.Level ?? 1;
         var plan = SkillPlan.FromState(cls, Content, state, level, progress?.SecondClass);
+        _rankOf = plan.RankOf;
         if (plan.SecondClass is not null)
         {
             _confirmId = null; // já escolheu: a confirmação não volta
@@ -359,10 +363,10 @@ public partial class SkillPanel : ProgressionPanel
             var summary = AbilityText.Summary(def);
             if (summary.Length == 0)
             {
-                summary = AbilityText.Describe(def, Content, stats).Split('\n')[^1];
+                summary = AbilityText.Describe(def, Content, stats, _rankOf).Split('\n')[^1];
             }
             var tip = $"{def.Name}{(def.Passive ? " — passiva" : def.Signature ? " — assinatura" : "")}\n"
-                + Tooltip(def, AbilityText.Describe(def, Content, stats));
+                + Tooltip(def, AbilityText.Wrap(AbilityText.Body(def, Content, stats, _rankOf)));
             line.AddChild(new SkillIcon
             {
                 Icon = IconCatalog.Shared.For(id),
@@ -695,11 +699,7 @@ public partial class SkillPanel : ProgressionPanel
     }
 
     /// <summary>Alcance e efeitos de um NH, para o detalhe.</summary>
-    private string RankBody(AbilityDefinition def, CharacterStats? stats)
-    {
-        var reach = AbilityText.Reach(def);
-        return (reach.Length > 0 ? char.ToUpperInvariant(reach[0]) + reach[1..] + "\n" : "") + AbilityText.Describe(def, Content, stats);
-    }
+    private string RankBody(AbilityDefinition def, CharacterStats? stats) => AbilityText.Body(def, Content, stats, _rankOf);
 
     /// <summary>Aba de um NH no detalhe: dourada se é a aberta; marca o NH atual e os que pedem nível maior.</summary>
     private Button RankTab(int r, bool selected, bool current, bool locked)
@@ -824,11 +824,7 @@ public partial class SkillPanel : ProgressionPanel
         return text;
     }
 
-    private string Section(AbilityDefinition def, CharacterStats? stats)
-    {
-        var reach = AbilityText.Reach(def);
-        return (reach.Length > 0 ? "\n" + char.ToUpperInvariant(reach[0]) + reach[1..] : "") + "\n" + AbilityText.Describe(def, Content, stats);
-    }
+    private string Section(AbilityDefinition def, CharacterStats? stats) => "\n" + AbilityText.Wrap(AbilityText.Body(def, Content, stats, _rankOf));
 
     /// <summary>Descrição (quebrada para caber no tooltip) seguida de <paramref name="numbers"/>.</summary>
     private static string Tooltip(AbilityDefinition def, string numbers) =>

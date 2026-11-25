@@ -4,7 +4,7 @@
     {
       "id": "arcanist.arcane_ray",
       "name": "Raio Arcano",
-      "description": "Canaliza um raio num inimigo, parado: o dano sobe a cada pulso. Andar cancela.",
+      "description": "Canaliza um raio num inimigo: o dano sobe a cada pulso. Andar cancela o raio, menos no NH V, que deixa andar devagar.",
       "tags": ["ranged", "channel"],
       "cost": { "resource": "mana", "amount": 40 },
       "cooldown": 8,

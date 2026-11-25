@@ -996,21 +996,21 @@ public partial class Hud : Control
             if (item is not null)
             {
                 // T-323: atalho do tipo de consumível; usa a primeira pilha dele no inventário.
-                tooltip += $" — você tem {count}\n" + summary + AbilityText.Describe(def, _content, stats)
+                tooltip += $" — você tem {count}\n" + summary + AbilityText.Wrap(AbilityText.Body(def, _content, stats, abilities.RankOf))
                     + (count == 0 ? "\n\nNenhuma no inventário: compre no Templo da Cidade." : "");
             }
             else if (isBasic)
             {
-                tooltip += " — ataque básico\n" + summary + AbilityText.Describe(def, _content, stats);
+                tooltip += " — ataque básico\n" + summary + AbilityText.Wrap(AbilityText.Body(def, _content, stats, abilities.RankOf));
             }
             else
             {
                 var baseDef = _content.Abilities.GetValueOrDefault(id);
                 var top = baseDef?.HighestRank ?? rank;
                 tooltip += $" — NH {Match.SkillPlan.Roman(rank)}{(baseDef?.Signature == true ? " (assinatura)" : "")}\n"
-                    + summary + AbilityText.Describe(def, _content, stats);
+                    + summary + AbilityText.Wrap(AbilityText.Body(def, _content, stats, abilities.RankOf));
                 tooltip += rank < top && _content.AbilityAt(id, rank + 1) is { } next
-                    ? $"\n\nPróximo NH ({Match.SkillPlan.Roman(rank + 1)}):\n{AbilityText.Describe(next, _content, stats)}"
+                    ? $"\n\nPróximo NH ({Match.SkillPlan.Roman(rank + 1)}):\n{AbilityText.Wrap(AbilityText.Body(next, _content, stats, abilities.RankOf))}"
                     : "\n\nNH máximo.";
             }
         }
